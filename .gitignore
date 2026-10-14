@@ -1,15 +1,52 @@
+# Android & Gradle
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
 local.properties
+/local.properties
+
+# Keystores & Signing Secrets (PRD, doc 8 Section 4, 12 Section 3)
+*.jks
+*.keystore
+*.key
+*.pem
+*.p12
+*.pfx
+manifest.key
+
+# Environment files & Secrets
+.env
+.env.*
+!.env.example
+
+# IDE & Editor files
+.idea/
+*.ipr
+*.iws
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.egg-info/
+dist/
+eggs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

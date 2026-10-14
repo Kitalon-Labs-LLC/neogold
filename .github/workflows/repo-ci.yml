@@ -1,0 +1,22 @@
+name: repo-ci
+on:
+  pull_request:
+  push:
+    branches: [main, "release/**"]
+permissions:
+  contents: read
+concurrency:
+  group: repo-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Requirement and test case traceability
+        run: python3 tools/trace.py docs
+      - name: License verification (TC-OPS-08)
+        run: python3 tools/check_licenses.py
+      - name: ShellCheck on tools/*.sh
+        run: shellcheck tools/*.sh
