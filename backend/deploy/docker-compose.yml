@@ -1,0 +1,99 @@
+# /srv/neogold/compose/docker-compose.yml  (doc 12 Section 7.1)
+name: neogold
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  logging:
+    driver: journald            # journald MaxRetentionSec=90day on the host (doc 8 Section 11)
+    options:
+      tag: "neogold-{{.Name}}"
+
+services:
+  caddy:
+    <<: *hardening
+    build:
+      context: ./caddy
+      args:
+        CADDY_BASE: ${CADDY_BASE:?pin the official caddy image by digest in .env}
+    image: neogold-caddy:local
+    user: "1000:1000"
+    ports: ["80:8080", "443:8443"]   # unprivileged ports inside the container
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:?}
+      ACME_EMAIL: ${ACME_EMAIL:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /srv/neogold/caddy/data:/data
+      - /srv/neogold/caddy/config:/config
+    tmpfs: ["/tmp:size=16m"]
+    networks:
+      edge:
+        ipv4_address: 172.30.0.10      # the only proxy the API trusts (FORWARDED_ALLOW_IPS in api.env)
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    <<: *hardening
+    image: ${API_IMAGE:?}@${API_DIGEST:?set API_DIGEST, see neogold-deploy}
+    user: "10001:10001"
+    env_file: /etc/neogold/api.env    # DATABASE_URL, PUBLIC_BASE_URL, ENROLLMENT_CODE_SECRET, FORWARDED_ALLOW_IPS=172.30.0.10 (mode 0600)
+    volumes:
+      - /srv/neogold/images:/data/images     # encrypted volume; upload temp files in /data/images/.tmp, same filesystem
+      - /srv/neogold/exports:/data/exports   # encrypted volume; excluded from backups; emptied after hand-over
+    tmpfs: ["/tmp:size=64m"]
+    networks: [edge, internal]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits: {cpus: "1.0", memory: 768M}
+
+  db:
+    <<: *hardening
+    image: ${POSTGRES_IMAGE:?pin postgres 16 by digest in .env}
+    user: "70:70"                     # postgres user in the Alpine image; data dir pre-owned by 70
+    env_file: /etc/neogold/db.env     # POSTGRES_DB=neogold, POSTGRES_PASSWORD for the superuser (bootstrap only)
+    volumes:
+      - /srv/neogold/pg:/var/lib/postgresql/data
+      - /srv/neogold/backup:/backup          # dump staging for neogold-backup; on the encrypted volume
+    tmpfs: ["/tmp:size=64m", "/var/run/postgresql:size=1m"]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits: {cpus: "1.0", memory: 1G}
+
+  migrate:
+    <<: *hardening
+    profiles: [ops]
+    restart: "no"
+    image: ${API_IMAGE:?}@${API_DIGEST:?}
+    user: "10001:10001"
+    env_file: /etc/neogold/migrate.env   # credentials of neogold_migrator only
+    command: ["alembic", "upgrade", "head"]
+    tmpfs: ["/tmp:size=16m"]
+    networks: [internal]
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+  internal:
+    internal: true

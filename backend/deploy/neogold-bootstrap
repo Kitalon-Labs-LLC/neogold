@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# One-time database setup before the first deploy (doc 12 Section 7.2, step 8).
+# Reads role passwords from /etc/neogold/roles.env: MIGRATOR_PASSWORD, APP_PASSWORD, EXPORT_PASSWORD, PURGE_PASSWORD.
+set -euo pipefail
+cd /srv/neogold/compose
+# shellcheck disable=SC1091
+source /etc/neogold/roles.env
+docker compose up -d --wait db
+docker compose exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d neogold \
+  -v migrator_pw="$MIGRATOR_PASSWORD" -v app_pw="$APP_PASSWORD" \
+  -v export_pw="$EXPORT_PASSWORD" -v purge_pw="$PURGE_PASSWORD" <<'SQL'
+CREATE ROLE neogold_migrator LOGIN PASSWORD :'migrator_pw';
+CREATE ROLE neogold_app      LOGIN PASSWORD :'app_pw';
+CREATE ROLE neogold_export   LOGIN PASSWORD :'export_pw';
+CREATE ROLE neogold_purge    LOGIN PASSWORD :'purge_pw';
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+ALTER SCHEMA public OWNER TO neogold_migrator;
+GRANT USAGE ON SCHEMA public TO neogold_app, neogold_export, neogold_purge;
+-- Tables created later by migrations get these grants automatically (doc 5 Section 3.5).
+ALTER DEFAULT PRIVILEGES FOR ROLE neogold_migrator IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE ON TABLES TO neogold_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE neogold_migrator IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO neogold_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE neogold_migrator IN SCHEMA public
+  GRANT SELECT ON TABLES TO neogold_export;
+ALTER DEFAULT PRIVILEGES FOR ROLE neogold_migrator IN SCHEMA public
+  GRANT SELECT, DELETE ON TABLES TO neogold_purge;
+SQL
+echo "Roles created. Migrations grant DELETE on auth_nonce and idempotency_record to neogold_app and"
+echo "revoke UPDATE on audit_log (doc 5 Section 3.5). Next: neogold-deploy sha256:<digest>"

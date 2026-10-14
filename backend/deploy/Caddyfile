@@ -1,0 +1,47 @@
+# /srv/neogold/compose/Caddyfile  (doc 12 Section 7.2)
+{
+	http_port 8080
+	https_port 8443
+	email {$ACME_EMAIL}
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 15m
+			write 15m
+			idle 2m
+		}
+	}
+}
+
+{$PUBLIC_HOST} {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	@image path_regexp image ^/v1/sessions/[^/]+/captures/[^/]+/image$
+	handle @image {
+		request_body {
+			max_size 20MB
+		}
+		reverse_proxy api:8000
+	}
+
+	handle /v1/* {
+		request_body {
+			max_size 256KB
+		}
+		reverse_proxy api:8000
+	}
+
+	handle {
+		respond 404
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

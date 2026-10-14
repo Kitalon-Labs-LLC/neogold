@@ -1,0 +1,9 @@
+[Unit]
+Description=NeoGold encrypted backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/neogold/backup.env
+ExecStart=/usr/local/bin/neogold-backup

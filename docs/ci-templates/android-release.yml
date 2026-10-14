@@ -1,0 +1,83 @@
+name: android-release
+on:
+  push:
+    tags: ["v*.*.*"]
+permissions:
+  contents: read
+jobs:
+  verify:
+    # The tagged commit is re-tested here; a green pull request is not enough (doc 9 Section 7).
+    uses: ./.github/workflows/android-ci.yml
+  release:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: release   # requires reviewer approval in repository settings
+    permissions:
+      contents: write      # create the GitHub release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Gate G1, clinical sign-off
+        run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md
+      - name: Tag matches versionName
+        working-directory: android
+        run: |
+          version="$(./gradlew -q printVersionName)"
+          test "v${version}" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} does not match versionName ${version}"; exit 1; }
+      - name: Build signed bundle and sign the asset manifest
+        working-directory: android
+        env:
+          UPLOAD_KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_B64 }}
+          UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          RELEASE_MANIFEST_KEY_B64: ${{ secrets.RELEASE_MANIFEST_KEY_B64 }}
+        run: |
+          umask 077
+          printf '%s' "$UPLOAD_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          printf '%s' "$RELEASE_MANIFEST_KEY_B64" | base64 -d > "$RUNNER_TEMP/manifest.key"
+          ./gradlew --no-daemon signAssetManifest bundleRelease cyclonedxBom \
+            -PuploadKeystore="$RUNNER_TEMP/upload.jks" -PmanifestKey="$RUNNER_TEMP/manifest.key"
+          mkdir -p "$RUNNER_TEMP/upload"
+          cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/upload/"
+      - name: Install bundletool and put SDK and NDK tools on PATH
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" \
+            https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          echo "a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29  $RUNNER_TEMP/bundletool.jar" | sha256sum -c -
+          printf '#!/bin/sh\nexec java -jar "%s" "$@"\n' "$RUNNER_TEMP/bundletool.jar" > "$RUNNER_TEMP/bundletool"
+          chmod +x "$RUNNER_TEMP/bundletool"
+          {
+            echo "$RUNNER_TEMP"
+            dirname "$(find "$ANDROID_HOME/build-tools" -name zipalign | sort -V | tail -n 1)"
+            dirname "$(find "$ANDROID_NDK_LATEST_HOME" -name llvm-objdump | head -n 1)"
+          } >> "$GITHUB_PATH"
+      - name: Gates S4 and S5 on the release bundle
+        run: |
+          bundletool build-apks --bundle="$RUNNER_TEMP/upload/app-release.aab" \
+            --output="$RUNNER_TEMP/universal.apks" --mode=universal
+          unzip -o -q "$RUNNER_TEMP/universal.apks" universal.apk -d "$RUNNER_TEMP"
+          tools/check_16kb.sh "$RUNNER_TEMP/universal.apk"
+          python3 tools/check_manifest.py "$(find android/app/build/intermediates -path '*release*' -name AndroidManifest.xml | head -n 1)"
+      - name: Publish the checked bundle to the internal testing track (no rebuild)
+        working-directory: android
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: ./gradlew --no-daemon publishReleaseBundle --track internal --artifact-dir "$RUNNER_TEMP/upload"
+      - name: GitHub release with SBOM and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/reports/bom.json "$RUNNER_TEMP/upload/"
+          (cd "$RUNNER_TEMP/upload" && sha256sum app-release.aab bom.json > SHA256SUMS)   # the exact files uploaded
+          gh release create "${GITHUB_REF_NAME}" --draft --title "NeoGold ${GITHUB_REF_NAME}" \
+            --notes-file docs/release-notes/"${GITHUB_REF_NAME}".md \
+            "$RUNNER_TEMP/upload/bom.json" "$RUNNER_TEMP/upload/SHA256SUMS"
+      - name: Remove signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" "$RUNNER_TEMP/manifest.key"

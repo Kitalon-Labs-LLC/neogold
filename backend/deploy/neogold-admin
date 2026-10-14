@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Host wrapper for the admin CLI (doc 7 Section 10). Every command line is written to the host
+# journal before it runs, so admin actions survive a database restore (doc 12 Section 8.2).
+set -euo pipefail
+cd /srv/neogold/compose
+logger -t neogold-admin -- "user=${SUDO_USER:-$USER} args=$*"
+exec docker compose exec -T api neogold-admin "$@"

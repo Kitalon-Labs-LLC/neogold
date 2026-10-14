@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Deploy one backend image by digest, with automatic rollback (doc 12 Section 7.3).
+# Usage: neogold-deploy sha256:<digest>            deploy that image (backup, migrate, start, smoke)
+#        neogold-deploy --rollback                 return to the previous image (no migration)
+#        neogold-deploy --restore sha256:<digest>  after a restore (doc 12 Section 8.2): API only,
+#                                                  no backup, no migration, Caddy left stopped
+set -euo pipefail
+cd /srv/neogold/compose
+
+set_digest() {   # write API_DIGEST into .env atomically; every compose command reads it from there
+  local tmp
+  tmp="$(mktemp .env.XXXXXX)"
+  grep -v '^API_DIGEST=' .env > "$tmp" || true
+  printf 'API_DIGEST=%s\n' "$1" >> "$tmp"
+  chmod 0600 "$tmp"
+  mv -f "$tmp" .env
+}
+current="$(cat .current-digest 2>/dev/null || true)"
+previous="$(cat .previous-digest 2>/dev/null || true)"
+mode=deploy
+case "${1:-}" in
+  --rollback) mode=rollback; target="$previous" ;;
+  --restore)  mode=restore;  target="${2:-}" ;;
+  *)          target="${1:-}" ;;
+esac
+[[ "$target" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "usage: neogold-deploy sha256:<digest> | --rollback | --restore sha256:<digest>" >&2; exit 2; }
+
+# An older image runs on a newer, expand-only schema; its self-test must accept that.
+if [[ "$mode" != deploy ]]; then export NEOGOLD_ALLOW_NEWER_SCHEMA=1; fi
+if [[ "$mode" == restore ]]; then export NEOGOLD_SMOKE_INTERNAL_ONLY=1; services=(api); else services=(api caddy); fi
+
+if [[ "$mode" == deploy && -n "$current" ]]; then
+  echo "1/5 Pre-deploy backup"
+  systemctl start neogold-backup.service          # oneshot; returns when the backup has finished
+else
+  echo "1/5 Backup skipped (${mode}; first deploy, rollback, or restore)"
+fi
+
+echo "2/5 Pull ${target}"
+set_digest "$target"
+docker compose pull api
+
+rollback() {
+  trap - ERR
+  echo "Deploy failed; restoring ${current:-nothing}" >&2
+  if [[ -n "$current" && "$mode" == deploy ]]; then
+    set_digest "$current"
+    export NEOGOLD_ALLOW_NEWER_SCHEMA=1
+    if docker compose up -d --wait "${services[@]}" && ./smoke.sh; then
+      echo "Rolled back to ${current}; smoke test passed" >&2
+    else
+      echo "ROLLBACK ALSO FAILED: pause the study and follow doc 12 Section 7.5" >&2
+    fi
+  fi
+  exit 1
+}
+trap rollback ERR
+
+if [[ "$mode" == deploy ]]; then
+  echo "3/5 Migrate (expand-only; checked in CI by the schema-compat job)"
+  docker compose --profile ops run --rm migrate
+else
+  echo "3/5 Migration skipped: an older image cannot migrate a newer schema"
+fi
+echo "4/5 Start ${services[*]}"
+docker compose up -d --wait "${services[@]}"
+echo "5/5 Smoke test"
+./smoke.sh
+trap - ERR
+
+if [[ "$target" != "$current" ]]; then
+  printf '%s\n' "$current" > .previous-digest
+  printf '%s\n' "$target" > .current-digest
+fi
+logger -t neogold-deploy "${mode}: ${target} (was ${current:-none})"
+echo "Deployed ${target} (${mode})"

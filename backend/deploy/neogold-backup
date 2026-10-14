@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Nightly encrypted backup with restic (doc 8 Section 5.4, doc 12 Section 8).
+# Environment from /etc/neogold/backup.env: RESTIC_REPOSITORY, RESTIC_PASSWORD_FILE (mode 0600).
+# Database dump, roles, and images go into ONE snapshot, so a restore always gets a matching set.
+set -euo pipefail
+cd /srv/neogold/compose
+stage=/srv/neogold/backup                    # encrypted volume, mounted in db at /backup
+rm -f "$stage"/neogold.dump "$stage"/globals.sql
+docker compose exec -T db pg_dump -U postgres -Fc -f /backup/neogold.dump neogold
+docker compose exec -T db pg_dumpall -U postgres --globals-only -f /backup/globals.sql
+docker compose exec -T db pg_restore --list /backup/neogold.dump > /dev/null   # refuse a truncated dump
+restic backup "$stage" /srv/neogold/images --tag nightly --exclude /srv/neogold/images/.tmp
+restic forget --tag nightly --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --prune
+if [[ "$(date -u +%u)" == "7" ]]; then restic check --read-data-subset=5%; fi
+rm -f "$stage"/neogold.dump "$stage"/globals.sql
+logger -t neogold-backup "backup complete"
