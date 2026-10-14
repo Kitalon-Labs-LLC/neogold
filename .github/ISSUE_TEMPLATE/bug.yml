@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a problem with NeoGold. Never include any information about a real baby.
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not include names, register numbers, participant codes, birth times, or photos of babies.**
+        For security problems, do not open an issue; follow SECURITY.md instead.
+  - type: checkboxes
+    id: no-patient-data
+    attributes:
+      label: Privacy check
+      options:
+        - label: This report contains no information about a real baby.
+          required: true
+  - type: dropdown
+    id: clinical
+    attributes:
+      label: Could this change what a health worker does for a baby?
+      options:
+        - "No"
+        - "Yes"
+        - "Not sure"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version (from the About screen)
+      placeholder: 1.0.0 (1000001)
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone model and Android version
+      placeholder: TECNO Spark 30C, Android 14
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. ...\n2. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+    validations:
+      required: true
