@@ -24,6 +24,7 @@ ALLOWED_EXPORTED = {
     "com.kitalonlabs.neogold.MainActivity": None,
     "androidx.work.impl.background.systemjob.SystemJobService": "android.permission.BIND_JOB_SERVICE",
     "androidx.work.impl.diagnostics.DiagnosticsReceiver": "android.permission.DUMP",
+    "androidx.profileinstaller.ProfileInstallReceiver": "android.permission.DUMP",
     "androidx.profileinstaller.ProfileInstallerReceiver": "android.permission.DUMP",
 }
 
