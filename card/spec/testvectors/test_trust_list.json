@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "version": 1,
+  "valid_from": "2026-10-01",
+  "valid_until": "2028-10-01",
+  "keys": [
+    {
+      "key_id": "TEST-CARD-KEY-01",
+      "purpose": "CARD_ISSUER",
+      "algorithm": "Ed25519",
+      "public_key_hex": "b2767c8bead67f2f63fb34c1df2936076fe3d9cdf4eb0be56f14faf86fd54cd1",
+      "valid_from": "2026-10-01",
+      "valid_until": "2028-10-01",
+      "description": "Test-only card issuer key for unit and integration tests"
+    },
+    {
+      "key_id": "TEST-STUDY-KEY-01",
+      "purpose": "STUDY_ISSUER",
+      "algorithm": "Ed25519",
+      "public_key_hex": "b6cd40afe1d1ebc63da9fdab19fce394f24d0813d25cf2de9a7fb2981ba570a5",
+      "valid_from": "2026-10-01",
+      "valid_until": "2028-10-01",
+      "description": "Test-only study issuer key for enrollment QR tests"
+    }
+  ],
+  "revoked_card_batches": [
+    "NG-2026-REVOKED"
+  ],
+  "revoked_study_codes": [
+    "STUDY-REVOKED"
+  ]
+}

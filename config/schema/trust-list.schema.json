@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neogold.org/schema/trust-list.schema.json",
+  "title": "NeoGold Trust List Schema",
+  "description": "Validation schema for config/trust-list.json, holding trusted public keys for card batches and study profiles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "version",
+    "valid_from",
+    "valid_until",
+    "keys",
+    "revoked_card_batches",
+    "revoked_study_codes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version number."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing integer revision of the trust list."
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Start of trust list validity (YYYY-MM-DD)."
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Expiration date of the trust list (YYYY-MM-DD)."
+    },
+    "keys": {
+      "type": "array",
+      "description": "List of trusted issuer public keys.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key_id",
+          "purpose",
+          "algorithm",
+          "public_key_hex",
+          "valid_from",
+          "valid_until",
+          "description"
+        ],
+        "properties": {
+          "key_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{3,32}$",
+            "description": "Unique identifier for this key."
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "CARD_ISSUER",
+              "STUDY_ISSUER"
+            ],
+            "description": "Specific intended purpose. A key is only accepted for its stated purpose."
+          },
+          "algorithm": {
+            "type": "string",
+            "enum": [
+              "Ed25519"
+            ],
+            "description": "Cryptographic signature algorithm."
+          },
+          "public_key_hex": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "32-byte Ed25519 public key encoded as 64 lowercase hexadecimal characters."
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "description": "Key validity start date (YYYY-MM-DD)."
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "description": "Key validity expiration date (YYYY-MM-DD)."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Human-readable label describing the key ownership and environment."
+          }
+        }
+      }
+    },
+    "revoked_card_batches": {
+      "type": "array",
+      "description": "List of revoked card batch IDs. Cards with these batch IDs will be rejected.",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z0-9][A-Z0-9-]{2,31}$"
+      }
+    },
+    "revoked_study_codes": {
+      "type": "array",
+      "description": "List of revoked study codes.",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{2,32}$"
+      }
+    }
+  }
+}
