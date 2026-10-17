@@ -1,0 +1,5 @@
+# Dev-only pinned dependencies for NeoGold card package tests and verification
+# The card generator itself (card/generator/render_card.py) uses the Python standard library only.
+cryptography==50.0.2
+jsonschema==4.26.0
+pytest==9.1.1

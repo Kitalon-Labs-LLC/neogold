@@ -1,0 +1,1034 @@
+{
+  "$comment": "Source of truth for card v1 geometry. Edit with card/spec/card-v1.md; tests keep the two and the derived pixel values consistent.",
+  "spec": "neogold-card",
+  "layout_version": 1,
+  "status": "DRAFT, awaiting P02 review gate",
+  "units": "mm; origin top-left of the card, x to the right, y down",
+  "card": {
+    "width_mm": 120.0,
+    "height_mm": 76.0,
+    "corner_radius_mm": 3.0,
+    "bleed_mm": 3.0,
+    "safe_margin_mm": 3.0
+  },
+  "canonical_image": {
+    "px_per_mm": 10,
+    "width_px": 1200,
+    "height_px": 760,
+    "patch_inner_fraction": 0.6,
+    "window_inner_fraction": 0.7,
+    "note": "Warp the full card (trim edge to trim edge) to this size; all px values below are exact mm x 10."
+  },
+  "markers": {
+    "artwork_family": "ARUCO_4X4",
+    "family_decision": "OPEN: decided by the v0.1 download-size measurement (doc 4 Section 16, item 1). The card geometry is identical for both families.",
+    "size_mm": 16.0,
+    "keepout_mm": 3.0,
+    "placements": [
+      {
+        "id": 0,
+        "corner": "TL",
+        "rect_mm": {
+          "x": 3.0,
+          "y": 3.0,
+          "w": 16.0,
+          "h": 16.0
+        },
+        "rect_px": {
+          "x": 30,
+          "y": 30,
+          "w": 160,
+          "h": 160
+        },
+        "corners_px_tl_tr_br_bl": [
+          [
+            30,
+            30
+          ],
+          [
+            190,
+            30
+          ],
+          [
+            190,
+            190
+          ],
+          [
+            30,
+            190
+          ]
+        ]
+      },
+      {
+        "id": 1,
+        "corner": "TR",
+        "rect_mm": {
+          "x": 101.0,
+          "y": 3.0,
+          "w": 16.0,
+          "h": 16.0
+        },
+        "rect_px": {
+          "x": 1010,
+          "y": 30,
+          "w": 160,
+          "h": 160
+        },
+        "corners_px_tl_tr_br_bl": [
+          [
+            1010,
+            30
+          ],
+          [
+            1170,
+            30
+          ],
+          [
+            1170,
+            190
+          ],
+          [
+            1010,
+            190
+          ]
+        ]
+      },
+      {
+        "id": 2,
+        "corner": "BR",
+        "rect_mm": {
+          "x": 101.0,
+          "y": 57.0,
+          "w": 16.0,
+          "h": 16.0
+        },
+        "rect_px": {
+          "x": 1010,
+          "y": 570,
+          "w": 160,
+          "h": 160
+        },
+        "corners_px_tl_tr_br_bl": [
+          [
+            1010,
+            570
+          ],
+          [
+            1170,
+            570
+          ],
+          [
+            1170,
+            730
+          ],
+          [
+            1010,
+            730
+          ]
+        ]
+      },
+      {
+        "id": 3,
+        "corner": "BL",
+        "rect_mm": {
+          "x": 3.0,
+          "y": 57.0,
+          "w": 16.0,
+          "h": 16.0
+        },
+        "rect_px": {
+          "x": 30,
+          "y": 570,
+          "w": 160,
+          "h": 160
+        },
+        "corners_px_tl_tr_br_bl": [
+          [
+            30,
+            570
+          ],
+          [
+            190,
+            570
+          ],
+          [
+            190,
+            730
+          ],
+          [
+            30,
+            730
+          ]
+        ]
+      }
+    ],
+    "families": {
+      "ARUCO_4X4": {
+        "opencv_dictionary": "DICT_4X4_50",
+        "modules_with_border": 6,
+        "module_mm": 2.6666666666666665,
+        "bitmaps_note": "1 = white, 0 = black; outermost ring is the black border. Verified against OpenCV 5.0.0 generateImageMarker.",
+        "bitmaps": {
+          "0": [
+            "000000",
+            "010110",
+            "001010",
+            "000110",
+            "000100",
+            "000000"
+          ],
+          "1": [
+            "000000",
+            "000000",
+            "011110",
+            "010010",
+            "010100",
+            "000000"
+          ],
+          "2": [
+            "000000",
+            "000110",
+            "000110",
+            "000100",
+            "011010",
+            "000000"
+          ],
+          "3": [
+            "000000",
+            "010010",
+            "010010",
+            "001000",
+            "001100",
+            "000000"
+          ]
+        }
+      },
+      "APRILTAG_36H11": {
+        "opencv_dictionary": "DICT_APRILTAG_36h11",
+        "modules_with_border": 8,
+        "module_mm": 2.0,
+        "bitmaps_note": "1 = white, 0 = black; outermost ring is the black border (the AprilTag white outer ring is the quiet zone). Verified against OpenCV 5.0.0 generateImageMarker.",
+        "bitmaps": {
+          "0": [
+            "00000000",
+            "00010000",
+            "00110100",
+            "00001010",
+            "00001100",
+            "01011100",
+            "01010110",
+            "00000000"
+          ],
+          "1": [
+            "00000000",
+            "01001000",
+            "01011010",
+            "00001100",
+            "00011110",
+            "01110100",
+            "00110110",
+            "00000000"
+          ],
+          "2": [
+            "00000000",
+            "00111000",
+            "00010000",
+            "01001000",
+            "00000010",
+            "00100100",
+            "01110110",
+            "00000000"
+          ],
+          "3": [
+            "00000000",
+            "00001100",
+            "00100110",
+            "01001010",
+            "01110010",
+            "01110000",
+            "01001110",
+            "00000000"
+          ]
+        }
+      }
+    }
+  },
+  "window": {
+    "rect_mm": {
+      "x": 36.0,
+      "y": 26.0,
+      "w": 24.0,
+      "h": 24.0
+    },
+    "corner_radius_mm": 2.0,
+    "rect_px": {
+      "x": 360,
+      "y": 260,
+      "w": 240,
+      "h": 240
+    },
+    "sample_px": {
+      "x": 396,
+      "y": 296,
+      "w": 168,
+      "h": 168
+    }
+  },
+  "patches": [
+    {
+      "index": 0,
+      "id": "G1",
+      "group": "GRAY",
+      "role": "gray ramp step 1 (lightest)",
+      "lab_d65": [
+        90.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 45.0,
+        "y": 3.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 450,
+        "y": 30,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 468,
+        "y": 48,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 1,
+      "id": "G2",
+      "group": "GRAY",
+      "role": "gray ramp step 2",
+      "lab_d65": [
+        77.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 34.5,
+        "y": 3.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 345,
+        "y": 30,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 363,
+        "y": 48,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 2,
+      "id": "G3",
+      "group": "GRAY",
+      "role": "gray ramp step 3",
+      "lab_d65": [
+        64.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 55.5,
+        "y": 3.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 555,
+        "y": 30,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 573,
+        "y": 48,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 3,
+      "id": "G4",
+      "group": "GRAY",
+      "role": "gray ramp step 4 (mid gray, exposure reference)",
+      "lab_d65": [
+        51.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 24.0,
+        "y": 3.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 240,
+        "y": 30,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 258,
+        "y": 48,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 4,
+      "id": "G5",
+      "group": "GRAY",
+      "role": "gray ramp step 5",
+      "lab_d65": [
+        39.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 66.0,
+        "y": 3.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 660,
+        "y": 30,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 678,
+        "y": 48,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 5,
+      "id": "G6",
+      "group": "GRAY",
+      "role": "gray ramp step 6",
+      "lab_d65": [
+        28.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 45.0,
+        "y": 64.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 450,
+        "y": 640,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 468,
+        "y": 658,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 6,
+      "id": "G7",
+      "group": "GRAY",
+      "role": "gray ramp step 7 (darkest)",
+      "lab_d65": [
+        18.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 55.5,
+        "y": 64.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 555,
+        "y": 640,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 573,
+        "y": 658,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 7,
+      "id": "K1",
+      "group": "SKIN",
+      "role": "light skin, low yellowness",
+      "lab_d65": [
+        72,
+        10,
+        12
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 24.0,
+        "y": 23.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 240,
+        "y": 230,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 258,
+        "y": 248,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 8,
+      "id": "K2",
+      "group": "SKIN",
+      "role": "light skin, mid yellowness",
+      "lab_d65": [
+        72,
+        8,
+        20
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 104.5,
+        "y": 23.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 1045,
+        "y": 230,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 1063,
+        "y": 248,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 9,
+      "id": "K3",
+      "group": "SKIN",
+      "role": "light skin, high yellowness",
+      "lab_d65": [
+        72,
+        5,
+        30
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 6.5,
+        "y": 23.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 65,
+        "y": 230,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 83,
+        "y": 248,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 10,
+      "id": "K4",
+      "group": "SKIN",
+      "role": "medium skin, low yellowness",
+      "lab_d65": [
+        56,
+        12,
+        14
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 24.0,
+        "y": 33.5,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 240,
+        "y": 335,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 258,
+        "y": 353,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 11,
+      "id": "K5",
+      "group": "SKIN",
+      "role": "medium skin, mid yellowness",
+      "lab_d65": [
+        56,
+        10,
+        22
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 87.0,
+        "y": 3.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 870,
+        "y": 30,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 888,
+        "y": 48,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 12,
+      "id": "K6",
+      "group": "SKIN",
+      "role": "medium skin, high yellowness",
+      "lab_d65": [
+        56,
+        6,
+        32
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 6.5,
+        "y": 33.5,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 65,
+        "y": 335,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 83,
+        "y": 353,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 13,
+      "id": "K7",
+      "group": "SKIN",
+      "role": "dark skin, low yellowness",
+      "lab_d65": [
+        40,
+        12,
+        12
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 24.0,
+        "y": 44.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 240,
+        "y": 440,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 258,
+        "y": 458,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 14,
+      "id": "K8",
+      "group": "SKIN",
+      "role": "dark skin, mid yellowness",
+      "lab_d65": [
+        40,
+        9,
+        20
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 76.5,
+        "y": 3.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 765,
+        "y": 30,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 783,
+        "y": 48,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 15,
+      "id": "K9",
+      "group": "SKIN",
+      "role": "dark skin, high yellowness",
+      "lab_d65": [
+        40,
+        6,
+        27
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 6.5,
+        "y": 44.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 65,
+        "y": 440,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 83,
+        "y": 458,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 16,
+      "id": "X1",
+      "group": "SATURATED",
+      "role": "saturated yellow (bilirubin hue axis)",
+      "lab_d65": [
+        80,
+        2,
+        70
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 104.5,
+        "y": 33.5,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 1045,
+        "y": 335,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 1063,
+        "y": 353,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 17,
+      "id": "X2",
+      "group": "SATURATED",
+      "role": "saturated red",
+      "lab_d65": [
+        45,
+        52,
+        35
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 66.0,
+        "y": 64.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 660,
+        "y": 640,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 678,
+        "y": 658,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 18,
+      "id": "X3",
+      "group": "SATURATED",
+      "role": "saturated blue (negative b* axis)",
+      "lab_d65": [
+        35,
+        8,
+        -42
+      ],
+      "duplicate_of": null,
+      "rect_mm": {
+        "x": 104.5,
+        "y": 44.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 1045,
+        "y": 440,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 1063,
+        "y": 458,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 19,
+      "id": "G2D",
+      "group": "GRAY",
+      "role": "duplicate of G2, opposite corner",
+      "lab_d65": [
+        77.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": "G2",
+      "rect_mm": {
+        "x": 76.5,
+        "y": 64.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 765,
+        "y": 640,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 783,
+        "y": 658,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 20,
+      "id": "G4D",
+      "group": "GRAY",
+      "role": "duplicate of G4, opposite corner",
+      "lab_d65": [
+        51.0,
+        0.0,
+        0.0
+      ],
+      "duplicate_of": "G4",
+      "rect_mm": {
+        "x": 87.0,
+        "y": 64.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 870,
+        "y": 640,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 888,
+        "y": 658,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 21,
+      "id": "K5D",
+      "group": "SKIN",
+      "role": "duplicate of K5, opposite corner",
+      "lab_d65": [
+        56,
+        10,
+        22
+      ],
+      "duplicate_of": "K5",
+      "rect_mm": {
+        "x": 24.0,
+        "y": 64.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 240,
+        "y": 640,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 258,
+        "y": 658,
+        "w": 54,
+        "h": 54
+      }
+    },
+    {
+      "index": 22,
+      "id": "K8D",
+      "group": "SKIN",
+      "role": "duplicate of K8, opposite corner",
+      "lab_d65": [
+        40,
+        9,
+        20
+      ],
+      "duplicate_of": "K8",
+      "rect_mm": {
+        "x": 34.5,
+        "y": 64.0,
+        "w": 9.0,
+        "h": 9.0
+      },
+      "rect_px": {
+        "x": 345,
+        "y": 640,
+        "w": 90,
+        "h": 90
+      },
+      "sample_px": {
+        "x": 363,
+        "y": 658,
+        "w": 54,
+        "h": 54
+      }
+    }
+  ],
+  "qr": {
+    "version": 12,
+    "ecc_level": "M",
+    "mode": "byte",
+    "modules": 65,
+    "module_mm": 0.5,
+    "quiet_zone_modules": 4,
+    "symbol_rect_mm": {
+      "x": 65.0,
+      "y": 21.75,
+      "w": 32.5,
+      "h": 32.5
+    },
+    "clear_rect_mm": {
+      "x": 63.0,
+      "y": 19.75,
+      "w": 36.5,
+      "h": 36.5
+    },
+    "symbol_rect_px": {
+      "x": 650,
+      "y": 218,
+      "w": 325,
+      "h": 325
+    },
+    "clear_rect_px": {
+      "x": 630,
+      "y": 198,
+      "w": 365,
+      "h": 365
+    }
+  },
+  "text_line": {
+    "rect_mm": {
+      "x": 63.0,
+      "y": 57.5,
+      "w": 36.5,
+      "h": 3.0
+    },
+    "font": "OCR-B or any monospaced sans, 6 pt, black",
+    "content": "<batch_id>  EXP <expires_at as YYYY-MM>",
+    "placeholder": "NG-2026-001  EXP 2028-10"
+  },
+  "tolerances": {
+    "status": "[Guessing] proposed starting values; confirm with the print partner after a proof run",
+    "metric": "CIE DeltaE 2000, D65 illuminant, 2 degree observer, from reflectance measured on the finished matte-laminated card",
+    "nominal_max_delta_e": {
+      "GRAY": 3.0,
+      "SKIN": 3.0,
+      "SATURATED": 5.0
+    },
+    "duplicate_pair_max_delta_e": 1.5,
+    "inter_card_spread_max_delta_e": 1.5,
+    "samples_per_batch": "at least 5 cards, or 2% of the batch, whichever is larger, spread over the run",
+    "gray_max_chroma_c_star": 3.0,
+    "print_position_tolerance_mm": 0.3,
+    "die_cut_tolerance_mm": 0.3,
+    "marker_size_tolerance_mm": 0.2
+  },
+  "print": {
+    "stock": "white matte synthetic or coated card stock, about 300 to 400 micrometres total thickness after lamination",
+    "lamination": "matte film, both sides, no gloss or soft-touch with sheen",
+    "window": "punched through card and laminate",
+    "sleeve": "opaque sunlight-protective sleeve for distribution"
+  }
+}
