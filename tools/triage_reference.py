@@ -5,51 +5,101 @@ Written from the document, not from the Kotlin engine, so the differential test 
 independent readings of the same spec. Integer tenths of mg/dL; rounding toward more care (threshold down,
 estimate and upper bound up, lower bound down); one first-match reason code.
 
-SYNTH below is the synthetic test config from docs/10_Test_Cases.md Section 0. These are NOT clinical values.
-Work package P03 adapts this file to read testdata/triage/config.synthetic.json instead of the dictionary.
+Reads testdata/triage/config.synthetic.json (or a path passed via CLI) instead of a hardcoded dictionary.
 Running it directly prints the expected result for each boundary case in docs/10_Test_Cases.md Section 6.
+Supports '--batch' to stream test cases via JSON for differential verification (TC-TRI-24).
 """
 from decimal import Decimal, ROUND_HALF_UP, ROUND_FLOOR, ROUND_CEILING
+import json
+import sys
+from pathlib import Path
 
 def tenths(x, mode=ROUND_HALF_UP):  # integer tenths of mg/dL
     return int((Decimal(str(x)) * 10).quantize(Decimal('1'), rounding=mode))
 
-SYNTH = {  # synthetic test config, NOT clinical values
-  "scope": {"minGA": 35, "maxAgeHours": 336},
-  "bands": {"ga35": [[0, 8.0], [24, 10.0], [48, 14.0], [96, 17.0], [336, 17.0]],
-            "ga36": [[0, 9.0], [24, 11.0], [48, 15.5], [96, 18.5], [336, 18.5]],
-            "ga38plus": [[0, 10.0], [24, 12.0], [48, 17.0], [96, 20.0], [336, 20.0]]},
-  "bandFor": lambda ga: "ga35" if ga == 35 else ("ga36" if ga in (36, 37) else "ga38plus"),
-  "bloodWithin": 3.0, "bloodAbs": 15.0, "recheckWithin": 5.0, "recheckHours": 24, "maxWidth": 6.0,
-}
+def load_config(path="testdata/triage/config.synthetic.json"):
+    p = Path(path)
+    with open(p, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+    return raw
+
+def band_for_ga(ga: int) -> str:
+    if ga == 35:
+        return "ga35"
+    elif ga in (36, 37):
+        return "ga36"
+    else:
+        return "ga38plus"
 
 def threshold_tenths(cfg, ga, age_h):
-    pts = cfg["bands"][cfg["bandFor"](ga)]
+    bands = cfg.get("phototherapyThresholds") or cfg.get("bands")
+    pts = bands[band_for_ga(ga)]
+    age_dec = Decimal(str(age_h))
     for (a0, t0), (a1, t1) in zip(pts, pts[1:]):
-        if a0 <= age_h <= a1:
-            t = Decimal(str(t0)) + (Decimal(str(t1)) - Decimal(str(t0))) * (Decimal(str(age_h)) - a0) / (a1 - a0)
+        a0_dec, a1_dec = Decimal(str(a0)), Decimal(str(a1))
+        if a0_dec <= age_dec <= a1_dec:
+            t0_dec, t1_dec = Decimal(str(t0)), Decimal(str(t1))
+            if a1_dec == a0_dec:
+                t = t0_dec
+            else:
+                t = t0_dec + (t1_dec - t0_dec) * (age_dec - a0_dec) / (a1_dec - a0_dec)
             return tenths(t, ROUND_FLOOR)   # threshold rounded down: toward more care
-    raise ValueError("age outside table")
+    raise ValueError(f"age {age_h} outside table (0 to 336)")
 
 def triage(cfg, *, danger=False, onset24=False, ga=40, photo=False, age_h=48.0,
            quality_failed_3=False, E=None, L=None, U=None):
+    min_ga = cfg["scope"].get("minGestationalAgeWeeks", cfg["scope"].get("minGA", 35))
+    max_age_h = cfg["scope"].get("maxAgeHours", 336)
+    blood_within = cfg.get("bloodTestZone", {}).get("withinOfThreshold", cfg.get("bloodWithin", 3.0))
+    blood_abs = cfg.get("bloodTestZone", {}).get("absoluteAtOrAbove", cfg.get("bloodAbs", 15.0))
+    recheck_within = cfg.get("recheck", {}).get("withinOfThreshold", cfg.get("recheckWithin", 5.0))
+    max_width = cfg.get("maxIntervalWidth", cfg.get("maxWidth", 6.0))
+
     if danger: return ("REFER_URGENT", "R1")
     if onset24: return ("REFER_URGENT", "R2")
-    if ga < cfg["scope"]["minGA"]: return ("CANNOT_SCREEN_BLOOD_TEST", "R3")
+    if ga < min_ga: return ("CANNOT_SCREEN_BLOOD_TEST", "R3")
     if photo: return ("CANNOT_SCREEN_BLOOD_TEST", "R4")
-    if age_h > cfg["scope"]["maxAgeHours"]: return ("CANNOT_SCREEN_CLINICAL_REVIEW", "R5")
+    if Decimal(str(age_h)) > Decimal(str(max_age_h)): return ("CANNOT_SCREEN_CLINICAL_REVIEW", "R5")
     if quality_failed_3: return ("BLOOD_TEST_TODAY", "QUALITY_FALLBACK")
     T = threshold_tenths(cfg, ga, age_h)
-    e, l, u = tenths(E, ROUND_CEILING), tenths(L, ROUND_FLOOR), tenths(U, ROUND_CEILING)  # toward more care
-    if e >= T: return ("REFER_URGENT", "ABOVE_THRESHOLD")
-    if u >= T - tenths(cfg["bloodWithin"]): return ("BLOOD_TEST_TODAY", "ZONE_WITHIN3")
-    if u >= tenths(cfg["bloodAbs"]): return ("BLOOD_TEST_TODAY", "ZONE_ABS15")
-    if u - l > tenths(cfg["maxWidth"]): return ("BLOOD_TEST_TODAY", "WIDE_INTERVAL")
-    if u >= T - tenths(cfg["recheckWithin"]): return ("RECHECK", "RECHECK_ZONE")
+    e = tenths(E, ROUND_CEILING) if E is not None else None
+    l = tenths(L, ROUND_FLOOR) if L is not None else None
+    u = tenths(U, ROUND_CEILING) if U is not None else None
+
+    if e is not None and e >= T: return ("REFER_URGENT", "ABOVE_THRESHOLD")
+    if u is not None and u >= T - tenths(blood_within): return ("BLOOD_TEST_TODAY", "ZONE_WITHIN3")
+    if u is not None and u >= tenths(blood_abs): return ("BLOOD_TEST_TODAY", "ZONE_ABS15")
+    if u is not None and l is not None and u - l > tenths(max_width): return ("BLOOD_TEST_TODAY", "WIDE_INTERVAL")
+    if u is not None and u >= T - tenths(recheck_within): return ("RECHECK", "RECHECK_ZONE")
     return ("NO_FURTHER_ACTION_FROM_SCREEN", "-")
 
 if __name__ == "__main__":
-    c = SYNTH
+    if "--batch" in sys.argv:
+        # Batch evaluation for differential testing (TC-TRI-24)
+        cfg_arg = [a for a in sys.argv[1:] if a != "--batch"]
+        cfg_path = cfg_arg[0] if cfg_arg else "testdata/triage/config.synthetic.json"
+        c = load_config(cfg_path)
+        batch = json.load(sys.stdin)
+        out = []
+        for item in batch:
+            act, rsn = triage(
+                c,
+                danger=item.get("danger", False),
+                onset24=item.get("onset24", False),
+                ga=item.get("ga", 40),
+                photo=item.get("photo", False),
+                age_h=item.get("age_h", 48.0),
+                quality_failed_3=item.get("quality_failed_3", False),
+                E=item.get("E"),
+                L=item.get("L"),
+                U=item.get("U")
+            )
+            out.append([act, rsn])
+        json.dump(out, sys.stdout)
+        sys.exit(0)
+
+    cfg_path = sys.argv[1] if len(sys.argv) > 1 else "testdata/triage/config.synthetic.json"
+    c = load_config(cfg_path)
     V = [
      ("TRI-01 danger signs", dict(danger=True, E=5, L=3, U=7)),
      ("TRI-02 onset under 24h", dict(onset24=True, E=5, L=3, U=7)),
@@ -77,4 +127,4 @@ if __name__ == "__main__":
     ]
     for name, kw in V:
         print(f"{name:45s} -> {triage(c, **kw)}")
-    print("T(40,36h) tenths", threshold_tenths(c, 40, 36), "T(40,48h)", threshold_tenths(c,40,48), "T(40,96h)", threshold_tenths(c,40,96))
+    print("T(40,36h) tenths", threshold_tenths(c, 40, 36), "T(40,48h)", threshold_tenths(c, 40, 48), "T(40,96h)", threshold_tenths(c, 40, 96))

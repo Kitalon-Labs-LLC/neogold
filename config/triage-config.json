@@ -1,0 +1,64 @@
+{
+  "configVersion": "2026.10.0-draft",
+  "guideline": "AAP-2022",
+  "units": "mg/dL",
+  "triageEnabled": false,
+  "validUntil": "2027-12-31",
+  "clinicalSignoff": {
+    "status": "DRAFT",
+    "signoffRecordSha256": null
+  },
+  "scope": {
+    "minGestationalAgeWeeks": 35,
+    "maxAgeHours": 336
+  },
+  "hardRules": [
+    { "id": "R1", "when": "dangerSigns == true", "action": "REFER_URGENT" },
+    { "id": "R2", "when": "jaundiceOnsetUnder24h == true", "action": "REFER_URGENT" },
+    { "id": "R3", "when": "gestationalAgeWeeks < 35", "action": "CANNOT_SCREEN_BLOOD_TEST" },
+    { "id": "R4", "when": "priorPhototherapy == true", "action": "CANNOT_SCREEN_BLOOD_TEST" },
+    { "id": "R5", "when": "ageHours > 336", "action": "CANNOT_SCREEN_CLINICAL_REVIEW" }
+  ],
+  "phototherapyThresholds": {
+    "ga35": [
+      [0, 0.0],
+      [24, 0.0],
+      [48, 0.0],
+      [96, 0.0],
+      [336, 0.0]
+    ],
+    "ga36": [
+      [0, 0.0],
+      [24, 0.0],
+      [48, 0.0],
+      [96, 0.0],
+      [336, 0.0]
+    ],
+    "ga38plus": [
+      [0, 0.0],
+      [24, 0.0],
+      [48, 0.0],
+      [96, 0.0],
+      [336, 0.0]
+    ]
+  },
+  "bloodTestZone": {
+    "withinOfThreshold": 3.0,
+    "absoluteAtOrAbove": 15.0
+  },
+  "recheck": {
+    "withinOfThreshold": 5.0,
+    "hours": 24
+  },
+  "maxIntervalWidth": 6.0,
+  "qualityThresholds": {
+    "maxCardAngleDegrees": 20.0,
+    "maxPatchNonuniformityDelta": 2.0,
+    "minBlurLaplacianVariance": 100.0,
+    "maxGlarePixelFraction": 0.02,
+    "minExposureMidGray": 40.0,
+    "maxExposureMidGray": 215.0,
+    "maxLightUniformityDelta": 2.0,
+    "maxCorrectionResidualDeltaE": 3.0
+  }
+}

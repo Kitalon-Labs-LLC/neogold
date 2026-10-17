@@ -24,6 +24,8 @@ jobs:
       - name: Lint, unit, golden vectors, differential triage
         working-directory: android
         run: ./gradlew --no-daemon lintRelease detekt testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema
+      - name: Gate G1, clinical sign-off
+        run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md
       - name: Build unsigned release
         working-directory: android
         run: ./gradlew --no-daemon assembleRelease
