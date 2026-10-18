@@ -1,0 +1,361 @@
+# NeoGold Training Pipeline Pinned Dependencies (TC-OPS-07, NFR-11)
+# Generated with exact SHA-256 hashes for offline, reproducible builds.
+# Usage: pip install --require-hashes -r requirements.txt
+
+attrs==26.1.0 \
+    --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309  # attrs-26.1.0-py3-none-any.whl \
+    --hash=sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32  # attrs-26.1.0.tar.gz
+
+cloudpickle==3.1.2 \
+    --hash=sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a  # cloudpickle-3.1.2-py3-none-any.whl \
+    --hash=sha256:7fda9eb655c9c230dab534f1983763de5835249750e85fbcef43aaa30a9a2414  # cloudpickle-3.1.2.tar.gz
+
+colorama==0.4.6 \
+    --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6  # colorama-0.4.6-py2.py3-none-any.whl \
+    --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44  # colorama-0.4.6.tar.gz
+
+iniconfig==2.3.1 \
+    --hash=sha256:9121e2c1fdb355232495be3194c8dfe87ccc2d5dee45947b78e68f499790d7a7  # iniconfig-2.3.1-py3-none-any.whl \
+    --hash=sha256:67f4b9c50da0dedf52af349e7749a80a9057a5031199791b906c3bb3ae878960  # iniconfig-2.3.1.tar.gz
+
+joblib==1.6.0 \
+    --hash=sha256:3dbbf9f6e4b592a2357b854608e980fe6390d131d7a82f011a377ef2ebef7aba  # joblib-1.6.0-py3-none-any.whl \
+    --hash=sha256:2ccc96785b12046c08fd6d55839c12857831b54a3c1673ffadd2f04bfc4eda03  # joblib-1.6.0.tar.gz
+
+jsonschema==4.26.0 \
+    --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce  # jsonschema-4.26.0-py3-none-any.whl \
+    --hash=sha256:0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326  # jsonschema-4.26.0.tar.gz
+
+jsonschema-specifications==2025.9.1 \
+    --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe  # jsonschema_specifications-2025.9.1-py3-none-any.whl \
+    --hash=sha256:b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d  # jsonschema_specifications-2025.9.1.tar.gz
+
+narwhals==2.27.1 \
+    --hash=sha256:d057df13f5852b8e157596e82eb5e955fad267425df5e420e0ee9863da483b31  # narwhals-2.27.1-py3-none-any.whl \
+    --hash=sha256:aed93076a3ea42d9c32c88e4eb5ea422a21937011cbe1f480f9572a523c82094  # narwhals-2.27.1.tar.gz
+
+numpy==2.5.4 \
+    --hash=sha256:c6342f54c67093cae5c0227eb0eb772fdb79f2a2c37a6eb278b9909ee06aa356  # numpy-2.5.4-cp312-cp312-macosx_10_13_x86_64.whl \
+    --hash=sha256:b11e8fda06a7d69f15ebf542660b74466c2e51094800c1fb794f47ad4faeef17  # numpy-2.5.4-cp312-cp312-macosx_11_0_arm64.whl \
+    --hash=sha256:9cb18a327b49c5c337f972b03682f6a49855525faaf3c0d3e9c96cd0fd8880a8  # numpy-2.5.4-cp312-cp312-macosx_14_0_arm64.whl \
+    --hash=sha256:aec3fc4b32ff82421274f5d205c559c51c840c8df66a78efd7f3612dd005a26a  # numpy-2.5.4-cp312-cp312-macosx_14_0_x86_64.whl \
+    --hash=sha256:fe4d21ab149f15e4e6043dfb0de87e6e5f34ac176cde83060e9802981fca2ac2  # numpy-2.5.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:fbde6962867ee75b48b0ee29b2b9372ec5d617799dbaf38e82dc0596f2f7738a  # numpy-2.5.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:381a7a3d2e65e64c0ec302795ab9dc12bb1e73f150904699c153716177eebdaf  # numpy-2.5.4-cp312-cp312-musllinux_1_2_aarch64.whl \
+    --hash=sha256:b89d0aaae2fe498c648f4c4795c084db535af5bd98ef942b2a3681fb74ce8645  # numpy-2.5.4-cp312-cp312-musllinux_1_2_x86_64.whl \
+    --hash=sha256:9968ab7e49b93ac6e1c3b2239732183152c9150f16308d30b66a372cffe3483c  # numpy-2.5.4-cp312-cp312-win32.whl \
+    --hash=sha256:a7b1b6353e36a7e50de2973a38d705c88ee93adcf120673cee7f45a4a3fa223a  # numpy-2.5.4-cp312-cp312-win_amd64.whl \
+    --hash=sha256:aa1cce2ff3f8d953de38b76bf44602caeb69f101430208f64a10067f7cb4b1d3  # numpy-2.5.4-cp312-cp312-win_arm64.whl \
+    --hash=sha256:2377da2dd3ba2c1200956acbab2a358c83b8e1f8531191672d1cd6ad83250d53  # numpy-2.5.4-cp313-cp313-macosx_10_13_x86_64.whl \
+    --hash=sha256:7415db95818b39ec475a5eea54d9e3b6bc83e3912158e46da3438cdce399804d  # numpy-2.5.4-cp313-cp313-macosx_11_0_arm64.whl \
+    --hash=sha256:6d6a71b9d9a97c03633aa12565ef2825ffa036cc1d99cfd50dacf0f128af4fe2  # numpy-2.5.4-cp313-cp313-macosx_14_0_arm64.whl \
+    --hash=sha256:d8200f16437b289a5bb927c6e184eccc3e8389bc0070fea4cd5b9e13c1757959  # numpy-2.5.4-cp313-cp313-macosx_14_0_x86_64.whl \
+    --hash=sha256:1c2e71b04c6cad90026e544501bbe0ab9290fa8a4d845e7e8c0d124fb429c988  # numpy-2.5.4-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:6ffa07666f8da0eef81d149934a626d0d95fbd6838432a33e66245423a9062c0  # numpy-2.5.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:2fa3328f784fc8277fc48026f6cad516f5c561c5d8e2e39b3c9e0c8f23223b34  # numpy-2.5.4-cp313-cp313-musllinux_1_2_aarch64.whl \
+    --hash=sha256:b86966fbe4ad7de710422175572bcdc75fdedadfb54bc6fab7deabccddd7780b  # numpy-2.5.4-cp313-cp313-musllinux_1_2_x86_64.whl \
+    --hash=sha256:5258bc06526964be5face2fc6f756857a3f24f21ec3e72ca131337a75b165d6c  # numpy-2.5.4-cp313-cp313-win32.whl \
+    --hash=sha256:8b4d2fd2d34e5f8c9235ee787de5631a37a28402b15cb80814df973d2be54129  # numpy-2.5.4-cp313-cp313-win_amd64.whl \
+    --hash=sha256:bc39ac66a7a9a3fbd6134fda43136b60ffde99c8f4501e64e0d2b24da137babf  # numpy-2.5.4-cp313-cp313-win_arm64.whl \
+    --hash=sha256:c668b2f0d651605b58892644b0e302c7157f7159544227758c896982ef384b18  # numpy-2.5.4-cp314-cp314-macosx_10_15_x86_64.whl \
+    --hash=sha256:ffa6ce09a1c6a08e9667dd9c97aa0b14184e8d18f2a14b78b2a2328c9147f076  # numpy-2.5.4-cp314-cp314-macosx_11_0_arm64.whl \
+    --hash=sha256:956555e0603a4d38019ae6925711cb9dc43195c076a928accf7ea5d50bddfe53  # numpy-2.5.4-cp314-cp314-macosx_14_0_arm64.whl \
+    --hash=sha256:2c2c4afffdeb7920e445028dd71eb932cac3e704792e964bc2a232426d4f1255  # numpy-2.5.4-cp314-cp314-macosx_14_0_x86_64.whl \
+    --hash=sha256:4054173604cd8658796053f1f3bc0befb68ec1c0762c57fdad61e199256a8617  # numpy-2.5.4-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:d549420b8858885cea8838a727842249218b9c1da24dd517e25c9c7a948310a3  # numpy-2.5.4-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:823874a507a84af050493b622affde94b6f7c3a0dc22cb2801381bc03b871c00  # numpy-2.5.4-cp314-cp314-musllinux_1_2_aarch64.whl \
+    --hash=sha256:4e263278bfb5ee6409db8aedbc4cc32973b1b82bc1e8d3c668551d04d83a7e37  # numpy-2.5.4-cp314-cp314-musllinux_1_2_x86_64.whl \
+    --hash=sha256:cfd73180400042a7c532d30c5e287bdd03c59ff9ee1b4c0316af0539e29dfe23  # numpy-2.5.4-cp314-cp314-win32.whl \
+    --hash=sha256:2ca144f15135b6212a5c47b1e2aeca6e412f102f95a2d5d88d8aec77eb255de3  # numpy-2.5.4-cp314-cp314-win_amd64.whl \
+    --hash=sha256:468397ba3c64427474706e5c9123fe266395496714dc684294eac75cd4930d1e  # numpy-2.5.4-cp314-cp314-win_arm64.whl \
+    --hash=sha256:1ef3aa6d7e29bb13677323114280b05acc57607fa2300e66432d665d5418a162  # numpy-2.5.4-cp314-cp314t-macosx_11_0_arm64.whl \
+    --hash=sha256:98b053943e5a0474ec0da309d2cb9d3f18ea57f8a2067c2ab7b5f763d1068380  # numpy-2.5.4-cp314-cp314t-macosx_14_0_arm64.whl \
+    --hash=sha256:b64a85f40e154983960a4167d4c1d57a50c7f109b3d3264a3a984154e90a8454  # numpy-2.5.4-cp314-cp314t-macosx_14_0_x86_64.whl \
+    --hash=sha256:a813ed7719bf45463c51779e6a98d0385fe905e48447526938a4b8337333d551  # numpy-2.5.4-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:c9b80cdf5cedba0e90d93fa5f9a333c4d65bd545cd669b71bb97ce2b703c9d73  # numpy-2.5.4-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:2199ed071f460487c8db2c0e5c0b564494190edb4772fe80f9aad88b2604def5  # numpy-2.5.4-cp314-cp314t-musllinux_1_2_aarch64.whl \
+    --hash=sha256:64f9c9878c1938476365e11ccfb6b770f3b9e5f045ccddc514235041e6959365  # numpy-2.5.4-cp314-cp314t-musllinux_1_2_x86_64.whl \
+    --hash=sha256:64d1c8ac28a4077cf987e0a71a7a0ef7e2df70722f07f0baa42dbb7eb6938647  # numpy-2.5.4-cp314-cp314t-win32.whl \
+    --hash=sha256:067374eb538c34c745436365cf7b0112595c1d326f21ce4ff340f61230239fbb  # numpy-2.5.4-cp314-cp314t-win_amd64.whl \
+    --hash=sha256:e94aef2c639da4a960ad0db8e06471208d8589974953d78b61d345b4eb99e394  # numpy-2.5.4-cp314-cp314t-win_arm64.whl \
+    --hash=sha256:8dddfbee2e68d26d0d7d7d9cb247b1fd4409241cce32d815a11d97ec2cfde179  # numpy-2.5.4-cp315-cp315-macosx_10_15_x86_64.whl \
+    --hash=sha256:81e3420b27048b65eb14c3acf0c174a8cb0e023277716110347d2dcb26026dad  # numpy-2.5.4-cp315-cp315-macosx_11_0_arm64.whl \
+    --hash=sha256:0b4724a19de67bea8cfc4970798efa78bcbbe2ac2613cfac16721a42d44de2a5  # numpy-2.5.4-cp315-cp315-macosx_14_0_arm64.whl \
+    --hash=sha256:2132418bf8dd124a427ca9e6a1daf9ee1a87185344c95119ceae868b99466da1  # numpy-2.5.4-cp315-cp315-macosx_14_0_x86_64.whl \
+    --hash=sha256:325518d4245b9e331387702aa58c2ce1dc4cdcbb41dfb4ccd5dcbc7e08db1266  # numpy-2.5.4-cp315-cp315-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:56733449d2544178beaa4545cee357370440cf056c197f9c7bfb19dbfdd0e86d  # numpy-2.5.4-cp315-cp315-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:5ec3753760c1a6d8bb91200666e545c3a9728e6269dfb5d6ce02340996698aa3  # numpy-2.5.4-cp315-cp315-musllinux_1_2_aarch64.whl \
+    --hash=sha256:b1185012870173de7ae33d370bd45b1cf5baee747ea4b97036b65f4e93016877  # numpy-2.5.4-cp315-cp315-musllinux_1_2_x86_64.whl \
+    --hash=sha256:298eca75243f2cbbfdb460560b9fb2a1792a33cf2ab4286efd43d92e8d3df508  # numpy-2.5.4-cp315-cp315-win32.whl \
+    --hash=sha256:332f3378fe077dd850e677ec01bdcc4f22368fb5d50ef10b2c79230b1bf5a592  # numpy-2.5.4-cp315-cp315-win_amd64.whl \
+    --hash=sha256:d4cccbbc78717966f764cd3af4fb70276fa01fc7a2688af11c78901fa5c04f05  # numpy-2.5.4-cp315-cp315-win_arm64.whl \
+    --hash=sha256:950ea81d57ef070665581b6e1b5f6a029306423cd1739c5b95fe78aa30db6b9d  # numpy-2.5.4-cp315-cp315t-macosx_10_15_x86_64.whl \
+    --hash=sha256:c05ede731b03fb1b7591faca9389ade3267d2bddf1ad8882bb3f2cc5e101694f  # numpy-2.5.4-cp315-cp315t-macosx_11_0_arm64.whl \
+    --hash=sha256:5fbf7141bbfd63aea22f435c9062a032b9ea0082fe9845dad7f021d3f1234e71  # numpy-2.5.4-cp315-cp315t-macosx_14_0_arm64.whl \
+    --hash=sha256:3573cd22564692a5b899ec344e5d5b9cc4576f2985b96f22af3564ed54f2710f  # numpy-2.5.4-cp315-cp315t-macosx_14_0_x86_64.whl \
+    --hash=sha256:6c109eac9cd439193678f69d70733c1108487546ca8eafc107b510ae10c1aecd  # numpy-2.5.4-cp315-cp315t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:80d6ef6e8620eb2c2b4c4caad50b5935d6db3cde2d51581b55dcc79e14016d1d  # numpy-2.5.4-cp315-cp315t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:77045a4b175bbf5316ec08003880804336c78f92281a1b72222b274ea85ec5ac  # numpy-2.5.4-cp315-cp315t-musllinux_1_2_aarch64.whl \
+    --hash=sha256:0f02a46e49cfb6c73bdb7aea1c0d3461dbae9aba613542b65f657cd3d17b9fab  # numpy-2.5.4-cp315-cp315t-musllinux_1_2_x86_64.whl \
+    --hash=sha256:ad62a416ddcf863bf44bba76fbf6b53366ab0692e294f51cae4b5fbe0d246788  # numpy-2.5.4-cp315-cp315t-win32.whl \
+    --hash=sha256:38f47be9f74ab870d2633b5456ae519c43758a8d1fd05342f0ce4ecc034396ee  # numpy-2.5.4-cp315-cp315t-win_amd64.whl \
+    --hash=sha256:7a14a461d9340f1b46b8648578aed9cdb8b3b018a8fac6c1dde2c9192a01a87f  # numpy-2.5.4-cp315-cp315t-win_arm64.whl \
+    --hash=sha256:9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a  # numpy-2.5.4.tar.gz
+
+packaging==26.3 \
+    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c  # packaging-26.3-py3-none-any.whl \
+    --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79  # packaging-26.3.tar.gz
+
+pluggy==1.7.0 \
+    --hash=sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec  # pluggy-1.7.0-py3-none-any.whl \
+    --hash=sha256:d1eaa46ebb595891b860ab086b4d09c8588af65ebd4361b8e8f4bb8920b90ba8  # pluggy-1.7.0.tar.gz
+
+pytest==9.1.1 \
+    --hash=sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c  # pytest-9.1.1-py3-none-any.whl \
+    --hash=sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313  # pytest-9.1.1.tar.gz
+
+referencing==0.37.0 \
+    --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231  # referencing-0.37.0-py3-none-any.whl \
+    --hash=sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8  # referencing-0.37.0.tar.gz
+
+rpds-py==2026.9.1 \
+    --hash=sha256:2711d29b653b3bce48a63d18b9c6b53274669e6d6c4094dddeb4d9a0e45128b2  # rpds_py-2026.9.1-cp311-cp311-macosx_10_12_x86_64.whl \
+    --hash=sha256:3231c4c0e521dafa5be0c9f114ee2c2ad46650836f2d72caa86801950c3e7044  # rpds_py-2026.9.1-cp311-cp311-macosx_11_0_arm64.whl \
+    --hash=sha256:e01b3c878c8641913e688edd1b3f08658c6783d29cf6b826bd3c0d1ae7a1ffaa  # rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:3e524c7874ac72884d28e16dd5b8d839fd09e0fe76b020d3fbca23212a7b8c52  # rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:761fdae6728ceb99ab182fad2f0cc1e262f610834dc891aea1d1a2a2e634776f  # rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:6b723eb406dec5bc9ec516c73ab9c3239a3284e017f7eb89ee2b3258bd504fb7  # rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:136a1c3fe4402b7008bc81cb62ee538481795b61a7e83df88dff3b3f02b726ff  # rpds_py-2026.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:839dde845559254f34885267c6878f60d61d5205180226d976fe488d45fa128e  # rpds_py-2026.9.1-cp311-cp311-manylinux_2_31_riscv64.whl \
+    --hash=sha256:56cd8b3f77d7b6812f533b662186a1f28316931166ddc00fb893b1b0db7e9888  # rpds_py-2026.9.1-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:074a4d198bc34d9a8ea425114fc3ded6d11ec01f6a314a8db67454a5152d8834  # rpds_py-2026.9.1-cp311-cp311-musllinux_1_2_aarch64.whl \
+    --hash=sha256:6beb738155fe8ab8091afdfa5a3226b21c2b1593f1e50ebb90eb25b44dbc0391  # rpds_py-2026.9.1-cp311-cp311-musllinux_1_2_i686.whl \
+    --hash=sha256:57492a550a1d88d29d003247e5f78dd8cf04a701fac0e4c8db8745a6d2504e0a  # rpds_py-2026.9.1-cp311-cp311-musllinux_1_2_x86_64.whl \
+    --hash=sha256:d95a354e02393eada6d7351184671aced9d4cce109dabf927cb7aa99624352a1  # rpds_py-2026.9.1-cp311-cp311-win32.whl \
+    --hash=sha256:ce4d4f52e2a4324396caddbd45a97d8d7be5f42edd25d2355282a9c34f9b2f7f  # rpds_py-2026.9.1-cp311-cp311-win_amd64.whl \
+    --hash=sha256:fdcd198979b4ecffcc1beba366a7fbcf4eb41243691a82fe52ceb0b902f09c12  # rpds_py-2026.9.1-cp311-cp311-win_arm64.whl \
+    --hash=sha256:50906f5aea24b5a865cbd0a589698288631d9f3a54c3a937c83aefa95a0d14af  # rpds_py-2026.9.1-cp312-cp312-macosx_10_12_x86_64.whl \
+    --hash=sha256:e21c1429e205828ea886a2293a4a2c8e01f4c25d9893ca330e97a6cf73f52e7b  # rpds_py-2026.9.1-cp312-cp312-macosx_11_0_arm64.whl \
+    --hash=sha256:2693b2728bbcc48d09a981a356954b0c47c53ff25b545856f28a889ea619f69a  # rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:8601470267d938bcb7f3ab1a336100af51a4fd5b6ed030ef52461bb3ef5e7e07  # rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:3890a6aa36e6baa53d5258a2a25d3ef8b37ad165a6ab27a892d7c3e3a432cd69  # rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:6b5b393eda5ea42cca1c1a6665f2a4882b4fd5d1777e41ce0545a107fb008c9d  # rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:addeda51556dac7c1a2f14cda62db8b621cd12afba3091d03a96c72932387eab  # rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:d9edf30457d74eebfd76b045535e36f1cd89062566a128a0db2145ca042d787e  # rpds_py-2026.9.1-cp312-cp312-manylinux_2_31_riscv64.whl \
+    --hash=sha256:815d26356930846a40c7bc1366e7b1b0320ab8a063e66c11298a208bed0fd237  # rpds_py-2026.9.1-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:3b5a6f40f0a1486b4b36c888123afc67acdbd9f33235927acf5ff295429a0ba3  # rpds_py-2026.9.1-cp312-cp312-musllinux_1_2_aarch64.whl \
+    --hash=sha256:b5b8b0753718d258fd454283fbd57e14545d3b40583fa672e27cb4f987626bcc  # rpds_py-2026.9.1-cp312-cp312-musllinux_1_2_i686.whl \
+    --hash=sha256:46d80bc76b51a6c24f9944368c28d38b8bcbcea1da4f2f8d3ebc31a67e8c6ec6  # rpds_py-2026.9.1-cp312-cp312-musllinux_1_2_x86_64.whl \
+    --hash=sha256:befc2d6a953e563f8a7bfd87a42c22ebf8a3e980dcb7b6a4d17b70b0e914e8a3  # rpds_py-2026.9.1-cp312-cp312-win32.whl \
+    --hash=sha256:5ce8943f79c2210f7abcc28e86367b03b28d95027fd01c46d2472373ae70c86f  # rpds_py-2026.9.1-cp312-cp312-win_amd64.whl \
+    --hash=sha256:501909f2e4a1e2dee528ef766fe3c469060ebc17e54a8383d404ba07a81a6f02  # rpds_py-2026.9.1-cp312-cp312-win_arm64.whl \
+    --hash=sha256:a36b70596407634ca82d4b989a3729074a008537a0522e4c8046a67c729103e9  # rpds_py-2026.9.1-cp313-cp313-macosx_10_12_x86_64.whl \
+    --hash=sha256:eba5d173f7d5708b22a93815017a4611873ed54db9f268077c0dd1ed99cfc858  # rpds_py-2026.9.1-cp313-cp313-macosx_11_0_arm64.whl \
+    --hash=sha256:457866b85daf5034296666168b84a69e0b2e89dc4f1af102b46f6448a60b9063  # rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:a3a52a3ba86436ab3aef510fbe21512abc2ddd1993005dfe50514bd2284ef025  # rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:d7841166b7fa64c9c56404617ae4341448847482d45933b13135d26c130519e5  # rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:926bdd3e3b5998ddf70cc64bc8cf57209571f9044542913afb673799fec77dd0  # rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:7868b85224291c6cb6759f9b5adb9745f486d226f62b16a614dd5a2a5ab2b35b  # rpds_py-2026.9.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:3cd182d7291d29b92c521a0069d9c01ba6193628a9a105531d11b40a6d731a33  # rpds_py-2026.9.1-cp313-cp313-manylinux_2_31_riscv64.whl \
+    --hash=sha256:e6ea1cda8d8c688278430e4268a42f5e5da3bdd74578dfadc0820c3f1766ce83  # rpds_py-2026.9.1-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:5943980471829f6de242a20b109de3111ba6b77e3af0ffc587028ac854b05e6c  # rpds_py-2026.9.1-cp313-cp313-musllinux_1_2_aarch64.whl \
+    --hash=sha256:76d3af9732d2dab69f28179b40ba2d87e2f1d5824b4a694780aa787d685e8f36  # rpds_py-2026.9.1-cp313-cp313-musllinux_1_2_i686.whl \
+    --hash=sha256:78326f4cb4427a56ba4996c0762b63be45f06b85f086526420d2b3a66e40f84d  # rpds_py-2026.9.1-cp313-cp313-musllinux_1_2_x86_64.whl \
+    --hash=sha256:172e47169583f46ce118cbec68e6795d0da0f4606b488b6434f8276bca0a058c  # rpds_py-2026.9.1-cp313-cp313-win32.whl \
+    --hash=sha256:3e93b2cd69a9830be33e03945cd7cda940a0a8bfcfbff41d6144f0cb0d3d8bd9  # rpds_py-2026.9.1-cp313-cp313-win_amd64.whl \
+    --hash=sha256:d151e148117294133bf8af7eeace085e7e87432db15ab6adf640330298a47f6f  # rpds_py-2026.9.1-cp313-cp313-win_arm64.whl \
+    --hash=sha256:c9d1aca01f49170fdcf5c92761b1fafe97f554b721ca4570c5949fff778f0d4b  # rpds_py-2026.9.1-cp314-cp314-macosx_10_12_x86_64.whl \
+    --hash=sha256:3f0e9ac28fc067d4d34b88ae43c48e9489455c97fee9633d851f7eeed5a05d35  # rpds_py-2026.9.1-cp314-cp314-macosx_11_0_arm64.whl \
+    --hash=sha256:07deecbfce94c78473018bc7d10b337cc651d12df87a1eb2cb3e4024bc9c33d0  # rpds_py-2026.9.1-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:821b2755db9194409254012f429c56643416fb96ef9be090be82ec8826b7f477  # rpds_py-2026.9.1-cp314-cp314-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:3c91c210ae7645626c608400e3519b4a642f837cce09ca830db3beb2e9f274d4  # rpds_py-2026.9.1-cp314-cp314-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:54ac2158a6f96cfbabff0b2eedaf94b90c5ec7ca8317fcadc61e1c2b2e0ff6ef  # rpds_py-2026.9.1-cp314-cp314-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:eac2f5dbafd585dfe31f86a23ebf0d3ba480a9d49ebc87947267b5608d4ea0cd  # rpds_py-2026.9.1-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:8aa5dda18d39b6143eb24809d158f9252c88f402749b6f1b62a506cc7d96cc35  # rpds_py-2026.9.1-cp314-cp314-manylinux_2_31_riscv64.whl \
+    --hash=sha256:5c90e7fa02e8f5de0d10c17595c568ada48c5302e749462c0ea1a4c362111a86  # rpds_py-2026.9.1-cp314-cp314-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:e6d198bad4e49dd6732fbd636e2fc5c082f45c8cad0b4acb756b00c82c76072e  # rpds_py-2026.9.1-cp314-cp314-musllinux_1_2_aarch64.whl \
+    --hash=sha256:96beca19ec79de272e8668585380ff9092c47077c1d7a1e098e00bbd921f4785  # rpds_py-2026.9.1-cp314-cp314-musllinux_1_2_i686.whl \
+    --hash=sha256:a5cf77eb04f20b720be95265a3e00eb2a14814074255cc27069c551b2db53118  # rpds_py-2026.9.1-cp314-cp314-musllinux_1_2_x86_64.whl \
+    --hash=sha256:a03d57b86d2a51d0a66c92177e2be154ad015f357791d306e714569999cdb4cc  # rpds_py-2026.9.1-cp314-cp314-win32.whl \
+    --hash=sha256:837c6b305e26fe0f75b15c92cf3b2ba29e0ae19dc40b1c557b026cb426347d0c  # rpds_py-2026.9.1-cp314-cp314-win_amd64.whl \
+    --hash=sha256:fce4b85234a0cbad67bf8e6e1201ee815d172c9aebad75f25645bc4d834f8e31  # rpds_py-2026.9.1-cp314-cp314-win_arm64.whl \
+    --hash=sha256:3a72c11530d71abfb66c8d7696a2f86c43e63fca8b948f1a784ac490f4ec688e  # rpds_py-2026.9.1-cp314-cp314t-macosx_10_12_x86_64.whl \
+    --hash=sha256:068c37bba854ec2fe42f7365c640af11dd9895890ccbf2df5070d0c059bd7f96  # rpds_py-2026.9.1-cp314-cp314t-macosx_11_0_arm64.whl \
+    --hash=sha256:d7fca4eb6df565e2a928f1c7dad92d27db8f9df0f449e76423ed5d7e713ed445  # rpds_py-2026.9.1-cp314-cp314t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:c933c6678c6f116ff8af47a4c6db0868b8ace74af0343016c0ef00f00272ea69  # rpds_py-2026.9.1-cp314-cp314t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:028ad274ea951dac64491b5d1e65712a4aeabfdbdb9fccf797b57bd899b0c495  # rpds_py-2026.9.1-cp314-cp314t-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:740d0a99cf9de0b17a3943388e9294a59becf75e7c43421f387bd3c7a9901f7c  # rpds_py-2026.9.1-cp314-cp314t-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:0da298fb372dc192610a4b9ecbc68a0cd8b675bbbd1fc519d01b41cfd658333e  # rpds_py-2026.9.1-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:eb61be926bb81567c1f48bdc8aa22b9855048dc2efd53871f9f7e6e9a5632346  # rpds_py-2026.9.1-cp314-cp314t-manylinux_2_31_riscv64.whl \
+    --hash=sha256:42e75466f83cd43f6026c81eab74246efb2bdadafb307b85700632d06c68f299  # rpds_py-2026.9.1-cp314-cp314t-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:617f59cde379b4f648a09797b7f683d04b90a46344cddab85639da5aff0f5531  # rpds_py-2026.9.1-cp314-cp314t-musllinux_1_2_aarch64.whl \
+    --hash=sha256:3edae8c5ddfdb6985d49ae9d150516e5076888879022f91a26c2de9276ce0bdb  # rpds_py-2026.9.1-cp314-cp314t-musllinux_1_2_i686.whl \
+    --hash=sha256:0f045bb053c9057720d72c56dffe30dffdc05997b2897a827b9325f0ab6623fa  # rpds_py-2026.9.1-cp314-cp314t-musllinux_1_2_x86_64.whl \
+    --hash=sha256:bf35d0568abda97233239ce32896d3ad53fccc537832c104e30c94aa5fb93569  # rpds_py-2026.9.1-cp314-cp314t-win32.whl \
+    --hash=sha256:1e8d4d79d828299bf44a55db22a9388ab967b49d17132c88eab0f4360b48da8e  # rpds_py-2026.9.1-cp314-cp314t-win_amd64.whl \
+    --hash=sha256:1d77b649e6f7cdf12ca5c2a98dad0ad37f9ea9b6f960408a92f0cb12bb3d04d9  # rpds_py-2026.9.1-cp315-cp315-macosx_10_12_x86_64.whl \
+    --hash=sha256:00ba2d8c7dd4ee537978ddf4b3fbd712bef2d8751603f7f3146b3f4287768e25  # rpds_py-2026.9.1-cp315-cp315-macosx_11_0_arm64.whl \
+    --hash=sha256:ec450527cbf485e13c8d3602a54f428ab0432fdade0ede75efd74b735421c871  # rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:306ee1850d8105b5baf977e78d45fcadd12c1a54678d614c9baf217708446e91  # rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:ef6b65b03247c54692ad4fd9ee97cb772781927db72e3cb05e70b3db6d1ff14f  # rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:a575404ebc9cf2e91edd32eaf570ec1430eb900d4f56724ba7dd4bc1fc9c176d  # rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:2c16ab111bc27c646ba8aa005d0527754edc538ebb636f0b1bf8e244b48d1945  # rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:7664419f27db41d4f1c43a78dccda7dd6e8ef2428df3ee01d0c2a07a6b071297  # rpds_py-2026.9.1-cp315-cp315-manylinux_2_31_riscv64.whl \
+    --hash=sha256:4b26b03d9d2658ee2fa234f8f4f19f38a09773fe5261028025032e26d4d35af0  # rpds_py-2026.9.1-cp315-cp315-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:be3e47e2d91aa3942ff9bf4077a505226005abfc39b6f7554a91c1b9393986b9  # rpds_py-2026.9.1-cp315-cp315-musllinux_1_2_aarch64.whl \
+    --hash=sha256:6307a0da524939decb8ca4a3933b8ab62525794411d6984fca6726e732804af6  # rpds_py-2026.9.1-cp315-cp315-musllinux_1_2_i686.whl \
+    --hash=sha256:159a7aab5c5e8b112c8830f54717ce56da1252ebdbb526f5be2df2309280b9e7  # rpds_py-2026.9.1-cp315-cp315-musllinux_1_2_x86_64.whl \
+    --hash=sha256:dbc2673f9223d420c91145599b3ba45a8a50c207d1976908e5fb5ddb0c9b9429  # rpds_py-2026.9.1-cp315-cp315-win32.whl \
+    --hash=sha256:75c38c50ab9aca840225d9a9a3810bf11d04bd5c1f186cabbb8aee56db3e9b15  # rpds_py-2026.9.1-cp315-cp315-win_amd64.whl \
+    --hash=sha256:a431156bb41865fc14cd5d79bb9d7bbed83110b0159e34e62ae30951f96c0009  # rpds_py-2026.9.1-cp315-cp315-win_arm64.whl \
+    --hash=sha256:ef0d8c843e2827d6c120ab4687e9423fb1d893db1df27b7c1506615bcb9734a0  # rpds_py-2026.9.1-cp315-cp315t-macosx_10_12_x86_64.whl \
+    --hash=sha256:45bc6bccf78b20fd834237d18db64965d7ee68ba7f60440a26c7ab71e7b8d51a  # rpds_py-2026.9.1-cp315-cp315t-macosx_11_0_arm64.whl \
+    --hash=sha256:1d55198263bb51f557550c6ed2e6d1cb6a6fed6eb5c9120b741c5926bef8a45d  # rpds_py-2026.9.1-cp315-cp315t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:a8763f20692da7df39b0afdd1ba3042b004c50a45994f76c2d9a25641f7673db  # rpds_py-2026.9.1-cp315-cp315t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:e43d4a1f673e8a1cbd8533e809e02b4bf9d4f2280269bb640436556312121250  # rpds_py-2026.9.1-cp315-cp315t-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:ea394a937f17a54c51239348bdbe2e3518124c8d4a8951ba04a311d3095bd18f  # rpds_py-2026.9.1-cp315-cp315t-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:cdeaa99ce822dca76cfb1b993e9120c5ea212f2eb66d48950ad63c349668a018  # rpds_py-2026.9.1-cp315-cp315t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:b4f062343e7ad3fa94f2c66e5ae667dee47ee74dd41a9057c4fbe163236a123d  # rpds_py-2026.9.1-cp315-cp315t-manylinux_2_31_riscv64.whl \
+    --hash=sha256:22ffd29a63d71fb1b81552c21f2c2b734949b7ac751a9be70675a939a900839b  # rpds_py-2026.9.1-cp315-cp315t-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:08dae4a4095150a7c4545a1fb40b98e1ab1744fbc2770d92c977b9dadaa49ab6  # rpds_py-2026.9.1-cp315-cp315t-musllinux_1_2_aarch64.whl \
+    --hash=sha256:9a0460d43603d1fd9ef59c30278531e15d78581721ddb538fa560aa7817ea4ad  # rpds_py-2026.9.1-cp315-cp315t-musllinux_1_2_i686.whl \
+    --hash=sha256:1c2d1f6da5128eabf34e963d7163a818846075a52568250d006c4c953b40f903  # rpds_py-2026.9.1-cp315-cp315t-musllinux_1_2_x86_64.whl \
+    --hash=sha256:5c6ee90dee3e85e055ddfd502d611643d9b0fd94c818220bda84ec3dacd9b27b  # rpds_py-2026.9.1-cp315-cp315t-win32.whl \
+    --hash=sha256:fe5ad0664ec772b02c45859041aa17655709cced7a31005817fbbbd988c25567  # rpds_py-2026.9.1-cp315-cp315t-win_amd64.whl \
+    --hash=sha256:4c0d2cb595a420b34d5086db0add011e26e2c09d6a024afbac4228bf8f863a30  # rpds_py-2026.9.1-pp311-pypy311_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:f3d6ed6a98cfd19155996605474982cc470d7601746a6439078f1a5a3fa8b050  # rpds_py-2026.9.1-pp311-pypy311_pp73-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:8171b44a054e5c67fd748ada04187f1250bf35b95f85e52ab64bcf3331a923bb  # rpds_py-2026.9.1-pp311-pypy311_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:fda1d96e542c37b6c804547dbf489c129fe7c97183a76a5ec275909ba1a063df  # rpds_py-2026.9.1-pp311-pypy311_pp73-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:270bdcdaac5d5b6f73c5e22e7e135c7f2a50e789f71d9e241d5be8d90026e19a  # rpds_py-2026.9.1-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:84a6ecc0c940169190d2c23bd969debd48c94dbc855acd60188a68d71d421608  # rpds_py-2026.9.1-pp311-pypy311_pp73-manylinux_2_31_riscv64.whl \
+    --hash=sha256:ab4b2fda7c2b542f7f9d886cc6a838c5079d2b76f72e6081411faba11adde2c9  # rpds_py-2026.9.1-pp311-pypy311_pp73-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:44b32a7c4f0da3d28af31c259e38ddcff096f855e205ed0671d02fcf44f1ea1c  # rpds_py-2026.9.1-pp311-pypy311_pp73-musllinux_1_2_aarch64.whl \
+    --hash=sha256:a3dbc5ed9514908d5046107d7b1346bde71eea61de6e0e4919c19354f97e769f  # rpds_py-2026.9.1-pp311-pypy311_pp73-musllinux_1_2_i686.whl \
+    --hash=sha256:6eae33003518fd4cb4f83a218d5371469dd3001aa3b87128c005b07762f7fe5e  # rpds_py-2026.9.1-pp311-pypy311_pp73-musllinux_1_2_x86_64.whl \
+    --hash=sha256:0483515261947e4e8b8e1375bf7463e7eb6ccfb3d86e7b554d90cd5285f20f32  # rpds_py-2026.9.1-pp311-pypy311_pp80-macosx_10_12_x86_64.whl \
+    --hash=sha256:4cfaf02209061880210819934de2f4f6aa83dc04dafe6770276acc240a56da31  # rpds_py-2026.9.1-pp311-pypy311_pp80-macosx_11_0_arm64.whl \
+    --hash=sha256:6cdc537c8633d7fd92a82e2e0d2ab74320a3f63d5e59fb9cf08711e08fe151c4  # rpds_py-2026.9.1-pp312-pypy312_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl \
+    --hash=sha256:10e208f2425d973938afcd56e28a7c4be32e27b6a60b5d381f49fb9d8acf9759  # rpds_py-2026.9.1-pp312-pypy312_pp73-manylinux_2_17_armv7l.manylinux2014_armv7l.whl \
+    --hash=sha256:6c0dbbcc19735fe5f8b0a54c07659d154a9e69f47e15d0a6ab7299215daf62cb  # rpds_py-2026.9.1-pp312-pypy312_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl \
+    --hash=sha256:684fd492fff4fead00587544e059be2bbcb6f93454f21fa2a91b66fc7508be82  # rpds_py-2026.9.1-pp312-pypy312_pp73-manylinux_2_17_s390x.manylinux2014_s390x.whl \
+    --hash=sha256:d1028417bb44037eb3069c1009bd7b7277212876cda22fbe565b0bca9fab6d2c  # rpds_py-2026.9.1-pp312-pypy312_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl \
+    --hash=sha256:492e5e428cbe126221611f47e068f01660352feec4ad18bc0f5ea9b2ae88fb14  # rpds_py-2026.9.1-pp312-pypy312_pp73-manylinux_2_31_riscv64.whl \
+    --hash=sha256:88b5268892fde430d5531f95bc560b6efbbd67c929662c586afd729a96e7461c  # rpds_py-2026.9.1-pp312-pypy312_pp73-manylinux_2_5_i686.manylinux1_i686.whl \
+    --hash=sha256:01445c8d194aa032a08e944f16567672da1c62dbdbefd8b6d0693032e290cf68  # rpds_py-2026.9.1-pp312-pypy312_pp73-musllinux_1_2_aarch64.whl \
+    --hash=sha256:eef6a03b0b6d08d0835ccfa8ec8d1bc70525e3801387567137b50c557695e6da  # rpds_py-2026.9.1-pp312-pypy312_pp73-musllinux_1_2_i686.whl \
+    --hash=sha256:6b9bf3135b4ad5981df9a73d71a35272d650a2985ae9c2746357b24d59de2448  # rpds_py-2026.9.1-pp312-pypy312_pp73-musllinux_1_2_x86_64.whl \
+    --hash=sha256:56c6952a9b15047466d0c2347c446a761d4527f89976156341e68f0ce5cc08b0  # rpds_py-2026.9.1-pp312-pypy312_pp80-macosx_10_12_x86_64.whl \
+    --hash=sha256:b242c27c8f836305a4a72df9cdd564386ac57b807bd252a063223331c9316b37  # rpds_py-2026.9.1-pp312-pypy312_pp80-macosx_11_0_arm64.whl \
+    --hash=sha256:4793ef7f78268b124b73fa933440f01d258bbae01de9fa53e9080c9ab0425a12  # rpds_py-2026.9.1.tar.gz
+
+scikit-learn==1.9.1 \
+    --hash=sha256:326c188f92084bf58664229f4578eeab6176313b37cd5dfc85abd92b94130c58  # scikit_learn-1.9.1-cp311-cp311-macosx_10_9_x86_64.whl \
+    --hash=sha256:b48b2b5b41d9c5fbafef5f37b042f61110df3318ad2a45baf57287ea5b9ba5a2  # scikit_learn-1.9.1-cp311-cp311-macosx_12_0_arm64.whl \
+    --hash=sha256:4298fcc01b3d8fa9768d36894e99cce0747b3b2dd73bfd80779e393769d0afab  # scikit_learn-1.9.1-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:52a0703bbc07ad27f560fa63fa68e4c54dd735bfbbf65b4dd3c225dc7547b6df  # scikit_learn-1.9.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:220fa18152852a5ce29c49e1eaba9d44ec44631cd2e5cf65f5a40eafa5ab3412  # scikit_learn-1.9.1-cp311-cp311-win_amd64.whl \
+    --hash=sha256:8218cb8938d3031e0d23842838425490c229ecf3e99f666776e09d12ed902352  # scikit_learn-1.9.1-cp311-cp311-win_arm64.whl \
+    --hash=sha256:0c0f8b5d09b44101cea2767f300680bada1ea27f976fe4b48b83950a4f55a49a  # scikit_learn-1.9.1-cp312-cp312-macosx_10_13_x86_64.whl \
+    --hash=sha256:8c14ce41d561f7749f990b41d6703fe02c4669fbc485e598e069e0a1967b488e  # scikit_learn-1.9.1-cp312-cp312-macosx_12_0_arm64.whl \
+    --hash=sha256:e4c20a6c017d820faa7ac8c783e3d0c6a9a2e297bf9f55332ca17cdf7fd4d04d  # scikit_learn-1.9.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:e5d7b18a5b9dca241a74695f3275fa4c895a9dadc72b3d8df5fa9d1083c9b83e  # scikit_learn-1.9.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:4b59abb30618121cc46b45972d6bf53a7128b4df4cd346c6ca6f4d5f9031e49c  # scikit_learn-1.9.1-cp312-cp312-win_amd64.whl \
+    --hash=sha256:d5945a2908be62350e2978344e62b56c1552c2ca4f844ebf6277c94944d647dd  # scikit_learn-1.9.1-cp312-cp312-win_arm64.whl \
+    --hash=sha256:2c2b312fd8c02951a364fa120ea08c1cec10d863466bf1701b013152d7537835  # scikit_learn-1.9.1-cp313-cp313-macosx_10_13_x86_64.whl \
+    --hash=sha256:61cd968ab831a76d0ecbaf0347ab2270268716da28f94fd022497e3d6f205f13  # scikit_learn-1.9.1-cp313-cp313-macosx_12_0_arm64.whl \
+    --hash=sha256:5990f9c69e431bfaddcde1a6d7c5355243e026bc9b9e560c13893b90dab53fb4  # scikit_learn-1.9.1-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:55e79d6e9b0923f1a978179822bd43d7f5543f45e970a00fe861f43486380aba  # scikit_learn-1.9.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:2070f271e5375dc42c6bb93b461ab1c0aa5841d4009267e0cfd95a39dca94a43  # scikit_learn-1.9.1-cp313-cp313-win_amd64.whl \
+    --hash=sha256:613f0a783ca05aa844a4e1ac42d48425058f2c52be73f40f8cd98b7cd111acd6  # scikit_learn-1.9.1-cp313-cp313-win_arm64.whl \
+    --hash=sha256:d5d117952769b563067656784e03c75a2d8235a7a05cf7fffa78a311e75aac08  # scikit_learn-1.9.1-cp314-cp314-macosx_10_15_x86_64.whl \
+    --hash=sha256:8893bc6331f60f18d4ac75e12ed356e2dcf6a564bf767918b5b7ca54c8c8be49  # scikit_learn-1.9.1-cp314-cp314-macosx_12_0_arm64.whl \
+    --hash=sha256:b5492cf2df5226691c32611de8734bcf42148c6547ae53c7f4e6b847793addc0  # scikit_learn-1.9.1-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:993d332ff80e62efae9e39603b7e872297c418d780f01a01855269a3489c950f  # scikit_learn-1.9.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:ca9051447455dae341d4d591eece7deb2d8e3d1020298fc87a81fc51e4da8f53  # scikit_learn-1.9.1-cp314-cp314-win_amd64.whl \
+    --hash=sha256:90de6573f733a9fb79476ff1371af52a397d41c8b35f9146e20923db010d67b6  # scikit_learn-1.9.1-cp314-cp314-win_arm64.whl \
+    --hash=sha256:7b5cad1624de8b75e5b9ccb7b0ce1ff1d01306340a3efc56d5529c5ba92392eb  # scikit_learn-1.9.1-cp314-cp314t-macosx_10_15_x86_64.whl \
+    --hash=sha256:d137ce8a6142029fb5c35bd82f470c40cd9e760e5e2f7694b362c497c4ab3fa2  # scikit_learn-1.9.1-cp314-cp314t-macosx_12_0_arm64.whl \
+    --hash=sha256:66f852f7325b5070bc28329005aca76055a2def78faac039548ae889aeaa45a6  # scikit_learn-1.9.1-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:748bcb0a4cc04aec470652c9e5ec68450948e867387e7dfade647107ade68d25  # scikit_learn-1.9.1-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:38cd925e893e5539be704d5edc64dbe081aacdab6b89d8c2977c1f6a7a453ce5  # scikit_learn-1.9.1-cp314-cp314t-win_amd64.whl \
+    --hash=sha256:b01e5b01735d38474127ca3f49319b592506225a87793b27559816b5c75cea39  # scikit_learn-1.9.1-cp314-cp314t-win_arm64.whl \
+    --hash=sha256:8dec64f31a6e0ec826aca6c1b39a51e16d946e400d4c0904316f3ca72ccfb825  # scikit_learn-1.9.1-cp315-cp315-macosx_10_15_x86_64.whl \
+    --hash=sha256:e1b468241f4a7a9a7a0d6479ad3cc47681cc151a4046c530f2777c3d68f08942  # scikit_learn-1.9.1-cp315-cp315-macosx_12_0_arm64.whl \
+    --hash=sha256:8ca869d0080a5723cde2d5a8b54a2da1ff7e68735a9e9adb3da1243183a0fa01  # scikit_learn-1.9.1-cp315-cp315-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:6754b7cabfc3df0b1f7b38f7a344f559bbae9d82f0ac5e3d48cccbd19fdcefdf  # scikit_learn-1.9.1-cp315-cp315-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:52cfdb1fed3a34362dbc0bd96f2e761a66fd5724d6901629f5a558f1f3bd9849  # scikit_learn-1.9.1-cp315-cp315-win_amd64.whl \
+    --hash=sha256:ae6571a4828c6f5019bcd2b4125e5b18c0af3dbc9c99726c891f45f41335ec8e  # scikit_learn-1.9.1-cp315-cp315-win_arm64.whl \
+    --hash=sha256:48fefd8eb42bd4eec3e2d348149368ccd6d71987e20c30706a56a24eb86a6e73  # scikit_learn-1.9.1-cp315-cp315t-macosx_10_15_x86_64.whl \
+    --hash=sha256:09f4d73049cd63575157f6b1060e06a8c83a4bd3488dbfaeedf35ccba7aad712  # scikit_learn-1.9.1-cp315-cp315t-macosx_12_0_arm64.whl \
+    --hash=sha256:b3da53831534214322d9cb240fa6f390b36cf69eba727a6d4bd3238677630d70  # scikit_learn-1.9.1-cp315-cp315t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:caae15634feceafa2612566b109a3082d3293167fac388eedaf77bff66b51983  # scikit_learn-1.9.1-cp315-cp315t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:ffbcbbbb44202fbe9bc64bced25a145759adb9ef010b3d37a8064958ac13df2a  # scikit_learn-1.9.1-cp315-cp315t-win_amd64.whl \
+    --hash=sha256:800dd22dd87fe97dcea484c24e85dd93cf1734d86bd74e668ad18f7967f4d1b5  # scikit_learn-1.9.1-cp315-cp315t-win_arm64.whl \
+    --hash=sha256:629cada3e33e2b9bf376cdc7614a47a4140b8aedc1d836579e359736fbd82977  # scikit_learn-1.9.1.tar.gz
+
+scipy==1.18.1 \
+    --hash=sha256:457fd7a2a8edeb044ab6ffbc0aa03ff6cd18491356e5e0c834d76ce621b916d1  # scipy-1.18.1-cp312-cp312-macosx_10_15_x86_64.whl \
+    --hash=sha256:e708533e8b2ae2497d65346538a7dcc92814410b25b81432eac66de0f2af8265  # scipy-1.18.1-cp312-cp312-macosx_12_0_arm64.whl \
+    --hash=sha256:7bbf207c4453ce1ad2e00b17313852b33310b83090c2311bdaf97f93c0380d12  # scipy-1.18.1-cp312-cp312-macosx_14_0_arm64.whl \
+    --hash=sha256:78c0665edead396b1abb4897c41a5c1d9bf090c8a637a4c20a61678e0a264e66  # scipy-1.18.1-cp312-cp312-macosx_14_0_x86_64.whl \
+    --hash=sha256:3c085faa2cfa879c5141df483f836f4d691045a078224a670fa570fa01612d89  # scipy-1.18.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:f55fa87b6c612ecd6b058f167c53231b1d14e412efe361d3d6e38b3631c73218  # scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:c35d74ce0e193ff740c2f2be2ac913ddc232fe6c1ff40b26cfecb9c670c63314  # scipy-1.18.1-cp312-cp312-musllinux_1_2_aarch64.whl \
+    --hash=sha256:d2924a03db38dc2e848bca2fe9f077dafb891480b91a00a0963a8cf86dfc31c1  # scipy-1.18.1-cp312-cp312-musllinux_1_2_x86_64.whl \
+    --hash=sha256:5e4d44984abc0020154ea81b247adeddcc3ac5527b975ff798bd1ba0adc513c2  # scipy-1.18.1-cp312-cp312-win_amd64.whl \
+    --hash=sha256:d65d448389b8436493abcf629cc94ad0cf32aecaf06e1acca1de53cc795f2f12  # scipy-1.18.1-cp312-cp312-win_arm64.whl \
+    --hash=sha256:3ab3523da44749156e1f68b464dc56af11ae4cbc5c739a49d05f32b982eca9f3  # scipy-1.18.1-cp313-cp313-macosx_10_15_x86_64.whl \
+    --hash=sha256:e6fb6a55cc0ba97b59a1f288fb86dc6fce8bdfc0fffcbfd015e3a954bf2a2d93  # scipy-1.18.1-cp313-cp313-macosx_12_0_arm64.whl \
+    --hash=sha256:ea324d9dd34c38bfb9bec8ca4d1b407db97dbb74029f566b8e322b1b6fe56fe6  # scipy-1.18.1-cp313-cp313-macosx_14_0_arm64.whl \
+    --hash=sha256:75b00eb8fb802090aa903f4ea1c7f5a584779f967361e68b7e98e531cc2d7174  # scipy-1.18.1-cp313-cp313-macosx_14_0_x86_64.whl \
+    --hash=sha256:d416b16cccfd70fbf62400e84d0bb2f4e6af519a45557f1692c749b37f14b315  # scipy-1.18.1-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:fdaf5ea890a6183d0565f51a61799d67081bd5b1cf03c5f4b3fd3732108625c9  # scipy-1.18.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:c825cef2f49e46753726a7181a8e199804a912b29519ada542c6ebc654951899  # scipy-1.18.1-cp313-cp313-musllinux_1_2_aarch64.whl \
+    --hash=sha256:e3b417bf8c2c7c16e8f58ad91db17783ec911ac16e7b50eb6eab6e809b4f5b07  # scipy-1.18.1-cp313-cp313-musllinux_1_2_x86_64.whl \
+    --hash=sha256:559ed65f60c1af5a03f3912605a1b5114f522c7c32fb23c3376ae8f03219fe28  # scipy-1.18.1-cp313-cp313-win_amd64.whl \
+    --hash=sha256:cd479fc04dd9401e3b4f49e76518768ef99c4f517a98c284eb091fd725719adf  # scipy-1.18.1-cp313-cp313-win_arm64.whl \
+    --hash=sha256:83de5453a7799afc9048b4616bd085cef126e36412f0ea2f6370c36a2a3a51e7  # scipy-1.18.1-cp314-cp314-macosx_10_15_x86_64.whl \
+    --hash=sha256:9554bcc6d715ee87a633a3cc8e7703c6628b100dd29cb8a2efc4c0533c7ff729  # scipy-1.18.1-cp314-cp314-macosx_12_0_arm64.whl \
+    --hash=sha256:011413b7426b75012840e35649e00fe0a2c3bae89fed433876e3a99251572efc  # scipy-1.18.1-cp314-cp314-macosx_14_0_arm64.whl \
+    --hash=sha256:88f0e784020649f88ea48c9f5ddfa403bf9205820667c0914740b392035afb82  # scipy-1.18.1-cp314-cp314-macosx_14_0_x86_64.whl \
+    --hash=sha256:2d3ab0e8c69a17dd3559eab8cbb88f258e285c94d572c2719033f90f83290c89  # scipy-1.18.1-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:ac0333bdf38309aa3dcbe7e3fa7ea29e7a2c37c6ea306a757b700ded8e4596ad  # scipy-1.18.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:911de823097db8b63f034299d12662db93344e6ffa0b881cbb57748974b70168  # scipy-1.18.1-cp314-cp314-musllinux_1_2_aarch64.whl \
+    --hash=sha256:95298364e251be3e60249facbeeca03631d3bb7584f85879516ec55ac717b81f  # scipy-1.18.1-cp314-cp314-musllinux_1_2_x86_64.whl \
+    --hash=sha256:78a0d7c918e74a232394117160e7e3db503377572a45bcef8826e4ab8a35feba  # scipy-1.18.1-cp314-cp314-win_amd64.whl \
+    --hash=sha256:cbf38d043c1aa4ab306e1ada6ab6eddacc3322a20b7af1b30bc93254b366fe09  # scipy-1.18.1-cp314-cp314-win_arm64.whl \
+    --hash=sha256:0fcb3c93519f27bb4f0c4b0f7802cdcaca7fcf93267b75edda2e9f4e8a55cbd7  # scipy-1.18.1-cp314-cp314t-macosx_10_15_x86_64.whl \
+    --hash=sha256:ddef79fb382df40104a19bb7151b3b23e57c1778fcf857c71ceecd9bd264513f  # scipy-1.18.1-cp314-cp314t-macosx_12_0_arm64.whl \
+    --hash=sha256:0e82073ecc7acc6436fac4b31674109c7e1d3e596789767eda01258a8c9e8123  # scipy-1.18.1-cp314-cp314t-macosx_14_0_arm64.whl \
+    --hash=sha256:8bcf3c1ba5d6456e2effd30fcbd3459b044d683fcdac79a2e6830f0bdf7de487  # scipy-1.18.1-cp314-cp314t-macosx_14_0_x86_64.whl \
+    --hash=sha256:cfbf154f2ba187f2ed6cce2639efff7d105f1140573642c0161615b6d91d6a87  # scipy-1.18.1-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:a1d33a7836f7ddc1993427966a0823468ec41bcbdb1a9f9942d1d7e57f803ba3  # scipy-1.18.1-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:7f4b8bc363b6d65ee2152bec57568e3c52639bb34c46057b09857a307ed5e21d  # scipy-1.18.1-cp314-cp314t-musllinux_1_2_aarch64.whl \
+    --hash=sha256:11c423f1049c5755ad4409af52a9ada1cff96fe9b50795d4af3619f292901239  # scipy-1.18.1-cp314-cp314t-musllinux_1_2_x86_64.whl \
+    --hash=sha256:c24acac1e18912761c4700239bbc1fd32f615af690f1584d49b35859be51324d  # scipy-1.18.1-cp314-cp314t-win_amd64.whl \
+    --hash=sha256:9f2897bf7737392ad0d5213ea7b6add72a4edf5679b3153106aeb88b6507b3b9  # scipy-1.18.1-cp314-cp314t-win_arm64.whl \
+    --hash=sha256:eb0dfcf4e28a99c12c999744a2ff67c9b06200e20401c7c88186e33552a46331  # scipy-1.18.1-cp315-cp315-macosx_10_15_x86_64.whl \
+    --hash=sha256:30f464bee641fa8e282577c7dce027308403213c6ca8270bba73285c91024bc5  # scipy-1.18.1-cp315-cp315-macosx_12_0_arm64.whl \
+    --hash=sha256:1bca3b943fc2567ea49cd02c99abde49da4d5178ec46f624bd8255cda8755beb  # scipy-1.18.1-cp315-cp315-macosx_14_0_arm64.whl \
+    --hash=sha256:c9d18a33309122074ea483dd92dd444189166b8b2ec429fe9ed5ac73c7a0aa23  # scipy-1.18.1-cp315-cp315-macosx_14_0_x86_64.whl \
+    --hash=sha256:82f201b4c878551d48558337aab270d3c6cca5507b8737c8d8a608d234cccde0  # scipy-1.18.1-cp315-cp315-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:0ac49ea97594532dd44b7136094d35f5440fa06e6d9c6384a74c01764df388c5  # scipy-1.18.1-cp315-cp315-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:ceb30a00ce7c92d459819443d29ca486d882b83fb6738bdcbb2a1cce94ac5daa  # scipy-1.18.1-cp315-cp315-musllinux_1_2_aarch64.whl \
+    --hash=sha256:f29633129f9fa7e88a3f0fca835de2d030bfc9643f7799e1a0c46cee24d38fc7  # scipy-1.18.1-cp315-cp315-musllinux_1_2_x86_64.whl \
+    --hash=sha256:92c14f5bdbfb6216315ce33e78080474082de8b3830122ba97809bfbe65f75c0  # scipy-1.18.1-cp315-cp315-win_amd64.whl \
+    --hash=sha256:e402cf31eb68f453dbb2d36fc6d722b33f24a55d68b2ae1d92fa6305ca71c298  # scipy-1.18.1-cp315-cp315-win_arm64.whl \
+    --hash=sha256:2a0b02f9fc46f8520330c23d45e6560db7e3a0d927232139427637f98943e11d  # scipy-1.18.1-cp315-cp315t-macosx_10_15_x86_64.whl \
+    --hash=sha256:1d73131e358976663dd969e1fb4ed1404b815cd977eaaedc3b3a133ba2d81c35  # scipy-1.18.1-cp315-cp315t-macosx_12_0_arm64.whl \
+    --hash=sha256:bff0b729edd992766136b34e39cc76bc2fad905aa58897ee72a9cd000a6d8443  # scipy-1.18.1-cp315-cp315t-macosx_14_0_arm64.whl \
+    --hash=sha256:10ac20c69d880f77f375db44c22e3e6a644f9fefa291d4cd2fb9790a89fc99fd  # scipy-1.18.1-cp315-cp315t-macosx_14_0_x86_64.whl \
+    --hash=sha256:33a834464fdabc0f26a45508df31b3cc5d028e04dbf6c5ed398541418e0a12fe  # scipy-1.18.1-cp315-cp315t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl \
+    --hash=sha256:49023963c193dacee096301452f223ee24d86ec5807f8df93c0f7221d119e305  # scipy-1.18.1-cp315-cp315t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl \
+    --hash=sha256:d84a09d0dad90ba6525d8ac1c2334b33e64bf3ccfe9e841f02feb867a22681e4  # scipy-1.18.1-cp315-cp315t-musllinux_1_2_aarch64.whl \
+    --hash=sha256:179ce34a8d0fe273d8883ba59e17e052247d08973dfcb743ca52bb1cce2d60b0  # scipy-1.18.1-cp315-cp315t-musllinux_1_2_x86_64.whl \
+    --hash=sha256:5632e3ae3d09197c446310cd5187de63e28448ce22f0f67b2b93d97503c0c230  # scipy-1.18.1-cp315-cp315t-win_amd64.whl \
+    --hash=sha256:eda632a7981f69730d6281f451db9c1c370993a2c0d7ddb43e2a809a2862b83a  # scipy-1.18.1-cp315-cp315t-win_arm64.whl \
+    --hash=sha256:52c4b7422442aba924d03ad4019852b08a92e64ea187b933135687bfe2747307  # scipy-1.18.1.tar.gz
+
+threadpoolctl==3.7.0 \
+    --hash=sha256:cd8b60b5641b45c67bbf73c64c843235fc2d8a480c87389f52f5dbee893b86be  # threadpoolctl-3.7.0-py3-none-any.whl \
+    --hash=sha256:61348cfb77d53b9242e0017029244b559b810c142ced65b4e21eeca1843959a7  # threadpoolctl-3.7.0.tar.gz

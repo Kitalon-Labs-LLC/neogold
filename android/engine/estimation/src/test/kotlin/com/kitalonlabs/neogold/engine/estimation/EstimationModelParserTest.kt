@@ -147,4 +147,30 @@ class EstimationModelParserTest {
         }
         assertThat(ex.reason).isEqualTo(EstimationException.InvalidModelException.Reason.SCHEMA_VIOLATION)
     }
+
+    @Test
+    fun testParseCanonicalModel() {
+        var dir = File(".").canonicalFile
+        var found: File? = null
+        while (dir.parentFile != null) {
+            val candidate = File(dir, "config/model.json")
+            if (candidate.isFile) {
+                found = candidate
+                break
+            }
+            dir = dir.parentFile
+        }
+        val file = found ?: File("../../../config/model.json").canonicalFile
+        if (file.isFile) {
+            val json = file.readText()
+            val model = EstimationModelParser.parse(json)
+            assertThat(model.modelVersion).isEqualTo("1.0.0-synthetic")
+            assertThat(model.algorithm).isEqualTo("ridge_regression_split_conformal")
+            assertThat(model.sites.keys).containsExactly(BodySite.STERNUM, BodySite.FOREHEAD)
+            assertThat(model.sites[BodySite.STERNUM]!!.residualQuantile90).isGreaterThan(0.0)
+            assertThat(model.sites[BodySite.FOREHEAD]!!.residualQuantile90).isGreaterThan(0.0)
+            assertThat(model.multiSiteWeights[BodySite.STERNUM]).isEqualTo(0.6)
+            assertThat(model.multiSiteWeights[BodySite.FOREHEAD]).isEqualTo(0.4)
+        }
+    }
 }

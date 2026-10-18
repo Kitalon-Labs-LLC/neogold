@@ -51,3 +51,12 @@ eggs/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Data files constraint (never commit data files, only manifests)
+testdata/bench/*.json
+testdata/bench/*.csv
+testdata/bench/*.parquet
+!testdata/bench/manifest.sha256
+
+# Temporary reproduction runs
+training/output/model_run*.json

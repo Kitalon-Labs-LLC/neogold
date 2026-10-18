@@ -90,6 +90,8 @@ Fill this in as work packages create them; keep it current.
 | Card package tests | `pytest card/tests` |
 | Requirement coverage | `python3 tools/trace.py docs` |
 | License check (TC-OPS-08) | `python3 tools/check_licenses.py` |
+| Model reproduction (TC-OPS-07) | `make reproduce` (or `python training/reproduce.py`) |
+| Training pipeline tests | `pytest training/tests` |
 | Release gates | `python3 tools/verify_clinical_signoff.py ...`, `tools/check_manifest.py`, `tools/check_network_config.py`, `tools/check_16kb.sh`, `tools/check_trust_list_release.py` |
 
 ---

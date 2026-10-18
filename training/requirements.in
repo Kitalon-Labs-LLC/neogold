@@ -1,0 +1,7 @@
+# High-level direct dependencies for NeoGold model training pipeline
+# Lockfile with cryptographic hashes is generated in training/requirements.txt
+numpy>=2.0.0
+scipy>=1.15.0
+scikit-learn>=1.6.0
+jsonschema>=4.20.0
+pytest>=8.0.0
