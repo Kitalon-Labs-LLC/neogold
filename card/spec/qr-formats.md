@@ -169,7 +169,9 @@ When a QR payload is scanned:
    - Card Batch: If `batch_id` is present in `revoked_card_batches`, return `Revoked` (`TC-CARD-06`).
    - Study Profile: If `study_code` is present in `revoked_study_codes`, return `Revoked`.
 6. **Date validity check:**
-   - Compare `expires_at_days` against current local date. If expired, return `Expired` (`TC-CARD-05`).
+   - Verify evaluation date is within trust list validity window (`valid_from` to `valid_until`). If outside, return `Expired`.
+   - Verify evaluation date is within issuer key validity window (`valid_from` to `valid_until`). If outside, return `Expired`.
+   - Compare `expires_at_days` against evaluation date. If expired (evaluation date > `expires_at`), return `Expired` (`TC-CARD-05`).
 7. **Success:** Return `Verified` along with the decoded typed structures.
 
 ---

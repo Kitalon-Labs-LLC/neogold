@@ -94,6 +94,10 @@
             "type": "string",
             "maxLength": 256,
             "description": "Human-readable label describing the key ownership and environment."
+          },
+          "test_only": {
+            "type": "boolean",
+            "description": "Optional flag indicating key is test-only. Forbidden in production trust lists."
           }
         }
       }
