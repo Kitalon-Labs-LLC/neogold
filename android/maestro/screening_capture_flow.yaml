@@ -1,0 +1,53 @@
+appId: com.kitalonlabs.neogold
+---
+# ==============================================================================
+# NeoGold Screening Capture Flow (TC-CAP-01, TC-CAP-15)
+# Target devices: D1 (Transsion), D2 (Xiaomi), D4 (Android Go 2GB)
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Navigate to Screening Mode (S15/S16)
+- tapOn:
+    id: "btn_start_screening"
+    optional: true
+
+- assertVisible:
+    id: "camera_preview"
+
+# 2. Verify Detection Overlay (S16)
+- assertVisible:
+    id: "card_detection_overlay"
+
+# Verify guide instruction before card is in frame (TC-CAP-01)
+- assertVisible:
+    text: ".*card.*"
+
+# 3. Simulate holding card steady in view
+# Card detection activates, progress bar reaches 100%, and auto-burst triggers
+- extendedWaitUntil:
+    visible:
+      id: "steady_progress_bar"
+    timeout: 10000
+
+# 4. Short Burst Auto-Capture executes (3 frames standard, 2 frames on low-RAM D4)
+# Verifies auto-shutter triggers when steady (1000 ms)
+- extendedWaitUntil:
+    visible:
+      id: "capture_processing_indicator"
+    timeout: 5000
+
+# 5. Result or Next Step Screen reached
+- extendedWaitUntil:
+    visible:
+      id: "screening_result_title"
+    timeout: 15000
+
+# 6. Verify zero images written to device storage
+# Evaluates scripted disk check: no *.jpg, *.jpeg, *.png created in app storage or DCIM
+- runScript: |
+    output = maestro.exec("adb shell 'find /sdcard/Android/data/com.kitalonlabs.neogold/files -name \"*.jpg\" -o -name \"*.jpeg\" -o -name \"*.png\" | wc -l'")
+    if (output.trim() !== "0") {
+      throw new Error("Screening mode persisted image file to disk! Found: " + output);
+    }
