@@ -1,0 +1,110 @@
+{
+  "dataset": "bad",
+  "count": 13,
+  "images": [
+    {
+      "filename": "bad_01_no_card.png",
+      "expected_reasons": [
+        "NO_CARD"
+      ],
+      "description": "Empty background with no card present",
+      "sha256": "f03ac9e7051c784a5218f64963e2dedabe95ecbe2f06c030119e8028c9b82afb"
+    },
+    {
+      "filename": "bad_02_card_angle.png",
+      "expected_reasons": [
+        "CARD_ANGLE"
+      ],
+      "description": "Card tilted at 25 degrees (exceeding 20 deg threshold)",
+      "sha256": "fbe1c0bebcf4b349625996774fe395ba8f60acd970f4205742ba4a3a91228648"
+    },
+    {
+      "filename": "bad_03_nonuniform_patches.png",
+      "expected_reasons": [
+        "NONUNIFORM_PATCHES"
+      ],
+      "description": "Opposite corner duplicate patches differ by 8 Delta E",
+      "sha256": "74a0a1e6e2c49c2e21fcea2f26a0ad60acb4caf83fb9846e8113c8f862b2e46d"
+    },
+    {
+      "filename": "bad_04_blur.png",
+      "expected_reasons": [
+        "BLUR"
+      ],
+      "description": "Motion/optical blur reducing Laplacian variance below threshold",
+      "sha256": "28ec1aeebbd5684595d7266da6659219049f4584add687b654745ccf5e73d265"
+    },
+    {
+      "filename": "bad_05_glare.png",
+      "expected_reasons": [
+        "GLARE"
+      ],
+      "description": "Specular glare reflection covering > 2% of window",
+      "sha256": "0b4f35ec20a8f558232c7e0c22094c59a30d76a4dcd9fb26e4f67d07cab1873d"
+    },
+    {
+      "filename": "bad_06_underexposed.png",
+      "expected_reasons": [
+        "UNDEREXPOSED"
+      ],
+      "description": "Severe underexposure with mid-gray patch G4 luminance < 40",
+      "sha256": "16a66ebef8584833301683fdb124859a9bb6db26532a266e8cc79d8e3b69ab1b"
+    },
+    {
+      "filename": "bad_07_overexposed.png",
+      "expected_reasons": [
+        "OVEREXPOSED"
+      ],
+      "description": "Severe overexposure with mid-gray patch G4 luminance > 215",
+      "sha256": "3fa0983b33d2d65627cb2c10d417c84ac70cfb5f2f88db2b07c06b67c4aa2757"
+    },
+    {
+      "filename": "bad_08_uneven_light.png",
+      "expected_reasons": [
+        "UNEVEN_LIGHT"
+      ],
+      "description": "Mixed/uneven lighting gradient across card > 2.0 Delta L*",
+      "sha256": "bd0b323b5be94a331dd3a81bc95ded3710287125e602ef515b0113ed682628f7"
+    },
+    {
+      "filename": "bad_09_high_residual.png",
+      "expected_reasons": [
+        "HIGH_RESIDUAL"
+      ],
+      "description": "Scrambled patch reflectances yielding color correction residual Delta E > 3.0",
+      "sha256": "d3bd0768e725ae1168908dc0afe711c20ddc1bbb7df0ba2abffafcd36e805715"
+    },
+    {
+      "filename": "bad_10_window_blue_cloth.png",
+      "expected_reasons": [
+        "WINDOW_NOT_SKIN"
+      ],
+      "description": "Blue cloth in skin aperture (fails skin chromaticity check)",
+      "sha256": "d4aa1f2d761c138aadc9db61b5525aed2e4b4da1b0b80e9b133d4ca5f14eaa33"
+    },
+    {
+      "filename": "bad_11_window_green_cloth.png",
+      "expected_reasons": [
+        "WINDOW_NOT_SKIN"
+      ],
+      "description": "Green cloth in skin aperture (fails skin chromaticity check)",
+      "sha256": "bb069396a3c9abb4178fb3507792a894ed6706a344b304ec8a9878abd731912d"
+    },
+    {
+      "filename": "bad_12_window_empty_hole.png",
+      "expected_reasons": [
+        "WINDOW_NOT_SKIN"
+      ],
+      "description": "Empty punched window hole / dark void",
+      "sha256": "821195c4c89951608d70bd225b8dd4f2742b74fdbd39e2aee28b5fdf38aacc4b"
+    },
+    {
+      "filename": "bad_13_window_high_contrast.png",
+      "expected_reasons": [
+        "WINDOW_NOT_SKIN"
+      ],
+      "description": "High contrast edge (cloth/skin boundary) violating gradient limit",
+      "sha256": "23f42d60d780652f28dae64175a1610f58d0b44b2b979fa4c6e9034f933d31bf"
+    }
+  ]
+}
