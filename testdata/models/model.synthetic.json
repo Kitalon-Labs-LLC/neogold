@@ -1,0 +1,51 @@
+{
+  "modelVersion": "1.0.0-synthetic",
+  "minAppVersion": "1.0.0",
+  "units": "mg/dL",
+  "algorithm": "ridge_regression_split_conformal",
+  "colorSpace": "CIELAB_D65",
+  "trainingDataSummary": {
+    "sampleCount": 300,
+    "participantCount": 150,
+    "description": "SYNTHETIC NON-CLINICAL MODEL ONLY. NOT FOR CLINICAL USE. Generated for unit testing, coverage validation, and CI golden vectors.",
+    "trainedDate": "2026-10-18",
+    "populations": [
+      "Synthetic bench phantoms"
+    ],
+    "devices": [
+      "Synthetic benchmark camera"
+    ],
+    "metrics": {
+      "mae": 1.15,
+      "correlationPearson": 0.91,
+      "coverage90": 0.90
+    }
+  },
+  "featureList": [
+    "l_star",
+    "a_star",
+    "b_star",
+    "b_over_l",
+    "a_over_b"
+  ],
+  "sites": {
+    "sternum": {
+      "standardizationMeans": [60.0, 10.0, 25.0, 0.40, 0.40],
+      "standardizationScales": [10.0, 5.0, 8.0, 0.15, 0.15],
+      "ridgeCoefficients": [-0.20, 0.35, 1.85, 0.50, -0.25],
+      "intercept": 10.5,
+      "residualQuantile90": 1.80
+    },
+    "forehead": {
+      "standardizationMeans": [62.0, 9.5, 26.0, 0.42, 0.38],
+      "standardizationScales": [9.5, 4.8, 7.5, 0.14, 0.14],
+      "ridgeCoefficients": [-0.18, 0.30, 1.75, 0.55, -0.20],
+      "intercept": 10.8,
+      "residualQuantile90": 1.95
+    }
+  },
+  "multiSiteWeights": {
+    "sternum": 0.6,
+    "forehead": 0.4
+  }
+}

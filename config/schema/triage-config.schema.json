@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://neogold.org/schema/triage-config.schema.json",
+  "$id": "https://kitalonlabs.com/schema/triage-config.schema.json",
   "title": "NeoGold Triage Configuration Schema",
   "description": "Validation schema for NeoGold triage configuration (docs/4_System_Architecture.md Section 6.1).",
   "type": "object",

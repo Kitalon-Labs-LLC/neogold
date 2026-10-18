@@ -20,6 +20,7 @@ CONFIG_SCHEMA_MAPPINGS = [
     ("config/triage-config.json", "config/schema/triage-config.schema.json"),
     ("testdata/triage/config.synthetic.json", "config/schema/triage-config.schema.json"),
     ("card/spec/testvectors/test_trust_list.json", "config/schema/trust-list.schema.json"),
+    ("testdata/models/model.synthetic.json", "config/schema/model.schema.json"),
 ]
 
 
@@ -71,6 +72,12 @@ def main():
     optional_trust_list = root / "config" / "trust-list.json"
     if optional_trust_list.exists():
         if not validate_file(optional_trust_list, root / "config" / "schema" / "trust-list.schema.json"):
+            all_passed = False
+
+    # Also check if config/model.json exists
+    optional_model = root / "config" / "model.json"
+    if optional_model.exists():
+        if not validate_file(optional_model, root / "config" / "schema" / "model.schema.json"):
             all_passed = False
 
     if all_passed:

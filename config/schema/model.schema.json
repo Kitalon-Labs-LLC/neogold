@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kitalonlabs.com/schema/model.schema.json",
+  "title": "NeoGold Bilirubin Estimation Model Schema",
+  "description": "Validation schema for NeoGold on-device bilirubin estimation model (docs/4_System_Architecture.md Sections 5.5 and 12).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "modelVersion",
+    "minAppVersion",
+    "units",
+    "algorithm",
+    "colorSpace",
+    "trainingDataSummary",
+    "featureList",
+    "sites",
+    "multiSiteWeights"
+  ],
+  "properties": {
+    "modelVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.]+)?$",
+      "description": "Semantic model version (e.g. 1.0.0 or 1.0.0-synthetic)."
+    },
+    "minAppVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.]+)?$",
+      "description": "Minimum compatible NeoGold Android app version (SemVer)."
+    },
+    "units": {
+      "type": "string",
+      "enum": ["mg/dL"],
+      "description": "Target bilirubin measurement units, strictly mg/dL."
+    },
+    "algorithm": {
+      "type": "string",
+      "enum": ["ridge_regression_split_conformal"],
+      "description": "Model family and uncertainty estimation method."
+    },
+    "colorSpace": {
+      "type": "string",
+      "enum": ["CIELAB_D65"],
+      "description": "Standard color space for input color features."
+    },
+    "trainingDataSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sampleCount",
+        "participantCount",
+        "description",
+        "trainedDate",
+        "populations",
+        "devices"
+      ],
+      "properties": {
+        "sampleCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of paired training samples."
+        },
+        "participantCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of unique participants."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable summary of training dataset and pedigree."
+        },
+        "trainedDate": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "Date model training was completed (YYYY-MM-DD)."
+        },
+        "populations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "List of populations or cohort descriptions represented in training data."
+        },
+        "devices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "List of phone/camera hardware models represented in training data."
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Summary evaluation metrics across validation or test partitions.",
+          "properties": {
+            "mae": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Mean Absolute Error in mg/dL."
+            },
+            "correlationPearson": {
+              "type": "number",
+              "minimum": -1.0,
+              "maximum": 1.0,
+              "description": "Pearson correlation coefficient r."
+            },
+            "coverage90": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Empirical coverage of the 90% split-conformal prediction interval."
+            }
+          }
+        }
+      }
+    },
+    "featureList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_*/]+$"
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Authoritative ordered list of feature names extracted from corrected window Lab."
+    },
+    "sites": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sternum"],
+      "properties": {
+        "sternum": {
+          "$ref": "#/$defs/siteModel"
+        },
+        "forehead": {
+          "$ref": "#/$defs/siteModel"
+        }
+      },
+      "description": "Per-body-site regression model parameters."
+    },
+    "multiSiteWeights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sternum"],
+      "properties": {
+        "sternum": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Weight assigned to sternum estimate in multi-site combination."
+        },
+        "forehead": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Weight assigned to forehead estimate in multi-site combination."
+        }
+      },
+      "description": "Weights for combining sternum and forehead predictions (must sum to 1.0)."
+    }
+  },
+  "$defs": {
+    "siteModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standardizationMeans",
+        "standardizationScales",
+        "ridgeCoefficients",
+        "intercept",
+        "residualQuantile90"
+      ],
+      "properties": {
+        "standardizationMeans": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 1,
+          "description": "Per-feature means for standardization."
+        },
+        "standardizationScales": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 1,
+          "description": "Per-feature standard deviations/scales for standardization (strictly positive)."
+        },
+        "ridgeCoefficients": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 1,
+          "description": "Ridge regression coefficients corresponding to standardized features."
+        },
+        "intercept": {
+          "type": "number",
+          "description": "Ridge regression intercept (bias)."
+        },
+        "residualQuantile90": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Split-conformal prediction residual quantile for 90% prediction interval (strictly positive)."
+        }
+      }
+    }
+  }
+}

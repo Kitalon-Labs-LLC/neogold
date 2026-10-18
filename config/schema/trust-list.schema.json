@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://neogold.org/schema/trust-list.schema.json",
+  "$id": "https://kitalonlabs.com/schema/trust-list.schema.json",
   "title": "NeoGold Trust List Schema",
   "description": "Validation schema for config/trust-list.json, holding trusted public keys for card batches and study profiles.",
   "type": "object",

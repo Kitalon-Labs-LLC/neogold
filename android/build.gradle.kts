@@ -111,9 +111,9 @@ fun resolvePythonCommand(): List<String> {
 tasks.register("verifyGoldenVectors") {
     description = "Golden vectors verification for color science and estimation (implemented in P04/P06)"
     group = "verification"
-    dependsOn(":engine:colorscience:test")
+    dependsOn(":engine:colorscience:test", ":engine:estimation:test")
     doLast {
-        println("Golden vectors verified: color science conversions, patch correction, and manifest.sha256 passed.")
+        println("Golden vectors verified: color science conversions, patch correction, and estimation vectors passed.")
     }
 }
 
