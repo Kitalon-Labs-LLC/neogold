@@ -555,6 +555,7 @@ Detailed in `12_Deployment_Runbook.md`. Summary:
 | ADR-012 | Qualify each phone by an empirical camera test (repeatability, duplicate-patch uniformity, accuracy) | Require AWB lock or Camera2 `FULL` level | Card in frame makes global locks unnecessary; spatially varying processing is the real risk and only measurement catches it; a spec rule would exclude many budget phones |
 | ADR-013 | DigitalOcean (dedicated droplet) for staging; Bangladesh-hosted production | Existing shared droplet; DigitalOcean for everything | Isolation, handover, data protection law |
 | ADR-014 | Nothing time-critical depends on background work | Rely on WorkManager and notifications | Budget Android skins kill background work |
+| ADR-015 | Monotone piecewise-linear linearization with PAVA isotonic filtering | Cubic splines (PCHIP, natural splines), unconstrained polynomials | Unconditional monotonicity across all inputs without Runge oscillations or spline overshoot; noise-resilient with 6 to 7 gray patches; exact node fidelity; zero matrix inversion |
 
 ---
 
