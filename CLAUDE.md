@@ -86,10 +86,11 @@ Fill this in as work packages create them; keep it current.
 | Android lint | `./gradlew lintRelease detekt` |
 | Backend tests | `cd backend && pytest -q` |
 | Card generator | `python card/generator/render_card.py` |
+| Card signing tool | `python3 card/tools/neogold-sign/neogold_sign.py --help` |
 | Card package tests | `pytest card/tests` |
 | Requirement coverage | `python3 tools/trace.py docs` |
 | License check (TC-OPS-08) | `python3 tools/check_licenses.py` |
-| Release gates | `python3 tools/verify_clinical_signoff.py ...`, `tools/check_manifest.py`, `tools/check_network_config.py`, `tools/check_16kb.sh` |
+| Release gates | `python3 tools/verify_clinical_signoff.py ...`, `tools/check_manifest.py`, `tools/check_network_config.py`, `tools/check_16kb.sh`, `tools/check_trust_list_release.py` |
 
 ---
 
