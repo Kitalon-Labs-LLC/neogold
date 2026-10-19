@@ -29,6 +29,7 @@ interface MasterKeyProvider {
         const val ALIAS_DB_MASTER = "neogold_db_master_key"
         const val ALIAS_FILE_MASTER = "neogold_file_master_key"
         const val ALIAS_PIN_VERIFIER = "neogold_pin_verifier_key"
+        const val ALIAS_CRASH_REPORT = "neogold_crash_master_key"
     }
 }
 

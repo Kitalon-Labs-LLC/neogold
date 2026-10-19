@@ -9,6 +9,8 @@ android {
 dependencies {
     implementation(libs.tink)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.biometric)
+    implementation(libs.timber)
 
     testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)

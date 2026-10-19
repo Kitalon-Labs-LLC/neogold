@@ -1,0 +1,12 @@
+{
+  "files": {
+    "model.json": "60eafafcba5adbde37e4a87260db4e2f5daee9aca82222ab1d7c122d4fae7510",
+    "triage-config.json": "cbf26083319a7abbf9479e9b6194dcf8436b9081e502cb4c4e7709cf1cdfb5e0",
+    "trust-list.json": "049d65f6f4a79c54c97e15fa9bcb7354c404b46dc5bbd8a99a2f4cd08e21bf01"
+  },
+  "formatVersion": 1,
+  "keyId": "K3",
+  "manifestVersion": "1.0.0",
+  "signature": "LiDI03fk8s5scThb00PhPPUjn8Qb10bk7AaCsoDLidCQTqCu+dGUn/y24mJCyYmURYkIYpBtwlNnx3uqPyixBA==",
+  "signerPublicKeyHex": "7ea85ce6309d111e3446befeb992a4335907473c37534ca42df7e99e191c4772"
+}

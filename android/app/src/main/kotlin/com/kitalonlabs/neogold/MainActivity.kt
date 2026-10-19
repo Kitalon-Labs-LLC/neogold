@@ -1,35 +1,192 @@
 package com.kitalonlabs.neogold
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
+import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.designsystem.theme.NeoGoldTheme
+import com.kitalonlabs.neogold.core.security.applock.AppLockManager
+import com.kitalonlabs.neogold.core.security.crash.CrashReportManager
+import com.kitalonlabs.neogold.core.security.privacy.SecureScreenHelper
 import com.kitalonlabs.neogold.navigation.Destinations
+import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
+
+    internal val appLockManager = AppLockManager()
+    private lateinit var dataStore: NeoGoldDataStore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        dataStore = DefaultNeoGoldDataStore(applicationContext)
+
+        // Privacy controls: Prevent recents snapshot on API 33+ (TC-PRIV-02, doc 8 Section 6.1)
+        SecureScreenHelper.setRecentsScreenshotEnabled(this, false)
+
+        // Overlay protection on API 26..30 (doc 8 Section 6.1)
+        SecureScreenHelper.setFilterTouchesWhenObscured(window, true)
+
+        lifecycleScope.launch {
+            dataStore.appLockEnabled.collect { enabled ->
+                appLockManager.isAppLockEnabled = enabled
+            }
+        }
+
         setContent {
             NeoGoldTheme {
                 val navController = rememberNavController()
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NeoGoldNavHost(
-                        navController = navController,
-                        modifier = Modifier.padding(innerPadding)
+                val isLocked by appLockManager.isLocked.collectAsState()
+                var showCrashDialog by remember {
+                    mutableStateOf<Boolean>(CrashReportManager.hasPendingReport(this@MainActivity))
+                }
+
+                DisposableEffect(navController) {
+                    val listener = androidx.navigation.NavController.OnDestinationChangedListener { _, destination, _ ->
+                        val secure = SecureScreenHelper.isDestinationSecure(destination.route)
+                        SecureScreenHelper.setSecureScreen(window, secure)
+                    }
+                    navController.addOnDestinationChangedListener(listener)
+                    onDispose {
+                        navController.removeOnDestinationChangedListener(listener)
+                    }
+                }
+
+                if (showCrashDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            CrashReportManager.clearReport(this@MainActivity)
+                            showCrashDialog = false
+                        },
+                        title = { Text("Share Crash Report?") },
+                        text = {
+                            Text("NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report.")
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    CrashReportManager.shareReport(this@MainActivity)
+                                    CrashReportManager.clearReport(this@MainActivity)
+                                    showCrashDialog = false
+                                }
+                            ) {
+                                Text("Share")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    CrashReportManager.clearReport(this@MainActivity)
+                                    showCrashDialog = false
+                                }
+                            ) {
+                                Text("Dismiss")
+                            }
+                        }
                     )
                 }
+
+                if (isLocked) {
+                    AppLockScreen(
+                        onUnlock = {
+                            appLockManager.authenticate(
+                                activity = this@MainActivity,
+                                onSuccess = {},
+                                onError = { _, _ -> }
+                            )
+                        }
+                    )
+                } else {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        NeoGoldNavHost(
+                            navController = navController,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        appLockManager.onAppForegrounded()
+        if (appLockManager.isLocked.value) {
+            appLockManager.authenticate(
+                activity = this,
+                onSuccess = {},
+                onError = { _, _ -> }
+            )
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        appLockManager.onAppBackgrounded()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (appLockManager.onActivityResult(requestCode, resultCode)) {
+            return
+        }
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+}
+
+@Composable
+private fun AppLockScreen(onUnlock: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Text(
+                text = "NeoGold is Locked",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Device authentication is required to access patient screening and records.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onUnlock) {
+                Text(text = "Unlock")
             }
         }
     }

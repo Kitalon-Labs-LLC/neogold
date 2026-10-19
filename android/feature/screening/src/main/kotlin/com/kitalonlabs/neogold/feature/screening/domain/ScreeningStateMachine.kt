@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.feature.screening.domain
 
+import com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import com.kitalonlabs.neogold.engine.triage.TriageAction
 import com.kitalonlabs.neogold.engine.triage.TriageEngine
@@ -36,7 +37,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * The UI only renders state; it never decides clinical flow.
  */
 class ScreeningStateMachine(
-    initialState: ScreeningState = ScreeningState.Initial
+    initialState: ScreeningState = ScreeningState.Initial,
+    private val integrityChecker: IntegrityChecker = IntegrityChecker { true }
 ) {
     private val _state = MutableStateFlow<ScreeningState>(initialState)
     val state: StateFlow<ScreeningState> = _state.asStateFlow()
@@ -64,10 +66,26 @@ class ScreeningStateMachine(
     }
 
     private fun handleStartScreening(): ScreeningState {
+        if (!integrityChecker.isScreeningAllowed()) {
+            return ScreeningState.Blocked(
+                inputs = ScreeningInputs(
+                    gestationalAgeWeeks = 38,
+                    ageHours = 48.0,
+                    dangerSigns = false,
+                    jaundiceOnsetUnder24h = false,
+                    priorPhototherapy = false,
+                    guardianConsentConfirmed = false
+                ),
+                reason = CardBlockReason.ASSET_INTEGRITY_COMPROMISED
+            )
+        }
         return ScreeningState.Inputs()
     }
 
     private fun handleSubmitInputs(inputs: ScreeningInputs): ScreeningState {
+        if (!integrityChecker.isScreeningAllowed()) {
+            return ScreeningState.Blocked(inputs, CardBlockReason.ASSET_INTEGRITY_COMPROMISED)
+        }
         // Guardian consent is mandatory before opening the camera (doc 2 Section 11, doc 10 TC-UI-13)
         if (!inputs.guardianConsentConfirmed) {
             // Stay in inputs state with unconfirmed consent
@@ -82,6 +100,10 @@ class ScreeningStateMachine(
             is ScreeningState.RuleCheck -> current.inputs
             is ScreeningState.Inputs -> current.inputs ?: return current
             else -> return current
+        }
+
+        if (!integrityChecker.isScreeningAllowed()) {
+            return ScreeningState.Blocked(inputs, CardBlockReason.ASSET_INTEGRITY_COMPROMISED)
         }
 
         // Evaluate hard rules R1 to R5 (first match wins, doc 4 Section 6.2)

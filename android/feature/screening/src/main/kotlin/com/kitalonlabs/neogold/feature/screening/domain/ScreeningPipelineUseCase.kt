@@ -43,7 +43,8 @@ sealed class PipelineExecutionResult {
  * - Screening_CaptureToResult
  */
 class ScreeningPipelineUseCase(
-    private val visionEngine: VisionEngine = VisionEngine()
+    private val visionEngine: VisionEngine = VisionEngine(),
+    private val integrityChecker: com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker = com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker { true }
 ) {
 
     companion object {
@@ -90,6 +91,12 @@ class ScreeningPipelineUseCase(
     ): PipelineExecutionResult = traceSection("Screening_CaptureToResult") {
         val timings = mutableMapOf<String, Long>()
         val startOverall = System.nanoTime()
+
+        if (!integrityChecker.isScreeningAllowed()) {
+            return@traceSection PipelineExecutionResult.Error(
+                SecurityException("Screening disabled: clinical asset integrity compromised")
+            )
+        }
 
         try {
             // Stage 1: Decode, Warp, Sampling & Marker Detection (doc 4 Section 5.6: < 700 ms)

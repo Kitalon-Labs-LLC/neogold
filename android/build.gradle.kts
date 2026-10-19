@@ -135,3 +135,18 @@ tasks.register<Exec>("verifyConfigSchema") {
     commandLine(pythonCmd + listOf("tools/verify_config_schema.py"))
 }
 
+tasks.register<Exec>("signAssetManifest") {
+    description = "Signs the bundle assets manifest with K3 (doc 4 Section 12, doc 8 Section 6.5)"
+    group = "build"
+    workingDir = rootDir.parentFile
+    val pythonCmd = resolvePythonCommand()
+    val manifestKeyProp = providers.gradleProperty("manifestKey").orNull
+    val argsList = mutableListOf<String>()
+    argsList.addAll(pythonCmd)
+    argsList.addAll(listOf("tools/sign_bundle_manifest.py", "--config-dir", "config", "--assets-dir", "android/app/src/main/assets"))
+    if (manifestKeyProp != null) {
+        argsList.addAll(listOf("--manifest-key", manifestKeyProp))
+    }
+    commandLine(argsList)
+}
+

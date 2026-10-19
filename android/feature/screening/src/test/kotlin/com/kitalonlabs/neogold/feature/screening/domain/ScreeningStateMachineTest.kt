@@ -307,4 +307,34 @@ class ScreeningStateMachineTest {
         assertThat(saved.summary.sessionId).isEqualTo("SES-12345")
         assertThat(saved.summary.versions.cardBatchId).isEqualTo("BATCH-2026-001")
     }
+
+    @Test
+    fun testAssetIntegrityCompromised_startScreeningBlocked_TC_SEC_09() {
+        val sm = ScreeningStateMachine(
+            integrityChecker = { false }
+        )
+        val state = sm.dispatch(ScreeningEvent.StartScreening)
+        assertThat(state).isInstanceOf(ScreeningState.Blocked::class.java)
+        val blocked = state as ScreeningState.Blocked
+        assertThat(blocked.reason).isEqualTo(CardBlockReason.ASSET_INTEGRITY_COMPROMISED)
+    }
+
+    @Test
+    fun testAssetIntegrityCompromised_submitInputsBlocked_TC_SEC_09() {
+        val sm = ScreeningStateMachine(
+            integrityChecker = { false }
+        )
+        val inputs = ScreeningInputs(
+            gestationalAgeWeeks = 38,
+            ageHours = 48.0,
+            dangerSigns = false,
+            jaundiceOnsetUnder24h = false,
+            priorPhototherapy = false,
+            guardianConsentConfirmed = true
+        )
+        val state = sm.dispatch(ScreeningEvent.SubmitInputs(inputs))
+        assertThat(state).isInstanceOf(ScreeningState.Blocked::class.java)
+        val blocked = state as ScreeningState.Blocked
+        assertThat(blocked.reason).isEqualTo(CardBlockReason.ASSET_INTEGRITY_COMPROMISED)
+    }
 }

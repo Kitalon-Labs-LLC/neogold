@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:model"))
     implementation(project(":core:common"))
+    implementation(project(":core:security"))
 
     // Engine modules for v0.1 pipeline integration (P10)
     implementation(project(":engine:camera"))

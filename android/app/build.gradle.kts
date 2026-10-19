@@ -12,6 +12,8 @@ val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 dependencies {
     implementation(libs.findLibrary("androidx.activity.compose").get())
     implementation(libs.findLibrary("androidx.navigation.compose").get())
+    implementation(libs.findLibrary("androidx.biometric").get())
+    implementation(libs.findLibrary("timber").get())
 
     // Core
     implementation(project(":core:designsystem"))
@@ -39,4 +41,8 @@ dependencies {
 
     // Sync
     implementation(project(":sync:research"))
+}
+
+tasks.named("preBuild") {
+    dependsOn(":signAssetManifest")
 }

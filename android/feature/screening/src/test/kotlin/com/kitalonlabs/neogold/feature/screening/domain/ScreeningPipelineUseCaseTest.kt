@@ -184,4 +184,36 @@ class ScreeningPipelineUseCaseTest {
         assertThat(failed.qualityResult.passed).isFalse()
         assertThat(failed.qualityResult.failureReasons).contains(QualityReasonCode.NO_CARD)
     }
+
+    @Test
+    fun testExecute_compromisedIntegrity_returnsError_TC_SEC_09() {
+        val compromisedPipeline = ScreeningPipelineUseCase(
+            visionEngine = VisionEngine(),
+            integrityChecker = { false }
+        )
+        val blankFrame = ImageFrame(1600, 1200, IntArray(1600 * 1200) { 0xFF000000.toInt() })
+        val inputs = ScreeningInputs(
+            gestationalAgeWeeks = 38,
+            ageHours = 48.0,
+            dangerSigns = false,
+            jaundiceOnsetUnder24h = false,
+            priorPhototherapy = false,
+            guardianConsentConfirmed = true
+        )
+
+        val result = compromisedPipeline.execute(
+            frame = blankFrame,
+            cardBatch = testCardBatch,
+            inputs = inputs,
+            attempt = 1,
+            estimationEngine = estimationEngine,
+            triageEngine = triageEngine,
+            versions = testVersions
+        )
+
+        assertThat(result).isInstanceOf(PipelineExecutionResult.Error::class.java)
+        val error = result as PipelineExecutionResult.Error
+        assertThat(error.exception).isInstanceOf(SecurityException::class.java)
+        assertThat(error.exception.message).contains("integrity compromised")
+    }
 }
