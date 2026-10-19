@@ -1,0 +1,131 @@
+<resources>
+    <!-- Core microcopy from doc 6 Section 10.4 (draft for nurse panel) -->
+    <string name="action_refer_urgent">এখনই জরুরি রেফার করুন</string>
+    <string name="action_blood_test">আজই রক্ত পরীক্ষা করান</string>
+    <string name="action_recheck">%d ঘণ্টা পর আবার পরীক্ষা করুন</string>
+    <string name="action_no_further">এই পরীক্ষা থেকে আর কিছু করার নেই</string>
+    <string name="next_no_further">নিয়মিত যত্ন চালিয়ে যান। বিপদচিহ্নের দিকে নজর রাখুন।</string>
+    <string name="confirm_blood">সবসময় রক্ত পরীক্ষা করে নিশ্চিত হোন।</string>
+    <string name="experimental">পরীক্ষামূলক। বাংলাদেশে এখনো যাচাই করা হয়নি।</string>
+    <string name="cannot_screen">নিওগোল্ড এই শিশুকে পরীক্ষা করতে পারবে না। রক্ত পরীক্ষা করান।</string>
+    <string name="cannot_screen_14d">দুই সপ্তাহের পরেও জন্ডিস থাকলে ডাক্তার দেখাতে হবে।</string>
+    <string name="q_early_jaundice">জন্মের প্রথম ২৪ ঘণ্টার মধ্যে কি হলুদ ভাব দেখা গিয়েছিল?</string>
+    <string name="q_danger_signs">শিশুর কি এই বিপদচিহ্নগুলোর কোনোটি আছে?</string>
+    <string name="danger_feeding">ঠিকমতো খাচ্ছে না</string>
+    <string name="danger_sleepy">অস্বাভাবিক ঘুমঘুম ভাব বা জাগানো কঠিন</string>
+    <string name="danger_cry">তীক্ষ্ণ গলায় কান্না</string>
+    <string name="danger_arching">পিঠ বা ঘাড় পেছনে বেঁকে যাওয়া</string>
+    <string name="q_phototherapy">শিশুকে কি আগে ফটোথেরাপি (আলোর চিকিৎসা) দেওয়া হয়েছে?</string>
+    <string name="birth_time">শিশুর জন্ম কখন হয়েছে?</string>
+    <string name="ga_label">গর্ভকাল (সপ্তাহ)</string>
+    <string name="place_card">কার্ডটি শিশুর বুকের ওপর রাখুন</string>
+    <string name="hold_still">ফোন স্থির রাখুন</string>
+    <string name="glare">আলোর প্রতিফলন বেশি। জানালা থেকে সরে আসুন।</string>
+    <string name="card_invalid">কার্ডটি যাচাই করা যায়নি। এই কার্ড দিয়ে পরীক্ষা করা যাবে না।</string>
+    <string name="register_label">রেজিস্টার নম্বর (ঐচ্ছিক)</string>
+    <string name="register_hint">নাম, ফোন নম্বর বা জন্ম নিবন্ধন নম্বর লিখবেন না।</string>
+    <string name="register_rejected">এটি ফোন বা পরিচয়পত্রের নম্বরের মতো দেখাচ্ছে। শুধু রেজিস্টার নম্বর লিখুন।</string>
+    <string name="phone_qualified">এই ফোন দিয়ে পরীক্ষা করা যাবে।</string>
+    <string name="phone_research_only">এই ফোনের ক্যামেরা রং অসমানভাবে বদলায়, তাই এটি শুধু গবেষণার কাজে ব্যবহার করা যাবে।</string>
+    <string name="battery_steps_title">নিওগোল্ডের রিমাইন্ডার চালু রাখুন</string>
+    <string name="upload_now">এখনই আপলোড করুন</string>
+    <string name="consent_question">শিশুর মা-বাবা বা অভিভাবক কি এই পরীক্ষায় সম্মতি দিয়েছেন?</string>
+    <string name="consent_no">সম্মতি ছাড়া পরীক্ষা করা যাবে না। আপনার ক্লিনিক্যাল বিবেচনা বা রক্ত পরীক্ষা ব্যবহার করুন।</string>
+    <string name="result_suggested">পরামর্শকৃত পরবর্তী পদক্ষেপ</string>
+    <string name="result_you_decide">আপনার ক্লিনিক্যাল বিবেচনা দিয়ে আপনিই সিদ্ধান্ত নিন।</string>
+    <string name="upload_waiting">%dটি আপলোডের অপেক্ষায়</string>
+    <string name="upload_clock_wrong">ফোনের সময় ভুল। তারিখ ও সময় স্বয়ংক্রিয়ভাবে সেট করুন, তারপর "এখনই আপলোড করুন" চাপুন।</string>
+    <string name="upload_update_app">আপলোড চালিয়ে যেতে নিওগোল্ড আপডেট করুন।</string>
+    <string name="upload_reenroll">এই ফোনটি আবার নিবন্ধন করতে হবে। আপনার স্টাডি কোঅর্ডিনেটরের সাথে যোগাযোগ করুন।</string>
+    <string name="upload_removed">এই ফোনটি স্টাডি থেকে বাদ দেওয়া হয়েছে। যে তথ্য এখনো আপলোড হয়নি তা ইউএসবি দিয়ে এক্সপোর্ট করা যাবে।</string>
+    <string name="enroll_confirm">%2$s পরিচালিত %1$s স্টাডিতে যোগ দেবেন? স্টাডির তথ্য %3$s-এ পাঠানো হবে।</string>
+    <string name="enroll_code_invalid">কোডটি চেনা যায়নি। দেখে আবার চেষ্টা করুন।</string>
+    <string name="enroll_code_new">কোঅর্ডিনেটরের কাছে নতুন কোড চান।</string>
+    <string name="participant_code_taken">এই অংশগ্রহণকারী কোডটি আগেই ব্যবহার করা হয়েছে। সম্মতিপত্রটি দেখুন।</string>
+    <string name="pin_locked">অনেকবার ভুল পিন দেওয়া হয়েছে। %d মিনিট পর আবার চেষ্টা করুন।</string>
+    <string name="clock_now">ফোনে এখনকার সময়: %s</string>
+    <string name="clock_wrong_block">ফোনের তারিখ বা সময় ভুল মনে হচ্ছে। তারিখ ও সময় স্বয়ংক্রিয়ভাবে সেট করে আবার চেষ্টা করুন।</string>
+    <string name="clock_auto_off">স্বয়ংক্রিয় তারিখ ও সময় বন্ধ আছে। শিশুর বয়স ঠিকভাবে হিসাব করতে এটি চালু করুন।</string>
+    <string name="study_settings_mismatch">স্টাডির সেটিংস মিলছে না। আপনার কোঅর্ডিনেটরের সাথে যোগাযোগ করুন।</string>
+
+    <!-- Navigation & UI Labels -->
+    <string name="btn_continue">চালিয়ে যান</string>
+    <string name="btn_back">পেছনে</string>
+    <string name="btn_next">পরবর্তী</string>
+    <string name="btn_yes">হ্যাঁ</string>
+    <string name="btn_no">না</string>
+    <string name="btn_i_understand">আমি বুঝতে পেরেছি</string>
+    <string name="btn_scan_card">কার্ড স্ক্যান করুন</string>
+    <string name="btn_take_photo">ছবি তুলুন</string>
+    <string name="btn_save_to_log">লগে সংরক্ষণ করুন</string>
+    <string name="btn_delete_all">সকল তথ্য মুছে ফেলুন</string>
+    <string name="btn_cancel">বাতিল</string>
+    <string name="btn_open_settings">ব্যাটারি সেটিংস খুলুন</string>
+
+    <!-- Onboarding S01 to S08 -->
+    <string name="s01_title">ভাষা নির্বাচন করুন</string>
+    <string name="s01_subtitle">নিওগোল্ডে আপনি যে ভাষা ব্যবহার করতে চান তা বেছে নিন।</string>
+    <string name="lang_english">English</string>
+    <string name="lang_bangla">বাংলা (Bangla)</string>
+
+    <string name="s02_title">নিওগোল্ড কী করে</string>
+    <string name="s02_body">নিওগোল্ড স্বাস্থ্যকর্মীদের সিদ্ধান্ত গ্রহণে সহায়তা করে। এটি পরবর্তী পদক্ষেপের পরামর্শ দেয় যাতে আপনি বুঝতে পারেন শিশুর জন্ডিসের জন্য রক্ত পরীক্ষা প্রয়োজন কি না।</string>
+
+    <string name="s03_title">নিওগোল্ড কী করে না</string>
+    <string name="s03_body">নিওগোল্ড কোনো চিকিৎসা মূল্যায়ন প্রদান করে না। এটি রোগ অনুপস্থিতির নিশ্চয়তা দেয় না। স্বাস্থ্যকর্মীর ক্লিনিক্যাল বিবেচনা সবসময় প্রাধান্য পাবে।</string>
+
+    <string name="s04_title">সবসময় রক্ত পরীক্ষা করে নিশ্চিত হোন</string>
+    <string name="s04_body">স্মার্টফোন ক্যামেরার অনুমান ল্যাবরেটরির রক্ত পরীক্ষার বিকল্প হতে পারে না। কোনো সন্দেহ দেখা দিলে সবসময় শিশুকে মোট সিরাম বিলিরুবিন (TSB) পরীক্ষার জন্য পাঠান।</string>
+
+    <string name="s05_title">ডিভাইস যাচাই ও ব্যাটারি সেটআপ</string>
+    <string name="s05_ram">মেমরি: %d মেগাবাইট</string>
+    <string name="s05_camera_level">ক্যামেরা লেভেল: %s</string>
+    <string name="s05_status_tested">পরীক্ষিত ফোন মডেল</string>
+    <string name="s05_status_untested">অপরীক্ষিত ফোন মডেল</string>
+    <string name="s05_supported_devices_title">সমর্থিত ফোন মডেল তালিকা</string>
+
+    <string name="s06_title">নিওগোল্ড কার্ডের কিউআর স্ক্যান করুন</string>
+    <string name="s06_instruction">আপনার নিওগোল্ড ভেরিফায়েড কার্ডের কিউআর কোডের দিকে ক্যামেরা তাক করুন।</string>
+    <string name="s06_card_verified">কার্ড যাচাইকৃত: ব্যাচ %s</string>
+
+    <string name="s07_title">ক্যামেরা উপযোগিতা যাচাই</string>
+    <string name="s07_instruction">সমতল স্থানে ঘরের আলোয় কার্ডটির ৩টি ছবি তুলুন। ছবি %d / ৩।</string>
+
+    <string name="s08_title">যাচাই সম্পন্ন হয়েছে</string>
+    <string name="s08_repeatability">পুনরাবৃত্তি: %s</string>
+    <string name="s08_uniformity">অভিন্নতা: %s</string>
+    <string name="s08_accuracy">সাদৃশ্য: %s</string>
+    <string name="s08_btn_get_started">শুরু করুন</string>
+
+    <!-- Settings S23 to S25 -->
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_language">ভাষা</string>
+    <string name="settings_retention_days">স্ক্রিনিং লগ সংরক্ষণের মেয়াদ (%d দিন)</string>
+    <string name="settings_keep_log">ডিভাইসে স্ক্রিনিং লগ রাখুন</string>
+    <string name="settings_app_lock">স্ক্রিন লক (পিন বা আঙুলের ছাপ)</string>
+    <string name="settings_crash_reports">ত্রুটির প্রতিবেদন পাঠান</string>
+    <string name="settings_digits">ক্লিনিক্যাল সংখ্যা</string>
+    <string name="settings_digits_western">ইংরেজি সংখ্যা (1, 2, 3)</string>
+    <string name="settings_digits_bangla">বাংলা সংখ্যা (১, ২, ৩)</string>
+    <string name="settings_about">পরিচিতি ও মডেল কার্ড</string>
+    <string name="settings_delete_all">সকল স্থানীয় তথ্য মুছে ফেলুন</string>
+
+    <!-- S24 About -->
+    <string name="about_title">নিওগোল্ড পরিচিতি</string>
+    <string name="about_version">অ্যাপ %s • মডেল %s • কনফিগ %s</string>
+    <string name="about_model_card_title">মডেল সারসংক্ষেপ</string>
+    <string name="about_license_title">ওপেন সোর্স লাইসেন্স</string>
+    <string name="about_intended_use">উদ্দেশ্য: প্রশিক্ষিত স্বাস্থ্যকর্মীদের সিদ্ধান্ত সহায়তা। নিওগোল্ড একটি স্ক্রিনিং সহায়ক ব্যবস্থা।</string>
+    <string name="about_limitations">সীমাবদ্ধতা: শুধুমাত্র ৩৫ সপ্তাহ বা তার পরে জন্ম নেওয়া এবং ১৪ দিন পর্যন্ত বয়সী নবজাতকদের জন্য প্রযোজ্য যাদের পূর্বে ফটোথেরাপি দেওয়া হয়নি।</string>
+
+    <!-- S25 Delete Data -->
+    <string name="delete_data_title">সকল তথ্য মুছে ফেলবেন?</string>
+    <string name="delete_data_warning">এই কাজটি আর ফিরিয়ে আনা যাবে না। সকল স্ক্রিনিং সেশন, সেটিংস, এনক্রিপশন কি এবং ক্যালিব্রেশন তথ্য স্থায়ীভাবে মুছে যাবে।</string>
+    <string name="delete_data_confirm_btn">হ্যাঁ, সবকিছু মুছে ফেলুন</string>
+
+    <!-- Update Prompt NG-055 -->
+    <string name="update_available_title">আপডেট পাওয়া গেছে</string>
+    <string name="update_flexible_msg">নিওগোল্ডের নতুন সংস্করণ পাওয়া গেছে। ডাউনলোড চলাকালীন অ্যাপ ব্যবহার চালিয়ে যেতে পারেন।</string>
+    <string name="update_immediate_msg">নিওগোল্ড ব্যবহারের পূর্বে একটি জরুরি আপডেট আবশ্যক। সর্বশেষ সংস্করণ ডাউনলোড করতে আপডেট চাপুন।</string>
+    <string name="update_btn">আপডেট করুন</string>
+</resources>

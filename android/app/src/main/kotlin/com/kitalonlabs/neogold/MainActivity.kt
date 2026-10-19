@@ -129,6 +129,7 @@ class MainActivity : FragmentActivity() {
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         NeoGoldNavHost(
                             navController = navController,
+                            dataStore = dataStore,
                             modifier = Modifier.padding(innerPadding)
                         )
                     }
@@ -195,20 +196,89 @@ private fun AppLockScreen(onUnlock: () -> Unit) {
 @Composable
 fun NeoGoldNavHost(
     navController: NavHostController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    dataStore: NeoGoldDataStore = DefaultNeoGoldDataStore(androidx.compose.ui.platform.LocalContext.current),
+    startDestination: String = Destinations.S01_LANGUAGE
 ) {
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    var lastQualificationResult by remember { mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null) }
+
     NavHost(
         navController = navController,
-        startDestination = Destinations.S01_LANGUAGE,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         // S01 to S08 Onboarding & Qualification
-        composable(Destinations.S01_LANGUAGE) { PlaceholderScreen("S01: Language Choice") }
-        composable(Destinations.S02_S04_SAFETY_NOTICE) { PlaceholderScreen("S02-S04: Safety Notice") }
-        composable(Destinations.S05_DEVICE_CHECK) { PlaceholderScreen("S05: Device Check") }
-        composable(Destinations.S06_CARD_SCAN) { PlaceholderScreen("S06: Card Scan") }
-        composable(Destinations.S07_QUALIFICATION) { PlaceholderScreen("S07: Qualification Capture") }
-        composable(Destinations.S08_QUALIFICATION_RESULT) { PlaceholderScreen("S08: Qualification Result") }
+        composable(Destinations.S01_LANGUAGE) {
+            val currentLang by dataStore.language.collectAsState(initial = "bn")
+            com.kitalonlabs.neogold.feature.onboarding.S01LanguageScreen(
+                initialLanguage = currentLang,
+                onLanguageSelected = { lang ->
+                    coroutineScope.launch {
+                        dataStore.setLanguage(lang)
+                    }
+                },
+                onContinue = {
+                    navController.navigate(Destinations.S02_S04_SAFETY_NOTICE)
+                }
+            )
+        }
+
+        composable(Destinations.S02_S04_SAFETY_NOTICE) {
+            com.kitalonlabs.neogold.feature.onboarding.S02S04SafetyNoticeScreen(
+                onAcknowledge = {
+                    coroutineScope.launch {
+                        dataStore.setSafetyAckVersion(1)
+                    }
+                    navController.navigate(Destinations.S05_DEVICE_CHECK)
+                }
+            )
+        }
+
+        composable(Destinations.S05_DEVICE_CHECK) {
+            com.kitalonlabs.neogold.feature.onboarding.S05DeviceCheckScreen(
+                onContinue = {
+                    navController.navigate(Destinations.S06_CARD_SCAN)
+                }
+            )
+        }
+
+        composable(Destinations.S06_CARD_SCAN) {
+            com.kitalonlabs.neogold.feature.onboarding.S06CardScanScreen(
+                onContinue = {
+                    navController.navigate(Destinations.S07_QUALIFICATION)
+                }
+            )
+        }
+
+        composable(Destinations.S07_QUALIFICATION) {
+            com.kitalonlabs.neogold.feature.onboarding.S07QualificationScreen(
+                onQualificationComplete = { res ->
+                    lastQualificationResult = res
+                    navController.navigate(Destinations.S08_QUALIFICATION_RESULT)
+                }
+            )
+        }
+
+        composable(Destinations.S08_QUALIFICATION_RESULT) {
+            val result = lastQualificationResult
+            if (result != null) {
+                com.kitalonlabs.neogold.feature.onboarding.S08QualificationResultScreen(
+                    result = result,
+                    onGetStarted = {
+                        coroutineScope.launch {
+                            dataStore.setActiveDeviceProfileId(result.profile.id)
+                            dataStore.setOnboardingComplete(true)
+                        }
+                        navController.navigate(Destinations.S09_HOME) {
+                            popUpTo(Destinations.S01_LANGUAGE) { inclusive = true }
+                        }
+                    }
+                )
+            } else {
+                Box(modifier = Modifier.fillMaxSize())
+            }
+        }
 
         // S09 Home
         composable(Destinations.S09_HOME) { PlaceholderScreen("S09: Home") }
@@ -230,9 +300,70 @@ fun NeoGoldNavHost(
         // S21 to S25 Log & Settings
         composable(Destinations.S21_LOG) { PlaceholderScreen("S21: Screening Log") }
         composable(Destinations.S22_SESSION_DETAIL) { PlaceholderScreen("S22: Session Detail") }
-        composable(Destinations.S23_SETTINGS) { PlaceholderScreen("S23: Settings") }
-        composable(Destinations.S24_ABOUT) { PlaceholderScreen("S24: About & Model Card") }
-        composable(Destinations.S25_DELETE_DATA) { PlaceholderScreen("S25: Delete All Data") }
+
+        composable(Destinations.S23_SETTINGS) {
+            val currentLang by dataStore.language.collectAsState(initial = "bn")
+            val currentDigits by dataStore.measurementDigits.collectAsState(initial = "western")
+            val retentionDays by dataStore.screeningRetentionDays.collectAsState(initial = 90)
+            val keepLog by dataStore.keepScreeningLog.collectAsState(initial = true)
+            val appLock by dataStore.appLockEnabled.collectAsState(initial = false)
+            val crashReport by dataStore.crashReportingOptIn.collectAsState(initial = false)
+
+            com.kitalonlabs.neogold.feature.settings.S23SettingsScreen(
+                currentLanguage = currentLang,
+                currentDigits = currentDigits,
+                retentionDays = retentionDays,
+                keepLog = keepLog,
+                appLockEnabled = appLock,
+                crashReportingOptIn = crashReport,
+                onLanguageChanged = { lang ->
+                    coroutineScope.launch { dataStore.setLanguage(lang) }
+                },
+                onDigitsChanged = { digits ->
+                    coroutineScope.launch { dataStore.setMeasurementDigits(digits) }
+                },
+                onRetentionDaysChanged = { days ->
+                    coroutineScope.launch { dataStore.setScreeningRetentionDays(days) }
+                },
+                onKeepLogChanged = { keep ->
+                    coroutineScope.launch { dataStore.setKeepScreeningLog(keep) }
+                },
+                onAppLockChanged = { enabled ->
+                    coroutineScope.launch { dataStore.setAppLockEnabled(enabled) }
+                },
+                onCrashReportingChanged = { optIn ->
+                    coroutineScope.launch { dataStore.setCrashReportingOptIn(optIn) }
+                },
+                onNavigateToAbout = {
+                    navController.navigate(Destinations.S24_ABOUT)
+                },
+                onNavigateToDeleteData = {
+                    navController.navigate(Destinations.S25_DELETE_DATA)
+                }
+            )
+        }
+
+        composable(Destinations.S24_ABOUT) {
+            com.kitalonlabs.neogold.feature.settings.S24AboutScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Destinations.S25_DELETE_DATA) {
+            com.kitalonlabs.neogold.feature.settings.S25DeleteAllDataScreen(
+                onConfirmDelete = {
+                    coroutineScope.launch {
+                        dataStore.clearAll()
+                        navController.navigate(Destinations.S01_LANGUAGE) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
+                onCancel = {
+                    navController.popBackStack()
+                }
+            )
+        }
 
         // R01 to R09 Research Mode
         composable(Destinations.R01_RESEARCH_UNLOCK) { PlaceholderScreen("R01: Research Unlock") }

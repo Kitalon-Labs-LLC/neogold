@@ -5,6 +5,69 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+
+@Immutable
+data class TriageColors(
+    val urgentSolid: Color,
+    val urgentTint: Color,
+    val urgentText: Color,
+    val bloodTestSolid: Color,
+    val bloodTestTint: Color,
+    val bloodTestText: Color,
+    val recheckSolid: Color,
+    val recheckTint: Color,
+    val recheckText: Color,
+    val noActionSolid: Color,
+    val noActionTint: Color,
+    val noActionText: Color,
+    val experimentalTint: Color,
+    val experimentalText: Color,
+    val cameraOverlay: Color
+)
+
+val LocalTriageColors = staticCompositionLocalOf {
+    LightTriageColors
+}
+
+val LightTriageColors = TriageColors(
+    urgentSolid = TriageUrgentSolid,
+    urgentTint = TriageUrgentTintLight,
+    urgentText = TriageUrgentTextLight,
+    bloodTestSolid = TriageBloodTestSolid,
+    bloodTestTint = TriageBloodTestTintLight,
+    bloodTestText = TriageBloodTestTextLight,
+    recheckSolid = TriageRecheckSolid,
+    recheckTint = TriageRecheckTintLight,
+    recheckText = TriageRecheckTextLight,
+    noActionSolid = TriageNoActionSolid,
+    noActionTint = TriageNoActionTintLight,
+    noActionText = TriageNoActionTextLight,
+    experimentalTint = ExperimentalLabelTint,
+    experimentalText = ExperimentalLabelText,
+    cameraOverlay = CameraScreenOverlay
+)
+
+val DarkTriageColors = TriageColors(
+    urgentSolid = TriageUrgentSolid,
+    urgentTint = TriageUrgentTintDark,
+    urgentText = TriageUrgentTextDark,
+    bloodTestSolid = TriageBloodTestSolid,
+    bloodTestTint = TriageBloodTestTintDark,
+    bloodTestText = TriageBloodTestTextDark,
+    recheckSolid = TriageRecheckSolid,
+    recheckTint = TriageRecheckTintDark,
+    recheckText = TriageRecheckTextDark,
+    noActionSolid = TriageNoActionSolid,
+    noActionTint = TriageNoActionTintDark,
+    noActionText = TriageNoActionTextDark,
+    experimentalTint = ExperimentalLabelTint,
+    experimentalText = ExperimentalLabelText,
+    cameraOverlay = CameraScreenOverlay
+)
 
 private val DarkColorScheme = darkColorScheme(
     primary = DarkPrimary,
@@ -21,7 +84,7 @@ private val LightColorScheme = lightColorScheme(
     primary = LightPrimary,
     background = LightBg,
     surface = LightSurface,
-    onPrimary = LightBg,
+    onPrimary = Color.White,
     onBackground = LightTextPrimary,
     onSurface = LightTextPrimary,
     outline = LightOutline,
@@ -34,9 +97,13 @@ fun NeoGoldTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val triageColors = if (darkTheme) DarkTriageColors else LightTriageColors
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        content = content
-    )
+    CompositionLocalProvider(LocalTriageColors provides triageColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = NeoGoldTypography,
+            content = content
+        )
+    }
 }

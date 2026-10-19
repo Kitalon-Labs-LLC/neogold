@@ -93,7 +93,7 @@ tasks.register("assembleRelease") {
 tasks.register("check") {
     description = "Runs all verification checks"
     group = "verification"
-    dependsOn("testReleaseUnitTest", "lintRelease")
+    dependsOn("testReleaseUnitTest", "lintRelease", "verifyStrings")
 }
 
 fun resolvePythonCommand(): List<String> {
@@ -133,6 +133,14 @@ tasks.register<Exec>("verifyConfigSchema") {
     workingDir = rootDir.parentFile
     val pythonCmd = resolvePythonCommand()
     commandLine(pythonCmd + listOf("tools/verify_config_schema.py"))
+}
+
+tasks.register<Exec>("verifyStrings") {
+    description = "String lint for banned words and missing keys (TC-UI-04, TC-A11Y-01)"
+    group = "verification"
+    workingDir = rootDir.parentFile
+    val pythonCmd = resolvePythonCommand()
+    commandLine(pythonCmd + listOf("tools/check_strings.py"))
 }
 
 tasks.register<Exec>("signAssetManifest") {

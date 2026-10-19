@@ -51,3 +51,5 @@ val ExperimentalLabelText = Color(0xFF5B3E00)
 
 // Camera Screen Neutral Dark Gray (doc 6 Section 2.1)
 val CameraScreenOverlay = Color(0xFF2B2F33)
+val CameraOverlayBackground = CameraScreenOverlay
+val CameraOverlayText = Color(0xFFFFFFFF)

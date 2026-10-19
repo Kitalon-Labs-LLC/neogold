@@ -1,0 +1,131 @@
+<resources>
+    <!-- Core microcopy from doc 6 Section 10.4 -->
+    <string name="action_refer_urgent">Refer urgently now</string>
+    <string name="action_blood_test">Blood test today</string>
+    <string name="action_recheck">Screen again in %d hours</string>
+    <string name="action_no_further">No further action from this screen</string>
+    <string name="next_no_further">Continue routine care. Watch for danger signs.</string>
+    <string name="confirm_blood">Always confirm with a blood test.</string>
+    <string name="experimental">Experimental. Not yet validated in Bangladesh.</string>
+    <string name="cannot_screen">NeoGold cannot screen this baby. Use a blood test.</string>
+    <string name="cannot_screen_14d">Jaundice after two weeks needs a doctor\'s review.</string>
+    <string name="q_early_jaundice">Did yellow color appear in the first 24 hours of life?</string>
+    <string name="q_danger_signs">Does the baby have any of these danger signs?</string>
+    <string name="danger_feeding">Not feeding well</string>
+    <string name="danger_sleepy">Unusually sleepy or hard to wake</string>
+    <string name="danger_cry">High-pitched cry</string>
+    <string name="danger_arching">Arching of the back or neck</string>
+    <string name="q_phototherapy">Has the baby already had phototherapy (light treatment)?</string>
+    <string name="birth_time">When was the baby born?</string>
+    <string name="ga_label">Gestational age (weeks)</string>
+    <string name="place_card">Place the card on the baby\'s chest</string>
+    <string name="hold_still">Hold the phone steady</string>
+    <string name="glare">Too much glare. Move away from the window.</string>
+    <string name="card_invalid">This card could not be verified. It cannot be used for screening.</string>
+    <string name="register_label">Facility register no. (optional)</string>
+    <string name="register_hint">Do not enter names, phone numbers, or birth registration numbers.</string>
+    <string name="register_rejected">This looks like a phone or ID number. Use the facility register number only.</string>
+    <string name="phone_qualified">This phone can be used for screening.</string>
+    <string name="phone_research_only">This phone\'s camera changes colors unevenly, so it can be used for research only.</string>
+    <string name="battery_steps_title">Keep NeoGold reminders working</string>
+    <string name="upload_now">Upload now</string>
+    <string name="consent_question">Has the baby\'s parent or guardian agreed to this screening?</string>
+    <string name="consent_no">No screening without consent. Use your clinical judgment or a blood test.</string>
+    <string name="result_suggested">Suggested next step</string>
+    <string name="result_you_decide">You decide, using your clinical judgment.</string>
+    <string name="upload_waiting">%d waiting to upload</string>
+    <string name="upload_clock_wrong">Phone clock is wrong. Set the date and time automatically, then tap Upload now.</string>
+    <string name="upload_update_app">Update NeoGold to keep uploading.</string>
+    <string name="upload_reenroll">This phone must be enrolled again. Contact your study coordinator.</string>
+    <string name="upload_removed">This phone was removed from the study. Data not yet uploaded can still be exported by USB.</string>
+    <string name="enroll_confirm">Join %1$s, run by %2$s? Study data will be sent to %3$s.</string>
+    <string name="enroll_code_invalid">Code not recognised. Check it and try again.</string>
+    <string name="enroll_code_new">Ask your coordinator for a new code.</string>
+    <string name="participant_code_taken">This participant code is already in use. Check the consent form.</string>
+    <string name="pin_locked">Too many wrong PINs. Try again in %d minutes.</string>
+    <string name="clock_now">Phone time now: %s</string>
+    <string name="clock_wrong_block">The phone\'s date or time looks wrong. Set the date and time automatically, then try again.</string>
+    <string name="clock_auto_off">Automatic date and time is off. Turn it on so the baby\'s age is calculated correctly.</string>
+    <string name="study_settings_mismatch">Study settings do not match. Contact your coordinator.</string>
+
+    <!-- Navigation & UI Labels -->
+    <string name="btn_continue">Continue</string>
+    <string name="btn_back">Back</string>
+    <string name="btn_next">Next</string>
+    <string name="btn_yes">Yes</string>
+    <string name="btn_no">No</string>
+    <string name="btn_i_understand">I understand</string>
+    <string name="btn_scan_card">Scan card</string>
+    <string name="btn_take_photo">Take photo</string>
+    <string name="btn_save_to_log">Save to log</string>
+    <string name="btn_delete_all">Delete all data</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_open_settings">Open battery settings</string>
+
+    <!-- Onboarding S01 to S08 -->
+    <string name="s01_title">Choose your language</string>
+    <string name="s01_subtitle">Select the language you want to use in NeoGold.</string>
+    <string name="lang_english">English</string>
+    <string name="lang_bangla">বাংলা (Bangla)</string>
+
+    <string name="s02_title">What NeoGold does</string>
+    <string name="s02_body">NeoGold provides decision support for trained health workers. It suggests a next step to help you decide whether a newborn baby needs a blood test for jaundice.</string>
+
+    <string name="s03_title">What NeoGold does not do</string>
+    <string name="s03_body">NeoGold does not provide medical evaluation. It never claims that a baby is free of jaundice. Clinical signs and your professional judgment always take precedence.</string>
+
+    <string name="s04_title">Always confirm with a blood test</string>
+    <string name="s04_body">A smartphone camera estimate can never replace laboratory blood measurement. Always send the baby for a total serum bilirubin (TSB) test when in doubt.</string>
+
+    <string name="s05_title">Device check &amp; battery setup</string>
+    <string name="s05_ram">Memory: %d MB</string>
+    <string name="s05_camera_level">Camera level: %s</string>
+    <string name="s05_status_tested">Tested device model</string>
+    <string name="s05_status_untested">Untested device model</string>
+    <string name="s05_supported_devices_title">Supported device models</string>
+
+    <string name="s06_title">Scan NeoGold card QR</string>
+    <string name="s06_instruction">Point the camera at the QR code on your verified NeoGold calibration card.</string>
+    <string name="s06_card_verified">Card verified: Batch %s</string>
+
+    <string name="s07_title">Camera qualification</string>
+    <string name="s07_instruction">Take 3 photos of the card under room lighting on a flat surface. Photo %d of 3.</string>
+
+    <string name="s08_title">Qualification complete</string>
+    <string name="s08_repeatability">Repeatability: %s</string>
+    <string name="s08_uniformity">Uniformity: %s</string>
+    <string name="s08_accuracy">Accuracy: %s</string>
+    <string name="s08_btn_get_started">Get started</string>
+
+    <!-- Settings S23 to S25 -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_retention_days">Screening log retention (%d days)</string>
+    <string name="settings_keep_log">Keep local screening log</string>
+    <string name="settings_app_lock">Screen lock (PIN/fingerprint)</string>
+    <string name="settings_crash_reports">Send crash reports</string>
+    <string name="settings_digits">Clinical numbers</string>
+    <string name="settings_digits_western">Western digits (1, 2, 3)</string>
+    <string name="settings_digits_bangla">Bangla digits (১, ২, ৩)</string>
+    <string name="settings_about">About and model card</string>
+    <string name="settings_delete_all">Delete all local data</string>
+
+    <!-- S24 About -->
+    <string name="about_title">About NeoGold</string>
+    <string name="about_version">App %s • Model %s • Config %s</string>
+    <string name="about_model_card_title">Model Summary</string>
+    <string name="about_license_title">Open Source Licenses</string>
+    <string name="about_intended_use">Intended use: Decision support for trained health workers. NeoGold is a screening tool, not a diagnostic device.</string>
+    <string name="about_limitations">Limitations: Validated only for babies born at 35 weeks or later, up to 14 days of age, with no prior phototherapy.</string>
+
+    <!-- S25 Delete Data -->
+    <string name="delete_data_title">Delete all local data?</string>
+    <string name="delete_data_warning">This action cannot be undone. All screening sessions, local settings, encryption keys, and calibration records will be permanently erased.</string>
+    <string name="delete_data_confirm_btn">Yes, delete everything</string>
+
+    <!-- Update Prompt NG-055 -->
+    <string name="update_available_title">Update available</string>
+    <string name="update_flexible_msg">A new version of NeoGold is available. You can continue using the app while it downloads.</string>
+    <string name="update_immediate_msg">A critical update is required before using NeoGold. Tap Update to download the latest version.</string>
+    <string name="update_btn">Update</string>
+</resources>

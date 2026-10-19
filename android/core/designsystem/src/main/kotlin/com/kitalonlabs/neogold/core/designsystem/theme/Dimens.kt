@@ -13,3 +13,17 @@ val YesNoButtonHeight = 64.dp
 val YesNoButtonGap = 12.dp
 val CardCornerRadius = 12.dp
 val ButtonCornerRadius = 28.dp
+
+object Dimens {
+    val ScreenPadding = ScreenSidePadding
+    val TouchTargetMin = MinTouchTarget
+    val PrimaryButtonHeight = com.kitalonlabs.neogold.core.designsystem.theme.PrimaryButtonHeight
+    val TriagePrimaryButtonHeight = ResultButtonHeight
+    val CardCornerRadius = com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
+    val ButtonCornerRadius = com.kitalonlabs.neogold.core.designsystem.theme.ButtonCornerRadius
+    val SpacingXs = 4.dp
+    val SpacingSm = 8.dp
+    val SpacingMd = 16.dp
+    val SpacingLg = 24.dp
+    val SpacingXl = 32.dp
+}
