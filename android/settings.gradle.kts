@@ -56,3 +56,6 @@ include(":core:testing")
 
 // Sync
 include(":sync:research")
+
+// Benchmark & Performance
+include(":benchmark")
