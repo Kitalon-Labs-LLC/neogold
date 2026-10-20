@@ -1,0 +1,1151 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "b122bc9f3ae0c9f9c4afaf077ab688d0",
+    "entities": [
+      {
+        "tableName": "device_profile",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `manufacturer` TEXT NOT NULL, `device_model` TEXT NOT NULL, `android_api` INTEGER NOT NULL, `camera_id` TEXT NOT NULL, `ram_mb` INTEGER NOT NULL, `is_low_ram_device` INTEGER NOT NULL, `camera_hardware_level` TEXT NOT NULL, `supports_ae_lock` INTEGER NOT NULL, `supports_awb_lock` INTEGER NOT NULL, `supports_manual_sensor` INTEGER NOT NULL, `supports_raw` INTEGER NOT NULL, `residual_correction` TEXT, `repeatability_de` REAL NOT NULL, `uniformity_de` REAL NOT NULL, `calibration_residual_de` REAL NOT NULL, `qualification` TEXT NOT NULL, `card_batch_id` TEXT NOT NULL, `calibrated_at` INTEGER NOT NULL, `app_version` TEXT NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`card_batch_id`) REFERENCES `card_batch`(`batch_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "manufacturer",
+            "columnName": "manufacturer",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceModel",
+            "columnName": "device_model",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "androidApi",
+            "columnName": "android_api",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraId",
+            "columnName": "camera_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ramMb",
+            "columnName": "ram_mb",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLowRamDevice",
+            "columnName": "is_low_ram_device",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraHardwareLevel",
+            "columnName": "camera_hardware_level",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "supportsAeLock",
+            "columnName": "supports_ae_lock",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "supportsAwbLock",
+            "columnName": "supports_awb_lock",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "supportsManualSensor",
+            "columnName": "supports_manual_sensor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "supportsRaw",
+            "columnName": "supports_raw",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "residualCorrection",
+            "columnName": "residual_correction",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "repeatabilityDe",
+            "columnName": "repeatability_de",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uniformityDe",
+            "columnName": "uniformity_de",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "calibrationResidualDe",
+            "columnName": "calibration_residual_de",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "qualification",
+            "columnName": "qualification",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardBatchId",
+            "columnName": "card_batch_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "calibratedAt",
+            "columnName": "calibrated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appVersion",
+            "columnName": "app_version",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_device_profile_card_batch_id",
+            "unique": false,
+            "columnNames": [
+              "card_batch_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_device_profile_card_batch_id` ON `${TABLE_NAME}` (`card_batch_id`)"
+          },
+          {
+            "name": "index_device_profile_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_device_profile_status` ON `${TABLE_NAME}` (`status`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "card_batch",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "card_batch_id"
+            ],
+            "referencedColumns": [
+              "batch_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "card_batch",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`batch_id` TEXT NOT NULL, `issuer_id` TEXT NOT NULL, `format_version` INTEGER NOT NULL, `reference_values` TEXT NOT NULL, `issued_at` INTEGER NOT NULL, `expires_at` INTEGER NOT NULL, `signature_valid` INTEGER NOT NULL, `qr_payload` BLOB NOT NULL, `server_status` TEXT NOT NULL, `first_seen_at` INTEGER NOT NULL, PRIMARY KEY(`batch_id`))",
+        "fields": [
+          {
+            "fieldPath": "batchId",
+            "columnName": "batch_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "issuerId",
+            "columnName": "issuer_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "formatVersion",
+            "columnName": "format_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "referenceValues",
+            "columnName": "reference_values",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "issuedAt",
+            "columnName": "issued_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAt",
+            "columnName": "expires_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "signatureValid",
+            "columnName": "signature_valid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "qrPayload",
+            "columnName": "qr_payload",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverStatus",
+            "columnName": "server_status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstSeenAt",
+            "columnName": "first_seen_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "batch_id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "research_study",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `study_code` TEXT NOT NULL, `site_code` TEXT NOT NULL, `display_name` TEXT NOT NULL, `server_url` TEXT, `device_key_alias` TEXT, `server_device_id` TEXT, `pin_hash` BLOB NOT NULL, `pin_salt` BLOB NOT NULL, `failed_pin_attempts` INTEGER NOT NULL DEFAULT 0, `locked_until` INTEGER, `timestamp_precision` TEXT NOT NULL DEFAULT 'DAY_PLUS_OFFSETS', `time_zone` TEXT NOT NULL DEFAULT 'Asia/Dhaka', `data_generation` INTEGER, `local_retention_after_ack_days` INTEGER NOT NULL DEFAULT 14, `export_public_key` BLOB, `status` TEXT NOT NULL, `enrolled_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "studyCode",
+            "columnName": "study_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCode",
+            "columnName": "site_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverUrl",
+            "columnName": "server_url",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "deviceKeyAlias",
+            "columnName": "device_key_alias",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "serverDeviceId",
+            "columnName": "server_device_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "pinHash",
+            "columnName": "pin_hash",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pinSalt",
+            "columnName": "pin_salt",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "failedPinAttempts",
+            "columnName": "failed_pin_attempts",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "lockedUntil",
+            "columnName": "locked_until",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "timestampPrecision",
+            "columnName": "timestamp_precision",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'DAY_PLUS_OFFSETS'"
+          },
+          {
+            "fieldPath": "timeZone",
+            "columnName": "time_zone",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'Asia/Dhaka'"
+          },
+          {
+            "fieldPath": "dataGeneration",
+            "columnName": "data_generation",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "localRetentionAfterAckDays",
+            "columnName": "local_retention_after_ack_days",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "14"
+          },
+          {
+            "fieldPath": "exportPublicKey",
+            "columnName": "export_public_key",
+            "affinity": "BLOB",
+            "notNull": false
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enrolledAt",
+            "columnName": "enrolled_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_research_study_study_code",
+            "unique": true,
+            "columnNames": [
+              "study_code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_research_study_study_code` ON `${TABLE_NAME}` (`study_code`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "research_participant",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `study_id` TEXT NOT NULL, `participant_code` TEXT NOT NULL, `consent_form_id` TEXT NOT NULL, `consent_recorded_at` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`study_id`) REFERENCES `research_study`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "studyId",
+            "columnName": "study_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "participantCode",
+            "columnName": "participant_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consentFormId",
+            "columnName": "consent_form_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consentRecordedAt",
+            "columnName": "consent_recorded_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_research_participant_study_id_participant_code",
+            "unique": true,
+            "columnNames": [
+              "study_id",
+              "participant_code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_research_participant_study_id_participant_code` ON `${TABLE_NAME}` (`study_id`, `participant_code`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "research_study",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "study_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "screening_session",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `mode` TEXT NOT NULL, `status` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `completed_at` INTEGER, `age_hours` REAL NOT NULL, `guardian_consent_confirmed` INTEGER NOT NULL, `gestational_age_weeks` INTEGER NOT NULL, `flag_jaundice_under_24h` INTEGER NOT NULL, `flag_danger_signs` INTEGER NOT NULL, `flag_prior_phototherapy` INTEGER NOT NULL, `rule_outcome` TEXT, `triage_action` TEXT, `reason_codes` TEXT, `estimate_mg_dl` REAL, `estimate_low_mg_dl` REAL, `estimate_high_mg_dl` REAL, `threshold_mg_dl` REAL, `recheck_due_at` INTEGER, `capture_attempts` INTEGER NOT NULL DEFAULT 0, `register_number` TEXT, `register_number_erased_at` INTEGER, `participant_id` TEXT, `estimate_hidden` INTEGER NOT NULL, `experimental_label_shown` INTEGER NOT NULL, `device_profile_id` TEXT, `card_batch_id` TEXT, `app_version` TEXT NOT NULL, `model_version` TEXT, `config_version` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`participant_id`) REFERENCES `research_participant`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`device_profile_id`) REFERENCES `device_profile`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`card_batch_id`) REFERENCES `card_batch`(`batch_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mode",
+            "columnName": "mode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAt",
+            "columnName": "completed_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "ageHours",
+            "columnName": "age_hours",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "guardianConsentConfirmed",
+            "columnName": "guardian_consent_confirmed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gestationalAgeWeeks",
+            "columnName": "gestational_age_weeks",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flagJaundiceUnder24h",
+            "columnName": "flag_jaundice_under_24h",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flagDangerSigns",
+            "columnName": "flag_danger_signs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flagPriorPhototherapy",
+            "columnName": "flag_prior_phototherapy",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ruleOutcome",
+            "columnName": "rule_outcome",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "triageAction",
+            "columnName": "triage_action",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "reasonCodes",
+            "columnName": "reason_codes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "estimateMgDl",
+            "columnName": "estimate_mg_dl",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "estimateLowMgDl",
+            "columnName": "estimate_low_mg_dl",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "estimateHighMgDl",
+            "columnName": "estimate_high_mg_dl",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "thresholdMgDl",
+            "columnName": "threshold_mg_dl",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "recheckDueAt",
+            "columnName": "recheck_due_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "captureAttempts",
+            "columnName": "capture_attempts",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "registerNumber",
+            "columnName": "register_number",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "registerNumberErasedAt",
+            "columnName": "register_number_erased_at",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "participantId",
+            "columnName": "participant_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "estimateHidden",
+            "columnName": "estimate_hidden",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "experimentalLabelShown",
+            "columnName": "experimental_label_shown",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceProfileId",
+            "columnName": "device_profile_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "cardBatchId",
+            "columnName": "card_batch_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "appVersion",
+            "columnName": "app_version",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelVersion",
+            "columnName": "model_version",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "configVersion",
+            "columnName": "config_version",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_screening_session_mode_created_at",
+            "unique": false,
+            "columnNames": [
+              "mode",
+              "created_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_screening_session_mode_created_at` ON `${TABLE_NAME}` (`mode`, `created_at`)"
+          },
+          {
+            "name": "index_screening_session_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_screening_session_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_screening_session_recheck_due_at",
+            "unique": false,
+            "columnNames": [
+              "recheck_due_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_screening_session_recheck_due_at` ON `${TABLE_NAME}` (`recheck_due_at`)"
+          },
+          {
+            "name": "index_screening_session_participant_id",
+            "unique": false,
+            "columnNames": [
+              "participant_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_screening_session_participant_id` ON `${TABLE_NAME}` (`participant_id`)"
+          },
+          {
+            "name": "index_screening_session_device_profile_id",
+            "unique": false,
+            "columnNames": [
+              "device_profile_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_screening_session_device_profile_id` ON `${TABLE_NAME}` (`device_profile_id`)"
+          },
+          {
+            "name": "index_screening_session_card_batch_id",
+            "unique": false,
+            "columnNames": [
+              "card_batch_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_screening_session_card_batch_id` ON `${TABLE_NAME}` (`card_batch_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "research_participant",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "participant_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "device_profile",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "device_profile_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "card_batch",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "card_batch_id"
+            ],
+            "referencedColumns": [
+              "batch_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "capture",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `session_id` TEXT NOT NULL, `attempt_number` INTEGER NOT NULL, `site` TEXT NOT NULL, `captured_at` INTEGER NOT NULL, `iso` INTEGER, `exposure_ns` INTEGER, `ae_locked` INTEGER NOT NULL, `awb_locked` INTEGER NOT NULL, `color_gains` TEXT, `quality_status` TEXT NOT NULL, `quality_fail_reasons` TEXT, `correction_residual_de` REAL, `features` TEXT, `image_file` TEXT, `image_sha256` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`session_id`) REFERENCES `screening_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "session_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptNumber",
+            "columnName": "attempt_number",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "site",
+            "columnName": "site",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "captured_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iso",
+            "columnName": "iso",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "exposureNs",
+            "columnName": "exposure_ns",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "aeLocked",
+            "columnName": "ae_locked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "awbLocked",
+            "columnName": "awb_locked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "colorGains",
+            "columnName": "color_gains",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "qualityStatus",
+            "columnName": "quality_status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "qualityFailReasons",
+            "columnName": "quality_fail_reasons",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "correctionResidualDe",
+            "columnName": "correction_residual_de",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "features",
+            "columnName": "features",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "imageFile",
+            "columnName": "image_file",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "imageSha256",
+            "columnName": "image_sha256",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_capture_session_id_attempt_number",
+            "unique": false,
+            "columnNames": [
+              "session_id",
+              "attempt_number"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_capture_session_id_attempt_number` ON `${TABLE_NAME}` (`session_id`, `attempt_number`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "screening_session",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "session_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "tsb_measurement",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `participant_id` TEXT NOT NULL, `session_id` TEXT, `tsb_mg_dl` REAL NOT NULL, `draw_time` INTEGER NOT NULL, `method` TEXT NOT NULL, `entered_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`participant_id`) REFERENCES `research_participant`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`session_id`) REFERENCES `screening_session`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "participantId",
+            "columnName": "participant_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "session_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tsbMgDl",
+            "columnName": "tsb_mg_dl",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "drawTime",
+            "columnName": "draw_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "method",
+            "columnName": "method",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enteredAt",
+            "columnName": "entered_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tsb_measurement_participant_id",
+            "unique": false,
+            "columnNames": [
+              "participant_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tsb_measurement_participant_id` ON `${TABLE_NAME}` (`participant_id`)"
+          },
+          {
+            "name": "index_tsb_measurement_session_id",
+            "unique": false,
+            "columnNames": [
+              "session_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tsb_measurement_session_id` ON `${TABLE_NAME}` (`session_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "research_participant",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "participant_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "screening_session",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "session_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "outbox",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `entity_type` TEXT NOT NULL, `entity_id` TEXT NOT NULL, `idempotency_key` TEXT NOT NULL, `revision` INTEGER NOT NULL DEFAULT 0, `dependency_requeues` INTEGER NOT NULL DEFAULT 0, `payload_sha256` TEXT NOT NULL, `state` TEXT NOT NULL, `attempts` INTEGER NOT NULL DEFAULT 0, `last_error` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entity_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entity_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idempotencyKey",
+            "columnName": "idempotency_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "dependencyRequeues",
+            "columnName": "dependency_requeues",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "payloadSha256",
+            "columnName": "payload_sha256",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attempts",
+            "columnName": "attempts",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "last_error",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_outbox_idempotency_key",
+            "unique": true,
+            "columnNames": [
+              "idempotency_key"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_outbox_idempotency_key` ON `${TABLE_NAME}` (`idempotency_key`)"
+          },
+          {
+            "name": "index_outbox_entity_type_entity_id",
+            "unique": true,
+            "columnNames": [
+              "entity_type",
+              "entity_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_outbox_entity_type_entity_id` ON `${TABLE_NAME}` (`entity_type`, `entity_id`)"
+          },
+          {
+            "name": "index_outbox_state_updated_at",
+            "unique": false,
+            "columnNames": [
+              "state",
+              "updated_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_outbox_state_updated_at` ON `${TABLE_NAME}` (`state`, `updated_at`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "audit_event",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `occurred_at` INTEGER NOT NULL, `event_type` TEXT NOT NULL, `details` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredAt",
+            "columnName": "occurred_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventType",
+            "columnName": "event_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "details",
+            "columnName": "details",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_audit_event_occurred_at",
+            "unique": false,
+            "columnNames": [
+              "occurred_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audit_event_occurred_at` ON `${TABLE_NAME}` (`occurred_at`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b122bc9f3ae0c9f9c4afaf077ab688d0')"
+    ]
+  }
+}

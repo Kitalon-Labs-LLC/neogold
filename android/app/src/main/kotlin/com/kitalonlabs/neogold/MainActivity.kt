@@ -404,6 +404,9 @@ fun NeoGoldNavHost(
                     navController.navigate(Destinations.R01_RESEARCH_UNLOCK) {
                         popUpTo(Destinations.R02_STUDY_HOME) { inclusive = true }
                     }
+                },
+                onExportClicked = {
+                    navController.navigate(Destinations.R07_EXPORT_SYNC)
                 }
             )
         }
@@ -458,7 +461,43 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.R07_EXPORT_SYNC) { PlaceholderScreen("R07: Export & Sync") }
+        composable(Destinations.R07_EXPORT_SYNC) {
+            var exportProgress by remember { mutableStateOf<com.kitalonlabs.neogold.feature.research.export.ExportProgress?>(null) }
+            var isExporting by remember { mutableStateOf(false) }
+            var exportCompleted by remember { mutableStateOf(false) }
+
+            val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")
+            ) { uri ->
+                if (uri != null) {
+                    coroutineScope.launch {
+                        isExporting = true
+                        exportProgress = com.kitalonlabs.neogold.feature.research.export.ExportProgress(
+                            completedFiles = 0,
+                            totalFiles = 10,
+                            bytesProcessed = 0L,
+                            stage = com.kitalonlabs.neogold.feature.research.export.ExportStage.PREPARING,
+                            message = "Preparing export package..."
+                        )
+                    }
+                }
+            }
+
+            com.kitalonlabs.neogold.feature.research.ui.R07ExportScreen(
+                studyCode = "DHK-01",
+                displayName = "NeoGold Clinical Validation Study",
+                hasExportKey = true,
+                exportProgress = exportProgress,
+                isExporting = isExporting,
+                exportCompleted = exportCompleted,
+                onChooseDestinationClicked = {
+                    exportLauncher.launch("neogold-export-DHK-01.zip")
+                },
+                onDoneClicked = {
+                    navController.popBackStack()
+                }
+            )
+        }
         composable(Destinations.R08_ENROLLMENT) { PlaceholderScreen("R08: Study Enrollment") }
         composable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }
     }

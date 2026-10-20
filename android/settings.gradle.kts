@@ -59,3 +59,7 @@ include(":sync:research")
 
 // Benchmark & Performance
 include(":benchmark")
+
+// Tools
+include(":neogold-decrypt")
+project(":neogold-decrypt").projectDir = file("../tools/neogold-decrypt")

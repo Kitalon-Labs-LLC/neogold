@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.findLibrary("kotlinx-coroutines-core").get())
 
     testImplementation(project(":core:testing"))
+    testImplementation(project(":neogold-decrypt"))
     testImplementation(libs.findLibrary("junit").get())
     testImplementation(libs.findLibrary("truth").get())
     testImplementation(libs.findLibrary("robolectric").get())

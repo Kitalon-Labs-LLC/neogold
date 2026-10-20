@@ -48,6 +48,7 @@ fun R02StudyHomeScreen(
     onNewParticipantSession: () -> Unit,
     onEnterTsbClicked: () -> Unit,
     onLockSession: () -> Unit,
+    onExportClicked: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -150,6 +151,15 @@ fun R02StudyHomeScreen(
             text = "Enter TSB Value",
             onClick = onEnterTsbClicked,
             modifier = Modifier.testTag("enter_tsb_button")
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Export encrypted study data (SAF)
+        NgSecondaryButton(
+            text = "Export Research Data",
+            onClick = onExportClicked,
+            modifier = Modifier.testTag("export_data_button")
         )
     }
 }

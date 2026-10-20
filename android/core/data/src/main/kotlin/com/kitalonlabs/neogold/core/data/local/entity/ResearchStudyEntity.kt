@@ -42,6 +42,8 @@ data class ResearchStudyEntity(
     val dataGeneration: Long?,
     @ColumnInfo(name = "local_retention_after_ack_days", defaultValue = "14")
     val localRetentionAfterAckDays: Int = 14,
+    @ColumnInfo(name = "export_public_key", typeAffinity = ColumnInfo.BLOB)
+    val exportPublicKey: ByteArray? = null,
     val status: String, // ACTIVE, CLOSED
     @ColumnInfo(name = "enrolled_at")
     val enrolledAt: Long
@@ -66,6 +68,10 @@ data class ResearchStudyEntity(
         if (timeZone != other.timeZone) return false
         if (dataGeneration != other.dataGeneration) return false
         if (localRetentionAfterAckDays != other.localRetentionAfterAckDays) return false
+        if (exportPublicKey != null) {
+            if (other.exportPublicKey == null) return false
+            if (!exportPublicKey.contentEquals(other.exportPublicKey)) return false
+        } else if (other.exportPublicKey != null) return false
         if (status != other.status) return false
         if (enrolledAt != other.enrolledAt) return false
 
@@ -88,6 +94,7 @@ data class ResearchStudyEntity(
         result = 31 * result + timeZone.hashCode()
         result = 31 * result + (dataGeneration?.hashCode() ?: 0)
         result = 31 * result + localRetentionAfterAckDays
+        result = 31 * result + (exportPublicKey?.contentHashCode() ?: 0)
         result = 31 * result + status.hashCode()
         result = 31 * result + enrolledAt.hashCode()
         return result

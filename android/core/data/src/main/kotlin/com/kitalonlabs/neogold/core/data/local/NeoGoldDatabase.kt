@@ -39,7 +39,7 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
         OutboxEntity::class,
         AuditEventEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class NeoGoldDatabase : RoomDatabase() {
@@ -57,6 +57,12 @@ abstract class NeoGoldDatabase : RoomDatabase() {
     companion object {
         const val DATABASE_NAME = "neogold.db"
 
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE research_study ADD COLUMN export_public_key BLOB")
+            }
+        }
+
         fun buildDatabase(
             context: Context,
             databaseKeyProvider: DatabaseKeyProvider,
@@ -66,6 +72,7 @@ abstract class NeoGoldDatabase : RoomDatabase() {
             val factory = openHelperFactory ?: SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())
             return Room.databaseBuilder(context, NeoGoldDatabase::class.java, databaseName)
                 .openHelperFactory(factory)
+                .addMigrations(MIGRATION_1_2)
                 .addCallback(DatabaseCallback)
                 .build()
         }

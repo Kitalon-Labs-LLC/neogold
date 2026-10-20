@@ -237,6 +237,7 @@ Studies this phone is enrolled in. Usually one.
 | `time_zone` | TEXT | No | IANA zone for all uploaded dates; default `Asia/Dhaka` |
 | `data_generation` | INTEGER | Yes | Last value seen from `GET /device`; a change triggers reconciliation (doc 7 Section 5.4) |
 | `local_retention_after_ack_days` | INTEGER | No | Default 14, so a server restore from any nightly backup in the last 13 days can still be refilled from phones (doc 12 Section 8.2) |
+| `export_public_key` | BLOB | Yes | 32-byte raw X25519 public key (K10) from the signed study profile for encrypting USB exports (doc 8 Section 5.2) |
 | `status` | TEXT | No | `ACTIVE`, `CLOSED` |
 | `enrolled_at` | INTEGER | No | |
 

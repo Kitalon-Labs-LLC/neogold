@@ -99,7 +99,15 @@ class ResearchRepository(
         return if (existingStudy != null) {
             // Verify provided PIN against existing study
             when (val check = pinManager.verifyPin(existingStudy.id, pin, now)) {
-                is PinCheckResult.Success -> Result.success(existingStudy)
+                is PinCheckResult.Success -> {
+                    if (existingStudy.exportPublicKey == null || !existingStudy.exportPublicKey.contentEquals(profile.exportPublicKey)) {
+                        val updated = existingStudy.copy(exportPublicKey = profile.exportPublicKey)
+                        database.researchStudyDao().update(updated)
+                        Result.success(updated)
+                    } else {
+                        Result.success(existingStudy)
+                    }
+                }
                 is PinCheckResult.LockedOut -> Result.failure(
                     SecurityException("PIN locked out for ${check.remainingMinutes} minutes")
                 )
@@ -135,6 +143,7 @@ class ResearchRepository(
                 timeZone = "Asia/Dhaka",
                 dataGeneration = null,
                 localRetentionAfterAckDays = 14,
+                exportPublicKey = profile.exportPublicKey,
                 status = "ACTIVE",
                 enrolledAt = now
             )
@@ -535,6 +544,10 @@ class ResearchRepository(
 
     suspend fun getActiveStudy(): ResearchStudyEntity? {
         return database.researchStudyDao().getActiveStudy()
+    }
+
+    suspend fun getActiveStudyExportPublicKey(): ByteArray? {
+        return database.researchStudyDao().getActiveStudy()?.exportPublicKey
     }
 
     suspend fun getPendingUploadsCount(): Int {
