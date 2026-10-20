@@ -112,7 +112,7 @@
 
     <!-- S24 About -->
     <string name="about_title">About NeoGold</string>
-    <string name="about_version">App %s • Model %s • Config %s</string>
+    <string name="about_version">App %1$s • Model %2$s • Config %3$s</string>
     <string name="about_model_card_title">Model Summary</string>
     <string name="about_license_title">Open Source Licenses</string>
     <string name="about_intended_use">Intended use: Decision support for trained health workers. NeoGold is a screening tool, not a diagnostic device.</string>

@@ -4,4 +4,5 @@ plugins {
 
 dependencies {
     implementation(project(":engine:colorscience"))
+    testImplementation(project(":engine:triage"))
 }

@@ -112,7 +112,7 @@
 
     <!-- S24 About -->
     <string name="about_title">নিওগোল্ড পরিচিতি</string>
-    <string name="about_version">অ্যাপ %s • মডেল %s • কনফিগ %s</string>
+    <string name="about_version">অ্যাপ %1$s • মডেল %2$s • কনফিগ %3$s</string>
     <string name="about_model_card_title">মডেল সারসংক্ষেপ</string>
     <string name="about_license_title">ওপেন সোর্স লাইসেন্স</string>
     <string name="about_intended_use">উদ্দেশ্য: প্রশিক্ষিত স্বাস্থ্যকর্মীদের সিদ্ধান্ত সহায়তা। নিওগোল্ড একটি স্ক্রিনিং সহায়ক ব্যবস্থা।</string>

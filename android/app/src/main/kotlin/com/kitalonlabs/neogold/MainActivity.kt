@@ -366,12 +366,98 @@ fun NeoGoldNavHost(
         }
 
         // R01 to R09 Research Mode
-        composable(Destinations.R01_RESEARCH_UNLOCK) { PlaceholderScreen("R01: Research Unlock") }
-        composable(Destinations.R02_STUDY_HOME) { PlaceholderScreen("R02: Study Home") }
-        composable(Destinations.R03_PARTICIPANT_CONSENT) { PlaceholderScreen("R03: Participant & Consent") }
-        composable(Destinations.R04_CAPTURE_PROTOCOL) { PlaceholderScreen("R04: Research Capture Protocol") }
-        composable(Destinations.R05_TSB_ENTRY) { PlaceholderScreen("R05: TSB Entry") }
-        composable(Destinations.R06_SESSION_COMPLETE) { PlaceholderScreen("R06: Session Complete") }
+        composable(Destinations.R01_RESEARCH_UNLOCK) {
+            var isLockedOut by remember { mutableStateOf(false) }
+            var lockoutMinutes by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+            var unlockErrorMessage by remember { mutableStateOf<String?>(null) }
+
+            com.kitalonlabs.neogold.feature.research.ui.R01ResearchUnlockScreen(
+                scannedProfile = null,
+                existingStudyName = null,
+                isLockedOut = isLockedOut,
+                lockoutMinutes = lockoutMinutes,
+                errorMessage = unlockErrorMessage,
+                onScanQrClicked = { /* QR scan integration */ },
+                onUnlockWithPin = { _ ->
+                    navController.navigate(Destinations.R02_STUDY_HOME)
+                },
+                onEnrollWithPin = { _, _ ->
+                    navController.navigate(Destinations.R02_STUDY_HOME)
+                }
+            )
+        }
+
+        composable(Destinations.R02_STUDY_HOME) {
+            com.kitalonlabs.neogold.feature.research.ui.R02StudyHomeScreen(
+                studyName = "NeoGold Clinical Validation Study",
+                studyCode = "DHK-01",
+                siteCode = "DMCH",
+                cardStatus = com.kitalonlabs.neogold.feature.research.data.CardTrustStatus.VERIFIED,
+                pendingUploadsCount = 0,
+                onNewParticipantSession = {
+                    navController.navigate(Destinations.R03_PARTICIPANT_CONSENT)
+                },
+                onEnterTsbClicked = {
+                    navController.navigate(Destinations.R05_TSB_ENTRY)
+                },
+                onLockSession = {
+                    navController.navigate(Destinations.R01_RESEARCH_UNLOCK) {
+                        popUpTo(Destinations.R02_STUDY_HOME) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Destinations.R03_PARTICIPANT_CONSENT) {
+            com.kitalonlabs.neogold.feature.research.ui.R03ParticipantConsentScreen(
+                studyName = "NeoGold Study",
+                onContinueToCapture = { code, _, _, _, _, _, _, _ ->
+                    navController.navigate(Destinations.R04_CAPTURE_PROTOCOL)
+                }
+            )
+        }
+
+        composable(Destinations.R04_CAPTURE_PROTOCOL) {
+            com.kitalonlabs.neogold.feature.research.ui.R04ResearchCaptureScreen(
+                participantCode = "SKP-0142",
+                onProtocolCompleted = { _ ->
+                    navController.navigate(Destinations.R05_TSB_ENTRY)
+                },
+                onCancel = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.R05_TSB_ENTRY) {
+            com.kitalonlabs.neogold.feature.research.ui.R05TsbEntryScreen(
+                initialParticipantCode = "SKP-0142",
+                isDeferredEntry = false,
+                onSaveTsb = { _, _, _, _ ->
+                    navController.navigate(Destinations.R06_SESSION_COMPLETE)
+                },
+                onSkipTsb = {
+                    navController.navigate(Destinations.R06_SESSION_COMPLETE)
+                }
+            )
+        }
+
+        composable(Destinations.R06_SESSION_COMPLETE) {
+            com.kitalonlabs.neogold.feature.research.ui.R06SessionCompleteScreen(
+                participantCode = "SKP-0142",
+                capturesCount = 4,
+                cardStatus = com.kitalonlabs.neogold.feature.research.data.CardTrustStatus.VERIFIED,
+                tsbEntered = true,
+                tsbMgDl = 14.2,
+                tsbMethod = "LAB",
+                onDoneClicked = {
+                    navController.navigate(Destinations.R02_STUDY_HOME) {
+                        popUpTo(Destinations.R02_STUDY_HOME) { inclusive = false }
+                    }
+                }
+            )
+        }
+
         composable(Destinations.R07_EXPORT_SYNC) { PlaceholderScreen("R07: Export & Sync") }
         composable(Destinations.R08_ENROLLMENT) { PlaceholderScreen("R08: Study Enrollment") }
         composable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }

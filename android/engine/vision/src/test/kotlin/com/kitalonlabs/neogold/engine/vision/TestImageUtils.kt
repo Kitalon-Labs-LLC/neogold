@@ -1,7 +1,6 @@
 package com.kitalonlabs.neogold.engine.vision
 
 import java.io.File
-import javax.imageio.ImageIO
 
 data class BadManifestEntry(
     val filename: String,
@@ -42,12 +41,26 @@ object TestImageUtils {
      */
     fun loadPngImage(file: File): ImageFrame {
         require(file.exists()) { "File not found: ${file.absolutePath}" }
-        val img = ImageIO.read(file)
+        val imageIoClass = Class.forName("javax.imageio.ImageIO")
+        val readMethod = imageIoClass.getMethod("read", File::class.java)
+        val img = readMethod.invoke(null, file)
             ?: throw IllegalArgumentException("Could not decode image from ${file.absolutePath}")
-        val w = img.width
-        val h = img.height
+        val getWidthMethod = img.javaClass.getMethod("getWidth")
+        val getHeightMethod = img.javaClass.getMethod("getHeight")
+        val getRgbMethod = img.javaClass.getMethod(
+            "getRGB",
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            IntArray::class.java,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType
+        )
+        val w = getWidthMethod.invoke(img) as Int
+        val h = getHeightMethod.invoke(img) as Int
         val pixels = IntArray(w * h)
-        img.getRGB(0, 0, w, h, pixels, 0, w)
+        getRgbMethod.invoke(img, 0, 0, w, h, pixels, 0, w)
         return ImageFrame(w, h, pixels)
     }
 
