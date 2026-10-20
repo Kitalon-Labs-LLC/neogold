@@ -2,7 +2,7 @@ name: repo-ci
 on:
   pull_request:
   push:
-    branches: [main, "release/**"]
+    branches: [main, dev, "release/**"]
 permissions:
   contents: read
 concurrency:

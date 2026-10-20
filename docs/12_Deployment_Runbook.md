@@ -67,7 +67,7 @@ tasks.register("printVersionName") { doLast { println(appVersionName) } }
 ```
 
 - **Backend versions:** tags `intake-v1.0.0`; deployments always name the image digest, never a tag.
-- **Branches:** trunk-based on `main`. A release branch `release/1.0` is cut at code freeze; fixes go to `main` first and are cherry-picked. Hotfixes branch from the release branch.
+- **Branches:** `main` holds stable, reviewed code; `dev` is the integration branch where all work lands first by pull request; work-package and fix branches are cut from `dev` and deleted on merge; `dev` is promoted to `main` by pull request (`CONTRIBUTING.md` Section 2). A release branch `release/1.0` is cut from `main` at code freeze; fixes go to `dev` first and are cherry-picked. Hotfixes branch from the release branch.
 - **Database changes:** on the phone, Room migrations only move forward. On the server, migrations are expand-only within a release (add columns or tables, never drop or rename), and the contract step that removes old structures ships one release later. This keeps the previous backend image runnable after a migration, which makes image rollback safe (Section 7.5). The rule is enforced, not just reviewed: the `schema-compat` CI job runs the previous release's test suite against the new schema and blocks the image build if it fails.
 
 ---
@@ -76,7 +76,7 @@ tasks.register("printVersionName") { doLast { println(appVersionName) } }
 
 | Workflow | Trigger | What it does | Secrets |
 |---|---|---|---|
-| `android-ci.yml` (Appendix A.1) | Pull request; push to `main` and `release/**`; called by the release workflow | Lint, unit, golden vectors, differential triage, config schema, unsigned release build, gates S4, S5, S6, requirement coverage; separate scan job with gate S9 (gitleaks) and Trivy | None |
+| `android-ci.yml` (Appendix A.1) | Pull request; push to `main`, `dev`, and `release/**`; called by the release workflow | Lint, unit, golden vectors, differential triage, config schema, unsigned release build, gates S4, S5, S6, requirement coverage; separate scan job with gate S9 (gitleaks) and Trivy | None |
 | `android-release.yml` (Appendix A.2) | Tag `v*.*.*` | Re-runs all of `android-ci.yml` on the tagged commit first; then gate G1, tag check, signed bundle, signed asset manifest, SBOM, gates S4 and S5 on that bundle, upload of **that same file** to the internal track, draft GitHub release with checksums of the uploaded files | Upload key, release manifest key (K3), Play service account; only in the protected `release` environment; deleted in an always-run final step |
 | `backend-ci.yml` (Appendix A.3) | Pull request, push to `main`, tag `intake-v*.*.*` | Ruff, Bandit, pytest (with the ten authentication cases), spec validation and server-spec diff, `schema-compat`, image build with SBOM and provenance, image scan | `GITHUB_TOKEN` with `packages: write` in the image job only |
 
@@ -86,7 +86,7 @@ Two gates are not automated in CI and are recorded in the test summary instead: 
 
 - Every action is pinned to a full commit SHA, with the version in a comment. The SHAs in Appendix A were resolved from the actions' release tags on 11 October 2026 [Certain]. Dependabot proposes updates.
 - Scanner jobs run with no secrets and a read-only token. This is not hypothetical: on 19 March 2026, attackers force-pushed malicious code to 75 of 76 version tags of `aquasecurity/trivy-action`, and the payload stole CI secrets while the scan appeared to run normally [Certain, Snyk analysis]. A pinned SHA plus a secret-free job makes that class of attack harmless here. Verify the pinned Trivy commit against Aqua's advisory before adopting it.
-- The `release` environment lists the founder and the second approver as required reviewers, with GitHub's "prevent self-review" setting on, so whoever pushed the tag cannot approve it. Branch protection on `main` and `release/**` requires the same two-person review.
+- The `release` environment lists the founder and the second approver as required reviewers, with GitHub's "prevent self-review" setting on, so whoever pushed the tag cannot approve it. Branch protection on `main`, `dev`, and `release/**` requires the same two-person review.
 - CI never holds server credentials. Deployment is pull-based: an admin on the server runs `neogold-deploy` with the digest that CI printed (Section 7.3).
 
 ---
@@ -398,7 +398,7 @@ on:
   pull_request:
     paths: ["android/**", "config/**", "testdata/**", "tools/**", "docs/**", ".github/workflows/android-ci.yml"]
   push:
-    branches: [main, "release/**"]
+    branches: [main, dev, "release/**"]
   workflow_call: {}
 permissions:
   contents: read

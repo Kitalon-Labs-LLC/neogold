@@ -102,12 +102,12 @@ Every work package prompt (`/ng-pNN`) follows this:
 
 1. Read the "Read first" sections in the prompt. Do not skim; the details are the requirements.
 2. Plan: list files to create or change, tests by `TC-` ID, open questions, and risks. Stop and wait for approval.
-3. Work on a branch `pNN-short-name`, in small commits.
+3. Work on a branch `pNN-short-name` cut from an up-to-date `dev`, in small commits. Never commit to `main` or `dev` directly, and never branch from another unmerged work-package branch (see `CONTRIBUTING.md` Section 2).
 4. For engines, write the tests first from doc 10, then the code.
 5. Run the checks for the touched modules and `python3 tools/trace.py docs`.
 6. Before finishing, run the `safety-reviewer` subagent on any change to engines, config, quality gate, or clinical UI, and the `privacy-security-reviewer` on any change to data, permissions, network, crypto, or backend. Fix what they find or report it.
 7. Update docs and the Commands table if anything changed.
-8. Open a pull request: what was built, `TC-` IDs now passing, doc changes, anything left open. The second approver reviews every PR.
+8. Open a pull request into `dev`: what was built, `TC-` IDs now passing, doc changes, anything left open. The second approver reviews every PR. The branch is deleted on merge.
 
 ## Definition of done
 

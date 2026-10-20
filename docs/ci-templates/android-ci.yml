@@ -3,7 +3,7 @@ on:
   pull_request:
     paths: ["android/**", "config/**", "testdata/**", "tools/**", "docs/**", ".github/workflows/android-ci.yml"]
   push:
-    branches: [main, "release/**"]
+    branches: [main, dev, "release/**"]
   workflow_call: {}
 permissions:
   contents: read

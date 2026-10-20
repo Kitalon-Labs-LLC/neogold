@@ -1,43 +1,57 @@
 version: 2
+# All update PRs target `dev` (CONTRIBUTING.md Section 2). Minor and patch bumps
+# are grouped per ecosystem so routine updates arrive as one PR, not one branch each.
 updates:
   - package-ecosystem: "gradle"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "gradle"
     directory: "/android"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      gradle-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "pip"
     directory: "/backend"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      backend-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "pip"
     directory: "/training"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      training-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/backend/deploy"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/backend/deploy/caddy"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]
