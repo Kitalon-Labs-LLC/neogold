@@ -137,7 +137,7 @@ class EstimationModelParserTest {
 
     @Test
     fun testDuplicateFeaturesThrows() {
-        val validJson = syntheticModelFile.readText()
+        val validJson = syntheticModelFile.readText().replace("\r\n", "\n")
         val dupFeatures = validJson.replace(
             "[\n    \"l_star\",\n    \"a_star\",\n    \"b_star\",\n    \"b_over_l\",\n    \"a_over_b\"\n  ]",
             "[\"l_star\", \"a_star\", \"b_star\", \"b_over_l\", \"l_star\"]"

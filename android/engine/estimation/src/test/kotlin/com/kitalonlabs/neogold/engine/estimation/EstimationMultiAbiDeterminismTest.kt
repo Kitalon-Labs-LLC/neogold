@@ -1,6 +1,7 @@
 package com.kitalonlabs.neogold.engine.estimation
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.kitalonlabs.neogold.engine.colorscience.Lab
 import com.kitalonlabs.neogold.engine.triage.TriageAction
 import com.kitalonlabs.neogold.engine.triage.TriageArithmetic
@@ -8,7 +9,6 @@ import com.kitalonlabs.neogold.engine.triage.TriageConfigParser
 import com.kitalonlabs.neogold.engine.triage.TriageEngine
 import com.kitalonlabs.neogold.engine.triage.TriageInputs
 import com.kitalonlabs.neogold.engine.triage.TriageResult
-import org.json.JSONObject
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -26,7 +26,7 @@ class EstimationMultiAbiDeterminismTest {
 
     private lateinit var engine: EstimationEngine
     private lateinit var triageEngine: TriageEngine
-    private lateinit var goldenJson: JSONObject
+    private lateinit var goldenData: Map<String, Any?>
 
     private val repoRoot: File
         get() {
@@ -50,30 +50,34 @@ class EstimationMultiAbiDeterminismTest {
         triageEngine = TriageEngine(config)
 
         val goldenFile = File(repoRoot, "testdata/golden/estimation/golden_estimation.json")
-        goldenJson = JSONObject(goldenFile.readText())
+        @Suppress("UNCHECKED_CAST")
+        goldenData = EstimationModelParser.SimpleJsonParser.parse(goldenFile.readText()) as Map<String, Any?>
     }
 
     @Test
     fun testTcEst07TwoAbiDeterminism_goldenVectorsExactIntegerTenthsAndTriage() {
-        val vectors = goldenJson.getJSONArray("vectors")
-        assertThat(vectors.length()).isGreaterThan(0)
+        @Suppress("UNCHECKED_CAST")
+        val vectors = goldenData["vectors"] as List<Map<String, Any?>>
+        assertThat(vectors.size).isGreaterThan(0)
 
-        for (i in 0 until vectors.length()) {
-            val vec = vectors.getJSONObject(i)
-            val vecId = vec.getString("id")
-            val inputLabArr = vec.getJSONArray("input_lab")
+        for (vec in vectors) {
+            val vecId = vec["id"] as String
+            @Suppress("UNCHECKED_CAST")
+            val inputLabArr = vec["input_lab"] as List<Number>
             val inputLab = Lab(
-                inputLabArr.getDouble(0),
-                inputLabArr.getDouble(1),
-                inputLabArr.getDouble(2)
+                inputLabArr[0].toDouble(),
+                inputLabArr[1].toDouble(),
+                inputLabArr[2].toDouble()
             )
 
             // Sternum test
-            val sternumExpected = vec.getJSONObject("sternum")
-            val sternumExpectedTenths = sternumExpected.getJSONObject("integer_tenths")
-            val expectedETenths = sternumExpectedTenths.getInt("estimate")
-            val expectedLTenths = sternumExpectedTenths.getInt("lower")
-            val expectedUTenths = sternumExpectedTenths.getInt("upper")
+            @Suppress("UNCHECKED_CAST")
+            val sternumExpected = vec["sternum"] as Map<String, Any?>
+            @Suppress("UNCHECKED_CAST")
+            val sternumExpectedTenths = sternumExpected["integer_tenths"] as Map<String, Any?>
+            val expectedETenths = (sternumExpectedTenths["estimate"] as Number).toInt()
+            val expectedLTenths = (sternumExpectedTenths["lower"] as Number).toInt()
+            val expectedUTenths = (sternumExpectedTenths["upper"] as Number).toInt()
 
             // Run 1: Primary computation
             val run1 = engine.estimateSite(BodySite.STERNUM, inputLab)
@@ -93,13 +97,13 @@ class EstimationMultiAbiDeterminismTest {
             assertThat(run1.upperBound.toBits()).isEqualTo(run2.upperBound.toBits())
 
             // Exact integer-tenth match against golden vector expectations (no tolerance!)
-            assertThat(eTenths1).named("Vector $vecId estimate tenths").isEqualTo(expectedETenths)
-            assertThat(lTenths1).named("Vector $vecId lower tenths").isEqualTo(expectedLTenths)
-            assertThat(uTenths1).named("Vector $vecId upper tenths").isEqualTo(expectedUTenths)
+            assertWithMessage("Vector $vecId estimate tenths").that(eTenths1).isEqualTo(expectedETenths)
+            assertWithMessage("Vector $vecId lower tenths").that(lTenths1).isEqualTo(expectedLTenths)
+            assertWithMessage("Vector $vecId upper tenths").that(uTenths1).isEqualTo(expectedUTenths)
 
-            assertThat(eTenths2).named("Vector $vecId repeat estimate tenths").isEqualTo(expectedETenths)
-            assertThat(lTenths2).named("Vector $vecId repeat lower tenths").isEqualTo(expectedLTenths)
-            assertThat(uTenths2).named("Vector $vecId repeat upper tenths").isEqualTo(expectedUTenths)
+            assertWithMessage("Vector $vecId repeat estimate tenths").that(eTenths2).isEqualTo(expectedETenths)
+            assertWithMessage("Vector $vecId repeat lower tenths").that(lTenths2).isEqualTo(expectedLTenths)
+            assertWithMessage("Vector $vecId repeat upper tenths").that(uTenths2).isEqualTo(expectedUTenths)
 
             // Evaluate triage action for this vector at 48 h, GA 38
             val triageInputs1 = TriageInputs(
@@ -127,9 +131,9 @@ class EstimationMultiAbiDeterminismTest {
             val triageResult2 = triageEngine.evaluate(triageInputs2) as TriageResult.Action
 
             // Triage action and reason codes must match identically
-            assertThat(triageResult1.action).named("Vector $vecId action").isEqualTo(triageResult2.action)
-            assertThat(triageResult1.reasonCode).named("Vector $vecId reason code").isEqualTo(triageResult2.reasonCode)
-            assertThat(triageResult1.thresholdUsed).named("Vector $vecId threshold").isEqualTo(triageResult2.thresholdUsed)
+            assertWithMessage("Vector $vecId action").that(triageResult1.action).isEqualTo(triageResult2.action)
+            assertWithMessage("Vector $vecId reason code").that(triageResult1.reasonCode).isEqualTo(triageResult2.reasonCode)
+            assertWithMessage("Vector $vecId threshold").that(triageResult1.thresholdUsed).isEqualTo(triageResult2.thresholdUsed)
         }
     }
 
