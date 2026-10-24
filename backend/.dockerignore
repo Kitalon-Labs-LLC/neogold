@@ -1,0 +1,8 @@
+# Build context for backend/Dockerfile: allow-list only what the image needs.
+*
+!app/
+!alembic/
+!alembic.ini
+!requirements-runtime.lock
+**/__pycache__
+**/*.pyc

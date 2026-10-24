@@ -32,6 +32,18 @@ from app.security.jwk import (
 )
 
 
+def pytest_addoption(parser):
+    # Used by the schema-compat CI job (doc 12 Section 2, TC-OPS-04): a later release runs
+    # this release's tests against its newer, already-migrated schema. Older code cannot
+    # migrate a schema whose head it does not know, so migration must be skipped.
+    parser.addoption(
+        "--no-migrate",
+        action="store_true",
+        default=False,
+        help="Do not run 'alembic upgrade head'; use the schema already in DATABASE_URL.",
+    )
+
+
 @pytest.fixture(scope="session")
 def postgres_url():
     url = os.getenv("DATABASE_URL")
@@ -46,16 +58,17 @@ def postgres_url():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database(postgres_url):
+def setup_database(postgres_url, request):
     import subprocess
-    env = os.environ.copy()
-    env["DATABASE_URL"] = postgres_url
-    subprocess.run(
-        [sys.executable, "-m", "alembic", "upgrade", "head"],
-        cwd=str(backend_dir),
-        env=env,
-        check=True,
-    )
+    if not request.config.getoption("--no-migrate"):
+        env = os.environ.copy()
+        env["DATABASE_URL"] = postgres_url
+        subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            cwd=str(backend_dir),
+            env=env,
+            check=True,
+        )
     from app.database import configure_engine
     configure_engine(postgres_url)
     yield
