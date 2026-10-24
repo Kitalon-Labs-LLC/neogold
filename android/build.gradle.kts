@@ -89,6 +89,12 @@ tasks.register("assembleRelease") {
     dependsOn(":app:assembleRelease")
 }
 
+tasks.register("bundleRelease") {
+    description = "Assembles release App Bundle"
+    group = "build"
+    dependsOn(":app:bundleRelease")
+}
+
 // Wire check task
 tasks.register("check") {
     description = "Runs all verification checks"
@@ -157,4 +163,71 @@ tasks.register<Exec>("signAssetManifest") {
     }
     commandLine(argsList)
 }
+
+tasks.register<Exec>("cyclonedxBom") {
+    description = "Generates CycloneDX 1.5 JSON SBOM for Android (Gate S3, doc 8 Section 10)"
+    group = "reporting"
+    workingDir = rootDir.parentFile
+    val pythonCmd = resolvePythonCommand()
+    val outputDir = file("app/build/reports")
+    doFirst {
+        outputDir.mkdirs()
+    }
+    val appVersion = providers.gradleProperty("versionName").getOrElse(
+        providers.gradleProperty("appVersionName").getOrElse("0.5.0")
+    )
+    commandLine(pythonCmd + listOf("tools/generate_sbom.py", "--lockfile", "android/app/gradle.lockfile", "--output", "android/app/build/reports/bom.json", "--app-version", appVersion))
+}
+
+abstract class PublishReleaseBundleTask : DefaultTask() {
+    @get:Input
+    @get:org.gradle.api.tasks.options.Option(option = "track", description = "Target Play track (internal, alpha, beta, production)")
+    abstract val track: Property<String>
+
+    @get:Input
+    @get:org.gradle.api.tasks.options.Option(option = "artifact-dir", description = "Directory containing bundle to upload")
+    abstract val artifactDir: Property<String>
+
+    init {
+        track.convention("internal")
+        artifactDir.convention("${project.rootDir}/app/build/outputs/bundle/release")
+    }
+
+    @TaskAction
+    fun publish() {
+        val targetTrack = track.get()
+        val dirPath = artifactDir.get()
+        val updatePriority = project.providers.gradleProperty("updatePriority").map(String::toInt).getOrElse(2)
+        val pythonCmd = (project.tasks.findByName("cyclonedxBom") as? Exec)?.commandLine?.firstOrNull()?.let { listOf(it) } ?: listOf("py", "-3")
+
+        val argsList = mutableListOf<String>()
+        argsList.addAll(pythonCmd)
+        argsList.addAll(listOf(
+            project.rootDir.parentFile.resolve("tools/play_publisher.py").absolutePath,
+            "--artifact-dir", dirPath,
+            "--track", targetTrack,
+            "--update-priority", updatePriority.toString()
+        ))
+
+        val pb = ProcessBuilder(argsList)
+        pb.directory(project.rootDir.parentFile)
+        val publisherCreds = project.providers.environmentVariable("ANDROID_PUBLISHER_CREDENTIALS").orNull
+        if (!publisherCreds.isNullOrBlank()) {
+            pb.environment()["ANDROID_PUBLISHER_CREDENTIALS"] = publisherCreds
+        }
+        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        pb.redirectError(ProcessBuilder.Redirect.INHERIT)
+        val proc = pb.start()
+        val exitCode = proc.waitFor()
+        if (exitCode != 0) {
+            throw GradleException("Play publication task failed with exit code $exitCode")
+        }
+    }
+}
+
+tasks.register<PublishReleaseBundleTask>("publishReleaseBundle") {
+    description = "Publishes checked release bundle to Google Play internal track (doc 12 Section 4)"
+    group = "publishing"
+}
+
 

@@ -1,0 +1,15 @@
+# Runtime dependencies of the intake image (backend/Dockerfile). Same packages as
+# pyproject.toml [project.dependencies]; no test, lint, or scan tooling.
+# Compiled with requirements.lock as a constraint, so the image runs exactly the
+# versions the test suite ran (checked in CI by tools/check_runtime_lock.py):
+#   uv pip compile --generate-hashes --universal --python-version 3.12 \
+#     requirements-runtime.in -c requirements.lock -o requirements-runtime.lock
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+pydantic-settings>=2.5.0
+sqlalchemy>=2.0.35
+alembic>=1.13.0
+psycopg[binary]>=3.3.0
+cryptography>=43.0.0
+pillow>=10.4.0

@@ -40,6 +40,8 @@ jobs:
           tools/check_16kb.sh android/app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
       - name: Requirement coverage (doc 9 Section 10)
         run: python3 tools/trace.py docs
+      - name: Gate: license check (TC-OPS-08)
+        run: python3 tools/check_licenses.py
   scan:
     # No secrets in this job: a compromised scanner has nothing to steal (doc 8 T12).
     # Trivy reads Maven dependencies from the committed gradle.lockfile files (dependency locking is on).

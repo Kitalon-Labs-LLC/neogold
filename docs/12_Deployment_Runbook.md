@@ -82,6 +82,27 @@ tasks.register("printVersionName") { doLast { println(appVersionName) } }
 
 Two gates are not automated in CI and are recorded in the test summary instead: the MobSF scan (S1, TC-SEC-10) and the instrumented UI tests on emulators, which run nightly. Gradle dependency locking is on, with `gradle.lockfile` files committed, so the Trivy scan can see Maven dependencies.
 
+**Manual MobSF Scan Step (Gate S1, TC-SEC-10):**
+1. Build or extract the release universal APK from the checked bundle:
+   ```bash
+   bundletool build-apks --bundle=app/build/outputs/bundle/release/app-release.aab \
+     --output=build/outputs/universal.apks --mode=universal
+   unzip -o -q build/outputs/universal.apks universal.apk -d build/outputs/
+   ```
+2. Start MobSF in a local container (never upload release binaries to public cloud scanners):
+   ```bash
+   docker run -it --rm -p 8000:8000 opensecurity/mobsf:latest
+   ```
+3. Upload `universal.apk` at `http://localhost:8000/` and run Static Analysis.
+4. Triage all findings against the MASVS-v2 checklist (doc 8 Section 1). Confirm:
+   - 0 Critical or High severity security vulnerabilities.
+   - Merged permissions and exported components match allow-lists.
+   - 0 tracking or third-party analytics libraries.
+5. **Where to record the result:**
+   - Export the MobSF report (PDF/JSON) and compute its SHA-256 checksum: `sha256sum mobsf-report.pdf`.
+   - Record the scan date, tool version, report SHA-256 hash, and triage findings in `docs/test-reports/vX.Y.Z.md` Section 4 (Gate S1 row and procedure sign-off).
+   - If archiving report artifacts, place in `docs/security-scans/` or partner audit bundle.
+
 **Supply-chain rules (doc 8 T12):**
 
 - Every action is pinned to a full commit SHA, with the version in a comment. The SHAs in Appendix A were resolved from the actions' release tags on 11 October 2026 [Certain]. Dependabot proposes updates.

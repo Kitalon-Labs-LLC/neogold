@@ -387,7 +387,7 @@ object EstimationModelParser {
     /**
      * Pure Kotlin recursive-descent JSON parser.
      */
-    private object SimpleJsonParser {
+    internal object SimpleJsonParser {
         fun parse(text: String): Any? {
             val tokenizer = Tokenizer(text)
             val result = parseValue(tokenizer)

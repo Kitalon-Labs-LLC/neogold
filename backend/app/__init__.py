@@ -1,0 +1,1 @@
+"""NeoGold Study Intake Backend."""
