@@ -275,3 +275,30 @@ def build_test_attestation_chain(
 
     cert_b64 = base64.b64encode(cert.public_bytes(serialization.Encoding.DER)).decode("ascii")
     return [cert_b64]
+
+
+@pytest.fixture
+def enrolled_device(client: TestClient, db, test_study_and_site):
+    study, site = test_study_and_site
+    _code_row, code_str = create_enrollment_code(db, study.id, site.id, code_str=f"K7QM-3XRA-{uuid4().hex[:4].upper()}")
+    privkey, jwk = mint_device_key()
+
+    idem_key = str(uuid4())
+    headers = {"Idempotency-Key": idem_key, "X-NeoGold-App-Version": "1.0.0"}
+    payload = {
+        "enrollment_code": code_str,
+        "device_public_key": jwk,
+        "device": {
+            "manufacturer": "Samsung",
+            "model": "SM-A125F",
+            "android_api": 30,
+            "app_version": "1.0.0",
+            "camera_hardware_level": "LIMITED",
+            "qualification": "QUALIFIED",
+        },
+    }
+    resp = client.post("/enrollments", json=payload, headers=headers)
+    assert resp.status_code == 201
+    device_id = UUID(resp.json()["device_id"])
+    return device_id, privkey, jwk
+

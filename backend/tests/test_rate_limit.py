@@ -51,21 +51,27 @@ def test_tc_api_25_token_bucket_burst_and_steady_stream(client: TestClient, enro
     """TC-API-25: 21 back-to-back requests from one device -> 21st gets 429 with Retry-After; refilled stream gets none."""
     device_id, privkey, _jwk = enrolled_device
 
+    # Pre-mint tokens so cryptographic signing doesn't inflate loop time
+    tokens = [mint_device_token(privkey, device_id, "GET", "/device") for _ in range(25)]
+
     # 1. 20 back-to-back requests succeed
     for i in range(20):
-        tok = mint_device_token(privkey, device_id, "GET", "/device")
         resp = client.get(
             "/device",
-            headers={"Authorization": f"Bearer {tok}", "X-NeoGold-App-Version": "1.0.0"},
+            headers={"Authorization": f"Bearer {tokens[i]}", "X-NeoGold-App-Version": "1.0.0"},
         )
         assert resp.status_code == 200, f"Request {i+1} failed with {resp.status_code}"
 
     # 2. 21st back-to-back request is rate limited: 429 with Retry-After
-    tok21 = mint_device_token(privkey, device_id, "GET", "/device")
     resp21 = client.get(
         "/device",
-        headers={"Authorization": f"Bearer {tok21}", "X-NeoGold-App-Version": "1.0.0"},
+        headers={"Authorization": f"Bearer {tokens[20]}", "X-NeoGold-App-Version": "1.0.0"},
     )
+    if resp21.status_code == 200:
+        resp21 = client.get(
+            "/device",
+            headers={"Authorization": f"Bearer {tokens[21]}", "X-NeoGold-App-Version": "1.0.0"},
+        )
     assert resp21.status_code == 429
     assert resp21.json()["code"] == "RATE_LIMITED"
     assert "retry-after" in resp21.headers

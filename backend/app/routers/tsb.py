@@ -11,6 +11,7 @@ from app.database import get_db
 from app.errors import (
     ConflictImmutableError,
     ParticipantUnknownError,
+    ParticipantWithdrawnError,
     Problem,
     SessionUnknownError,
     ValidationFailedError,
@@ -82,6 +83,9 @@ def put_tsb_measurement(
 
     if not canonical_participant or canonical_participant.site_id != site.id:
         raise ParticipantUnknownError(f"Participant {body.participant_id} not found at this site")
+
+    if canonical_participant.withdrawn_on is not None:
+        raise ParticipantWithdrawnError("Participant has withdrawn consent")
 
     # 2. If session_id provided, verify it exists and belongs to the same participant
     if body.session_id is not None:

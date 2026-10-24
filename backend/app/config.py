@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     )
     API_VERSION: str = "1.0.0"
     TRUST_LIST_PATH: str = os.getenv("TRUST_LIST_PATH", "config/trust-list.json")
+    IMAGE_STORE_DIR: str = os.getenv("IMAGE_STORE_DIR", "/data/images")
+    PURGE_DATABASE_URL: str | None = os.getenv("PURGE_DATABASE_URL", None)
+    EXPORT_DATABASE_URL: str | None = os.getenv("EXPORT_DATABASE_URL", None)
 
 
 settings = Settings()

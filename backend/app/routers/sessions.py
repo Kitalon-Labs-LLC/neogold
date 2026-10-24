@@ -1,21 +1,27 @@
-from __future__ import annotations
-
 import datetime
 import hashlib
-from uuid import UUID
+import os
+from pathlib import Path
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Header, Path, Request, Response, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Header, Request, Response, status
+from fastapi import Path as FastApiPath
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.errors import (
+    CaptureNotInManifestError,
     CardBatchUnknownError,
     ConflictImmutableError,
+    HashMismatchError,
     NotFoundError,
     ParticipantUnknownError,
     ParticipantWithdrawnError,
     Problem,
+    SessionUnknownError,
+    StorageFullError,
     ValidationFailedError,
 )
 from app.models.api import ImageReceipt, SessionManifest, SessionStatus
@@ -33,6 +39,7 @@ from app.models.db import (
 from app.models.db import (
     Session as DbSession,
 )
+from app.security.jpeg import validate_jpeg
 
 router = APIRouter(tags=["Sessions"])
 
@@ -66,7 +73,7 @@ def put_session_manifest(
     request: Request,
     response: Response,
     body: SessionManifest,
-    session_id: UUID = Path(...),
+    session_id: UUID = FastApiPath(...),
     idempotency_key: UUID = Header(alias="Idempotency-Key"),
     x_neogold_app_version: str = Header(alias="X-NeoGold-App-Version"),
     db: Session = Depends(get_db),
@@ -102,12 +109,15 @@ def put_session_manifest(
         raise ValidationFailedError("consent_date is after capture_date")
 
     # 2. Card batch checks
+    recorded_card_status = body.card_status
     if body.card_status in ("VERIFIED", "EXPIRED"):
         if not body.card_batch_id:
             raise ValidationFailedError("card_batch_id required when card_status is VERIFIED or EXPIRED")
         batch_row = db.execute(select(CardBatch).where(CardBatch.batch_id == body.card_batch_id)).scalar_one_or_none()
         if not batch_row:
             raise CardBatchUnknownError(f"Card batch {body.card_batch_id} not registered")
+        if batch_row.expires_at < body.capture_date:
+            recorded_card_status = "EXPIRED"
     else:
         if body.card_batch_id is not None:
             raise ValidationFailedError("card_batch_id must be null when card_status is UNVERIFIED")
@@ -170,11 +180,15 @@ def put_session_manifest(
             raise ConflictImmutableError(f"Session {session_id} already exists with different manifest")
 
     # 7. Create new session
+    missing_uuids = [c.capture_id for c in body.captures if c.has_image]
+    initial_status = "RECEIVING"
+    completed_on = None
+
     new_session = DbSession(
         id=session_id,
         participant_id=canonical_participant.id,
         device_id=device.id,
-        card_status=body.card_status,
+        card_status=recorded_card_status,
         card_batch_id=body.card_batch_id,
         capture_date=body.capture_date,
         captured_at=body.captured_at,
@@ -190,13 +204,13 @@ def put_session_manifest(
         model_version=body.model_version,
         config_version=body.config_version,
         manifest_sha256=manifest_hash,
-        status="RECEIVING",
+        status=initial_status,
         received_on=today,
+        completed_on=completed_on,
     )
     db.add(new_session)
     db.flush()
 
-    missing_uuids = []
     for c in body.captures:
         new_cap = DbCapture(
             id=c.capture_id,
@@ -214,18 +228,16 @@ def put_session_manifest(
             verified=False,
         )
         db.add(new_cap)
-        if c.has_image:
-            missing_uuids.append(c.capture_id)
 
     db.commit()
 
     response.status_code = status.HTTP_201_CREATED
     return SessionStatus(
         session_id=session_id,
-        status="RECEIVING",
+        status=initial_status,
         missing_images=missing_uuids,
         received_on=today,
-        completed_on=None,
+        completed_on=completed_on,
     )
 
 
@@ -246,7 +258,7 @@ def put_session_manifest(
     },
 )
 def get_session_status(
-    session_id: UUID = Path(...),
+    session_id: UUID = FastApiPath(...),
     x_neogold_app_version: str = Header(alias="X-NeoGold-App-Version"),
     db: Session = Depends(get_db),
 ) -> SessionStatus:
@@ -297,32 +309,101 @@ def get_session_status(
 async def put_capture_image(
     request: Request,
     response: Response,
-    session_id: UUID = Path(...),
-    capture_id: UUID = Path(...),
+    session_id: UUID = FastApiPath(...),
+    capture_id: UUID = FastApiPath(...),
     idempotency_key: UUID = Header(alias="Idempotency-Key"),
     x_neogold_app_version: str = Header(alias="X-NeoGold-App-Version"),
     content_digest: str = Header(alias="Content-Digest"),
     db: Session = Depends(get_db),
 ) -> ImageReceipt:
-    # Basic Phase A and stub for P17 - Phase A checks were already performed in middleware
-    capture_row = db.execute(
-        select(DbCapture).where(DbCapture.session_id == session_id, DbCapture.id == capture_id)
-    ).scalar_one()
+    device_id: UUID = request.scope["state"]["device_id"]
+    device = db.execute(select(Device).where(Device.id == device_id)).scalar_one()
+    site = db.execute(select(Site).where(Site.id == device.site_id)).scalar_one()
+    study = db.execute(select(Study).where(Study.id == site.study_id)).scalar_one()
 
-    # Read body bytes and verify hash
+    # Lock session row FOR UPDATE
+    session_row = db.execute(
+        select(DbSession).where(DbSession.id == session_id).with_for_update()
+    ).scalar_one_or_none()
+    if not session_row:
+        raise SessionUnknownError(f"Session {session_id} not found", status=404)
+
+    capture_row = db.execute(
+        select(DbCapture).where(DbCapture.session_id == session_id, DbCapture.id == capture_id).with_for_update()
+    ).scalar_one_or_none()
+    if not capture_row or not capture_row.has_image:
+        raise CaptureNotInManifestError("Capture not found in manifest or has_image false")
+
     body = await request.body()
     actual_hash = hashlib.sha256(body).hexdigest()
     if actual_hash != capture_row.sha256:
-        from app.errors import HashMismatchError
         raise HashMismatchError("Body hash does not match declared digest")
 
+    # If already verified
+    if capture_row.verified:
+        missing_count = db.execute(
+            select(func.count(DbCapture.id)).where(
+                DbCapture.session_id == session_id,
+                DbCapture.has_image.is_(True),
+                DbCapture.verified.is_(False),
+            )
+        ).scalar_one()
+        response.status_code = status.HTTP_200_OK
+        return ImageReceipt(
+            session_status=session_row.status,
+            missing_count=missing_count,
+            capture_id=capture_id,
+            sha256=capture_row.sha256 or actual_hash,
+            size_bytes=capture_row.size_bytes or len(body),
+            verified=True,
+        )
+
+    # Validate JPEG
+    validate_jpeg(body)
+
+    # Write to temp file in /data/images/.tmp, fsync, and atomic rename
+    store_dir = Path(settings.IMAGE_STORE_DIR)
+    tmp_dir = store_dir / ".tmp"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    tmp_file = tmp_dir / f"{uuid4()}.tmp"
+    try:
+        with open(tmp_file, "wb") as f:
+            f.write(body)
+            f.flush()
+            os.fsync(f.fileno())
+        dest_file = store_dir / study.study_code / site.site_code / str(session_id) / f"{capture_id}.jpg"
+        dest_file.parent.mkdir(parents=True, exist_ok=True)
+        tmp_file.replace(dest_file)
+    except OSError as e:
+        if tmp_file.exists():
+            tmp_file.unlink(missing_ok=True)
+        raise StorageFullError(f"Image storage write failed: {e}") from e
+
+    rel_path = f"{study.study_code}/{site.site_code}/{session_id}/{capture_id}.jpg"
     capture_row.verified = True
+    capture_row.object_key = rel_path
+    capture_row.size_bytes = len(body)
+    db.flush()
+
+    missing_count = db.execute(
+        select(func.count(DbCapture.id)).where(
+            DbCapture.session_id == session_id,
+            DbCapture.has_image.is_(True),
+            DbCapture.verified.is_(False),
+        )
+    ).scalar_one()
+
+    today = datetime.datetime.now(datetime.UTC).date()
+    if missing_count == 0:
+        session_row.status = "COMPLETE"
+        session_row.completed_on = today
+
     db.commit()
 
     response.status_code = status.HTTP_201_CREATED
     return ImageReceipt(
-        session_status="RECEIVING",
-        missing_count=0,
+        session_status=session_row.status,
+        missing_count=missing_count,
         capture_id=capture_id,
         sha256=capture_row.sha256 or actual_hash,
         size_bytes=len(body),

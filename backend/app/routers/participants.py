@@ -8,7 +8,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.errors import ConflictImmutableError, ParticipantCodeTakenError
+from app.errors import (
+    ConflictImmutableError,
+    ParticipantCodeTakenError,
+    ParticipantWithdrawnError,
+)
 from app.models.api import ParticipantReceipt, ParticipantUpload, Problem
 from app.models.db import Device, Participant, ParticipantAlias, Site
 
@@ -54,6 +58,8 @@ def put_participant(
     # Case A: participant_id exists as a Participant
     existing_p = db.execute(select(Participant).where(Participant.id == participant_id)).scalar_one_or_none()
     if existing_p:
+        if existing_p.withdrawn_on is not None:
+            raise ParticipantWithdrawnError("Participant has withdrawn consent")
         if (
             existing_p.site_id == site.id
             and existing_p.participant_code == body.participant_code
@@ -78,6 +84,8 @@ def put_participant(
         canonical = db.execute(
             select(Participant).where(Participant.id == existing_alias.participant_id)
         ).scalar_one()
+        if canonical.withdrawn_on is not None:
+            raise ParticipantWithdrawnError("Participant has withdrawn consent")
         if (
             canonical.site_id == site.id
             and canonical.participant_code == body.participant_code
@@ -101,6 +109,8 @@ def put_participant(
         )
     ).scalar_one_or_none()
     if same_code_p:
+        if same_code_p.withdrawn_on is not None:
+            raise ParticipantWithdrawnError("Participant has withdrawn consent")
         if same_code_p.consent_form_id == body.consent_form_id:
             # Register as alias!
             alias = ParticipantAlias(

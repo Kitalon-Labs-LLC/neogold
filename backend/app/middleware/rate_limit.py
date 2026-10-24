@@ -113,12 +113,16 @@ def is_ip_trusted(client_ip: str, allowed_ips_str: str) -> bool:
 def get_client_ip(scope: dict) -> str:
     client = scope.get("client")
     direct_ip = client[0] if client else "127.0.0.1"
+    if direct_ip == "testclient":
+        direct_ip = "127.0.0.1"
 
     headers_dict = {}
     for k, v in scope.get("headers", []):
-        headers_dict[k.lower()] = v.decode("latin1", errors="replace")
+        k_str = k.decode("latin1").lower() if isinstance(k, bytes) else str(k).lower()
+        v_str = v.decode("latin1", errors="replace") if isinstance(v, bytes) else str(v)
+        headers_dict[k_str] = v_str
 
-    xff = headers_dict.get(b"x-forwarded-for".decode("ascii"))
+    xff = headers_dict.get("x-forwarded-for")
     if xff and is_ip_trusted(direct_ip, settings.FORWARDED_ALLOW_IPS):
         parts = [p.strip() for p in xff.split(",") if p.strip()]
         if parts:

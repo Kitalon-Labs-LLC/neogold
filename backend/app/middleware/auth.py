@@ -32,6 +32,7 @@ from app.errors import (
     SessionUnknownError,
     StudyClosedError,
     StudyPausedError,
+    UnsupportedMediaTypeError,
     ValidationFailedError,
     problem_response,
 )
@@ -308,6 +309,10 @@ class DeviceAuthMiddleware:
                 raise PayloadTooLargeError("Payload exceeds size limit")
 
             if is_image_route(method, path):
+                content_type = headers_dict.get("content-type", "")
+                if content_type.lower() != "image/jpeg":
+                    raise UnsupportedMediaTypeError("Content-Type must be image/jpeg")
+
                 clean_path = path
                 clean_path = clean_path.removeprefix("/v1")
                 m_img = re.match(r"^/sessions/([0-9a-fA-F-]+)/captures/([0-9a-fA-F-]+)/image$", clean_path)
@@ -387,10 +392,15 @@ class DeviceAuthMiddleware:
 
             # Phase B: Read body & verify hash
             body_chunks = []
+            total_body_len = 0
             while True:
                 message = await receive()
                 if message["type"] == "http.request":
-                    body_chunks.append(message.get("body", b""))
+                    chunk = message.get("body", b"")
+                    total_body_len += len(chunk)
+                    if total_body_len > max_allowed_bytes:
+                        raise PayloadTooLargeError("Payload exceeds size limit")
+                    body_chunks.append(chunk)
                     if not message.get("more_body", False):
                         break
 
