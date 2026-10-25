@@ -28,7 +28,7 @@ def main(argv):
         print("G1 FAIL: triageEnabled must be true or false")
         return 1
     record_bytes = open(record_path, "rb").read()
-    fields = dict(re.findall(r"^- \*\*(\w+):\*\* (.+)$", record_bytes.decode("utf-8"), re.M))
+    fields = {k: v.strip() for k, v in re.findall(r"^- \*\*(\w+):\*\* (.+)$", record_bytes.decode("utf-8"), re.M)}
     errors = []
     signoff = cfg.get("clinicalSignoff", {})
     if signoff.get("status") != "SIGNED":

@@ -1,0 +1,12 @@
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "C4", "SIM", "UP"]
+ignore = [
+    "E501",   # Line too long
+    "E402",   # Module level import not at top of file (sys.path insertion for test / tool execution)
+    "B008",   # Do not perform function call in argument defaults (standard FastAPI Depends, Header, Path)
+    "B007",   # Loop control variable not used
+    "BLE001", # Do not catch blind exception
+]
