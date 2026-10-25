@@ -13,6 +13,8 @@ dependencies {
     implementation(libs.findLibrary("androidx.activity.compose").get())
     implementation(libs.findLibrary("androidx.navigation.compose").get())
     implementation(libs.findLibrary("androidx.biometric").get())
+    implementation(libs.findLibrary("androidx-room-runtime").get())
+    implementation(libs.findLibrary("androidx-room-ktx").get())
     implementation(libs.findLibrary("timber").get())
 
     // Core
