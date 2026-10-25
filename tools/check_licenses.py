@@ -56,6 +56,7 @@ GROUP_LICENSE_MAP = {
     "org.jetbrains": "Apache-2.0",
     "com.jakewharton.timber": "Apache-2.0",
     "com.squareup.okio": "Apache-2.0",
+    "com.squareup.okhttp3": "Apache-2.0",
     "io.github.java-diff-utils": "Apache-2.0",
     "commons-codec": "Apache-2.0",
     "commons-io": "Apache-2.0",
