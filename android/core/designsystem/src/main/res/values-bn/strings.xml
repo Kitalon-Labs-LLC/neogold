@@ -128,4 +128,85 @@
     <string name="update_flexible_msg">নিওগোল্ডের নতুন সংস্করণ পাওয়া গেছে। ডাউনলোড চলাকালীন অ্যাপ ব্যবহার চালিয়ে যেতে পারেন।</string>
     <string name="update_immediate_msg">নিওগোল্ড ব্যবহারের পূর্বে একটি জরুরি আপডেট আবশ্যক। সর্বশেষ সংস্করণ ডাউনলোড করতে আপডেট চাপুন।</string>
     <string name="update_btn">আপডেট করুন</string>
+
+    <!-- What to tell the mother card (NG-047, TC-UI-09) -->
+    <string name="mother_card_title">মাকে কী বলবেন</string>
+    <string name="mother_card_refer_urgent">শিশুর কিছু উপসর্গ দেখা যাচ্ছে যার জন্য তাকে দ্রুত হাসপাতালে নেওয়া প্রয়োজন। রক্ত পরীক্ষা লাগবে কি না তা বোঝার জন্য একটি ফোন অ্যাপ ব্যবহার করা হয়েছে। অনুগ্রহ করে শিশুকে এখনই হাসপাতালে নিয়ে যান যাতে চিকিৎসকরা বিলিরুবিন পরিমাপ করতে পারেন।</string>
+    <string name="mother_card_blood_test">শিশুর বিলিরুবিনের মাত্রা চিকিৎসার সীমার কাছাকাছি। রক্ত পরীক্ষা লাগবে কি না তা বোঝার জন্য একটি ফোন অ্যাপ ব্যবহার করা হয়েছে। সঠিক মাত্রা জানতে আজই একটি রক্ত পরীক্ষা করানো প্রয়োজন।</string>
+    <string name="mother_card_recheck">শিশুর ত্বকে কিছুটা হলুদ ভাব রয়েছে যার ফলোআপ করা দরকার। রক্ত পরীক্ষা লাগবে কি না তা বোঝার জন্য একটি ফোন অ্যাপ ব্যবহার করা হয়েছে। নির্ধারিত সময়ে শিশুকে আবার দেখান, অথবা খাওয়ার সমস্যা, অতিরিক্ত ঘুম বা অন্য কোনো বিপদচিহ্ন দেখা দিলে আগেই নিয়ে আসুন।</string>
+    <string name="mother_card_no_further">এই পরীক্ষা থেকে এই মুহূর্তে জরুরি ব্যবস্থা নেওয়ার প্রয়োজন দেখা যাচ্ছে না। রক্ত পরীক্ষা লাগবে কি না তা বোঝার জন্য একটি ফোন অ্যাপ ব্যবহার করা হয়েছে। নিয়মিত দুধ খাওয়ানো ও যত্ন চালিয়ে যান, এবং বুকের দুধ না খাওয়া, অস্বাভাবিক ঘুম, তীক্ষ্ণ কান্না বা শরীর বেঁকে যাওয়ার মতো বিপদচিহ্ন দেখলে দ্রুত নিয়ে আসুন।</string>
+
+    <!-- Retake guidance per reason (NG-012, TC-CAP-13) -->
+    <string name="retake_no_card">কার্ডটি পাওয়া যায়নি। কার্ডটি শিশুর বুকের ওপর রাখুন এবং নিশ্চিত করুন যে ৪টি কোণই দেখা যাচ্ছে।</string>
+    <string name="retake_card_angle">কার্ডটি কাত হয়ে আছে। ফোনটি কার্ডের ঠিক ওপরে সোজা করে ধরুন।</string>
+    <string name="retake_nonuniform_patches">কার্ডের ওপর আলো অসমান। উজ্জ্বল আলো বা ছায়া থেকে সরে আসুন।</string>
+    <string name="retake_blur">ছবি অস্পষ্ট বা ঝাপসা। ফোনটি স্থির রাখুন।</string>
+    <string name="retake_glare">আলোর প্রতিফলন বেশি। জানালা থেকে সরে আসুন।</string>
+    <string name="retake_underexposed">পর্যাপ্ত আলো নেই। অপেক্ষাকৃত উজ্জ্বল জায়গায় যান।</string>
+    <string name="retake_overexposed">অতিরিক্ত আলো। সরাসরি উজ্জ্বল আলো থেকে সরে আসুন।</string>
+    <string name="retake_uneven_light">মিশ্র আলো। জানালা ও সরাসরি বাতি থেকে সরে আসুন।</string>
+    <string name="retake_high_residual">কার্ডের রং সঠিকভাবে যাচাই করা যায়নি। কার্ডটি পরিষ্কার করুন বা এর পৃষ্ঠ পরীক্ষা করুন।</string>
+    <string name="retake_window_not_skin">স্কিন উইন্ডোতে ত্বক সঠিকভাবে দেখা যাচ্ছে না। নিশ্চিত করুন উইন্ডোর ভেতর কেবল ত্বক রয়েছে (কোনো কাপড়, ছায়া বা আঙুল নয়)।</string>
+    <string name="retake_general">ছবিটি যাচাই করা যায়নি। অনুগ্রহ করে আবার ছবি তুলুন।</string>
+
+    <!-- Home screen S09 -->
+    <string name="home_title">নিওগোল্ড</string>
+    <string name="home_btn_new_screening">নতুন স্ক্রীনিং</string>
+    <string name="home_today_screenings">আজ: %dটি স্ক্রীনিং</string>
+    <string name="home_rechecks_due_count">%dটি ফলোআপ বাকি</string>
+    <string name="home_rechecks_due_at">%s-এ ফলোআপ নির্ধারিত</string>
+    <string name="home_no_rechecks">আজ কোনো ফলোআপ বাকি নেই</string>
+    <string name="home_screening_log">স্ক্রীনিং লগ</string>
+    <string name="home_card_valid">কার্ড ব্যাচ %1$s মেয়াদ %2$s পর্যন্ত</string>
+
+    <!-- S10 Birth time & Stepper -->
+    <string name="birth_time_future_error">জন্মের সময় বর্তমান সময়ের চেয়ে পরে হতে পারে না।</string>
+    <string name="birth_age_hours_display">এখন বয়স: %d ঘণ্টা</string>
+
+    <!-- S14 Rule outcomes -->
+    <string name="rule_urgent_title">এখনই জরুরি রেফার করুন</string>
+    <string name="rule_urgent_next_step">এখনই হাসপাতালে স্থানান্তরের ব্যবস্থা করুন।</string>
+    <string name="rule_cannot_screen_title">স্ক্রীনিং করা সম্ভব নয়</string>
+    <string name="rule_phototherapy_reason">নিওগোল্ড এই শিশুকে পরীক্ষা করতে পারবে না। আগে ফটোথেরাপি দিলে ত্বকের পরিমাপ সঠিক হয় না। রক্ত পরীক্ষা করান।</string>
+    <string name="rule_ga_reason">নিওগোল্ড ৩৫ সপ্তাহের আগে জন্ম নেওয়া শিশুদের পরীক্ষা করতে পারে না। রক্ত পরীক্ষা করান।</string>
+    <string name="rule_age_reason">দুই সপ্তাহের পরেও জন্ডিস থাকলে অন্যান্য কারণ মূল্যায়নে ডাক্তার দেখাতে হবে।</string>
+
+    <!-- S15 Capture guide -->
+    <string name="capture_guide_title">ছবি তোলার প্রস্তুতি</string>
+    <string name="capture_guide_step1">কার্ডটি শিশুর বুকের (স্টার্নাম) ওপর সোজা করে রাখুন।</string>
+    <string name="capture_guide_step2">ফোনটি স্থিরভাবে প্রায় ২০ সেমি দূরে ধরে রাখুন।</string>
+    <string name="capture_guide_step3">সরাসরি জানালার আলো বা প্রতিফলন থেকে দূরে থাকুন।</string>
+    <string name="btn_open_camera">ক্যামেরা খুলুন</string>
+
+    <!-- S17 Photo problem -->
+    <string name="photo_problem_title">ছবিতে সমস্যা দেখা দিয়েছে</string>
+    <string name="photo_problem_attempt">প্রচেষ্টা ৩ এর মধ্যে %d</string>
+    <string name="btn_retake">আবার ছবি তুলুন</string>
+
+    <!-- S18 Forehead photo -->
+    <string name="forehead_photo_title">কপালের ছবি (ঐচ্ছিক)</string>
+    <string name="forehead_photo_desc">শিশুর কপালে কার্ড রেখে দ্বিতীয় ছবি তুললে অনুমানে অতিরিক্ত সাহায্য করে।</string>
+    <string name="btn_add_forehead">কপালের ছবি যোগ করুন</string>
+    <string name="btn_skip_forehead">কপালের ছবি বাদ দিন</string>
+
+    <!-- S19 Analyzing -->
+    <string name="analyzing_title">ছবি বিশ্লেষণ করা হচ্ছে...</string>
+    <string name="analyzing_taking_long">প্রত্যাশিত সময়ের চেয়ে বেশি সময় লাগছে। আপনি রক্ত পরীক্ষা করাতে পারেন।</string>
+
+    <!-- S21 Log & S22 Session Detail -->
+    <string name="log_title">স্ক্রীনিং লগ</string>
+    <string name="log_filter_all">সব</string>
+    <string name="log_filter_today">আজ</string>
+    <string name="log_filter_week">গত ৭ দিন</string>
+    <string name="log_filter_month">গত ৩০ দিন</string>
+    <string name="log_empty">কোনো স্ক্রীনিং রেকর্ড পাওয়া যায়নি</string>
+    <string name="log_export_title">স্ক্রীনিং লগ এক্সপোর্ট</string>
+    <string name="log_export_warning">স্ক্রীনিং রেকর্ড এক্সপোর্ট করা হচ্ছে। রোগীর গোপনীয়তা রক্ষায় ডিফল্টভাবে রেজিস্টার নম্বর বাদ দেওয়া হয়েছে।</string>
+    <string name="log_export_include_register">রেজিস্টার নম্বর অন্তর্ভুক্ত করুন</string>
+    <string name="btn_export">এক্সপোর্ট করুন</string>
+    <string name="session_detail_title">স্ক্রীনিং বিবরণ</string>
+
+    <!-- Notifications NG-048, TC-LOG-09 -->
+    <string name="notif_recheck_title">নিওগোল্ড</string>
+    <string name="notif_recheck_body">একটি ফলোআপ পরীক্ষা নির্ধারিত আছে</string>
 </resources>

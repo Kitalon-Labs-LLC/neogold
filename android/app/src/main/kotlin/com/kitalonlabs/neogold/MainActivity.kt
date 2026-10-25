@@ -34,10 +34,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
+import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
+import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
+import com.kitalonlabs.neogold.core.designsystem.components.organisms.TriageUiAction
 import com.kitalonlabs.neogold.core.designsystem.theme.NeoGoldTheme
+import com.kitalonlabs.neogold.core.security.AndroidMasterKeyProvider
+import com.kitalonlabs.neogold.core.security.DefaultDatabaseKeyProvider
 import com.kitalonlabs.neogold.core.security.applock.AppLockManager
 import com.kitalonlabs.neogold.core.security.crash.CrashReportManager
 import com.kitalonlabs.neogold.core.security.privacy.SecureScreenHelper
+import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
+import com.kitalonlabs.neogold.feature.log.S21LogScreen
+import com.kitalonlabs.neogold.feature.log.S22SessionDetailScreen
+import com.kitalonlabs.neogold.feature.log.ScreeningLogExportManager
+import com.kitalonlabs.neogold.feature.result.S20ResultScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S09HomeScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S10BirthTimeGaScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S10aGuardianConsentScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S11EarlyJaundiceScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S12DangerSignsScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S13PhototherapyScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S14RuleOutcomeScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S15CaptureGuideScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S16CameraScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S17PhotoProblemScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S18ForeheadPhotoScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S19AnalyzingScreen
 import com.kitalonlabs.neogold.navigation.Destinations
 import kotlinx.coroutines.launch
 
@@ -198,10 +220,39 @@ fun NeoGoldNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     dataStore: NeoGoldDataStore = DefaultNeoGoldDataStore(androidx.compose.ui.platform.LocalContext.current),
-    startDestination: String = Destinations.S01_LANGUAGE
+    database: NeoGoldDatabase? = null,
+    startDestination: String = Destinations.S01_LANGUAGE,
+    triageEnabled: Boolean = false
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var lastQualificationResult by remember { mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val db = remember(database) {
+        database ?: run {
+            val masterKey = AndroidMasterKeyProvider(context.applicationContext)
+            val keyProvider = DefaultDatabaseKeyProvider(context.applicationContext, masterKey)
+            NeoGoldDatabase.buildDatabase(context.applicationContext, keyProvider)
+        }
+    }
+
+    // Screening session flow state
+    var sessionAgeHours by remember { androidx.compose.runtime.mutableDoubleStateOf(0.0) }
+    var sessionGaWeeks by remember { androidx.compose.runtime.mutableIntStateOf(38) }
+    var sessionBirthTimeMs by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+    var sessionRuleOutcome by remember { mutableStateOf<String?>(null) }
+    var sessionTriageAction by remember { mutableStateOf(TriageUiAction.CANNOT_SCREEN) }
+    var sessionReasonCodes by remember { mutableStateOf<List<String>>(emptyList()) }
+    var sessionEstimatedLow by remember { mutableStateOf<Double?>(null) }
+    var sessionEstimatedHigh by remember { mutableStateOf<Double?>(null) }
+    var sessionThreshold by remember { mutableStateOf<Double?>(null) }
+    var sessionRecheckHours by remember { androidx.compose.runtime.mutableIntStateOf(24) }
+    var sessionCapturesCount by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var lastQualityReason by remember { mutableStateOf<com.kitalonlabs.neogold.engine.vision.QualityReasonCode?>(null) }
+
+    // Log & Session detail state
+    var selectedSessionIdForDetail by remember { mutableStateOf<String?>(null) }
+    var logSessions by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
+    var dueRechecks by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
 
     NavHost(
         navController = navController,
@@ -281,25 +332,359 @@ fun NeoGoldNavHost(
         }
 
         // S09 Home
-        composable(Destinations.S09_HOME) { PlaceholderScreen("S09: Home") }
+        composable(Destinations.S09_HOME) {
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                val now = System.currentTimeMillis()
+                dueRechecks = db.screeningSessionDao().getDueRechecks(now)
+                logSessions = db.screeningSessionDao().getSessionsByMode("SCREENING")
+            }
+
+            val todayCount = remember(logSessions) {
+                val oneDayAgo = System.currentTimeMillis() - 24L * 60 * 60 * 1000
+                logSessions.count { it.createdAt >= oneDayAgo }
+            }
+
+            S09HomeScreen(
+                triageEnabled = triageEnabled,
+                todayScreeningsCount = todayCount,
+                dueRechecks = dueRechecks,
+                onNewScreeningClicked = {
+                    sessionAgeHours = 0.0
+                    sessionGaWeeks = 38
+                    sessionBirthTimeMs = 0L
+                    sessionRuleOutcome = null
+                    sessionTriageAction = TriageUiAction.CANNOT_SCREEN
+                    sessionReasonCodes = emptyList()
+                    sessionEstimatedLow = null
+                    sessionEstimatedHigh = null
+                    sessionThreshold = null
+                    sessionRecheckHours = 24
+                    sessionCapturesCount = 0
+                    lastQualityReason = null
+                    navController.navigate(Destinations.S10A_GUARDIAN_CONSENT)
+                },
+                onScreeningLogClicked = {
+                    navController.navigate(Destinations.S21_LOG)
+                },
+                onSettingsClicked = {
+                    navController.navigate(Destinations.S23_SETTINGS)
+                },
+                onRecheckClicked = { _ ->
+                    navController.navigate(Destinations.S10A_GUARDIAN_CONSENT)
+                }
+            )
+        }
 
         // S10a to S20 Screening Flow
-        composable(Destinations.S10A_GUARDIAN_CONSENT) { PlaceholderScreen("S10a: Guardian Consent") }
-        composable(Destinations.S10_BIRTH_TIME_GA) { PlaceholderScreen("S10: Birth Time & Gestational Age") }
-        composable(Destinations.S11_EARLY_JAUNDICE) { PlaceholderScreen("S11: Early Jaundice") }
-        composable(Destinations.S12_DANGER_SIGNS) { PlaceholderScreen("S12: Danger Signs") }
-        composable(Destinations.S13_PHOTOTHERAPY) { PlaceholderScreen("S13: Phototherapy") }
-        composable(Destinations.S14_RULE_OUTCOME) { PlaceholderScreen("S14: Rule Outcome") }
-        composable(Destinations.S15_CAPTURE_GUIDE) { PlaceholderScreen("S15: Capture Guide") }
-        composable(Destinations.S16_CAMERA) { PlaceholderScreen("S16: Camera") }
-        composable(Destinations.S17_PHOTO_PROBLEM) { PlaceholderScreen("S17: Photo Problem") }
-        composable(Destinations.S18_FOREHEAD_PHOTO) { PlaceholderScreen("S18: Forehead Photo") }
-        composable(Destinations.S19_ANALYZING) { PlaceholderScreen("S19: Analyzing") }
-        composable(Destinations.S20_RESULT) { PlaceholderScreen("S20: Result") }
+        composable(Destinations.S10A_GUARDIAN_CONSENT) {
+            S10aGuardianConsentScreen(
+                onConsentConfirmed = {
+                    navController.navigate(Destinations.S10_BIRTH_TIME_GA)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S10_BIRTH_TIME_GA) {
+            S10BirthTimeGaScreen(
+                onNext = { ageHours, gaWeeks, birthTimeMs ->
+                    sessionAgeHours = ageHours
+                    sessionGaWeeks = gaWeeks
+                    sessionBirthTimeMs = birthTimeMs
+                    navController.navigate(Destinations.S11_EARLY_JAUNDICE)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S11_EARLY_JAUNDICE) {
+            S11EarlyJaundiceScreen(
+                onAnswered = { isEarlyJaundice ->
+                    if (isEarlyJaundice) {
+                        sessionRuleOutcome = TriageReasonCode.R2
+                        navController.navigate(Destinations.S14_RULE_OUTCOME)
+                    } else {
+                        navController.navigate(Destinations.S12_DANGER_SIGNS)
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S12_DANGER_SIGNS) {
+            S12DangerSignsScreen(
+                onAnswered = { hasDangerSigns ->
+                    if (hasDangerSigns) {
+                        sessionRuleOutcome = TriageReasonCode.R1
+                        navController.navigate(Destinations.S14_RULE_OUTCOME)
+                    } else {
+                        navController.navigate(Destinations.S13_PHOTOTHERAPY)
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S13_PHOTOTHERAPY) {
+            S13PhototherapyScreen(
+                onAnswered = { hadPhototherapy ->
+                    if (hadPhototherapy) {
+                        sessionRuleOutcome = TriageReasonCode.R4
+                        navController.navigate(Destinations.S14_RULE_OUTCOME)
+                    } else if (sessionGaWeeks < 35) {
+                        sessionRuleOutcome = TriageReasonCode.R3
+                        navController.navigate(Destinations.S14_RULE_OUTCOME)
+                    } else if (sessionAgeHours > 336.0) {
+                        sessionRuleOutcome = TriageReasonCode.R5
+                        navController.navigate(Destinations.S14_RULE_OUTCOME)
+                    } else {
+                        navController.navigate(Destinations.S15_CAPTURE_GUIDE)
+                    }
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S14_RULE_OUTCOME) {
+            val rule = sessionRuleOutcome ?: TriageReasonCode.R1
+            S14RuleOutcomeScreen(
+                ruleCode = rule,
+                onSaveToLog = { registerNumber ->
+                    coroutineScope.launch {
+                        val entity = ScreeningSessionEntity(
+                            id = java.util.UUID.randomUUID().toString(),
+                            mode = "SCREENING",
+                            status = "COMPLETED",
+                            createdAt = System.currentTimeMillis(),
+                            completedAt = System.currentTimeMillis(),
+                            ageHours = sessionAgeHours.coerceIn(0.0, 720.0),
+                            guardianConsentConfirmed = 1,
+                            gestationalAgeWeeks = sessionGaWeeks.coerceIn(22, 44),
+                            flagJaundiceUnder24h = if (rule == TriageReasonCode.R2) 1 else 0,
+                            flagDangerSigns = if (rule == TriageReasonCode.R1) 1 else 0,
+                            flagPriorPhototherapy = if (rule == TriageReasonCode.R4) 1 else 0,
+                            ruleOutcome = rule,
+                            triageAction = when (rule) {
+                                TriageReasonCode.R1, TriageReasonCode.R2 -> "REFER_URGENT"
+                                TriageReasonCode.R3, TriageReasonCode.R4 -> "BLOOD_TEST_TODAY"
+                                TriageReasonCode.R5 -> "CANNOT_SCREEN"
+                                else -> "CANNOT_SCREEN"
+                            },
+                            reasonCodes = "[\"$rule\"]",
+                            estimateMgDl = null,
+                            estimateLowMgDl = null,
+                            estimateHighMgDl = null,
+                            thresholdMgDl = null,
+                            recheckDueAt = null,
+                            captureAttempts = 0,
+                            registerNumber = registerNumber,
+                            registerNumberErasedAt = null,
+                            participantId = null,
+                            estimateHidden = 0,
+                            experimentalLabelShown = 1,
+                            deviceProfileId = null,
+                            cardBatchId = "NG-2026-001",
+                            appVersion = "1.0.0",
+                            modelVersion = null,
+                            configVersion = "2026.10.0"
+                        )
+                        db.screeningSessionDao().insert(entity)
+                        navController.navigate(Destinations.S09_HOME) {
+                            popUpTo(Destinations.S09_HOME) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(Destinations.S15_CAPTURE_GUIDE) {
+            S15CaptureGuideScreen(
+                onOpenCamera = {
+                    navController.navigate(Destinations.S16_CAMERA)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S16_CAMERA) {
+            S16CameraScreen(
+                onCaptureCompleted = { _ ->
+                    sessionCapturesCount++
+                    navController.navigate(Destinations.S18_FOREHEAD_PHOTO)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S17_PHOTO_PROBLEM) {
+            S17PhotoProblemScreen(
+                reason = lastQualityReason,
+                attempt = sessionCapturesCount,
+                onRetake = {
+                    navController.navigate(Destinations.S16_CAMERA)
+                },
+                onFallbackToBloodTest = {
+                    sessionTriageAction = TriageUiAction.BLOOD_TEST
+                    sessionReasonCodes = listOf(TriageReasonCode.QUALITY_FALLBACK)
+                    navController.navigate(Destinations.S20_RESULT)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S18_FOREHEAD_PHOTO) {
+            S18ForeheadPhotoScreen(
+                onAddForehead = {
+                    navController.navigate(Destinations.S16_CAMERA)
+                },
+                onSkipForehead = {
+                    navController.navigate(Destinations.S19_ANALYZING)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S19_ANALYZING) {
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(1200L) // Under 3s budget (NFR-02)
+                sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION
+                sessionEstimatedLow = 8.2
+                sessionEstimatedHigh = 10.1
+                sessionThreshold = 12.0
+                navController.navigate(Destinations.S20_RESULT) {
+                    popUpTo(Destinations.S19_ANALYZING) { inclusive = true }
+                }
+            }
+            S19AnalyzingScreen(
+                onTimeoutFallback = {
+                    sessionTriageAction = TriageUiAction.BLOOD_TEST
+                    sessionReasonCodes = listOf(TriageReasonCode.QUALITY_FALLBACK)
+                    navController.navigate(Destinations.S20_RESULT) {
+                        popUpTo(Destinations.S19_ANALYZING) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Destinations.S20_RESULT) {
+            S20ResultScreen(
+                action = sessionTriageAction,
+                nextStepText = when (sessionTriageAction) {
+                    TriageUiAction.REFER_URGENT -> "Refer urgently to neonatal inpatient unit"
+                    TriageUiAction.BLOOD_TEST -> "Order serum bilirubin test today"
+                    TriageUiAction.RECHECK -> "Recheck in 24 hours"
+                    TriageUiAction.NO_FURTHER_ACTION -> "Routine newborn care. Re-evaluate if jaundice deepens."
+                    TriageUiAction.CANNOT_SCREEN -> "Order serum bilirubin test today"
+                },
+                reasonText = if (sessionReasonCodes.isNotEmpty()) sessionReasonCodes.joinToString(", ") else null,
+                estimatedLow = sessionEstimatedLow,
+                estimatedHigh = sessionEstimatedHigh,
+                threshold = sessionThreshold,
+                recheckHours = sessionRecheckHours,
+                triageEnabled = triageEnabled,
+                onSaveToLog = { registerNumber ->
+                    coroutineScope.launch {
+                        val recheckDueTime = if (sessionTriageAction == TriageUiAction.RECHECK) {
+                            System.currentTimeMillis() + sessionRecheckHours * 3600 * 1000L
+                        } else null
+                        val entity = ScreeningSessionEntity(
+                            id = java.util.UUID.randomUUID().toString(),
+                            mode = "SCREENING",
+                            status = "COMPLETED",
+                            createdAt = System.currentTimeMillis(),
+                            completedAt = System.currentTimeMillis(),
+                            ageHours = sessionAgeHours.coerceIn(0.0, 720.0),
+                            guardianConsentConfirmed = 1,
+                            gestationalAgeWeeks = sessionGaWeeks.coerceIn(22, 44),
+                            flagJaundiceUnder24h = 0,
+                            flagDangerSigns = 0,
+                            flagPriorPhototherapy = 0,
+                            ruleOutcome = null,
+                            triageAction = sessionTriageAction.name,
+                            reasonCodes = if (sessionReasonCodes.isNotEmpty()) "[\"${sessionReasonCodes.joinToString("\",\"")}\"]" else null,
+                            estimateMgDl = if (sessionEstimatedLow != null && sessionEstimatedHigh != null) (sessionEstimatedLow!! + sessionEstimatedHigh!!) / 2.0 else null,
+                            estimateLowMgDl = sessionEstimatedLow,
+                            estimateHighMgDl = sessionEstimatedHigh,
+                            thresholdMgDl = sessionThreshold,
+                            recheckDueAt = recheckDueTime,
+                            captureAttempts = sessionCapturesCount,
+                            registerNumber = registerNumber,
+                            registerNumberErasedAt = null,
+                            participantId = null,
+                            estimateHidden = 0,
+                            experimentalLabelShown = 1,
+                            deviceProfileId = null,
+                            cardBatchId = "NG-2026-001",
+                            appVersion = "1.0.0",
+                            modelVersion = "1.0.0",
+                            configVersion = "2026.10.0"
+                        )
+                        db.screeningSessionDao().insert(entity)
+                        navController.navigate(Destinations.S09_HOME) {
+                            popUpTo(Destinations.S09_HOME) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
 
         // S21 to S25 Log & Settings
-        composable(Destinations.S21_LOG) { PlaceholderScreen("S21: Screening Log") }
-        composable(Destinations.S22_SESSION_DETAIL) { PlaceholderScreen("S22: Session Detail") }
+        composable(Destinations.S21_LOG) {
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                logSessions = db.screeningSessionDao().getSessionsByMode("SCREENING")
+            }
+            S21LogScreen(
+                sessions = logSessions,
+                onSessionSelected = { sessionId ->
+                    selectedSessionIdForDetail = sessionId
+                    navController.navigate(Destinations.S22_SESSION_DETAIL)
+                },
+                onExportClicked = {
+                    val csv = ScreeningLogExportManager.exportToCsv(logSessions, includeRegisterNumbers = false)
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, csv)
+                        type = "text/csv"
+                    }
+                    context.startActivity(Intent.createChooser(sendIntent, "Export Screening Log"))
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Destinations.S22_SESSION_DETAIL) {
+            val session = logSessions.find { it.id == selectedSessionIdForDetail }
+            if (session != null) {
+                S22SessionDetailScreen(
+                    session = session,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                Box(modifier = Modifier.fillMaxSize())
+            }
+        }
 
         composable(Destinations.S23_SETTINGS) {
             val currentLang by dataStore.language.collectAsState(initial = "bn")

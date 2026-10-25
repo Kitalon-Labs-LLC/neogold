@@ -128,4 +128,85 @@
     <string name="update_flexible_msg">A new version of NeoGold is available. You can continue using the app while it downloads.</string>
     <string name="update_immediate_msg">A critical update is required before using NeoGold. Tap Update to download the latest version.</string>
     <string name="update_btn">Update</string>
+
+    <!-- What to tell the mother card (NG-047, TC-UI-09) -->
+    <string name="mother_card_title">What to tell the mother</string>
+    <string name="mother_card_refer_urgent">The baby shows clinical signs that need immediate attention at the hospital. A phone app was used to help decide whether a blood test is needed. Please take the baby to the hospital now so doctors can check the bilirubin levels.</string>
+    <string name="mother_card_blood_test">The baby\'s estimated bilirubin level is close to the treatment threshold. A phone app was used to help decide whether a blood test is needed. A blood test is necessary today to measure the exact bilirubin level and protect the baby.</string>
+    <string name="mother_card_recheck">The baby\'s skin shows mild yellowing that needs follow-up. A phone app was used to help decide whether a blood test is needed. Please bring the baby back for another check at the scheduled time, or sooner if feeding changes, sleepiness, or other danger signs appear.</string>
+    <string name="mother_card_no_further">The baby does not require immediate referral from this screen. A phone app was used to help decide whether a blood test is needed. Continue routine feeding and newborn care, and bring the baby back immediately if you notice danger signs such as poor feeding, unusual sleepiness, high-pitched cry, or arching.</string>
+
+    <!-- Retake guidance per reason (NG-012, TC-CAP-13) -->
+    <string name="retake_no_card">Card not found. Place the card on the baby\'s chest and ensure all 4 corners are visible.</string>
+    <string name="retake_card_angle">Card is tilted. Hold the phone directly above the card.</string>
+    <string name="retake_nonuniform_patches">Uneven light across the card. Turn away from bright lights or shadows.</string>
+    <string name="retake_blur">Photo is blurry. Hold the phone steady.</string>
+    <string name="retake_glare">Too much glare. Move away from the window.</string>
+    <string name="retake_underexposed">Not enough light. Move to a better-lit area.</string>
+    <string name="retake_overexposed">Too much light. Move away from direct bright light.</string>
+    <string name="retake_uneven_light">Mixed lighting. Move away from windows and direct lamps.</string>
+    <string name="retake_high_residual">Card colors could not be verified. Clean the card or check its surface.</string>
+    <string name="retake_window_not_skin">Skin check failed. Ensure only clear skin is in the card window without cloth, shadow, or fingers.</string>
+    <string name="retake_general">Photo could not be verified. Please retake the photo.</string>
+
+    <!-- Home screen S09 -->
+    <string name="home_title">NeoGold</string>
+    <string name="home_btn_new_screening">New screening</string>
+    <string name="home_today_screenings">Today: %d screenings</string>
+    <string name="home_rechecks_due_count">%d recheck due</string>
+    <string name="home_rechecks_due_at">Recheck due at %s</string>
+    <string name="home_no_rechecks">No rechecks due today</string>
+    <string name="home_screening_log">Screening log</string>
+    <string name="home_card_valid">Card batch %1$s valid until %2$s</string>
+
+    <!-- S10 Birth time & Stepper -->
+    <string name="birth_time_future_error">Birth time cannot be in the future.</string>
+    <string name="birth_age_hours_display">Age now: %d hours</string>
+
+    <!-- S14 Rule outcomes -->
+    <string name="rule_urgent_title">Refer urgently now</string>
+    <string name="rule_urgent_next_step">Arrange transport to the hospital now.</string>
+    <string name="rule_cannot_screen_title">Cannot screen</string>
+    <string name="rule_phototherapy_reason">NeoGold cannot screen this baby. Prior phototherapy affects skin measurement. Use a blood test.</string>
+    <string name="rule_ga_reason">NeoGold cannot screen babies born before 35 weeks. Use a blood test.</string>
+    <string name="rule_age_reason">Jaundice after two weeks needs a doctor\'s review for other causes.</string>
+
+    <!-- S15 Capture guide -->
+    <string name="capture_guide_title">Prepare for photo</string>
+    <string name="capture_guide_step1">Place the card flat on the baby\'s chest (sternum).</string>
+    <string name="capture_guide_step2">Hold the phone steady, about 20 cm away.</string>
+    <string name="capture_guide_step3">Turn away from direct window light or glare.</string>
+    <string name="btn_open_camera">Open camera</string>
+
+    <!-- S17 Photo problem -->
+    <string name="photo_problem_title">Photo problem</string>
+    <string name="photo_problem_attempt">Attempt %d of 3</string>
+    <string name="btn_retake">Retake photo</string>
+
+    <!-- S18 Forehead photo -->
+    <string name="forehead_photo_title">Optional forehead photo</string>
+    <string name="forehead_photo_desc">A second photo of the card on the baby\'s forehead improves estimate consistency.</string>
+    <string name="btn_add_forehead">Add forehead photo</string>
+    <string name="btn_skip_forehead">Skip forehead photo</string>
+
+    <!-- S19 Analyzing -->
+    <string name="analyzing_title">Analyzing image...</string>
+    <string name="analyzing_taking_long">Taking longer than expected. You may proceed with a blood test.</string>
+
+    <!-- S21 Log & S22 Session Detail -->
+    <string name="log_title">Screening Log</string>
+    <string name="log_filter_all">All</string>
+    <string name="log_filter_today">Today</string>
+    <string name="log_filter_week">Past 7 days</string>
+    <string name="log_filter_month">Past 30 days</string>
+    <string name="log_empty">No screening sessions recorded</string>
+    <string name="log_export_title">Export Screening Log</string>
+    <string name="log_export_warning">Exporting screening records. By default, facility register numbers are excluded to protect patient privacy.</string>
+    <string name="log_export_include_register">Include facility register numbers</string>
+    <string name="btn_export">Export</string>
+    <string name="session_detail_title">Screening Detail</string>
+
+    <!-- Notifications NG-048, TC-LOG-09 -->
+    <string name="notif_recheck_title">NeoGold</string>
+    <string name="notif_recheck_body">A recheck is due</string>
 </resources>
