@@ -15,7 +15,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.ui.res.stringResource
+import com.kitalonlabs.neogold.core.designsystem.R
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -50,6 +53,11 @@ fun R07ExportScreen(
     exportCompleted: Boolean,
     onChooseDestinationClicked: () -> Unit,
     onDoneClicked: () -> Unit,
+    pendingUploadsCount: Int = 0,
+    serverDeviceId: String? = null,
+    onUploadNowClicked: () -> Unit = {},
+    onEnrollClicked: () -> Unit = {},
+    onLeaveStudyClicked: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -144,6 +152,84 @@ fun R07ExportScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                     }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Cloud Study Sync Section (doc 6 Section 5, Section 10.4, NG-042)
+        Card(
+            shape = RoundedCornerShape(CardCornerRadius),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("cloud_sync_card")
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Cloud Sync",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Cloud Sync Status",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                if (serverDeviceId != null) {
+                    val waitingText = if (pendingUploadsCount > 0) {
+                        stringResource(R.string.upload_waiting, pendingUploadsCount)
+                    } else {
+                        "All study data uploaded to server"
+                    }
+                    Text(
+                        text = waitingText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("upload_waiting_text")
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        NgPrimaryButton(
+                            text = stringResource(R.string.upload_now),
+                            onClick = onUploadNowClicked,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("upload_now_button")
+                        )
+                        NgSecondaryButton(
+                            text = "Leave Study",
+                            onClick = onLeaveStudyClicked,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("leave_study_button")
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "This device is not enrolled on the study server. Research sessions can only be exported via USB until enrolled.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    NgPrimaryButton(
+                        text = "Join Study Server (R08)",
+                        onClick = onEnrollClicked,
+                        modifier = Modifier.testTag("join_server_button")
+                    )
                 }
             }
         }
