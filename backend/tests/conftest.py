@@ -58,6 +58,21 @@ def postgres_url():
 
 
 @pytest.fixture(scope="session", autouse=True)
+def setup_image_store(tmp_path_factory):
+    configured = os.getenv("IMAGE_STORE_DIR", settings.IMAGE_STORE_DIR)
+    store_path = Path(configured)
+    try:
+        (store_path / ".tmp").mkdir(parents=True, exist_ok=True)
+    except (PermissionError, OSError):
+        temp_store = tmp_path_factory.mktemp("image_store")
+        (temp_store / ".tmp").mkdir(parents=True, exist_ok=True)
+        os.environ["IMAGE_STORE_DIR"] = str(temp_store)
+        settings.IMAGE_STORE_DIR = str(temp_store)
+    os.environ.setdefault("NEOGOLD_SKIP_BACKUP_CHECK", "1")
+    yield
+
+
+@pytest.fixture(scope="session", autouse=True)
 def setup_database(postgres_url, request):
     import subprocess
     if not request.config.getoption("--no-migrate"):

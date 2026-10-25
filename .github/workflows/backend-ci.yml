@@ -36,6 +36,8 @@ jobs:
         working-directory: backend
         env:
           DATABASE_URL: postgresql://postgres:test@localhost:5432/postgres
+          IMAGE_STORE_DIR: ${{ runner.temp }}/images
+          NEOGOLD_SKIP_BACKUP_CHECK: "1"
         run: pytest -q
       - name: Spec lint and server-spec diff
         run: |
@@ -72,6 +74,9 @@ jobs:
           pip install --require-hashes -r requirements.lock
           alembic upgrade head
       - name: Run the previous release's tests against it
+        env:
+          IMAGE_STORE_DIR: ${{ runner.temp }}/images
+          NEOGOLD_SKIP_BACKUP_CHECK: "1"
         run: |
           prev="$(git describe --tags --abbrev=0 --match 'intake-v*' HEAD^ 2>/dev/null || true)"
           if [ -z "$prev" ]; then echo "no previous release yet"; exit 0; fi
