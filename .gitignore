@@ -60,3 +60,5 @@ testdata/bench/*.parquet
 
 # Temporary reproduction runs
 training/output/model_run*.json
+15_Claude_Code_Prompts.md
+16_Agent_Quality_Prompts.md
