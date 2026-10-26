@@ -70,6 +70,10 @@ def main():
         return 2
     if data.get("tool_name") not in (None, "Bash"):
         return 0
+    # Project-level registration (.claude/settings.json) sees every Bash call, so it
+    # enforces only inside the doc-auditor subagent.
+    if "--project" in sys.argv[1:] and data.get("agent_type") != "doc-auditor":
+        return 0
     reason = verdict((data.get("tool_input") or {}).get("command", ""))
     if reason:
         print(f"doc-auditor guard blocked this command: {reason}", file=sys.stderr)

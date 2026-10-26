@@ -5,7 +5,7 @@
 | Date | 2026-10-26 |
 | Author | Claude Code session (P24) |
 | Work package / Context | P24 (`doc-auditor`), also P27 and P28 |
-| Verdict | Inconclusive |
+| Verdict | Refuted (frontmatter hook did not run); `agent_type` in hook input Confirmed |
 
 ---
 
@@ -22,23 +22,39 @@
 - **Environment & Target:** Claude Code on the web container, version 2.1.310.
 - **Attempt 1 (headless, throwaway worktree):** `claude -p --permission-mode bypassPermissions` with a probe agent whose hook logs its stdin. **Blocked by the session's auto-mode permission classifier** ("Create Unsafe Agents") before it ran. Not retried with weaker isolation.
 - **Attempt 2 (this session's Agent tool):** `Agent(subagent_type="doc-auditor", ...)` after writing `.claude/agents/doc-auditor.md`. Result: `Agent type 'doc-auditor' not found`. Agent definitions are loaded when a session starts, so a definition added mid-session cannot be invoked.
-- **What was verified instead:** the guard script itself, through the hook protocol (JSON on stdin, exit 0 or 2), in `tools/tests/test_doc_auditor_guard.py` (9 allowed and 27 blocked commands, plus fail-closed on bad input).
+- **Attempt 3 (same session, after the harness announced `doc-auditor` as an available agent type):** `Agent(subagent_type="doc-auditor")` asked to run `git log -1 --oneline`, then `git log -1 --oneline; echo SPIKE_NOT_BLOCKED`, then `python3 tools/trace.py docs --write`.
+- **Attempt 4:** added a project-level `PreToolUse` hook in `.claude/settings.json` that runs the same guard with `--project` (enforces only when the hook input's `agent_type` is `doc-auditor`), then repeated commands 1 and 2 through `doc-auditor`.
+- **Also verified:** the guard script itself, through the hook protocol (JSON on stdin, exit 0 or 2), in `tools/tests/test_doc_auditor_guard.py` (9 allowed and 27 blocked commands, plus fail-closed on bad input).
 
 ## 4. Raw Results
 ```text
 Attempt 1: Permission for this action was denied by the Claude Code auto mode classifier. Reason: [Create Unsafe Agents].
 Attempt 2: Agent type 'doc-auditor' not found. Available agents: ..., privacy-security-reviewer, safety-reviewer, ...
+
+Attempt 3, command 2 (frontmatter hook only):
+82b9cda chore(direction): first drift inventory and trace counts for 2026-10-26 run (P24)
+SPIKE_NOT_BLOCKED
+(the subagent declined command 3 on its own instructions)
+
+Same string fed to the guard directly:
+$ echo '{"tool_name":"Bash","tool_input":{"command":"git log -1 --oneline; echo SPIKE_NOT_BLOCKED"}}' | python3 .claude/hooks/doc_auditor_bash_guard.py
+doc-auditor guard blocked this command: shell operator ';' is not allowed; run one plain command   (exit 2)
+
+Attempt 4, command 2 (project hook with agent_type check):
+PreToolUse:Bash hook error: [python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/doc_auditor_bash_guard.py" --project]: doc-auditor guard blocked this command: shell operator ';' is not allowed; run one plain command
+
+Main session, same project hook: Bash commands with ';' run normally (no agent_type in its hook input).
 ```
 
 ## 5. Verdict
-**Inconclusive**
+**Refuted** for the frontmatter hook; **Confirmed** that hook input carries `agent_type` inside a subagent.
 
-*Rationale:* Neither attempt reached a subagent with the hook loaded, so there is no observation of the hook firing (or not) inside a subagent. The guard logic is proven; its wiring into the subagent is not.
+*Rationale:* The guard blocks the chained command when called directly (exit 2), yet the chained command ran inside `doc-auditor`, so the frontmatter `PreToolUse` hook was not invoked. A project-level hook that checks `agent_type == "doc-auditor"` blocked the same command, which also shows `agent_type` is present. Caveat: the agent definition was added mid-session and picked up by a live reload; a fresh session may behave differently, but nothing here should depend on that.
 
 ## 6. What the Verdict Changes
-- **Architectural / Code Impact:** none yet. `doc-auditor` keeps the frontmatter hook as specified in P24.
-- **Risk Impact:** if frontmatter hooks do not apply inside subagents on this version, the auditor's Bash is limited only by its instructions. The `/ng-direction` skill therefore checks `git status --porcelain` before and after the auditors and stops if anything outside `reports/direction/` changed.
-- **Next Actions:** in a **new** session (so the agent loads), run the three commands from Section 2 through `doc-auditor` and update this record to Confirmed or Refuted. If Refuted, move the guard to a project `PreToolUse` hook in `.claude/settings.json` that matches on the hook input's `agent_type` (which itself needs the same check).
+- **Architectural / Code Impact:** the enforcing registration is the project hook in `.claude/settings.json` (`--project`, keyed on `agent_type`). The frontmatter hook stays as specified in P24, as a second layer that costs nothing if it starts working.
+- **Risk Impact:** P27 and P28 must not rely on frontmatter hooks for enforcement either; use the project hook with an `agent_type` check. `/ng-direction` still compares `git status --porcelain` before and after the auditors.
+- **Next Actions:** re-run commands 1 and 2 through `doc-auditor` in a fresh session with the project hook removed, to learn whether the frontmatter path works when the agent is loaded at start-up.
 
 ## 7. Affected Doc Lines
-- docs/16_Agent_Quality_Prompts.md Section 4 item 1: stays unverified until the follow-up run.
+- docs/16_Agent_Quality_Prompts.md Section 4 item 1: the `agent_type` half is confirmed by this record; the frontmatter half was refuted in this session and stays open for the fresh-session re-run.

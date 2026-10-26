@@ -114,3 +114,19 @@ def test_auditor_schema_requires_evidence_for_implemented():
     jsonschema.validate(_report([_sample_claim(status="Unknown", evidence=[], reason="needs a phone")]), schema)
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(_report([_sample_claim(status="Done")]), schema)
+
+
+def test_project_registration_enforces_only_inside_doc_auditor():
+    cmd = {"tool_name": "Bash", "tool_input": {"command": "git log; rm -rf android"}}
+    project = [sys.executable, str(GUARD), "--project"]
+    inside = subprocess.run(project, input=json.dumps({**cmd, "agent_type": "doc-auditor"}),
+                            capture_output=True, text=True)
+    assert inside.returncode == 2
+    for other in ({**cmd, "agent_type": "general-purpose"}, cmd):  # other subagents, main session
+        assert subprocess.run(project, input=json.dumps(other), capture_output=True, text=True).returncode == 0
+
+
+def test_project_settings_register_the_guard():
+    settings = json.loads((REPO / ".claude/settings.json").read_text())
+    hooks = [h["command"] for e in settings["hooks"]["PreToolUse"] if e["matcher"] == "Bash" for h in e["hooks"]]
+    assert any("doc_auditor_bash_guard.py" in c and "--project" in c for c in hooks)

@@ -53,7 +53,7 @@ Docs 1, 11, and 13 are context only; no auditor.
 
 Save each reply as `$OUT/auditor/<doc-number>.json` and validate it against `reports/direction/auditor.schema.json`. A reply that fails validation is re-requested once; if it fails again, record that doc as "audit failed" in the report and continue. **Re-check every Implemented claim's evidence yourself by sampling** (at least 3 per doc, all of them in the six verdict areas): open the file and line. Evidence that does not show the claim turns the status into Unknown, and the report notes the downgrade.
 
-If `doc-auditor` is not available as a subagent type (it loads at session start), run the same instructions (`.claude/agents/doc-auditor.md` body) in a general-purpose subagent with tools limited to Read, Grep, and Glob, and say in the report that the Bash guard was not active.
+The Bash guard that enforces read-only is the project hook in `.claude/settings.json` (it keys on `agent_type == "doc-auditor"`); the frontmatter hook did not fire in testing (docs/spikes/2026-10-26-subagent-frontmatter-hooks.md). If `doc-auditor` is not available as a subagent type, run the same instructions (`.claude/agents/doc-auditor.md` body) in a general-purpose subagent, and say in the report that the Bash guard was not active for those audits.
 
 ### Step c: Unplanned work (main session)
 1. **Inventory items no doc anchors:** every `unplanned` entry in the gated categories (`gated` list in the inventory). Group them by category; one row per item.
