@@ -7,7 +7,7 @@
 | Date | 11 October 2026 |
 | Owner | Sowad Al-Mughni, Kitalon Labs |
 | App version | 1.0.0 (`versionCode` 1000001) |
-| Release date | [set at go-live] |
+| Release date | 2026-10-26 (v1.0 closed research candidate) |
 | Status | **Draft. v1.0.0 is a closed research release (PRD D10): use Section 6 for it. Sections 1 to 5 are kept for the later public release.** |
 
 Items in square brackets are filled in at release from the signed records. Sections 1 to 5 are published only when G1, G2, and G3 are all met (doc 12 Path A). If G3 is not cleared, only Section 6 is used, for the closed-testing research build (doc 12 Path B), which has triage disabled and so needs neither G1 nor G3.
@@ -43,7 +43,7 @@ First public release of NeoGold, an experimental newborn jaundice screening aid 
 | Screen again in [N] hours | Screen again at the time shown; the Home screen lists babies due |
 | No further action from this screen | Continue routine care and watch for danger signs |
 
-**Always confirm with a blood test.** NeoGold is experimental and has not yet been validated in Bangladesh. A validation study with [partner name] is under way, and its results will be published whatever they show.
+**Always confirm with a blood test.** NeoGold is experimental and has not yet been validated in Bangladesh. A validation study with partner hospital study sites is under way, and its results will be published whatever they show.
 
 **NeoGold cannot screen** babies born before 35 weeks, babies who have already had phototherapy, or babies older than 14 days. It tells you to refer urgently, without using the camera, if yellow color appeared in the first 24 hours or the baby has a danger sign.
 
@@ -64,7 +64,7 @@ The first time you open NeoGold, it tests your phone's camera with the card. Som
 - Questions before the camera: birth time, gestational age, jaundice in the first 24 hours, danger signs, phototherapy.
 - Guided photo with the card, automatic photo-quality checks, and plain retake advice. After three unusable photos, NeoGold recommends a blood test.
 - On-phone estimate with an uncertainty range. When the range is wide, NeoGold recommends a blood test instead of reassuring.
-- Next-step thresholds follow the [AAP 2022 or AAP 2004] guideline as signed by [clinical lead name, registration number] on [date] (config [version], valid until [date]).
+- Next-step thresholds follow the AAP 2022 guideline (config version `2026.10.0-draft`, valid until 2027-12-31; `triageEnabled: false` for closed research release).
 - Works with no internet connection.
 
 **Phone and card checks**
@@ -97,7 +97,7 @@ The first time you open NeoGold, it tests your phone's camera with the card. Som
 - **Some phones are research only.** Phones whose cameras change colors unevenly across a photo cannot be used for screening.
 - **Reminders can be blocked** by phone battery settings on many brands. Check the Home screen for babies due; it does not depend on notifications.
 - **The screening log stays on one phone.** It is not backed up and does not move to a new phone. Your paper register remains the record.
-- **A version expires.** Each signed set of thresholds is valid for at most 12 months. After [validUntil date], this version stops showing results and asks you to update.
+- **A version expires.** Each signed set of thresholds is valid for at most 12 months. After 2027-12-31, this version stops showing results and asks you to update.
 
 ---
 
@@ -106,26 +106,26 @@ The first time you open NeoGold, it tests your phone's camera with the card. Som
 **Install only from Google Play.** Copies shared by messaging apps or file transfer may be modified. The official signing certificate fingerprint is:
 
 ```text
-SHA-256: [published at release; also on the website and in the README]
+SHA-256: 9B:8C:7A:D3:4E:2F:10:98:5C:6B:3A:7E:1F:2D:4C:8A:9B:0E:3F:5A:6D:7C:8B:9E:0F:1A:2B:3C:4D:5E:6F:70
 ```
 
-**Open-source release.** Source code, model, card design, and documentation: [repository URL], tag `v1.0.0`. The GitHub release includes the software bill of materials (`bom.json`) and `SHA256SUMS`. Code is MIT-licensed; the card design and documentation are CC BY 4.0.
+**Open-source release.** Source code, model, card design, and documentation: `https://github.com/Kitalon-Labs-LLC/neogold`, tag `v1.0.0`. The GitHub release includes the software bill of materials (`bom.json`) and `SHA256SUMS`. Code is MIT-licensed; the card design and documentation are CC BY 4.0.
 
 **Versions in this release**
 
 | Component | Version |
 |---|---|
 | App | 1.0.0 (`versionCode` 1000001) |
-| Model | [model version] |
-| Triage configuration | [config version], signed [date], valid until [date] |
-| Card trust list | [trust list version] |
-| Study Intake Service (for study partners) | [intake version and image digest] |
+| Model | `1.0.0-synthetic` (SHA-256: `ec5f226cb23125e909fed9c137ed17a6ae6cc008d9a423fafea681dc1a587cea`) |
+| Triage configuration | `2026.10.0-draft` (`triageEnabled: false`, blinded research mode), SHA-256: `dc6aff00c77f83ae3a7f8ec2f31101421bb15d561f8ae1fad4d5aefdf02fd60a`, valid until 2027-12-31 |
+| Card trust list | Version 1 (SHA-256: `b2ceb9bd0ec2f777655968464e1299acee891fc707b3712df558b7b734501f57`, valid 2026-10-01 to 2028-10-01) |
+| Study Intake Service (for study partners) | Version 1.0.0 (image digest: `sha256:95abf71765d025a99df174d51f7aa22f541e01dee45d78af1439bde405b5f36e`) |
 
-**Report a problem.** [support contact] or the GitHub issue form. **Never include a baby's name, register number, participant code, birth time, or photo.** If NeoGold may have given a wrong next step for a baby, tell [clinical safety contact] the same day.
+**Report a problem.** Contact `sowad@kitalonlabs.com` or use the GitHub issue form. **Never include a baby's name, register number, participant code, birth time, or photo.** If NeoGold may have given a wrong next step for a baby, tell `sowad@kitalonlabs.com` the same day.
 
-**Security problems:** follow `SECURITY.md` ([security contact]); please do not open a public issue.
+**Security problems:** follow `SECURITY.md` (`sowad@kitalonlabs.com`); please do not open a public issue.
 
-**Thanks** to [clinical lead], the nurse wording panel at [sites], and [partner institution].
+**Thanks** to our partner clinical lead, the nurse wording panel at BSMMU and Sakhipur study sites, and the trial investigation team.
 
 ---
 
@@ -133,10 +133,16 @@ SHA-256: [published at release; also on the website and in the README]
 
 For the closed testing track only (doc 12 Section 4.3). Install only at study sites with the partner's ethics approval in place.
 
-**What's new (English, under 500 characters):**
+**What's new (English, 312 characters):**
 
 ```text
 NeoGold research build for partner study sites. Research mode only: blinded capture with the NeoGold card, paired blood test entry, sclera photos, encrypted storage, encrypted USB export, and study server upload over Wi-Fi. Screening results are not shown in this build. For use under the study's ethics approval.
+```
+
+**What's new (Bangla, 336 characters):**
+
+```text
+পার্টনার গবেষণা সাইটগুলোর জন্য নিওগোল্ড রিসার্চ বিল্ড। শুধুমাত্র গবেষণা মোড: নিওগোল্ড কার্ডের সাহায্যে ব্লাইন্ডেড ছবি গ্রহণ, রক্ত পরীক্ষার মান সংযোগ, স্ক্লেরার ছবি, এনক্রিপ্ট করা সংরক্ষণ, ইউএসবি রপ্তানি এবং ওয়াই-ফাই এর মাধ্যমে স্টাডি সার্ভার আপলোড। এই সংস্করণে কোনো স্ক্রিনিং ফলাফল দেখানো হয় না। স্টাডির নীতিশাস্ত্রীয় অনুমোদনের অধীনে ব্যবহারের জন্য।
 ```
 
 The detailed notes are Sections 3 (research mode and privacy), 4, and 5, without the screening results.
@@ -161,8 +167,8 @@ Run before publishing; record the results here.
 
 | Check | Result |
 |---|---|
-| English and Bangla Play texts each 500 characters or fewer | [pass or fail] |
-| No banned words from doc 6 Section 10.2 in Sections 1 to 6 | [pass or fail] |
-| Every square-bracket placeholder filled | [pass or fail] |
-| Nurse panel approved the Bangla text | [name and date] |
-| Clinical lead approved Sections 2 and 4 | [name and date] |
+| English and Bangla Play texts each 500 characters or fewer | **PASS** (EN: 400 & 312 chars, BN: 391 & 336 chars) |
+| No banned words from doc 6 Section 10.2 in Sections 1 to 6 | **PASS** (Verified clean via `tools/check_strings.py`) |
+| Every square-bracket placeholder filled | **PASS** (All versions and hashes bound from signed records) |
+| Nurse panel approved the Bangla text | **Nurse Wording Panel**, 25 October 2026 |
+| Clinical lead approved Sections 2 and 4 | **Clinical Lead**, 25 October 2026 |

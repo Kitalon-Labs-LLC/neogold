@@ -12,7 +12,7 @@ To report a vulnerability:
 - **Preferred:** Use [GitHub Private Vulnerability Reporting](https://github.com/Kitalon-Labs-LLC/neogold/security/advisories/new) on this repository.
 - **Alternative:** Email the security team at:
   ```text
-  security@kitalonlabs.com  <!-- Placeholder: update with your designated security address -->
+  sowad@kitalonlabs.com
   ```
 
 Please include:

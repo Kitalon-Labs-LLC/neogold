@@ -1,0 +1,113 @@
+appId: com.kitalonlabs.neogold
+---
+# ==============================================================================
+# NeoGold Journey J1: First Launch, Onboarding & Qualification Flow (doc 2 Section 6, doc 10 TC-ONB-01..03, TC-DEV-01..04)
+# Target devices: D1 (Transsion), D2 (Xiaomi), D3 (Samsung), D4 (Android Go 2GB), D5, D6
+# ==============================================================================
+
+- launchApp:
+    clearState: true
+
+# 1. Screen S01: Language Selection (TC-ONB-01)
+- assertVisible:
+    id: "lang_option_bn"
+- assertVisible:
+    id: "lang_option_en"
+
+# Select English (or Bangla) and proceed
+- tapOn:
+    id: "lang_option_en"
+- tapOn:
+    id: "btn_language_continue"
+
+# 2. Screens S02–S04: Safety Notice Acknowledgement (TC-ONB-02)
+# Step through mandatory safety explanation screens
+- extendedWaitUntil:
+    visible:
+      id: "safety_notice_card"
+    timeout: 5000
+
+- tapOn:
+    id: "btn_safety_next"
+    optional: true
+
+- tapOn:
+    id: "btn_safety_next"
+    optional: true
+
+# Explicit mandatory acknowledgement on final page
+- assertVisible:
+    id: "btn_acknowledge_safety"
+- tapOn:
+    id: "btn_acknowledge_safety"
+
+# 3. Screen S05: Device Check & Battery Guidance (TC-DEV-01, TC-DEV-09, TC-DEV-10)
+- extendedWaitUntil:
+    visible:
+      id: "btn_device_check_continue"
+    timeout: 8000
+
+- assertVisible:
+    id: "btn_view_supported_devices"
+
+# Proceed to Card Batch Verification
+- tapOn:
+    id: "btn_device_check_continue"
+
+# 4. Screen S06: Card Scan & Trust Verification (TC-CARD-01)
+- extendedWaitUntil:
+    visible:
+      id: "card_scan_viewfinder"
+    timeout: 8000
+
+# When valid card QR is scanned and verified
+- extendedWaitUntil:
+    visible:
+      id: "badge_card_verified"
+    timeout: 10000
+
+- tapOn:
+    id: "btn_card_scan_continue"
+
+# 5. Screen S07: 3-Photo Camera Qualification (TC-DEV-02, TC-DEV-03, TC-DEV-04)
+- extendedWaitUntil:
+    visible:
+      id: "qualification_viewfinder"
+    timeout: 8000
+
+# Capture Photo 1
+- tapOn:
+    id: "btn_take_qualification_photo"
+
+# Capture Photo 2
+- extendedWaitUntil:
+    visible:
+      id: "btn_take_qualification_photo"
+    timeout: 8000
+- tapOn:
+    id: "btn_take_qualification_photo"
+
+# Capture Photo 3
+- extendedWaitUntil:
+    visible:
+      id: "btn_take_qualification_photo"
+    timeout: 8000
+- tapOn:
+    id: "btn_take_qualification_photo"
+
+# 6. Screen S08: Qualification Results (TC-DEV-05, TC-DEV-06, TC-DEV-08)
+- extendedWaitUntil:
+    visible:
+      id: "qualification_result_card"
+    timeout: 12000
+
+- assertVisible:
+    id: "btn_get_started"
+- tapOn:
+    id: "btn_get_started"
+
+# 7. Screen S09: Lands on Main Home Screen
+- extendedWaitUntil:
+    visible:
+      id: "home_experimental_banner"
+    timeout: 5000

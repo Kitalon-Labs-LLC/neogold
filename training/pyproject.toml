@@ -9,7 +9,7 @@ description = "Deterministic reproducible training pipeline for NeoGold on-devic
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-    { name = "Kitalon Labs", email = "research@kitalonlabs.com" }
+    { name = "Kitalon Labs", email = "sowad@kitalonlabs.com" }
 ]
 license = { text = "MIT" }
 dependencies = [
