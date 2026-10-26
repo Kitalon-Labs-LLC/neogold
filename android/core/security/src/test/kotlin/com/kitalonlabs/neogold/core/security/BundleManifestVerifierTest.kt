@@ -185,7 +185,7 @@ class BundleManifestVerifierTest {
     fun realAppAssets_verifySuccessfully() {
         val assetsDir = File("../../app/src/main/assets").takeIf { it.exists() }
             ?: File("android/app/src/main/assets").takeIf { it.exists() }
-            ?: File("d:/Project/neogold-android/android/app/src/main/assets")
+            ?: error("Could not find the app assets directory (expected ../../app/src/main/assets)")
 
         val verifier = BundleManifestVerifier(testPublicKeyHex)
         val result = verifier.verify { name ->
@@ -201,7 +201,7 @@ class BundleManifestVerifierTest {
     fun realAppAssets_tamperedTriageConfig_disablesScreening_TC_SEC_09() {
         val assetsDir = File("../../app/src/main/assets").takeIf { it.exists() }
             ?: File("android/app/src/main/assets").takeIf { it.exists() }
-            ?: File("d:/Project/neogold-android/android/app/src/main/assets")
+            ?: error("Could not find the app assets directory (expected ../../app/src/main/assets)")
 
         val verifier = BundleManifestVerifier(testPublicKeyHex)
         val result = verifier.verify { name ->

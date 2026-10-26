@@ -92,8 +92,7 @@ class ScreeningFlowTest {
             File("../../../testdata/triage/config.synthetic.json"),
             File("../../testdata/triage/config.synthetic.json"),
             File("../testdata/triage/config.synthetic.json"),
-            File("testdata/triage/config.synthetic.json"),
-            File("d:/Project/neogold-android/testdata/triage/config.synthetic.json")
+            File("testdata/triage/config.synthetic.json")
         )
         val configFile = candidatePaths.firstOrNull { it.exists() }
             ?: File("testdata/triage/config.synthetic.json")

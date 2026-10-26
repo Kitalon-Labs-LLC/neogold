@@ -14,7 +14,7 @@ object TriageCli {
             ?: File("../$configPath").takeIf { it.exists() }
             ?: File("../../$configPath").takeIf { it.exists() }
             ?: File("../../../$configPath").takeIf { it.exists() }
-            ?: File("d:/Project/neogold-android/$configPath")
+            ?: error("Could not find '$configPath'. Run from the repository root or a module directory.")
         val config = TriageConfigParser.parse(configFile.readText())
         val engine = TriageEngine(config = config)
 

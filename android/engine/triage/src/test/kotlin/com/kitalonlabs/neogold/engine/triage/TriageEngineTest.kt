@@ -18,8 +18,7 @@ class TriageEngineTest {
             File("../../../testdata/triage/config.synthetic.json"),
             File("../../testdata/triage/config.synthetic.json"),
             File("../testdata/triage/config.synthetic.json"),
-            File("testdata/triage/config.synthetic.json"),
-            File("d:/Project/neogold-android/testdata/triage/config.synthetic.json")
+            File("testdata/triage/config.synthetic.json")
         )
         val configFile = candidatePaths.firstOrNull { it.exists() }
             ?: throw IllegalStateException("Could not find config.synthetic.json")
@@ -442,7 +441,7 @@ class TriageEngineTest {
         // Schema and property check on clinical config
         val clinicalJson = File("config/triage-config.json").takeIf { it.exists() }
             ?: File("../../../config/triage-config.json").takeIf { it.exists() }
-            ?: File("d:/Project/neogold-android/config/triage-config.json")
+            ?: throw IllegalStateException("Could not find config/triage-config.json")
         val parsed = TriageConfigParser.parse(clinicalJson.readText())
 
         // Every GA from 35 to 44 maps to exactly one band
@@ -511,7 +510,8 @@ class TriageEngineTest {
     fun test_TC_TRI_21_signoff_hash_enforced_in_CI() {
         // CI check verify_clinical_signoff.py handles triageEnabled false
         val draftJson = File("config/triage-config.json").takeIf { it.exists() }
-            ?: File("d:/Project/neogold-android/config/triage-config.json")
+            ?: File("../../../config/triage-config.json").takeIf { it.exists() }
+            ?: throw IllegalStateException("Could not find config/triage-config.json")
         val parsed = TriageConfigParser.parse(draftJson.readText())
         assertThat(parsed.triageEnabled).isFalse()
         assertThat(parsed.clinicalSignoff.status).isEqualTo(SignoffStatus.DRAFT)
