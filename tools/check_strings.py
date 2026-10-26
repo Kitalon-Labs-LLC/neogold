@@ -8,10 +8,12 @@ Enforces:
 3. No hardcoded string violations in layouts/code where strings.xml keys should be used.
 """
 
+import glob
 import os
 import re
 import sys
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 BANNED_ENGLISH = [
     r"\bsafe\b",
@@ -52,19 +54,8 @@ def parse_strings(xml_path):
     return strings
 
 
-def main():
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    res_dir = os.path.join(repo_root, "android", "core", "designsystem", "src", "main", "res")
-    en_xml = os.path.join(res_dir, "values", "strings.xml")
-    bn_xml = os.path.join(res_dir, "values-bn", "strings.xml")
-
-    if not os.path.exists(en_xml) or not os.path.exists(bn_xml):
-        print(f"ERROR: String resource files not found in {res_dir}", file=sys.stderr)
-        sys.exit(1)
-
-    en_strings = parse_strings(en_xml)
-    bn_strings = parse_strings(bn_xml)
-
+def check_strings_content(en_strings: dict[str, str], bn_strings: dict[str, str]) -> list[str]:
+    """Check parsed strings for missing keys and banned words."""
     errors = []
 
     # 1. Missing keys check (TC-A11Y-01)
@@ -88,13 +79,42 @@ def main():
             if re.search(pat, text):
                 errors.append(f"Bangla string '{key}' contains banned pattern '{pat}': \"{text}\"")
 
-    if errors:
+    return errors
+
+
+def main():
+    repo_root = Path(__file__).resolve().parent.parent
+    res_dirs = [
+        repo_root / "android" / "core" / "designsystem" / "src" / "main" / "res",
+    ]
+
+    total_en = 0
+    total_bn = 0
+    all_errors = []
+
+    for res_dir in res_dirs:
+        en_xml = res_dir / "values" / "strings.xml"
+        bn_xml = res_dir / "values-bn" / "strings.xml"
+
+        if not en_xml.exists() or not bn_xml.exists():
+            print(f"ERROR: String resource files not found in {res_dir}", file=sys.stderr)
+            sys.exit(1)
+
+        en_strings = parse_strings(en_xml)
+        bn_strings = parse_strings(bn_xml)
+        total_en += len(en_strings)
+        total_bn += len(bn_strings)
+
+        errors = check_strings_content(en_strings, bn_strings)
+        all_errors.extend(errors)
+
+    if all_errors:
         print("STRING LINT VIOLATIONS DETECTED:", file=sys.stderr)
-        for err in errors:
+        for err in all_errors:
             print(f"  - {err}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"SUCCESS: String lint passed! Checked {len(en_strings)} English and {len(bn_strings)} Bangla strings. 0 violations.")
+    print(f"SUCCESS: String lint passed! Checked {total_en} English and {total_bn} Bangla strings. 0 violations.")
     sys.exit(0)
 
 
