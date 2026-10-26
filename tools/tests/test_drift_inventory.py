@@ -497,6 +497,25 @@ def test_since_limits_commit_range(repo):
     assert inv["commits"]["range"] == f"{head}..HEAD"
 
 
+def test_since_cannot_inject_git_options(repo):
+    # P24 privacy review finding 1: "--output=x" must not reach git log as an option.
+    inv = di.inventory(repo, since="--output=" + str(repo / "docs/pwned"))
+    assert inv["categories"]["backlog_refs"]["status"].startswith("skipped: --since")
+    assert not list((repo / "docs").glob("pwned*"))
+    inv = di.inventory(repo, since="no-such-ref")
+    assert inv["categories"]["backlog_refs"]["status"].startswith("skipped: --since")
+
+
+def test_output_refuses_symlinked_reports_dir(repo, tmp_path):
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (repo / "reports").mkdir(exist_ok=True)
+    (repo / "reports/direction").symlink_to(elsewhere)
+    with pytest.raises(SystemExit, match="symlink"):
+        run(repo, "--out", "reports/direction/x.json")
+    assert not list(elsewhere.iterdir())
+
+
 def test_resolved_items_are_reported(repo, capsys):
     bf = repo / "android/core/model/build.gradle.kts"
     bf.write_text("dependencies {\n    implementation(libs.leftpad)\n}\n")

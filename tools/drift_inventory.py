@@ -805,8 +805,16 @@ def git_inventory(root, since):
             wp_ng[cells[0]] = ids
     wps = set(re.findall(r"\bP\d{2}\b", log_all))
     via_wp = set().union(*(wp_ng.get(p, set()) for p in wps)) if wps else set()
+    if since:
+        # Resolve to a commit first: a value such as "--output=x" must never reach git
+        # as an option (P24 privacy review, finding 1).
+        resolved = None if since.startswith("-") else git(
+            root, "rev-parse", "--verify", "--quiet", "--end-of-options", f"{since}^{{commit}}")
+        if not resolved:
+            return {"backlog_refs": skipped(f"--since {since!r} is not a commit"), "_commits": {}}
+        since = resolved.strip()
     rng = f"{since}..HEAD" if since else "HEAD"
-    log = git(root, "log", "--no-merges", "--format=%H%x1f%s%x1f%b%x1e", rng)
+    log = git(root, "log", "--no-merges", "--format=%H%x1f%s%x1f%b%x1e", "--end-of-options", rng)
     if log is None:
         return {"backlog_refs": skipped(f"git log failed for {rng}"), "_commits": {}}
     commits = []
@@ -860,7 +868,9 @@ def inventory(root, since=None, merged_manifest=None, python=None):
 
 def safe_out(root, path):
     p = (root / path).resolve() if not pathlib.Path(path).is_absolute() else pathlib.Path(path).resolve()
-    allowed = (root / "reports/direction").resolve()
+    allowed = root.resolve() / "reports" / "direction"
+    if (root / "reports").is_symlink() or (root / "reports/direction").is_symlink():
+        raise SystemExit("refusing to write: reports/ or reports/direction/ is a symlink")
     if not p.is_relative_to(allowed):
         raise SystemExit(f"refusing to write {p}: output must be under {allowed}")
     p.parent.mkdir(parents=True, exist_ok=True)

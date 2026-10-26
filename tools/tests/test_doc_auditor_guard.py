@@ -22,7 +22,9 @@ spec.loader.exec_module(guard)
     "git diff main...HEAD --stat",
     "python3 tools/drift_inventory.py",
     "python3 tools/drift_inventory.py --since abc123 --check --allow-skipped",
-    "python3 tools/drift_inventory.py --python=/opt/venv/bin/python",
+    "python3 tools/drift_inventory.py --since=p24-direction-check",
+    "python3 tools/drift_inventory.py --since HEAD~5",
+    "git log main..HEAD",
     "python3 tools/trace.py docs",
     "python3 tools/trace.py docs --tests",
 ])
@@ -36,6 +38,14 @@ def test_allowed(command):
     "python3 tools/drift_inventory.py --write-baseline",
     "python3 tools/drift_inventory.py --out reports/direction/x.json",
     "python3 tools/drift_inventory.py --root /tmp",
+    "python3 tools/drift_inventory.py --since=--output=docs/x",   # privacy review finding 1
+    "python3 tools/drift_inventory.py --since --output=docs/x",
+    "python3 tools/drift_inventory.py --since",
+    "python3 tools/drift_inventory.py --python /bin/sh",          # finding 2
+    "python3 tools/drift_inventory.py --merged-manifest /etc/passwd",
+    "git diff /etc/hostname /dev/null",                           # finding 4
+    "git diff ../other-checkout/file",
+    "git diff ~/notes",
     "python3 tools/verify_config_schema.py",
     "python3 -c 'import os'",
     "python3 tools/../backend/app/cli.py",
@@ -80,6 +90,24 @@ def test_hook_protocol_allows_with_exit_0():
 
 def test_hook_fails_closed_on_bad_input():
     assert run_hook("not json").returncode == 2
+    assert run_hook("[1, 2]").returncode == 2
+    bad_type = json.dumps({"tool_name": "Bash", "tool_input": {"command": ["git", "log"]}})
+    assert run_hook(bad_type).returncode == 2
+
+
+def run_project_hook(payload):
+    return subprocess.run([sys.executable, str(GUARD), "--project"], input=payload, capture_output=True, text=True)
+
+
+def test_project_hook_never_blocks_main_session_on_bad_input():
+    assert run_project_hook("not json").returncode == 0
+    assert run_project_hook("[1, 2]").returncode == 0
+
+
+def test_project_hook_fails_closed_for_auditor_on_bad_command_type():
+    bad = json.dumps({"tool_name": "Bash", "agent_type": "doc-auditor", "tool_input": {"command": 42}})
+    res = run_project_hook(bad)
+    assert res.returncode == 2 and "guard error" in res.stderr
 
 
 def test_agent_frontmatter_wires_the_guard():
