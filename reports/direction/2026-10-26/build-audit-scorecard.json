@@ -1,0 +1,357 @@
+{
+  "date": "2026-10-26",
+  "commit": "91c1125",
+  "scope": "docs/15_Claude_Code_Prompts.md work packages P00 to P22",
+  "overall": "components_built_app_not_integrated",
+  "release_readiness": {
+    "v1.0_closed_testing": "not_ready",
+    "reason": "Research mode does not work in the app"
+  },
+  "work_packages": {
+    "P00": {
+      "verdict": "done",
+      "main_gap": "`.idea/` tracked in git"
+    },
+    "P01": {
+      "verdict": "partial",
+      "main_gap": "Hilt unused; network rule is a unit test, not a Gradle check; PR #8 merged on red CI"
+    },
+    "P02": {
+      "verdict": "done_gate_not_evidenced",
+      "main_gap": "Merged into P03 branch before its review gate"
+    },
+    "P03": {
+      "verdict": "done",
+      "main_gap": "Gate not evidenced"
+    },
+    "P04": {
+      "verdict": "done",
+      "main_gap": null
+    },
+    "P05": {
+      "verdict": "done",
+      "main_gap": null
+    },
+    "P06": {
+      "verdict": "done",
+      "main_gap": "TC-EST-07 two-ABI is JVM only"
+    },
+    "P07": {
+      "verdict": "done",
+      "main_gap": null
+    },
+    "P08": {
+      "verdict": "partial",
+      "main_gap": "Custom detector; spike decision unrecorded; tests use own renderer"
+    },
+    "P09": {
+      "verdict": "partial",
+      "main_gap": "S07 qualification hardcoded; device_profile never saved"
+    },
+    "P10": {
+      "verdict": "not_met",
+      "main_gap": "Pipeline not wired; no Macrobenchmark; v0.1 report simulated"
+    },
+    "P11": {
+      "verdict": "partial",
+      "main_gap": "Retention not scheduled; purge not wired; :core:data lock stale"
+    },
+    "P12": {
+      "verdict": "partial",
+      "main_gap": "Integrity result unused; test K3 trusted, private half committed"
+    },
+    "P13": {
+      "verdict": "partial",
+      "main_gap": "String lint ignores Kotlin; fonts not bundled; no real in-app update"
+    },
+    "P14": {
+      "verdict": "not_met",
+      "main_gap": "Research mode unreachable, any PIN accepted, nothing saved"
+    },
+    "P15": {
+      "verdict": "partial",
+      "main_gap": "Export screen never writes a file"
+    },
+    "P16": {
+      "verdict": "partial",
+      "main_gap": "Android workflows invalid YAML; no release tags; v1.0.0 notes missing"
+    },
+    "P17": {
+      "verdict": "done",
+      "main_gap": null
+    },
+    "P18": {
+      "verdict": "mostly_done",
+      "main_gap": "No Schemathesis run (TC-API-30)"
+    },
+    "P19": {
+      "verdict": "done_in_repo",
+      "main_gap": "Droplet steps are the founder's"
+    },
+    "P20": {
+      "verdict": "partial",
+      "main_gap": "Upload never started by the app; R08 and R09 placeholders"
+    },
+    "P21": {
+      "verdict": "not_met",
+      "main_gap": "Fake capture and result; rules in UI; wording; enums; versions"
+    },
+    "P22": {
+      "verdict": "not_met",
+      "main_gap": "Reports claim unrun tests; no release candidate on a track"
+    }
+  },
+  "defects": {
+    "log": "docs/11_Bug_Defect_Log.md",
+    "s1": [
+      "BUG-2026-001",
+      "BUG-2026-002",
+      "BUG-2026-003",
+      "BUG-2026-004",
+      "BUG-2026-005",
+      "BUG-2026-006",
+      "BUG-2026-007",
+      "BUG-2026-008",
+      "BUG-2026-009",
+      "BUG-2026-010",
+      "BUG-2026-011",
+      "BUG-2026-012",
+      "BUG-2026-013",
+      "BUG-2026-014",
+      "BUG-2026-015"
+    ],
+    "s1_clinical": [
+      "BUG-2026-001",
+      "BUG-2026-002",
+      "BUG-2026-003",
+      "BUG-2026-004",
+      "BUG-2026-005",
+      "BUG-2026-006",
+      "BUG-2026-007",
+      "BUG-2026-008"
+    ],
+    "s2": [
+      "BUG-2026-016",
+      "BUG-2026-017",
+      "BUG-2026-018",
+      "BUG-2026-019",
+      "BUG-2026-020",
+      "BUG-2026-021",
+      "BUG-2026-022",
+      "BUG-2026-023",
+      "BUG-2026-024",
+      "BUG-2026-025",
+      "BUG-2026-026",
+      "BUG-2026-027",
+      "BUG-2026-028",
+      "BUG-2026-029",
+      "BUG-2026-030",
+      "BUG-2026-031"
+    ]
+  },
+  "ci": {
+    "android-ci.yml": {
+      "ever_passed": false,
+      "runs_checked": 38,
+      "cause": "invalid YAML since 21410eb; earlier: gradlew not executable, gitleaks 2 findings"
+    },
+    "android-release.yml": {
+      "ever_ran_a_job": false,
+      "cause": "invalid YAML"
+    },
+    "backend-ci.yml": {
+      "status_on_main": "green"
+    },
+    "repo-ci.yml": {
+      "status_on_main": "green"
+    }
+  },
+  "local_run": {
+    "android_jvm": {
+      "tests": 359,
+      "failures": 0,
+      "note": ":core:data (12) needs one lock entry updated; fails from a clean checkout"
+    },
+    "backend": {
+      "tests": 37,
+      "failures": 0
+    },
+    "card": {
+      "tests": 29,
+      "failures": 0
+    },
+    "training": {
+      "tests": 10,
+      "failures": 0
+    },
+    "verifyConfigSchema": "5 configs pass",
+    "trace": "FR 38/38, NFR 14/14, H 11/11, T 17/17, Gate 9/9, NG 55/63"
+  },
+  "test_case_evidence": {
+    "by_area": {
+      "ONB": {
+        "total": 6,
+        "automated": 6,
+        "jvm_standin_only": 0,
+        "no_test": 0
+      },
+      "DEV": {
+        "total": 10,
+        "automated": 3,
+        "jvm_standin_only": 7,
+        "no_test": 0
+      },
+      "CARD": {
+        "total": 10,
+        "automated": 7,
+        "jvm_standin_only": 2,
+        "no_test": 1
+      },
+      "CAP": {
+        "total": 17,
+        "automated": 12,
+        "jvm_standin_only": 5,
+        "no_test": 0
+      },
+      "EST": {
+        "total": 7,
+        "automated": 5,
+        "jvm_standin_only": 2,
+        "no_test": 0
+      },
+      "TRI": {
+        "total": 26,
+        "automated": 25,
+        "jvm_standin_only": 1,
+        "no_test": 0
+      },
+      "UI": {
+        "total": 14,
+        "automated": 13,
+        "jvm_standin_only": 1,
+        "no_test": 0
+      },
+      "LOG": {
+        "total": 12,
+        "automated": 10,
+        "jvm_standin_only": 1,
+        "no_test": 1
+      },
+      "PRIV": {
+        "total": 5,
+        "automated": 1,
+        "jvm_standin_only": 4,
+        "no_test": 0
+      },
+      "RSH": {
+        "total": 16,
+        "automated": 10,
+        "jvm_standin_only": 6,
+        "no_test": 0
+      },
+      "EXP": {
+        "total": 4,
+        "automated": 2,
+        "jvm_standin_only": 2,
+        "no_test": 0
+      },
+      "SYNC": {
+        "total": 20,
+        "automated": 14,
+        "jvm_standin_only": 6,
+        "no_test": 0
+      },
+      "API": {
+        "total": 33,
+        "automated": 30,
+        "jvm_standin_only": 2,
+        "no_test": 1
+      },
+      "SEC": {
+        "total": 14,
+        "automated": 0,
+        "jvm_standin_only": 4,
+        "no_test": 10
+      },
+      "PERF": {
+        "total": 7,
+        "automated": 0,
+        "jvm_standin_only": 0,
+        "no_test": 7
+      },
+      "REL": {
+        "total": 8,
+        "automated": 4,
+        "jvm_standin_only": 2,
+        "no_test": 2
+      },
+      "A11Y": {
+        "total": 5,
+        "automated": 5,
+        "jvm_standin_only": 0,
+        "no_test": 0
+      },
+      "USE": {
+        "total": 5,
+        "automated": 0,
+        "jvm_standin_only": 0,
+        "no_test": 5
+      },
+      "OPS": {
+        "total": 11,
+        "automated": 0,
+        "jvm_standin_only": 2,
+        "no_test": 9
+      }
+    },
+    "totals": {
+      "total": 230,
+      "automated": 147,
+      "jvm_standin_only": 47,
+      "no_test": 36
+    },
+    "no_test": [
+      "TC-API-30",
+      "TC-CARD-10",
+      "TC-LOG-09",
+      "TC-OPS-01",
+      "TC-OPS-02",
+      "TC-OPS-03",
+      "TC-OPS-05",
+      "TC-OPS-06",
+      "TC-OPS-08",
+      "TC-OPS-09",
+      "TC-OPS-10",
+      "TC-OPS-11",
+      "TC-PERF-01",
+      "TC-PERF-02",
+      "TC-PERF-03",
+      "TC-PERF-04",
+      "TC-PERF-05",
+      "TC-PERF-06",
+      "TC-PERF-07",
+      "TC-REL-04",
+      "TC-REL-07",
+      "TC-SEC-01",
+      "TC-SEC-02",
+      "TC-SEC-04",
+      "TC-SEC-05",
+      "TC-SEC-06",
+      "TC-SEC-10",
+      "TC-SEC-11",
+      "TC-SEC-12",
+      "TC-SEC-13",
+      "TC-SEC-14",
+      "TC-USE-01",
+      "TC-USE-02",
+      "TC-USE-03",
+      "TC-USE-04",
+      "TC-USE-05"
+    ]
+  },
+  "test_reports": {
+    "docs/test-reports/v0.1.md": "not_passed_under_correction",
+    "docs/test-reports/v0.5.md": "not_passed_under_correction",
+    "docs/test-reports/v1.0.md": "not_passed_under_correction_do_not_promote"
+  }
+}

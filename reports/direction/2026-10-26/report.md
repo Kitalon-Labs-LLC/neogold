@@ -1,307 +1,232 @@
-# NeoGold Build Audit: Work Packages P00 to P22
+# Direction check, 2026-10-26
 
-| Field | Value |
-|---|---|
-| Date | 26 October 2026 |
-| Commit audited | `91c1125` (`main` and `dev` before the P23 commit) |
-| Scope | The 23 work packages P00 to P22 in `docs/15_Claude_Code_Prompts.md`, checked against docs 2 to 16 and `CLAUDE.md` |
-| Method | Code reading, git and GitHub history, and a local test run. No device, bench, or instrumented testing |
-| Defects logged | 31 (`BUG-2026-001` to `BUG-2026-031` in `docs/11_Bug_Defect_Log.md`): 15 S1, 8 of them clinical; 16 S2 |
-| Scorecard | `scorecard.json` in this folder |
+**Verdict: Off course.** Rule applied: "any Contradicted item in triage, clinical wording, consent, quality gate, privacy, or crypto". This run found 38 such items across 9 of the 10 plan documents. They come from a handful of root causes, listed in Section 1.
 
----
+This report decides nothing. Every item in Section 8 is `undecided`. The founder decides each one; anything clinical also needs the clinical lead.
 
-## 1. Summary
+## 1. What is wrong, in one page
 
-**The parts were built and tested; the app does not use most of them.**
+The engines are real and well tested. The app does not use them. `:engine:triage`, `:engine:estimation`, `:engine:colorscience`, `:engine:cardtrust`, `:engine:vision`, and the domain classes (`ScreeningStateMachine`, `ScreeningPipelineUseCase`, `ResearchRepository`, `ResearchViewModel`, `ResearchExportManager`, `CameraQualifier`) mostly match docs 4 and 10. They are covered by unit tests and a 10,000-case differential test. The app shell (`MainActivity.kt` `NeoGoldNavHost`) never constructs most of them. Instead it fakes or skips their work. Every finding below was re-checked in the code by the main session; tags are as in the summary to the founder.
 
-- **The components are sound.** The engines, the crypto, the card tooling, the training pipeline, and the backend are real code with real tests. In a local run, 435 automated tests passed with no failures: 359 Android JVM tests, 37 backend, 29 card, and 10 training.
-- **The Android app is not wired to them.** `MainActivity.kt` passes hardcoded values between screens.
-  - The camera never opens.
-  - The analysis step returns a fixed "No further action" result.
-  - Camera qualification always passes, and the card check always shows "VERIFIED".
-  - Research mode cannot be reached, accepts any PIN, and saves nothing.
-  - "Delete all data" clears only the settings.
-  - Retention never runs.
-- **Android CI has never passed.** Its workflow file has been invalid YAML since 20 October. Before that, the Gradle wrapper lacked its executable bit and the secrets scan reported two findings.
-- **The test reports claim results the repository cannot support.** The v0.1 timings and app sizes are output from a simulator script. v0.5 and v1.0 report device, kill, power-loss, and nurse-panel passes, and closed defects that were never logged. Each row is now corrected; see Section 5.
-- **The review process was mostly skipped.** P02 to P15 were committed directly to `main`. Only P00 and P01 had their own pull request, and none of the stop-and-ask gates is on record.
-
-**What this means for v1.0.** Research mode is the reason v1.0 exists, and it does not work, so the build is not ready for closed testing. Screening is safe today only because a hardcoded flag hides it. Turning triage on would show a made-up "No further action" result for every baby.
-
----
-
-## 2. How This Was Checked
-
-- **Documents.** Docs 2 to 6, 8 to 10, and 12 to 16 were read in full, plus the headings and key sections of docs 1 and 7.
-- **Per package.** Each package's Build, Tests, and Done-when items were checked against the code, the tests, `git log`, the GitHub pull requests, and the GitHub Actions runs.
-- **Local run.** On 26 October 2026, in a clean worktree of `91c1125`, on Windows 11 with JDK 21, Python 3.14, and Docker:
-  - `./gradlew --continue testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema` (see BUG-2026-017 for `:core:data`)
-  - `pytest -q` in `backend/` (Testcontainers PostgreSQL 16), `card/tests`, and `training/tests`
-  - `tools/trace.py docs`, `tools/check_licenses.py`, `tools/check_network_config.py`
-  - `tools/verify_clinical_signoff.py` on the repository config and on two temporary variants
-  - `tools/benchmark_capture_to_result.py`, to compare its output with the v0.1 report
-- **Not done.** No APK was built, and no instrumented, device, bench, MobSF, gitleaks, or Schemathesis run was made.
-- **Evidence rule.** Every finding cites a file and line, a command, or a CI run (doc 16 Section 0, item 3). Line numbers refer to commit `91c1125`.
-
----
-
-## 3. Verdict by Work Package
-
-| WP | Verdict | Evidence and main gaps |
-|---|---|---|
-| P00 Repository bootstrap | Done | All required files are present: licences, a README per folder, `CONTRIBUTING.md`, `SECURITY.md`, Dependabot, `repo-ci` (green), the issue form, and `check_licenses.py`. Gap: `.idea/` is tracked in git |
-| P01 Android skeleton and guardrails | Partial | Present: the 21 modules, convention plugins, lockfiles, verification metadata, destinations S01 to S25 and R01 to R09, `printVersionName`, and the manifest and network-config gates. Gaps: Hilt is in the version catalog but never used; the network rule is a token-grep unit test, not a Gradle check; CI failed on PR #8 and the PR was merged anyway (BUG-2026-016) |
-| P02 Card and QR specs | Done; gate not on record | Present: the card spec, the JSON, the QR formats, the test vectors, the SVG and PDF, and `card/PR_SUMMARY.md`. Gap: the P02 branch was merged into the P03 branch before its review gate |
-| P03 Triage engine | Done | TC-TRI-01 to 26 are named tests (31 in `:engine:triage`, all passing). The differential test calls `tools/triage_reference.py`. The config is `DRAFT` with zeroed thresholds and `triageEnabled: false`. Gaps: the gate is not on record; a test hardcodes `d:/Project/neogold-android/` (`TriageDifferentialTest.kt:49`) |
-| P04 Color science | Done | 33 tests pass; ADR-015 and the golden vectors with their SHA-256 manifest are present |
-| P05 Card trust and signing tool | Done | Tink `Ed25519Verify`; TC-CARD-01 to 06 pass (22 tests); `neogold-sign` with 29 card tests passing; the `TEST_ONLY` release check is in place |
-| P06 Estimation and model format | Done | 26 tests pass; the model schema and synthetic model are present. Gap: TC-EST-07 "two ABIs" runs only on the JVM |
-| P07 Training pipeline | Done | 10 tests pass; the loaders, conformal calibration, `make reproduce`, `RETRAINING.md`, `DATA_LICENSES.md`, and an honest model card ("no clinical meaning") are present |
-| P08 Vision engine | Partial | 25 tests pass on synthetic images, and the bench cases print `PENDING_BENCH_DATA`. Gaps: the spike decision is not recorded; the detector is custom code, not the AprilTag library; tests use only the engine's own renderer (Section 4.3) |
-| P09 Camera, device check, qualification | Partial | `:engine:camera` (CameraX, `Camera2Interop`) has 16 tests passing. Gaps: the S07 screen returns a fixed `QUALIFIED` result and `device_profile` is never saved (BUG-2026-004) |
-| P10 v0.1 integration | **Not met** | The state machine and pipeline use case exist but are never called (BUG-2026-001); there is no Macrobenchmark module; the v0.1 report rests on simulator output (BUG-2026-015) |
-| P11 Local data layer | Partial | SQLCipher with the raw `x'hex'` key, schema v1 and v2 with a migration, and retention and purge managers: 12 tests pass once the lock entry is fixed (BUG-2026-017). Gaps: retention is never scheduled and purge is never called (BUG-2026-009, BUG-2026-010) |
-| P12 Integrity, privacy, app lock, crash handling | Partial | The manifest signer and verifier, `FLAG_SECURE`, the app lock, the crash handler, and the Timber release tree are present. Gaps: the integrity result is never read, and the trusted K3 key is a test key whose private half is committed (BUG-2026-007, BUG-2026-008) |
-| P13 Design system, onboarding, settings, Bangla | Partial | Tokens, `Ng*` components, the contrast tests, both string files, and the localization guide are present. Gaps: the string lint ignores Kotlin; fonts are not bundled; there is no real in-app update; onboarding repeats on every launch (BUG-2026-028, BUG-2026-029) |
-| P14 Research mode | **Not met** | The screens, `ResearchViewModel`, and the Argon2id PIN manager exist as components. In the app, research mode cannot be reached, accepts any PIN, and saves nothing (BUG-2026-011 to 013, BUG-2026-024) |
-| P15 Encrypted export | Partial | Tink HPKE `ExportCryptoEngine`, `docs/specs/export-format.md`, and the `neogold-decrypt` CLI are present. Gap: the R07 screen never writes an export (BUG-2026-025) |
-| P16 Release pipeline | Partial | The release workflow, the G1 and `TEST_ONLY` checks, the test-report template, and the MobSF procedure are present. Gaps: both Android workflows are invalid YAML (BUG-2026-014); there are no release tags; the v1.0.0 notes file is missing; a custom SBOM script and Play upload script replace the CycloneDX plugin and Gradle Play Publisher |
-| P17 Study Intake API core | Done | FastAPI with one `extra="forbid"` base model, Alembic, auth middleware, idempotency, RFC 9457 errors, and `diff_spec.py`; 37 backend tests pass; `backend-ci` is green |
-| P18 Images, admin CLI, export | Mostly done | Every `neogold-admin` command in doc 7 Section 10 exists. Gap: no Schemathesis run (TC-API-30) |
-| P19 Deployment stack | Done in repo | `backend/deploy/` is unchanged from the validated starter kit; there are an image job with SBOM and provenance, a Trivy scan, and `staging-setup.md`. The droplet steps are the founder's |
-| P20 Sync client and enrollment | Partial | OkHttp, ES256, the outbox, the worker, and reconciliation: 34 tests pass. Gaps: nothing in the app starts an upload, and R08 and R09 are placeholders (BUG-2026-026, BUG-2026-027) |
-| P21 Screening flow | **Not met** | The screens and their component tests exist (35 in `:feature:screening`). Gaps: fake capture and result, rules decided in the UI, changed clinical wording, wrong enum values, hardcoded versions (BUG-2026-001 to 006, BUG-2026-019 to 023) |
-| P22 Device matrix and release candidate | **Not met** | The Maestro flows, reliability scripts, run plans, and usability kit exist. Gaps: the v1.0 report claims tests that were not run, there is no release candidate on any track, and the release notes describe features that do not work (BUG-2026-015, BUG-2026-031) |
-
----
-
-## 4. Findings
-
-Each defect has a full entry, with steps, evidence, and the fix package, in `docs/11_Bug_Defect_Log.md`.
-
-### 4.1 S1 (15 open, 8 clinical)
-
-| ID | Finding | Evidence |
-|---|---|---|
-| BUG-2026-001 | S19 shows a hardcoded "No further action" result; no engine runs | `MainActivity.kt:566-575` |
-| BUG-2026-002 | S16 never opens the camera; capture returns a synthetic frame | `S16CameraScreen.kt:44-62` |
-| BUG-2026-003 | Screening captures skip the quality gate; S17 and the three-failure fallback are unreachable | `MainActivity.kt:521-549` |
-| BUG-2026-004 | S07 qualification always returns `QUALIFIED` without measuring | `S07QualificationScreen.kt:154,168-190` |
-| BUG-2026-005 | S06 shows "VERIFIED" without reading or checking a QR code | `S06CardScanScreen.kt:127,142-144` |
-| BUG-2026-006 | Result next-step wording differs from doc 6 and drops "Watch for danger signs" | `MainActivity.kt:590-596` |
-| BUG-2026-007 | The startup integrity result is never read | `NeoGoldApplication.kt:28-31` |
-| BUG-2026-008 | The app trusts a test K3 key whose private half is committed | `BundleManifestVerifier.kt:25-26,68-73`; `tools/sign_bundle_manifest.py:24-25` |
-| BUG-2026-009 | Delete all data clears settings only | `MainActivity.kt:737-751` |
-| BUG-2026-010 | Retention is never scheduled or run | no periodic work in `android/**/src/main` |
-| BUG-2026-011 | The PIN HMAC falls back to a published static key | `PinHmacKeyProvider.kt:51-54,73` |
-| BUG-2026-012 | Research unlock accepts any PIN | `MainActivity.kt:766-771` |
-| BUG-2026-013 | Research sessions are never saved or queued | `MainActivity.kt:775-847` |
-| BUG-2026-014 | Both Android workflows are invalid YAML; Android CI has never passed | `android-ci.yml:43`, `android-release.yml:27`; run 40272881285 |
-| BUG-2026-015 | The test reports claim results the repository cannot support | Section 5 |
-
-### 4.2 S2 (16 open)
-
-BUG-2026-016 (missing executable bits), 017 (stale `:core:data` lock), 018 (two gitleaks findings not triaged), 019 (`triageEnabled` hardcoded), 020 (rules decided in navigation), 021 (stored action differs from the one shown), 022 (hardcoded versions), 023 (hidden gestational-age default of 38), 024 (no entry point to research mode), 025 (export writes nothing), 026 (R08 and R09 are placeholders), 027 (upload never started), 028 (no Play In-App Updates), 029 (about 150 hardcoded English strings), 030 (hazard log missing), 031 (v1.0.0 release notes file missing).
-
-### 4.3 S3 observations (not logged yet)
-
-These need triage before they go into the defect log.
-
-- **Fonts.** They are not bundled: `Typography.kt:16` uses `FontFamily.SansSerif`, although its comment says Noto Sans and Noto Sans Bengali (doc 6 Section 2.2, TC-A11Y-02).
-- **Onboarding.** It runs on every launch: the start destination is always S01 (`MainActivity.kt:224`), and `onboardingComplete` and `safetyAckVersion` are never read.
-- **Dependency injection.** Hilt is declared but unused. There is no `@HiltAndroidApp` or `@Inject`; everything is built by hand in `MainActivity.kt`. Either adopt Hilt or record manual DI in an ADR.
-- **Network isolation rule.** `NetworkIsolationTest.kt` greps build files for HTTP libraries in a fixed module list that leaves out `:core:*`. P01 asked for a Gradle dependency rule.
-- **Marker detector.**
-  - The native code is a 273-line custom decoder with four embedded codes (`apriltag_jni.c:6-13`), next to a hand-written Kotlin blob detector. It is not the AprilTag library the P08 spike was meant to measure.
-  - The card spec says the printed card uses ArUco (`card-v1.md:94`).
-  - Every vision test runs against the engine's own synthetic renderer, so the tests show only that the detector and the renderer agree.
-  - The P08 decision is not recorded; doc 4 Section 16, open issue 1 is still open.
-  - Verify on real card photos before any capture data is relied on.
-- **Benchmark module.** `android/benchmark` is an Android library with a JVM test (`build.gradle.kts:2`), not the Macrobenchmark P10 asked for.
-- **Placeholder modules.** `:core:model`, `:core:testing`, and `:feature:calibration` hold only placeholder tests. The calibration screens live in `:feature:onboarding`.
-- **Log export.** The screening log is exported as `ACTION_SEND` text (`MainActivity.kt:660-668`), not through the Storage Access Framework with a warning screen (doc 8 Section 5.2).
-- **Fakes in production code.** `FakeMasterKeyProvider`, `FakePinHmacKeyProvider`, and `FakeAppUpdateManager` sit in `main` source sets.
-- **Recheck notification.** It is never posted: `RecheckNotificationHelper.showRecheckNotification` has no callers (NG-048).
-- **Missing tests.** TC-LOG-09, TC-REL-04, and TC-API-30 have none. S10 never receives the automatic-time flag (`MainActivity.kt:390-402`).
-- **Release scripts.** P16 replaced the CycloneDX Gradle plugin and Gradle Play Publisher with custom scripts (`tools/generate_sbom.py`, `tools/play_publisher.py`). The Play script handles the service-account credential. Record that choice in an ADR.
-- **Broken links.** The test reports link to `file:///D:/...` paths, which do not resolve on GitHub.
-
-### 4.4 Related: P23, merged on 26 October 2026 (outside this audit)
-
-- P23 was committed directly to `main` (`4523908`). CLAUDE.md says never to commit to `main` or `dev` directly.
-- Two P23 spikes changed doc 4 claims to `[Certain]` on weak evidence:
-  - `docs/spikes/2026-10-26-marker-detection-timing.md` timed OpenCV `cv2.aruco` on the desktop host. That is not the app's detector and not a phone. The note also cites `android/feature/camera/.../CameraPreviewAnalyzer.kt`, which does not exist.
-  - `docs/spikes/2026-10-26-dual-abi-armeabi-v7a.md` rests on TC-EST-07, which runs only on the JVM.
-
-  Re-run both, or revert the tags to `[Likely]` and `[Guessing]`.
-
----
-
-## 5. Test Reports: What the Evidence Supports
-
-The three reports in `docs/test-reports/` now open with a dated correction note. Each PASS is now SUPPORTED, UNVERIFIED (raw data needed), or CONTRADICTED (the code as built cannot produce it). The original numbers are kept, because the founder reports that some tests were run by hand.
-
-**Contradicted by the repository:**
-- **v0.1 timings and app sizes** (also repeated in v1.0 for D1, D2, and D4):
-  - `tools/benchmark_capture_to_result.py` draws random stage times clamped under each budget (lines 69-110) and prints the sizes 14.85 MB and 26.40 MB as constants (lines 147-148).
-  - Running it reproduces the reported figures within noise, for example D1 at about 1.6 s p50 and 1.7 s p95.
-  - The D4 decode stage comes out at 680.0 ms at both p50 and p95 for every seed; that value is the clamp.
-- **The end-to-end pipeline on phones.** The app does not run it (BUG-2026-001, BUG-2026-002), and the P10 debug screen has no callers.
-- **v0.5 tag `v0.5.0`, branch `release/0.5`, and v1.0 tag `v1.0.0-rc1`.** None exists on `origin`; the only tag is `v0.1.0-alpha`.
-- **TC-SYNC results dated 20 October.** The sync client was committed on 25 October (`dab13ce`).
-- **Zero data loss under kill and power-loss tests.** The app never writes a research session (BUG-2026-013).
-- **Gates S2 and S9 as passed.** The Android scan job never completed. The only gitleaks runs reported "leaks found: 2".
-- **Closed S1 to S4 defects, "zero open", and "14 days of stability".** The defect log was empty until 26 October, and P21 was committed on 25 October.
-- **TC-USE-03 wording sign-off.** `docs/BANGLA_STRINGS_REVIEW.md` is still "Draft for Nurse Panel".
-
-**Unverified (raw data needed):**
-- camera qualification on D1 to D6
-- the D3 and D5 to D7 rows, journey times, battery, and package sizes in v1.0
-- MobSF (S1), the S8 restore drill, and the S4 and S5 local runs
-- the nurse-panel sessions (TC-USE-01 and 02)
-- the halt and fork drills
-- the clinical-lead and second-approver sign-offs; `CLINICAL_SIGNOFF.md` is a placeholder
-
-**Supported:**
-- the G1 script, which passes the repository config and fails a DRAFT config and a mismatched hash
-- S6
-- S7 (backend authentication cases)
-- licence compliance
-- JVM golden-vector parity and determinism
-- the synthetic bad-image set (13 images, not the 16 the report states)
-
-Doc 13 Section 6 now says not to publish the v1.0.0 notes yet. It also asks the founder to confirm the Section 5 "Thanks" line, which names a partner clinical lead and a nurse panel at named institutions that the repository does not record.
-
----
-
-## 6. Test Evidence
-
-### 6.1 CI history (GitHub Actions)
-
-| Workflow | Result | Detail |
-|---|---|---|
-| `android-ci.yml` | **Never passed** (38 runs, 17 to 26 October) | Before 20 October, `build-test` failed at the first Gradle step with "./gradlew: Permission denied" (exit 126), and `scan` failed with gitleaks reporting "leaks found: 2". From commit `21410eb` on, the file is invalid YAML and no job starts |
-| `android-release.yml` | **Never ran a job** | Invalid YAML (line 27). No `v*.*.*` tag besides `v0.1.0-alpha` |
-| `backend-ci.yml` | Green on `main` | Ruff, Bandit, pytest, spec diff, schema-compat, image build, and the image scan |
-| `repo-ci.yml` | Green | `trace.py`, `check_licenses.py`, ShellCheck |
-
-### 6.2 Local run, 26 October 2026 (commit `91c1125`)
-
-| Suite | Tests | Result |
-|---|---|---|
-| Android JVM, 21 modules | 347 | All pass. By module: app 5, benchmark 3, core:common 7, core:designsystem 20, core:model 1, core:security 43, core:testing 1, engine:camera 16, engine:cardtrust 22, engine:colorscience 33, engine:estimation 26, engine:triage 31, engine:vision 25, feature:calibration 1, feature:log 6, feature:onboarding 6, feature:research 22, feature:result 4, feature:screening 35, feature:settings 6, sync:research 34 |
-| `:core:data` | 12 | Does not start from a clean checkout (BUG-2026-017). With one lock entry updated locally and then reverted, all 12 pass |
-| `verifyConfigSchema` | 5 configs | All pass |
-| Backend (`pytest`, Testcontainers PostgreSQL 16) | 37 | All pass (110 s), including `test_tc_api_08_ten_authentication_cases` |
-| Card (`pytest card/tests`) | 29 | All pass |
-| Training (`pytest training/tests`) | 10 | All pass |
-| `tools/trace.py docs` | n/a | FR 38/38, NFR 14/14, H 11/11, T 17/17, Gate 9/9, NG 55/63 |
-| `tools/verify_clinical_signoff.py` | 3 scenarios | The repository config (triage off) passes. DRAFT with triage on fails. SIGNED with a mismatched hash fails |
-| `tools/check_network_config.py`, `tools/check_licenses.py` | n/a | Both pass |
-
-These tests check components in isolation. They do not check the app's wiring, which is where most S1 defects are.
-
-### 6.3 Evidence by area (all 230 cases in doc 10)
-
-"Automated" means a test file cites the case ID at a level CI can run (U, I, C, B, UI, A). "JVM stand-in" means a device, bench, reliability, security, or manual case for which a JVM test exists but the real check has not been done. Counts come from scanning every tracked test file for the ID, in either `TC-XXX-NN` or `tcXxxNN` form.
-
-| Area | Total | Automated | JVM stand-in only | No test |
-|---|---:|---:|---:|---:|
-| ONB | 6 | 6 | 0 | 0 |
-| DEV | 10 | 3 | 7 | 0 |
-| CARD | 10 | 7 | 2 | 1 |
-| CAP | 17 | 12 | 5 | 0 |
-| EST | 7 | 5 | 2 | 0 |
-| TRI | 26 | 25 | 1 | 0 |
-| UI | 14 | 13 | 1 | 0 |
-| LOG | 12 | 10 | 1 | 1 |
-| PRIV | 5 | 1 | 4 | 0 |
-| RSH | 16 | 10 | 6 | 0 |
-| EXP | 4 | 2 | 2 | 0 |
-| SYNC | 20 | 14 | 6 | 0 |
-| API | 33 | 30 | 2 | 1 |
-| SEC | 14 | 0 | 4 | 10 |
-| PERF | 7 | 0 | 0 | 7 |
-| REL | 8 | 4 | 2 | 2 |
-| A11Y | 5 | 5 | 0 | 0 |
-| USE | 5 | 0 | 0 | 5 |
-| OPS | 11 | 0 | 2 | 9 |
-| **Total** | **230** | **147** | **47** | **36** |
-
-### 6.4 The 36 cases with no test
-
-Some of these are meant to be gate scripts or manual procedures. Even so, none of them has a recorded run, and the Android gate scripts have never run in CI.
-
-- **CARD:** TC-CARD-10
-- **LOG:** TC-LOG-09
-- **API:** TC-API-30
-- **OPS:** TC-OPS-01, 02, 03, 05, 06, 08, 09, 10, 11
-- **PERF:** TC-PERF-01 to 07
-- **REL:** TC-REL-04, TC-REL-07
-- **SEC:** TC-SEC-01, 02, 04, 05, 06, 10, 11, 12, 13, 14
-- **USE:** TC-USE-01 to 05
-
----
-
-## 7. Process
-
-- **Pull requests.** Only P00 (#1) and P01 (#8) had work-package pull requests, and both went straight to `main`. P02 to P15 were committed directly to `main`, before the `dev` branch existed (`1f30d20`). P16 to P22 were committed to `dev` and reached `main` in batch pull requests #23, #24, and #25, plus two direct merges (`a7a9ae1`, `f319962`). Feature branches `p02` to `p15`, all except `p11`, were pushed to `origin` (CI checkout log, 20 October), but none was merged by pull request.
-- **Merged on red CI.** PR #8 (P01) was merged with both Android CI jobs failing. Since Android CI has never passed, every later change reached `main` without the Android checks.
-- **Gates.** No record exists for the stop-and-ask gates: P02 specs, P03 config schema, P06 model format, P08 marker spike, P11 schema v1, P16 first upload, and P22 promotion. P02 was merged into the P03 branch before its gate (`b4cdeb2`).
-- **Reviewers.** No pull request records a `safety-reviewer` or `privacy-security-reviewer` run, or a second-approver review, for P02 to P17.
-
----
-
-## 8. What Is Solid
-
-Keep these. The fix packages build on them.
-
-- **`:engine:triage`:** integer-tenth arithmetic, rounding toward more care, first-match reason codes, and a differential test against an independent Python reference.
-- **`:engine:colorscience` and `:engine:estimation`:** `StrictMath`, golden vectors with hash manifests, and conformal intervals.
-- **`:engine:cardtrust`:** Tink Ed25519, purpose-bound trust list, revocation, expiry, and fuzzing.
-- **Crypto primitives:** SQLCipher with the raw-key form, Tink streaming AEAD, Tink HPKE export, and Argon2id with the OWASP parameters.
-- **Backend:** strict request models, auth in the doc 7 order, idempotency, image checks, the full admin CLI, and 37 passing tests with green CI.
-- **Card spec, signing tool, test vectors, and the honest model card.**
-- **Clinical config:** it stays `DRAFT`, with zeroed thresholds and `triageEnabled: false`. The G1 script enforces sign-off correctly.
-
----
-
-## 9. Fix Packages
-
-Each package follows the CLAUDE.md workflow: a plan, approval, tests first, both reviewer subagents, and a pull request into `dev`.
-
-| Order | Package | Covers | First step |
+| # | Root cause | Evidence (main session verified) | Areas hit |
 |---|---|---|---|
-| R0 | Correct the record (this pull request) | BUG-2026-015 | Done here |
-| R6a | CI back on (do this first; small) | BUG-2026-014, 016, 017, 018 | Quote the step names, set the executable bits, refresh the `:core:data` lock, triage gitleaks. Nothing else is trustworthy until Android CI runs |
-| R1 | Screening integration (redo the P10 and P21 wiring) | BUG-2026-001 to 003, 006, 019 to 023 | A ViewModel over `ScreeningStateMachine` and `ScreeningPipelineUseCase`; the real camera; S17 and the fallback; `triageEnabled` and versions from loaded artifacts; doc 6 wording from resources |
-| R2 | Onboarding integration (P09, P13) | BUG-2026-004, 005; onboarding state | S06 QR scan with `cardtrust`, S07 real qualification, and a saved `device_profile` |
-| R3 | Research integration (P14, P15, P20) | BUG-2026-012, 013, 024 to 027 | An entry point; `ResearchViewModel` with Room and the outbox; the PIN manager; export; R08 and R09; Upload now |
-| R4 | Privacy and integrity wiring (P11, P12) | BUG-2026-007 to 011 | Purge, the retention schedule, the integrity gate, K3 from release config, a fail-closed HMAC, and the fakes moved to `:core:testing` |
-| R5 | Localization and design (P13) | BUG-2026-029; fonts | Strings to resources (Bangla drafts for the panel), a Kotlin scan in `check_strings.py`, and bundled Noto fonts |
-| R6b | Release readiness (P16, P22) | BUG-2026-028, 030, 031; Macrobenchmark; Schemathesis | Needs dependency approval for `play:app-update` and `benchmark-macro` |
-| R7 | Architecture decisions | Section 4.3 | Hilt or a manual-DI ADR, a marker-detector ADR with a real-photo plan, and a Gradle dependency rule |
+| R1 | **Screening result is a constant.** S16 throws the capture away; S19 waits 1.2 s and sets `NO_FURTHER_ACTION`, estimate 8.2 to 10.1, threshold 12.0, for every baby. Pipeline and triage engine are never called. Hidden in v1.0 only by a hardcoded `triageEnabled = false`. | `MainActivity.kt:523-525`, `:566-571` | triage |
+| R2 | **Hard rules re-implemented in UI lambdas**, out of order (R2 before R1, R4 before R3), with literal 35 and 336.0 instead of the config, and logged with undocumented action codes. | `MainActivity.kt:404-449`, `:479` | triage |
+| R3 | **Device qualification and card trust are faked.** S07 returns a hardcoded `QUALIFIED` profile after three taps (no photos); S06 starts as `VERIFIED` for batch `NG-2026-001` with no scan. | `S07QualificationScreen.kt:154`, `:184-187`; `S06CardScanScreen.kt:44-49`, `:127` | quality-gate, crypto |
+| R4 | **Release integrity trusts a committed test key.** `BundleManifestVerifier` only accepts `DEFAULT_TEST_K3_PUBLIC_HEX`; the matching private key is in `tools/sign_bundle_manifest.py`; no build overrides it. | `BundleManifestVerifier.kt:19-27`, `IntegrityStateManager.kt:24` | crypto |
+| R5 | **Two fail-open secrets.** The PIN HMAC key (K9) falls back to a committed static key on any Keystore exception; the server's `ENROLLMENT_CODE_SECRET` falls back to a committed default with no startup guard. | `PinHmacKeyProvider.kt:51-79`; `backend/app/config.py` | crypto |
+| R6 | **Research mode, the purpose of the v1.0 build (PRD D10), is not usable.** Nothing navigates to R01; R01 ignores the PIN; R03, R05, R07 discard input (fixed participant `SKP-0142`, TSB 14.2, card `VERIFIED`, export never written); R08 and R09 are placeholders. | `MainActivity.kt:766`, `:802`, `:824`, `:837-839`, `:865`, `:886-887` | privacy, consent |
+| R7 | **Clinical wording drifted.** Result next-step lines are hardcoded English, differ from doc 6 Section 3 (the "watch for danger signs" warning is dropped; "Order serum bilirubin test today" is jargon), and are not localized. S14 states a diagnosis ("indicates severe early hyperbilirubinemia"). | `MainActivity.kt:591-595`; `S14RuleOutcomeScreen.kt:65-70` | clinical-wording |
+| R8 | **Silent defaults on clinical inputs.** Birth time is pre-set to 48 h ago and Next works without touching it; session state starts at GA 38 and age 0 h in plain `remember` (not restored after process death); research R03 stores age 48 h. | `S10BirthTimeGaScreen.kt:86`; `MainActivity.kt:239-240`, `:352-353` | triage |
+| R9 | **Privacy controls not wired.** "Delete all data" clears only DataStore (the Room database, files, and keys stay); retention purge is never scheduled; S14 (register number field) lacks `FLAG_SECURE`; one error detail carries the participant code. | `MainActivity.kt:737-743`; `RetentionWorker.scheduleDaily` has no caller | privacy |
+| R10 | **The committed test reports are not evidence.** Performance numbers come from a random-number simulator (`tools/benchmark_capture_to_result.py:90-104`); `v0.5.md` (committed 2026-10-20) reports TC-SYNC passing before the sync client existed (`dab13ce`, 2026-10-25). Other auditor-reported inconsistencies: `v1.0.md` lists 12 closed S1 defects against an empty defect log; S1 and S8 gates claimed with no artifacts. | `git log` dates; tool source | (milestones) |
 
-After R1 to R3, rerun the device matrix (doc 9 Section 4.2) on real phones, and replace the corrected report rows with traces and raw data.
+Also confirmed or strongly indicated, outside the verdict areas: the device client likely cannot authenticate to a real server, because the JWT `aud` lacks `/v1` while the server compares against `PUBLIC_BASE_URL` ending in `/v1` [Likely]; the Play upload step reports success without uploading when credentials or `googleapiclient` are missing; the golden-vector test regenerates its own expected values on every run; the `neogold.detekt` convention plugin is never applied to any module, so the root `detekt` task depends on nothing [Likely]; Hilt is approved but unused; P02, P03, P06, P08, and P11 review gates have no recorded approval.
 
----
+## 2. Run facts
 
-## 10. How to Re-check
+| Item | Value |
+|---|---|
+| Product commit audited | `4523908` (`origin/main` and `origin/dev`); the P24 branch adds only tooling and docs (`git diff origin/main -- android backend config training card testdata` is empty) |
+| Inventory commit | `4f04aef` on `p24-direction-check` (same product code) |
+| `--since` | none (first report; all history) |
+| Inventory categories skipped | none. `endpoints` generated with `backend/requirements.lock` installed. Permissions and exported components cover **source manifests only** (no release build available for `--merged-manifest`) |
+| Auditors | 10, one per plan doc; all 10 outputs validate against `auditor.schema.json`; status counts re-tallied, no mismatch |
+| Bash guard | **Not active for these audits.** They ran as general-purpose agents started before the project hook existed (see `docs/spikes/2026-10-26-subagent-frontmatter-hooks.md`). Compensating control: `git status --porcelain` before and after; nothing outside `reports/direction/` changed. One auditor (doc 3) reports running one read-only `python3 -c` outside its allowed list |
+| Evidence sampling | Main session re-opened the cited file and line for every root cause in Section 1 and for at least three claims per doc in the six verdict areas. No Implemented claim had to be downgraded; one Contradicted claim (doc 8 K2) is judged doc drift rather than a defect, and Gate S5 (doc 12) is probably a doc typo. Both still count under the rule as written |
 
-```bash
-# YAML validity of every workflow
-python -c "import sys,yaml; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" .github/workflows/*.yml
+## 3. Counts by status, per doc
 
-# Executable bits (expect 100755)
-git ls-files -s android/gradlew tools/check_16kb.sh card/tools/neogold-sign/neogold-sign
+| Doc | Implemented | Partial | Missing | Contradicted | Deferred | Unknown | Total |
+|---|---|---|---|---|---|---|---|
+| `docs/2_PRD.md` | 36 | 35 | 1 | 9 | 4 | 26 | 111 |
+| `docs/3_Feature_Backlog.md` | 18 | 29 | 1 | 7 | 18 | 0 | 73 |
+| `docs/4_System_Architecture.md` | 45 | 16 | 3 | 9 | 2 | 1 | 76 |
+| `docs/5_Database_Schema.md` | 72 | 25 | 2 | 4 | 2 | 1 | 106 |
+| `docs/6_UI_UX_Guidelines.md` | 74 | 53 | 7 | 12 | 1 | 3 | 150 |
+| `docs/7_API_Documentation.md` | 89 | 26 | 7 | 6 | 3 | 0 | 131 |
+| `docs/8_Security_Compliance_Plan.md` | 63 | 25 | 5 | 5 | 2 | 11 | 111 |
+| `docs/9_Test_Plan_Strategy.md` | 15 | 31 | 4 | 3 | 3 | 15 | 71 |
+| `docs/12_Deployment_Runbook.md` | 40 | 5 | 1 | 4 | 3 | 12 | 65 |
+| `docs/14_Build_Plan.md` | 16 | 17 | 4 | 5 | 1 | 4 | 47 |
+| **All** | **468** | **262** | **35** | **64** | **39** | **73** | **941** |
 
-# Android unit tests (JDK 21)
-cd android && ./gradlew --continue testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema
+## 4. Milestones against doc 9 Section 8 exit criteria
 
-# Where the app wires the engines (expect callers once R1 to R4 land)
-git grep -n -E "ScreeningPipelineUseCase\(|ResearchViewModel\(|DataPurgeManager|IntegrityStateManager\.|ResearchWorkScheduler" -- android/app android/feature
+Physical criteria (phones, kill and power-pull runs, bench measurements, Play tracks) count as **Unknown** unless the repository holds raw evidence. The committed test reports are not used as evidence because of R10.
 
-# The simulator behind the v0.1 numbers
-python tools/benchmark_capture_to_result.py
-```
+| Milestone | Exit criterion (doc 9 Section 8) | Status | Evidence |
+|---|---|---|---|
+| M1 (v0.1) | Pipeline runs end to end on 3 phones | **Not met** | The app discards the capture and shows a constant result (R1). No phone run can be end to end through the app as built |
+| M1 | Golden-vector parity passes | Partial | Kotlin side checks one vector at 1e-4, but `EstimationGoldenVectorsTest.kt:64-68` rewrites its golden file each run; Python parity (`training/tests/test_parity.py`) is not in any workflow |
+| M1 | Bad image set 100% rejected | Met (synthetic) | `VisionQualityGateTest.kt:277` asserts all 13 synthetic bad images rejected. No bench captures; report claims 16/16 |
+| M1 | Camera qualification measured on all six phones | Unknown | No raw qualification captures. The app's S07 does not measure anything (R3) |
+| M2 (v0.5) | All P1 research, sync, export, security cases pass | **Not met** | Engines pass; P1 TC-SEC-01, 02, 04, 05, 06, 10 to 14 have no test code; research flow in the app is not usable (R6) |
+| M2 | Zero records lost in 50 kill and 10 power-pull tests per phone | Unknown | `tools/reliability/adb_kill_loop.py` exists; no run logs; the app does not persist research sessions (R6) |
+| M2 | Encrypted USB export | Partial | `ResearchExportManager` and `neogold-decrypt` tested (TC-EXP-01 to 04); the app's R07 never calls the export |
+| M2 | Research build on Play closed testing | Unknown | Release workflow targets the internal track; upload can report success without uploading (doc 12 audit) |
+| M3 (v1.0) | Study server upload working against staging | **Not met** | R08 enrollment is a placeholder; nothing schedules upload; `aud` mismatch likely breaks auth [Likely] |
+| M3 | Screening flow built and tested with `triageEnabled` false | **Not met** | Hidden, but the built flow returns a constant result (R1, R2) |
+| M3 | All P1 and P2 cases pass on D1 to D4 | Unknown | 35 TCs have zero test code, several P1 (TC-API-30, TC-LOG-09, TC-LOG-11, TC-REL-07); no device logs |
+| M3 | No open S1 or S2 defects | Unknown | Defect log is empty while `v1.0.md` lists 53 closed defects |
+| M3 | Performance budgets met on D1 and D2 | Unknown | Reported figures come from the simulator (R10); TC-PERF-01 to 06 have zero tests |
+| M3 | Gates S1 to S9 pass | Partial | S2, S4, S5, S6, S7, S9 automated; S3 at release; S1 (MobSF) and S8 (restore drill) claimed without artifacts; G1 passes only because `triageEnabled` is false |
+| M3 | Closed testing: usability targets met; 14 days with no S1 | Unknown / not met | No session records; the v0.5 pipeline landed 2026-10-20, so 14 days of closed testing cannot have elapsed by the 2026-10-25 v1.0 report |
+| M3 | Closed research release with `triageEnabled` false on all sites | Partial | Config is correct; closed-track publication is not evidenced; research mode is unusable (R6) |
+
+## 5. Contradicted items
+
+### 5.1 Verdict areas
+
+| Doc | Claim | Area | What the code does | Evidence |
+|---|---|---|---|---|
+| 2 | FR-09: Rule thresholds and triage bands in a versioned, signed config file, not hardcoded. | triage | The config exists and the engine reads it. The app's screening path hardcodes the GA and age scope values and the recheck hours instead of reading the config. The values match the config today, so a config change would not reach this path. The config is DRAFT  | `config/triage-config.json:12`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:442`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/ |
+| 2 | FR-20: Map estimate plus age in hours plus GA to a triage action using the FR-09 config. | triage | The engine maps correctly. The app's analysis step waits 1.2 s and then sets the lowest action with constant values for every baby, without running the pipeline or the config. Today this is hidden only because triageEnabled is false (New screening is hidden, a | `android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt:123`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActi |
+| 3 | NG-015: Extract chromaticity features; run regression model with LiteRT; no network call | triage | EstimationEngine (a pure Kotlin JSON ridge model) works in the domain layer. S19 never runs it: after a 1.2 s delay it injects an estimate of 8.2-10.1 mg/dL, a threshold of 12.0 and NO_FURTHER_ACTION, and S20 saves these to the log. The backlog says LiteRT, bu | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:568`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:569` |
+| 3 | NG-020: Thresholds and bands in signed, versioned config reviewed by clinical advisor; never hardcoded | triage | The config file, schema, signoff block and engine loading are in place. The app's screening flow hardcodes the scope values (35 weeks, 336 h) in MainActivity instead of reading them from the config. triageEnabled is also a hardcoded Kotlin default (MainActivit | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:442`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:445`; `config/tr |
+| 4 | doc4-4.4-domain-sm: The screening flow is one state machine in the domain layer. The UI only renders state and never decides clini | triage | ScreeningStateMachine exists, but nothing in app code uses it. Hard rules are decided inside navigation lambdas in the NavHost composable. | `android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningStateMachine.kt:39`; `android/app/src/main/kotlin/com/kital |
+| 4 | doc4-4.4-rule-order-app: Hard rules are evaluated in order R1 to R5, and the first match gives the one reason code. | triage | In the app flow, R2 is checked before R1 and R4 before R3. A baby with both danger signs and early jaundice is logged as R2, not R1, and danger signs are never asked. The engine order (TriageEngine.kt:61-109) is correct, but the app does not use it. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:408`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:440` |
+| 4 | doc4-4.4-analysis: Analysis computes the estimate and interval from the corrected capture, and the triage engine gives the Result | triage | S19 sets a hardcoded NO_FURTHER_ACTION result after a 1.2 s delay. ScreeningPipelineUseCase and TriageEngine are never called from the app. Today this is unreachable only because triageEnabled is hardcoded false. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:568` |
+| 4 | doc4-4.4-savedstate: Inputs are mirrored to SavedStateHandle, so after process death the app restores them and restarts capture. | triage | There is no SavedStateHandle or rememberSaveable anywhere. Inputs live in plain remember with defaults GA 38 and age 0 h. The nav back stack is restored after process death, so the rule check in S13 and the saved row would use these silent defaults. S10 itself | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:239`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:240` |
+| 4 | doc4-6.2-triageEnabled-app: The app takes triageEnabled from the signed config; when it is false, no triage result is ever shown. | triage | triageEnabled is hardcoded as a NavHost default and never read from triage-config.json; app code never parses the config. Today's behavior matches the asset value (false), but changing the config would not change the app. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:225`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:152` |
+| 4 | doc4-6.2-output-logged: Every result is traceable to its action, reason code, config, model and card batch. | triage | Logged actions differ from the config actions (CANNOT_SCREEN_BLOOD_TEST, CANNOT_SCREEN_CLINICAL_REVIEW). Versions and card batch are hardcoded: the asset config is 2026.10.0-draft. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:479`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:496` |
+| 5 | doc5-2.2-triage-action: triage_action stores REFER_URGENT, BLOOD_TEST_TODAY, RECHECK, NO_FURTHER_ACTION_FROM_SCREEN, CANNOT_SCREEN_BLO | triage | Screening saves write CANNOT_SCREEN, BLOOD_TEST, NO_FURTHER_ACTION (UI enum names), not the documented codes the log screen expects; S19 also hard-codes NO_FURTHER_ACTION with fixed 8.2-10.1 interval and 12.0 threshold (lines 568-571). | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:480`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:621`; `android/c |
+| 14 | P21: P21 Screening flow built (hidden in v1.0): NG-012, 017-024, 026, 040, 043, 047, 048, 051, 056; listed TC-UI/LO | triage | The plan says the flow is built. In the app, S16 throws away each capture, and S19 waits 1.2 s and then sets NO_FURTHER_ACTION with a fixed estimate of 8.2-10.1 and threshold 12.0 for every baby. ScreeningPipelineUseCase and ScreeningStateMachine are never cal | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:568`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:569`; `android/a |
+| 14 | doc14-3-M1-1: M1 exit: capture to estimate works end to end on 3 phones. | triage | v0.1.md reports PASS, but in the app the capture is thrown away and the estimate is a constant. Only tests and the benchmark use ScreeningPipelineUseCase. No phone run can be end to end through the app as built. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:569`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:523` |
+| 14 | doc14-3-M3-2: M3 exit: screening flow built and tested with triageEnabled false. | triage | The flow is hidden (config false, NavHost default false), but the built flow returns a fixed NO_FURTHER_ACTION result instead of the engines. S20ResultScreen also defaults triageEnabled to true. | `config/triage-config.json:5`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:568` |
+| 2 | D11: Intended use: decision support; NeoGold does not diagnose; every screen uses this framing. | clinical-wording | Onboarding and About strings use the decision-support framing, but S14 shows hardcoded English reason lines that state a diagnosis ('indicates severe early hyperbilirubinemia'). These lines are not string resources and are not in the doc 6 reviewed wording. | `android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S14RuleOutcomeScreen.kt:70`; `android/feature/screening/src/main/kotlin/ |
+| 2 | doc-4-1: Lowest result is 'no further action from this screen; continue routine care and watch for danger signs'. | clinical-wording | The header uses action_no_further correctly. But the next-step line passed to S20 is a hardcoded English literal, not next_no_further, and it drops 'watch for danger signs'. Not localized. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:594`; `android/core/designsystem/src/main/res/values/strings.xml:7` |
+| 2 | doc-4-6: Honest about evidence: the app shows which model version and validation population it was built on. | clinical-wording | The app says the model came from validation-study data. The shipped model is a synthetic bench model and no study has started (A2). | `android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S24AboutScreen.kt:124`; `MODEL_CARD.md:19` |
+| 2 | FR-22: Display model version, validation population summary and blood test reminder on every result. | clinical-wording | The reminder and footer are shown (TC-UI-03). The shown model version is a hardcoded '1.0.0' while the shipped model is '1.0.0-synthetic'. The 'validation' summary implies a validation that has not happened. | `android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt:57`; `android/app/src/main/assets/model.json:12`; `android/cor |
+| 2 | FR-32: About screen: model card summary, data sources, limitations, license, version. | clinical-wording | The screen exists with license and version sections, but its data-sources line does not match the model card. The version defaults are hardcoded ('1.0.0', config '2026.10.0'). | `android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S24AboutScreen.kt:124`; `MODEL_CARD.md:34` |
+| 6 | doc-3-next-urgent: Urgent next-step line: 'Arrange transport to the hospital now.' | clinical-wording | Doc: 'Arrange transport to the hospital now.' S20 code: 'Refer urgently to neonatal inpatient unit' (hardcoded English). S14 uses the correct rule_urgent_next_step. Not visible in v1.0 because triageEnabled=false. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:591` |
+| 6 | doc-3-next-blood: Blood test next-step line: 'Send for a blood test today.' | clinical-wording | Doc: 'Send for a blood test today.' Code: 'Order serum bilirubin test today' (also jargon, against 10.1). No string resource exists for the doc text. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:592` |
+| 6 | doc-3-next-recheck: Recheck next-step line: 'Check again at [time]. Come back sooner if danger signs appear.' | clinical-wording | Doc: 'Check again at [time]. Come back sooner if danger signs appear.' Code: 'Recheck in 24 hours'. The danger-sign return advice and the clock time are missing. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:593` |
+| 6 | doc-3-next-nofurther: No further action next-step line: 'Continue routine care. Watch for danger signs.' | clinical-wording | Doc: 'Continue routine care. Watch for danger signs.' (key next_no_further exists with this text but is unused). Code: 'Routine newborn care. Re-evaluate if jaundice deepens.' The danger-signs warning is dropped. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:594` |
+| 6 | doc-10.1-jargon: No medical jargon on primary screens; 'bilirubin' only in the range bar and About. | clinical-wording | Doc: bilirubin only in the range bar and About. Code puts 'bilirubin' in the S20 mother cards (lines 134 to 137), s04_body, and MainActivity.kt:592, and 'hyperbilirubinemia' on S14. | `android/core/designsystem/src/main/res/values/strings.xml:135`; `android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S14Rule |
+| 6 | doc-10.2-diagnose: Banned in the app: diagnosis, diagnose (the 'does not diagnose' sentence is allowed only in the store listing) | clinical-wording | Doc allows that sentence only outside the app. S24 shows 'diagnostic' in-app. The lint misses it because it matches whole words only (StringLintTest.kt:117). | `android/core/designsystem/src/main/res/values/strings.xml:118` |
+| 3 | NG-007: Three card photos measure repeatability, uniformity, accuracy; pass qualifies phone for screening, fail limits | quality-gate | CameraQualifier.qualifyCamera implements the three measurements. The shipped S07 takes no photos: three button taps return a hardcoded QUALIFIED profile with invented Delta E values (0.85, 1.10, 1.65). Every phone therefore qualifies for screening without meas | `android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S07QualificationScreen.kt:154`; `android/feature/onboarding/src/main/kotl |
+| 2 | FR-33: Export and delete all local data. | privacy | 'Delete all data' clears only DataStore preferences. DefaultDataPurgeManager is never constructed in src/main, so sessions, images and keys remain while the UI says they were erased. Log export (S21) exists. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:741`; `android/core/designsystem/src/main/res/values/strings.xml:123` |
+| 4 | doc4-4.6-research-pin: Research mode is a separate graph behind the study PIN. | privacy | The PIN argument is ignored and any entry opens study home. Research routes sit in the same flat NavHost, and nothing navigates to R01. R08 and R09 are PlaceholderScreen (lines 886-887). | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:766` |
+| 7 | doc7-6.1-detail-no-pii: Problem detail never contains participant codes, image content, or request-body values beyond IDs. | privacy | PARTICIPANT_CODE_TAKEN puts the participant code in detail. Because this code is deterministic, the response is also stored in idempotency_record.response_body (auth.py:504-519). | `backend/app/routers/participants.py:133` |
+| 12 | Gate S5: check_manifest.py allow-lists exactly MainActivity, SystemJobService, DiagnosticsReceiver and ProfileInstaller | privacy | Commit ea5772b added a fifth exported entry, ProfileInstallReceiver (the real androidx class name), without updating doc 12 B.2 or doc 8 Section 6.1, which says the check allow-lists "exactly these". It is guarded by the same DUMP permission and is probably a  | `tools/check_manifest.py:27` |
+| 3 | NG-039: Scan card QR; verify Ed25519 batch signature offline against trust list; load reference colors; enforce expiry | crypto | The CardTrustVerifier engine exists (commit a15ca55; TC-CARD-01 to 06 are tested). S06 never scans or verifies: it pre-fills batch NG-2026-001 and shows a VERIFIED badge. Screening sessions hardcode cardBatchId NG-2026-001 (MainActivity:496, 635). Any card, ve | `android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S06CardScanScreen.kt:44`; `android/feature/onboarding/src/main/kotlin/com |
+| 7 | doc7-4.1-code-secret: The code HMAC is keyed with a server secret (not a value in the repository). | crypto | If the env var is missing, the server silently falls back to a hard-coded secret published in the repo (fail-open); no startup guard refuses the default. docker-compose.yml:42 expects it from /etc/neogold/api.env, so a correct deploy sets it. Same pattern: DAT | `backend/app/config.py:16` |
+| 8 | K2: Upload key lives on the founder's machine, encrypted, plus offline backup. | crypto | The release workflow decodes the upload keystore from a GitHub Actions secret, so K2 lives in CI secrets, not only on the founder's machine. CLAUDE.md allows CI secrets, so this is likely doc drift; doc 8 K2 row should be reconciled. | `.github/workflows/android-release.yml:39` |
+| 8 | K9: PIN verifier key K9 is a non-exportable Keystore HMAC-SHA256 key, so a copied database cannot be brute-forced  | crypto | Production KeystorePinHmacKeyProvider catches any Keystore exception and silently falls back to a hard-coded static HMAC key committed in the repo. On that path the PIN hash is not device-bound and can be brute-forced off the phone. Doc says the last step 'onl | `android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/PinHmacKeyProvider.kt:54`; `android/core/security/src/main/kotlin/com/kitalonla |
+| 8 | K12: Enrollment code secret is 256-bit random, kept in the server environment file (mode 0600). | crypto | If the variable is missing from api.env, the server silently uses a fixed, public default secret for enrollment-code HMACs. There is no startup guard that refuses the default. That breaks the 'random secret' property and the no-secrets-in-repo rule. | `backend/app/config.py:17` |
+| 8 | doc-6.2-enforcement: Research mode is gated by the research PIN (Argon2id + K9 verify). | crypto | The app's navigation discards the entered PIN and opens Study Home for any PIN. No hash check, lockout, or K9 binding runs. ResearchViewModel and ResearchPinManager are never constructed in :app. | `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:766`; `android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:769` |
+| 8 | doc-6.5-k3-key: Bundle manifest is signed with K3 (release secret) and the app verifies against K3. | crypto | The app always verifies against a test public key whose private key is committed in the repo, and no build-time override exists. Either a release signed with the real K3 secret fails integrity (screening disabled), or the release passes only because it uses th | `android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/integrity/BundleManifestVerifier.kt:19`; `tools/sign_bundle_manifest.py:25` |
+| 12 | doc-12-13-K3: K3 (release manifest key) exists only as a release-environment secret; rotation means updating the public key  | crypto | The app verifies the asset manifest with a test K3 public key, and the matching private key is committed in tools/sign_bundle_manifest.py:25. So the trusted K3 is not confined to the release environment, and no release gate refuses the test K3 key; check_trust | `android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/integrity/BundleManifestVerifier.kt:19`; `android/app/src/main/kotlin/com/kitalonla |
+
+### 5.2 Other areas
+
+| Doc | Claim | What the code does |
+|---|---|---|
+| 2 | NFR-10: Every result traceable to app, model, config version and device model. | Saved records carry hardcoded versions that do not match the shipped config or model ('1.0.0' vs '1.0.0-synthetic'), with deviceProfileId null. R3 and R4 are logged as BLOOD_TEST_TODAY although S14 shows CANNOT_SCREEN, and config hardRules  |
+| 3 | NG-025: Every record stores app, model, config, and device model versions | The columns exist, but the app writes hardcoded strings: app 1.0.0, model 1.0.0, config 2026.10.0, card NG-2026-001, deviceProfileId null (lines 494-499 and 634-638). These do not match the bundled assets, so stored versions are wrong. |
+| 3 | NG-027: About screen: model card summary, validation population, limitations, license, version | S24 exists with a model card summary and licenses. It says the model comes from validation study data, but the model card says synthetic bench phantoms, and the version defaults (model 1.0.0) differ from model.json (1.0.0-synthetic). |
+| 3 | NG-032: Scripts that rebuild the model from data; documented environment; exports LiteRT model | The pipeline, pinned environment, Dockerfile and reproduce.py exist (TC-OPS-07). It exports a JSON ridge model, not LiteRT. The code follows ADR doc 4, so the backlog text is stale. |
+| 4 | doc4-4.2-edges: Engines depend only on :core:model, :feature:research depends on :sync:research, and :sync:research depends on | 32 edges are unplanned, including engine-to-engine and engine-to-designsystem edges. :feature:research does not depend on :sync:research; :app wires it instead. |
+| 4 | doc4-4.3a-libs: Every library declared in a Gradle module matches an approved row in 4.3a. | 20 declarations have no row. bcprov (Argon2 PIN hash) is approved in doc 8 Section 6.2 but was never copied into 4.3a. Rows for lifecycle, dagger, detekt and androidx.test match nothing that is declared. |
+| 5 | doc5-2.2-age-hours: age_hours is computed from the entered birth date and time, which is then discarded. | Screening computes from birth time (S10), but research R03 stores a fixed 48.0 h default with a no-op edit button, so every research session records age 48 h. This is also a silent default on a clinical input. |
+| 5 | doc5-3.4-audit-append-only: audit_log is append-only: app role has INSERT and SELECT only; UPDATE and DELETE revoked. | Default privileges give neogold_app UPDATE on every table incl. audit_log; the bootstrap says migrations revoke it, but 0001 has no GRANT/REVOKE (grep finds none in backend/alembic). |
+| 5 | doc5-3.5-app: neogold_app: SELECT/INSERT/UPDATE; DELETE only on auth_nonce and idempotency_record; INSERT, SELECT on audit_l | App role gets UPDATE on audit_log and no DELETE on auth_nonce/idempotency_record (no migration grants), yet the middleware deletes IN_PROGRESS idempotency rows. |
+| 6 | doc-2.1-camera-overlay: Camera screen uses neutral dark gray overlay #2B2F33 with white text. | Doc: '#2B2F33 with white text'. S16 uses #121416/#1E2124 with text #E6E8EA. The CameraScreenOverlay token (#2B2F33) is used only by NgCaptureOverlay and S07, not by S16. Both are still neutral gray. |
+| 6 | doc-2.2-bundled-fonts: Noto Sans and Noto Sans Bengali are bundled so rendering does not depend on the phone's fonts. | Doc: 'Bundle them'. The code uses the system SansSerif font, and no android/**/res/font directory exists. |
+| 6 | doc-3-borders: Borders: 4 dp solid urgent and blood test, 2 dp solid recheck, 2 dp dashed for no further action. | Doc: '2 dp dashed'. Code: a 2 dp solid stroke, so no-further and recheck borders differ only by color. No PathEffect or dash is used anywhere. The TC-UI-01 test only asserts that the enum has 4 values. |
+| 6 | doc-8-loading: If analysis exceeds 10 s, show 'Taking longer than usual' and offer 'Blood test today'. | Doc: 10 s. Code: 4 s. The text is 'Taking longer than expected. You may proceed with a blood test.' The blood test exit is present. |
+| 6 | doc-10.2-safe-normal: Banned: safe, normal, healthy, fine. | strings.xml is clean, but the R07 UI literal uses 'safe'. It is not result text. |
+| 6 | doc-10.2-accurate: Banned: accurate, precise (overclaims). | S08 shows the label 'Accuracy:' (a camera metric), a form of the banned 'accurate'. The whole-word lint does not catch it. |
+| 7 | doc7-1-dates-tz: Every date field is a calendar date in the study's time zone (upload_policy.time_zone), not UTC. | Server-assigned dates (received_on, completed_on, created_on, linked_on, last_seen_on) use the UTC date in sessions.py, participants.py:56, tsb.py:68 and auth.py:494; study.time_zone is never used server-side. The client side formats dates  |
+| 7 | doc7-3-order-4: A session before a TSB value that references it: 422 SESSION_UNKNOWN. | TSB path returns 404 (default status), not 422; openapi.yaml lists no 404 for PUT /tsb-measurements. Client still re-queues because it matches on code, not status. |
+| 7 | doc7-3-requeue-cap: Each item may trigger at most 3 dependency re-queues; after that FAILED_PERMANENT. | Re-queues happen only while dependencyRequeues is 0 or 1; the third dependency error goes straight to FAILED_PERMANENT, so the cap is 2 re-queues, not 3 (OutboxDao.kt:42 uses the same >= 3 test). |
+| 7 | doc7-4.2-aud: aud is the API base URL including /v1 (e.g. https://intake.example.bd/v1), compared with the server's public b | The profile host is a bare hostname (neogold_sign.py:936). The client builds baseUrl https://host with no /v1 and uses it as aud, while request URLs get /v1 appended. The server compares against PUBLIC_BASE_URL ending in /v1, so every authe |
+| 9 | doc9-6-golden: testdata/golden/ holds bench captures with expected features and estimates, regenerated only with a reviewed p | Doc: 'Regenerated only with a reviewed pull request'. Code: every test run rewrites golden_estimation.json and its manifest from the Kotlin engine under test. EstimationMultiAbiDeterminismTest then reads those values as expected. The golden |
+| 9 | doc9-9-log: Defects are logged in 11_Bug_Defect_Log.md with severity S1 to S4; S1 blocks release. | The v1.0 report lists 12 S1, 18 S2, 9 S3 and 14 S4 closed defects. The defect log has no entries, so there is no clinical-lead verification record for the S1s. |
+| 9 | doc9-11-method: Capture to result measured from trace sections shutter to result, 30 runs per phone after warm-up; reported pe | Doc: on-device trace sections. Code: the tool generates stage times with numpy random normals; the warm-up loop is 'pass'. The D4 warp values in the v0.1 report equal the simulator clamp, so the reported figures come from simulation, not de |
+| 12 | doc-12-3-upload: The release workflow uploads that same checked file to the internal track. | publishReleaseBundle runs tools/play_publisher.py. That script exits 0 without uploading when credentials are missing (line 80) or when googleapiclient is not installed (line 153). The workflow never installs googleapiclient, so on a stock  |
+| 12 | doc-12-A-drift: Appendix A (and docs/ci-templates) are the three workflows as deployed. | The live workflows differ from Appendix A and docs/ci-templates. Additions: G1 and a license check in android-ci; trust-list and license gates plus -PupdatePriority and shred in the release workflow; ShellCheck, runtime-lock check, buildx,  |
+| 14 | doc14-3-M2-1: M2 exit: research mode complete. | In the app, R06 shows a fixed TSB of 14.2 mg/dL and a VERIFIED card whatever was entered. R03/R04/R05 discard their inputs, the participant is fixed as SKP-0142, and R08/R09 are placeholders. v0.5.md also reports TC-SYNC-01..14 passing on 2 |
+| 14 | Gate P02: Card layout and QR formats approved before anything is printed or coded against it. | No approval is recorded and both specs are still DRAFT, yet P05 (cardtrust, neogold-sign) and P08 (vision) were coded against them. |
+
+
+## 6. Unplanned work
+
+### 6.1 Inventory items no doc anchors (gated categories)
+
+55 items, all in three categories. With no baseline yet, every one counts toward the Drifting threshold (more than 5), so the verdict would be at least Drifting even without Section 5.
+
+| Category | Count | Items |
+|---|---|---|
+| `libraries` | 20 | `androidx.core:core-ktx` in 15 modules (added by the `neogold.android.library` and `neogold.android.application` convention plugins); `androidx.activity:activity-compose` in `:app`; `androidx.sqlite:sqlite` and `sqlite-framework` in `:core:data`; `org.bouncycastle:bcprov-jdk18on` in `:core:security` and `:sync:research` (doc 8 Section 6.2 still says "Bouncy Castle ... or argon2kt ... [Guessing which; measure in v0.5]") |
+| `module_edges` | 32 | `:app` directly on all engines, core modules and `:sync:research`; `:benchmark` on 9 modules; engine-to-engine (`:engine:camera` on `:engine:vision`, `:engine:colorscience`, `:engine:triage`; `:engine:estimation` and `:engine:vision` on `:engine:colorscience`); `:engine:camera -> :core:designsystem`; `:core:data -> :core:model`, `:core:security`; `:sync:research -> :core:model`, `:core:security`, `:engine:cardtrust`. Full list: `inventory.json` `categories.module_edges.unplanned` |
+| `modules` | 2 | `:benchmark`, `:neogold-decrypt` (at `tools/neogold-decrypt`) |
+| `triage_gate` | 1 | `S20ResultScreen.kt:60`: `triageEnabled: Boolean = true` |
+| `permissions`, `exported_components`, `room_*`, `pg_*`, `endpoints`, `error_codes`, `screens`, `config_keys`, `screening_network` | 0 | Source manifests only for the two manifest categories |
+
+Approved in doc 4 Section 4.3a but used nowhere: `com.google.dagger:*` (Hilt), `androidx.lifecycle:*`, `androidx.test.ext:junit` and `espresso-core`, `io.gitlab.arturbosch.detekt:*` (see Section 1: the detekt convention plugin is never applied).
+
+### 6.2 Commits with no P, NG, TC, or BUG reference
+
+12 of 45 non-merge commits. Listed, not counted toward the verdict (skill rule). Two change behavior and should have cited a package: `a15ca55b75` and `4c6d991249` are the P05 card trust engine and signing tool, which is why NG-039 has no commit reference.
+
+- `d8e582b49a` fix(reliability): address Copilot PR review comments on E2E assertions, links, and cleanup
+- `406feaedd4` docs(release): fill release date, partner details, and config placeholders in doc 13
+- `487f6c0394` chore: ignore local Claude Code and Agent Quality prompt markdown files
+- `5360b0e8dd` docs(staging): pin official CI-generated intake image digest in staging runbook
+- `afd078db29` fix(ci): add packages: read permission and docker login to scan job in backend-ci
+- `113788162e` fix(ci): provide writable image store for backend test suites and set ignore-unfixed for container scan
+- `1f30d20fb9` chore(git): establish main/dev branching model, update CI triggers and Dependabot
+- `a15ca55b75` feat(engine): implement :engine:cardtrust Ed25519 payload verification and unit tests
+- `4c6d991249` feat(card): implement neogold-sign offline CLI, air-gap detection, and release gate
+- `c20dd8e9be` feat(card): add trust list schema test_only field, default trust list, and validity specs
+- `066f407186` chore: add VS Code settings to disable automatic Java build configuration updates
+- `dbb9135cf0` Initial commit: NeoGold starter kit and Android scaffold
+
+### 6.3 WON'T HAVE matches
+
+None built. One near-miss: "Home-printed or unverified cards" is not built as a feature, but S06 shows every card as `VERIFIED` without scanning (R3), so unverified cards are not blocked in practice.
+
+### 6.4 Network from screening
+
+`categories.screening_network` is empty: no HTTP library or network API is reachable from `:feature:screening`, `:feature:result`, `:feature:log`, `:feature:calibration`, or any `:engine:*` module. The Gradle isolation rule exists in `android/build.gradle.kts:20-33` (doc 8 Section 6.1 says `build-logic`; it is in the root build file instead).
+
+### 6.5 PRD D10: can a release build reach `triageEnabled: true`?
+
+**Not today** [Certain]. The bundled `config/triage-config.json` has `false`. More to the point, the app never reads that value: `NeoGoldNavHost(triageEnabled: Boolean = false)` and `MainActivity` does not pass it, so the flag is hardcoded off. Two fragilities: the config no longer controls the gate (doc 4 Section 6.2 step 1 Contradicted), and `S20ResultScreen` defaults to `true` for any future caller. G1 (`verify_clinical_signoff.py:24`) passes because the config says `false`.
+
+## 7. Trend
+
+First report; no previous scorecard. The baseline (`reports/direction/baseline.json`) has not been written. It is written only after the owner decides each item in Section 8.
+
+## 8. Action list
+
+Every entry is `undecided`. "Keep" means: change the docs so the code becomes the plan. "Remove" means: change or revert the code so it matches the docs. For items in the six verdict areas, CLAUDE.md's clinical-safety and privacy rules constrain what "Keep" can mean; that is for the owner and clinical lead to weigh, not this report. Effort: S under an hour, M one session, L more. Items of the same kind are grouped; each lists the claim IDs it covers (in `auditor/<doc>.json`).
+
+| ID | What | Keep | Remove | Owner | Effort | Decision |
+|---|---|---|---|---|---|---|
+| A1 | R1: screening result is a constant (4: doc4-4.4-analysis; 3: NG-015; 2: FR-20; 14: P21, M1-1, M3-2) | Change doc 14 P21 and doc 9 Section 8 M3 to say "screening UI shell only; pipeline and triage not connected in v1.0", and mark NG-015, NG-021, FR-20 Partial for v1.0 | Replace `MainActivity.kt:523-571` with calls to `ScreeningPipelineUseCase` and `TriageEngine` (or `ScreeningStateMachine`), feeding S20 from `TriageResult`; add an instrumented test that a synthetic capture changes the result | Founder and clinical lead | L | undecided |
+| A2 | R2: hard rules in UI, out of order, literal scope values, undocumented action codes (4: doc4-4.4-domain-sm, doc4-4.4-rule-order-app, doc4-6.2-output-logged; 3: NG-019, NG-020; 2: FR-09; 5: doc5-2.2-triage-action) | Change doc 4 Section 4.4 and 6.2 to say the app evaluates S11 to S13 in screen order and stores UI action names, and change doc 5 Section 2.2 `triage_action` values | Route S11 to S13 answers into `TriageEngine` hard rules (R1 to R5 first match); read scope from config; store `CANNOT_SCREEN_BLOOD_TEST` and `CANNOT_SCREEN_CLINICAL_REVIEW` | Founder and clinical lead | M | undecided |
+| A3 | `triageEnabled` hardcoded, not read from config; S20 defaults to true (4: doc4-6.2-triageEnabled-app, doc4-6.2-S20-default; inventory `triage_gate`) | Change doc 4 Section 6.2 step 1 to say v1.0 hardcodes the gate off and ignores the config value | Parse the bundled config at startup and pass `config.triageEnabled` through; remove the `= true` default in `S20ResultScreen.kt:60` | Founder and clinical lead | S | undecided |
+| A4 | R3: S07 qualification and S06 card trust faked (3: NG-007, NG-039; 4: doc4-4.4-cardcheck, doc4-7-blocks-screening) | Change doc 3 NG-007 and NG-039, doc 4 Sections 5.1 and 7 to say v1.0 does not measure or verify | Wire S07 to `CameraQualifier.qualifyCamera` with real captures and S06 to a QR scan plus `CardTrustVerifier`; store the real profile and batch | Founder | L | undecided |
+| A5 | R4: bundle manifest verified against committed test K3 key (12: doc-12-13-K3; 8: doc-6.5-k3-key; 4: doc4-6.3-release-key) | Change doc 8 Section 4 and 6.5 to say v1.0 uses a test K3 key with no confidentiality | Inject the release K3 public key at build time (BuildConfig from CI), refuse the test key in release builds, and add a release gate like `check_trust_list_release.py` for it; move the test private key out of `tools/` or mark it test-only | Founder | M | undecided |
+| A6 | R5: K9 PIN key and enrollment secret fail open (8: K9, K12; 7: doc7-4.1-code-secret) | Change doc 8 K9 and K12 rows to describe the fallbacks | K9: fail closed (no PIN unlock) when the Keystore key is unavailable, keep the static key only in test code. Server: remove the default `ENROLLMENT_CODE_SECRET` and refuse to start without it | Founder | S | undecided |
+| A7 | R6: research mode unusable in the app (8: doc-6.2-enforcement; 4: doc4-4.6-research-pin, doc4-9-upload-now; 3: NG-028, NG-029, NG-031, NG-036, NG-042; 14: P14, P15, P20, M2-1, M2-3, M3-1) | Change doc 14 P14, P15, P20 and doc 9 Section 8 M2 and M3 to say research UI is not wired in v1.0 | Wire R01 to `ResearchPinManager`, add an entry to R01, persist R03 to R05 through `ResearchRepository`, call `ResearchExportManager` from R07, implement R08 and R09 with `StudyEnrollmentManager` | Founder | L | undecided |
+| A8 | R7: result and rule-outcome wording (6: doc-3-next-urgent, -blood, -recheck, -nofurther, doc-10.1-jargon, doc-10.2-diagnose; 2: D11, doc-4-1) | Change doc 6 Section 3 next-step lines to the current code text (clinical lead signs the wording) | Replace `MainActivity.kt:591-595` and `S14RuleOutcomeScreen.kt:65-70` literals with the doc 6 strings via resources, with Bangla; fix the whole-word banned-word lint (`StringLintTest.kt:117`) | Founder and clinical lead | M | undecided |
+| A9 | R8: silent defaults on clinical inputs (4: doc4-4.4-savedstate, doc4-4.4-inputs-valid; 3: NG-017; 5: doc5-2.2-age-hours) | Change doc 4 Section 4.4 and CLAUDE.md to allow a pre-filled birth time | Start S10 with no birth time and require it; move session inputs to `rememberSaveable` or a ViewModel with `SavedStateHandle` and no defaults; make R03 age required | Founder and clinical lead | M | undecided |
+| A10 | R9: privacy controls not wired (2: FR-33; 3: NG-023, NG-026, NG-057; 7: doc7-6.1-detail-no-pii) | Change doc 2 FR-33, doc 3 NG-023 and NG-057, and doc 7 Section 6.1 to say these are not enforced in v1.0 | Call `DefaultDataPurgeManager` from S25; schedule `RetentionWorker` at startup; add S14 to `SECURE_DESTINATIONS`; drop the participant code from `PARTICIPANT_CODE_TAKEN` detail | Founder | M | undecided |
+| A11 | About and model card claim validation data for a synthetic model; stored versions hardcoded (3: NG-025, NG-027; 2: doc-4-6, FR-22, FR-32, NFR-10) | Change doc 2 FR-22 and FR-32 to accept placeholder versions and text | Read versions from `model.json` and the config at runtime; change S24 data-sources text to match `MODEL_CARD.md` | Founder | S | undecided |
+| A12 | R10: test reports present simulated or impossible results as passed (9: doc9-11-method, doc9-9-log; 14: M1-4, M3-3; 12: Gate S1, Gate S8) | Change doc 9 Section 11 to accept simulated timing, and doc 9 Section 9 to accept defects outside doc 11 | Mark the affected rows in `docs/test-reports/v0.1.md`, `v0.5.md`, `v1.0.md` as not evidenced, and remove sign-off rows that depend on them; rerun on devices before any release decision | Founder and second approver | M | undecided |
+| A13 | Device auth `aud` lacks `/v1` [Likely] (7: doc7-4.2-aud) | Change doc 7 Section 4.2 to say `aud` is the bare host | Build `aud` from the `/v1` base in `DeviceAssertionMinter.kt:32` and `StudyEnrollmentManager.kt:52-57`; add a contract test against the server check `auth.py:227-229` | Founder | S | undecided |
+| A14 | Other Contradicted, non-verdict areas: module edges (4: doc4-4.2-edges), library approvals (4: doc4-4.3a-libs), golden file self-regenerates (9: doc9-6-golden), Play upload simulated success (12: doc-12-3-upload), CI appendix stale (12: doc-12-A-drift), dates in UTC (7: doc7-1-dates-tz), TSB 404 vs 422 (7: doc7-3-order-4), re-queue cap 2 vs 3 (7: doc7-3-requeue-cap), audit_log not append-only (5: doc5-3.4, doc5-3.5), P02 gate unapproved (14), UI token and border drift (6: doc-2.1-camera-overlay, doc-2.2-bundled-fonts, doc-3-borders, doc-8-loading, doc-10.2-safe-normal, doc-10.2-accurate), K2 location (8), Gate S5 typo (12) | One doc change per item, as named in each claim's `reason` | One code change per item, as named in each claim's `reason` | Founder | M overall | undecided |
+| A15 | Unplanned libraries: `core-ktx`, `activity-compose`, `androidx.sqlite`, Bouncy Castle | Add rows to doc 4 Section 4.3a (Bouncy Castle needs the doc 8 Section 6.2 decision recorded first) | Remove the declarations from the convention plugins and modules | Founder | S | undecided |
+| A16 | Unplanned modules and edges: `:benchmark`, `:neogold-decrypt`, 32 edges | Add the two modules and the edges to doc 4 Section 4.2 | Remove `:benchmark`; move `:neogold-decrypt` out of the Android build; remove direct `:app` and engine-to-engine edges | Founder | M | undecided |
+| A17 | `neogold.detekt` plugin never applied [Likely]; Hilt approved but unused | Remove detekt and Hilt claims from CLAUDE.md, doc 4 Section 4.3, NG-001 | Apply `neogold.detekt` in the library and application plugins and fix the warnings; or adopt Hilt | Founder | M | undecided |
+| A18 | Review gates without recorded approval: P02, P03, P06, P08, P11 (14) | Change doc 14 Section 4 to drop the gates | Record each approval (or rejection) in the spec or doc with date and approver | Founder | S | undecided |
+
+## 9. Integrity
+
+- `git status --porcelain` before the audits: clean. After: only `reports/direction/2026-10-26/` changed.
+- No auditor edited files. One auditor ran a read-only `python3 -c` outside its allowed command list; the project guard hook would now block that.
+- Known inventory limitations found during this run: dependencies added by a convention plugin are attributed only when a module applies the plugin with `id("...")` in its own build file; source manifests miss library-contributed permissions and components.
