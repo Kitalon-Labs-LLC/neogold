@@ -1,0 +1,1068 @@
+{
+ "doc": "docs/14_Build_Plan.md",
+ "companions": [],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "P00",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P00 Repository bootstrap: NG-001, NG-037 built; TC-OPS-08 (license check) tested.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "aa13ec1",
+     "quote": "P00: Repository bootstrap (#1)"
+    },
+    {
+     "file": ".github/workflows/repo-ci.yml",
+     "line": 20,
+     "quote": "run: python3 tools/check_licenses.py"
+    },
+    {
+     "file": "android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S24AboutScreen.kt",
+     "line": 133,
+     "quote": "// Open Source Licenses Card"
+    }
+   ],
+   "reason": "LICENSE, README, CONTRIBUTING present; TC-OPS-08 runs as a CI step (trace shows 0 test-code citations, which is expected for an OPS check)."
+  },
+  {
+   "id": "P01",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P01 Android skeleton and guardrails: NG-001; TC-SEC-01, TC-SEC-02 (static), TC-SEC-04 checks.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "b959f70",
+     "quote": "P01: Gradle build, version catalog, convention plugins, guardrails, dependency locking"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 33,
+     "quote": "run: python3 tools/check_network_config.py android/app/src/main/res/xml/network_security_config.xml"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 35,
+     "quote": "run: python3 tools/check_manifest.py"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 40,
+     "quote": "tools/check_16kb.sh android/app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk"
+    }
+   ],
+   "reason": "All three are CI gate scripts wired in android-ci; trace.txt counts 0 test-code citations for TC-SEC-01/02/04 because they are OPS checks. The D7 device run of TC-SEC-04 is out of P01 scope."
+  },
+  {
+   "id": "P02",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P02 Card v1 and QR format specs (NG-006, NG-045) written and approved at spec review.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "990a8c4",
+     "quote": "P02: card v1 design and QR format specifications (NG-006, NG-045)"
+    },
+    {
+     "file": "card/spec/card-v1.md",
+     "line": 7,
+     "quote": "| Status | DRAFT — Awaiting P02 Review Gate |"
+    },
+    {
+     "file": "card/spec/qr-formats.md",
+     "line": 7,
+     "quote": "| Status | DRAFT — Awaiting P02 Review Gate |"
+    }
+   ],
+   "reason": "Specs, generator, and card tests exist; the spec review the package names as its test is not recorded (both specs still DRAFT)."
+  },
+  {
+   "id": "P03",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P03 Triage engine and signed config: NG-019, NG-020, NG-053; TC-TRI-01 to 26 tested.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "961e1a1",
+     "quote": "feat(triage): implement triage engine, signed configuration, and verification tests (P03)"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-TRI-01..TC-TRI-26 each >= 1 test"
+    },
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 36,
+     "quote": "fun test_TC_TRI_01_danger_signs()"
+    }
+   ],
+   "reason": "Read TC-TRI-01..03: they assert action and reason code against config.synthetic.json. All 26 TC-TRI IDs cited by tests."
+  },
+  {
+   "id": "P04",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P04 Color science engine: NG-013; TC-EST-02, TC-EST-03 tested.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "6317582",
+     "quote": "feat(colorscience): implement color science engine, calibration, conversions, and golden vectors (P04)"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "\"TC-EST-02\": 2, \"TC-EST-03\": 2"
+    }
+   ],
+   "reason": "Package commit and both TCs cited by tests."
+  },
+  {
+   "id": "P05",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P05 Card trust engine and signing tool: NG-039, NG-045; TC-CARD-01 to 06, TC-RSH-02, 03 tested.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "a15ca55",
+     "quote": "feat(engine): implement :engine:cardtrust Ed25519 payload verification and unit tests"
+    },
+    {
+     "commit": "4c6d991",
+     "quote": "feat(card): implement neogold-sign offline CLI, air-gap detection, and release gate"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-CARD-01..06 1-2 tests each; \"TC-RSH-02\": 4, \"TC-RSH-03\": 4"
+    },
+    {
+     "inventory_key": "categories.backlog_refs.missing",
+     "quote": "[\"NG-039\"]"
+    }
+   ],
+   "reason": "Built and tested, but no commit cites P05 or NG-039 (inventory lists NG-039 as missing from commit refs); traceability gap only."
+  },
+  {
+   "id": "P06",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P06 Estimation engine and model format: NG-015, NG-016; TC-EST-01, 05, 06, 07 tested.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "e6b3c7c",
+     "quote": "feat(estimation): implement estimation engine, model format, and golden vectors (P06)"
+    },
+    {
+     "file": "android/engine/estimation/src/test/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationGoldenVectorsTest.kt",
+     "line": 11,
+     "quote": "TC-EST-01: Parity test with golden test vectors at 1e-4."
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "\"TC-EST-05\": 4, \"TC-EST-06\": 1, \"TC-EST-07\": 3"
+    }
+   ],
+   "reason": "All four TCs cited by tests."
+  },
+  {
+   "id": "P07",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P07 Training pipeline: NG-032, NG-033, NG-038; TC-OPS-07 tested.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "5a79d61",
+     "quote": "feat(training): implement reproducible training pipeline, loaders, and conformal calibration (P07)"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "\"TC-OPS-07\": 2"
+    }
+   ],
+   "reason": "Package commit and TC-OPS-07 cited by 2 tests."
+  },
+  {
+   "id": "P08",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P08 Vision engine: NG-010, NG-011, NG-014; TC-CAP-02 to 12, 17, TC-CARD-07 tested.",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "aac596a",
+     "quote": "feat(vision): implement vision engine, marker detector, and quality gate (P08)"
+    },
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 243,
+     "quote": "fun tcCap11_wholeBadSetRejected()"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-CAP-02..12 and 17 >= 2 each; \"TC-CARD-07\": 3"
+    }
+   ],
+   "reason": "All named TCs cited. Read TC-CAP-11: asserts every manifest item in testdata/bad is rejected with its expected reason. The marker-library gate is a separate claim."
+  },
+  {
+   "id": "P09",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P09 Camera, device check, qualification: NG-004, 007, 008, 009, 044; TC-DEV-01 to 10, TC-CAP-01, 15 tested.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "04ccd82",
+     "quote": "feat(camera): implement camera engine, device check, and camera qualification (P09)"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-DEV-01..10 2-5 each; \"TC-CAP-01\": 2, \"TC-CAP-15\": 2"
+    }
+   ],
+   "reason": "Software built and all named TCs cited. Physical qualification on matrix phones is a milestone claim."
+  },
+  {
+   "id": "P10",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P10 v0.1 integration and performance: NG-025; TC-PERF-01 to 04, TC-EST-04 tested.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "commit": "0b94f8b",
+     "quote": "feat(screening): P10 v0.1 milestone integration, capture to estimate, and performance"
+    },
+    {
+     "inventory_key": "categories.test_cases.missing",
+     "quote": "TC-PERF-01, TC-PERF-02, TC-PERF-03, TC-PERF-04"
+    },
+    {
+     "file": "tools/benchmark_capture_to_result.py",
+     "line": 1
+    }
+   ],
+   "reason": "TC-EST-04 has 2 tests and a benchmark runner exists, but TC-PERF-01..04 have 0 test citations and need device runs. ScreeningPipelineUseCase is used only by tests and the benchmark; the app NavHost never calls it (see P21)."
+  },
+  {
+   "id": "P11",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P11 Local data layer: NG-023, 034, 035, 057; TC-LOG-04, 05, 07, 11, TC-SEC-07, 08, TC-REL-08 tested.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "commit": "5958931",
+     "quote": "feat(data): implement P11 local data layer, Room on SQLCipher, Tink file store, and retention"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/purge/DataPurgeManager.kt",
+     "line": 34,
+     "quote": "override suspend fun deleteAllData(): NeoGoldDatabase {"
+    },
+    {
+     "inventory_key": "categories.test_cases.missing",
+     "quote": "TC-LOG-11"
+    }
+   ],
+   "reason": "All named TCs have tests except TC-LOG-11 (delete all data: database, files, and keys removed), which has 0 tests although the code exists."
+  },
+  {
+   "id": "P12",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P12 Integrity, privacy, app lock, crash handling: NG-049, 054, 057; TC-PRIV-01 to 05, TC-SEC-03, 09 tested.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "commit": "0061dca",
+     "quote": "feat(security): implement P12 bundle integrity verification, privacy controls, app lock, and in-house crash handler"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-PRIV-01..05 1-6 each; \"TC-SEC-03\": 1, \"TC-SEC-09\": 4"
+    }
+   ],
+   "reason": "All named TCs cited by tests."
+  },
+  {
+   "id": "P13",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P13 Design system, onboarding, settings, Bangla: TC-ONB-01 to 06, TC-UI-04 to 08, TC-A11Y-01 to 05 tested.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "commit": "991584e",
+     "quote": "feat(designsystem): implement P13 design system, onboarding flow, settings, and Bangla localization"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-ONB-01..06, TC-UI-04..08, TC-A11Y-01..05 all >= 1"
+    }
+   ],
+   "reason": "All named TCs cited by tests."
+  },
+  {
+   "id": "P14",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P14 Research mode: NG-028 to NG-031, NG-041; TC-RSH-01 to 16 tested.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "commit": "f9b6488",
+     "quote": "feat(research): implement P14 research mode, blinded capture, PIN security, and TSB entry"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-RSH-01..16 2-5 each"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 802,
+     "quote": "onContinueToCapture = { code, _, _, _, _, _, _, _ ->"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 824,
+     "quote": "onSaveTsb = { _, _, _, _ ->"
+    }
+   ],
+   "reason": "Screens and components are tested, but the app NavHost drops the consent answers, capture results, and TSB entry and only navigates. It also hardcodes participant SKP-0142 and card status VERIFIED."
+  },
+  {
+   "id": "P15",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P15 Encrypted export and decrypt tool: NG-036; TC-EXP-01 to 04 tested.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "commit": "67c1e52",
+     "quote": "feat(research): implement P15 encrypted export, Tink HPKE, and offline decrypt tool"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-EXP-01..04: 2 each"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 865,
+     "quote": "message = \"Preparing export package...\""
+    }
+   ],
+   "reason": "ResearchExportManager and neogold-decrypt are built and tested, but nothing outside tests calls ResearchExportManager. The R07 handler only sets progress to PREPARING and never writes an export."
+  },
+  {
+   "id": "P16",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P16 Release pipeline and security gates: NG-055; TC-OPS-01 to 03, 10, TC-SEC-05, 06, 10, 14.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "commit": "21410eb",
+     "quote": "feat(release): implement P16 release pipeline and security gates for v0.5"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 26,
+     "quote": "run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md"
+    },
+    {
+     "inventory_key": "categories.test_cases.missing",
+     "quote": "TC-OPS-01, TC-OPS-02, TC-OPS-03, TC-OPS-10, TC-SEC-05, TC-SEC-06, TC-SEC-10, TC-SEC-14"
+    }
+   ],
+   "reason": "The release workflow, gitleaks, Trivy, SBOM, and play_publisher exist. All 8 named TCs have 0 test citations. TC-OPS-03/10 need Play tracks and TC-SEC-10/14 need MobSF or a manual review, and no artifacts for these are in the repo."
+  },
+  {
+   "id": "P17",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P17 Study Intake API core: NG-042; TC-API-01 to 16, 25, 31 tested.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "commit": "a49648a",
+     "quote": "feat(backend): implement P17 study intake API core, device assertion auth, and CI workflow"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-API-01..16 >= 1; \"TC-API-25\": 1, \"TC-API-31\": 1"
+    }
+   ],
+   "reason": "All named TCs cited by backend tests."
+  },
+  {
+   "id": "P18",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P18 Intake images, admin CLI, export: NG-042; TC-API-17 to 33 tested.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "commit": "dc69a29",
+     "quote": "feat(backend): implement P18 intake images, session completion, admin CLI, and export (NG-042)"
+    },
+    {
+     "inventory_key": "categories.test_cases.missing",
+     "quote": "TC-API-30"
+    }
+   ],
+   "reason": "16 of 17 TCs have tests. TC-API-30 (Schemathesis fuzzing against staging) has no test, and backend/ contains no schemathesis."
+  },
+  {
+   "id": "P19",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P19 Deployment stack and backend CI: NG-042; TC-OPS-04, 05, 11, TC-SEC-11 to 13.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "commit": "34bcb3c",
+     "quote": "feat(deploy): implement P19 deployment stack, backend CI, and staging runbook (NG-042)"
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 1
+    },
+    {
+     "inventory_key": "categories.test_cases.missing",
+     "quote": "TC-OPS-05, TC-OPS-11, TC-SEC-11, TC-SEC-12, TC-SEC-13"
+    }
+   ],
+   "reason": "The deploy stack exists and TC-OPS-04 has 1 test. The other 5 TCs are staging drills or scans with no tests and no recorded results beyond docs/test-reports/staging-setup.md."
+  },
+  {
+   "id": "P20",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P20 Research sync client and enrollment: NG-042; TC-SYNC-01 to 20, TC-API-07 tested.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "commit": "dab13ce",
+     "quote": "feat(sync): implement P20 research sync client and study enrollment (NG-042)"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-SYNC-01..20 >= 1; \"TC-API-07\": 3"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 886,
+     "quote": "composable(Destinations.R08_ENROLLMENT) { PlaceholderScreen(\"R08: Study Enrollment\") }"
+    }
+   ],
+   "reason": "The sync module is tested, but R08 Enrollment and R09 are PlaceholderScreens. StudyEnrollmentManager and ResearchWorkScheduler have no caller outside :sync:research, and R02 hardcodes pendingUploadsCount = 0."
+  },
+  {
+   "id": "P21",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P21 Screening flow built (hidden in v1.0): NG-012, 017-024, 026, 040, 043, 047, 048, 051, 056; listed TC-UI/LOG/REL/CAP/CARD tested.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "commit": "4e20abe",
+     "quote": "feat(screening): implement P21 screening flow, results, log, and due list"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 568,
+     "quote": "sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 569,
+     "quote": "sessionEstimatedLow = 8.2"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 523,
+     "quote": "onCaptureCompleted = { _ ->"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 594,
+     "quote": "TriageUiAction.NO_FURTHER_ACTION -> \"Routine newborn care. Re-evaluate if jaundice deepens.\""
+    },
+    {
+     "inventory_key": "categories.test_cases.missing",
+     "quote": "TC-LOG-09, TC-REL-07"
+    }
+   ],
+   "reason": "The plan says the flow is built. In the app, S16 throws away each capture, and S19 waits 1.2 s and then sets NO_FURTHER_ACTION with a fixed estimate of 8.2-10.1 and threshold 12.0 for every baby. ScreeningPipelineUseCase and ScreeningStateMachine are never called. The no-further-action text is hardcoded English that differs from strings.xml:7 \"Continue routine care. Watch for danger signs.\" Hidden only by triageEnabled=false. TC-LOG-09 and TC-REL-07 have 0 tests."
+  },
+  {
+   "id": "P22",
+   "kind": "NG",
+   "section": "1",
+   "claim": "P22 Device matrix and release candidates: NG-046; TC-PERF-05 to 07, TC-USE-01 to 05, TC-OPS-06, 09, remaining E2E.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "commit": "a1a5261",
+     "quote": "feat(release): implement P22 device matrix verification and v1.0 release candidate (NG-046)"
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "\"TC-PERF-07\": 2"
+    },
+    {
+     "file": "docs/BANGLA_STRINGS_REVIEW.md",
+     "line": 7,
+     "quote": "| Status | **Draft for Nurse Panel** |"
+    },
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 51,
+     "quote": "100% unaided; 100% teach-back (TC-USE-01..03)"
+    }
+   ],
+   "reason": "TC-PERF-07 is tested and reliability tooling and run plans exist. TC-PERF-05/06, TC-USE-01..05, and TC-OPS-06/09 have 0 tests and need people or devices. v1.0.md reports TC-USE-03 as passed, but the wording record it needs is still a draft."
+  },
+  {
+   "id": "P23",
+   "kind": "other",
+   "section": "1",
+   "claim": "P23 Spike and assumption check: process tooling with tests in tools/tests/.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "commit": "4523908",
+     "quote": "feat(quality): implement P23 spike and assumption check loop"
+    },
+    {
+     "file": "tools/tests/test_assumptions.py",
+     "line": 1
+    }
+   ],
+   "reason": "tools/assumptions.py, the ng-spike and ng-assumptions skills, docs/spikes/, and tools/tests/test_assumptions.py are present at the audited commit."
+  },
+  {
+   "id": "P24",
+   "kind": "other",
+   "section": "1",
+   "claim": "P24 Direction check: /ng-direction, drift_inventory.py --check CI job, tooling tests.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "docs/14_Build_Plan.md",
+     "line": 56,
+     "quote": "| P24 | Direction check | 11 Agent quality loop | P23 | none (process) | tooling tests in tools/tests/ | 2 to 3 |"
+    }
+   ],
+   "reason": "In progress on this branch, after the audited commit 4523908; not assessed per instructions."
+  },
+  {
+   "id": "doc14-3-M1-1",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M1 exit: capture to estimate works end to end on 3 phones.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 569,
+     "quote": "sessionEstimatedLow = 8.2"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 523,
+     "quote": "onCaptureCompleted = { _ ->"
+    },
+    {
+     "file": "docs/test-reports/v0.1.md",
+     "line": 35,
+     "quote": "Verified across 30 runs per device on D1, D2, and D4 | **PASS**"
+    }
+   ],
+   "reason": "v0.1.md reports PASS, but in the app the capture is thrown away and the estimate is a constant. Only tests and the benchmark use ScreeningPipelineUseCase. No phone run can be end to end through the app as built."
+  },
+  {
+   "id": "doc14-3-M1-2",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M1 exit: golden-vector parity.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/test/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationGoldenVectorsTest.kt",
+     "line": 11,
+     "quote": "TC-EST-01: Parity test with golden test vectors at 1e-4."
+    },
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "\"TC-EST-01\": 2, \"TC-EST-07\": 3"
+    }
+   ],
+   "reason": "JVM parity tests exist. Parity on both ABIs on real devices is not shown by these tests."
+  },
+  {
+   "id": "doc14-3-M1-3",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M1 exit: bad image set 100% rejected.",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 277,
+     "quote": "assertThat(rejectedImages).isEqualTo(totalImages)"
+    }
+   ],
+   "reason": "The test runs every manifest entry in testdata/bad (14 PNGs) and asserts that all are rejected with their expected reasons. v0.1.md says 16/16 frames, which does not match the 14 images in the repo."
+  },
+  {
+   "id": "doc14-3-M1-4",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M1 exit: camera qualification measured on all six matrix phones.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v0.1.md",
+     "line": 36,
+     "quote": "D1–D4, D6 `QUALIFIED`; D5 `QUALIFIED` (Legacy fallbacks verified)"
+    }
+   ],
+   "reason": "Needs device measurements. v0.1.md asserts them but has no raw data, links to file:///D:/ paths, and was committed with the P10 code one day after P09. The 2026-10-26 assumptions report still lists AE/AWB timing as \"None (mock test only)\". Raw qualification logs per phone would settle it."
+  },
+  {
+   "id": "doc14-3-M2-1",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M2 exit: research mode complete.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 839,
+     "quote": "tsbMgDl = 14.2,"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 837,
+     "quote": "cardStatus = com.kitalonlabs.neogold.feature.research.data.CardTrustStatus.VERIFIED,"
+    },
+    {
+     "file": "docs/test-reports/v0.5.md",
+     "line": 40,
+     "quote": "Research mode, sync, encryption, USB export, security | All P1 test suites pass with zero regressions | **PASS**"
+    }
+   ],
+   "reason": "In the app, R06 shows a fixed TSB of 14.2 mg/dL and a VERIFIED card whatever was entered. R03/R04/R05 discard their inputs, the participant is fixed as SKP-0142, and R08/R09 are placeholders. v0.5.md also reports TC-SYNC-01..14 passing on 2026-10-20, but the sync client commit dab13ce is dated 2026-10-25."
+  },
+  {
+   "id": "doc14-3-M2-2",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M2 exit: zero records lost in 50 kill and 10 power-loss tests per phone.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "tools/reliability/adb_kill_loop.py",
+     "line": 1
+    },
+    {
+     "file": "docs/test-reports/v0.5.md",
+     "line": 41,
+     "quote": "Outbox store-and-forward maintains 100% integrity | **PASS**"
+    }
+   ],
+   "reason": "Needs physical kill and power-pull runs. Tooling exists, but the report gives no per-phone logs, and since the app never persists research sessions (see M2-1) the result cannot have come from the app flow. Per-phone run logs would settle it."
+  },
+  {
+   "id": "doc14-3-M2-3",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M2 exit: encrypted USB export.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-EXP-01..04: 2 each"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 865,
+     "quote": "message = \"Preparing export package...\""
+    }
+   ],
+   "reason": "The export engine and decrypt tool are tested, but the R07 UI never calls ResearchExportManager, so no export is written from the app."
+  },
+  {
+   "id": "doc14-3-M2-4",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M2 exit: build on Play closed testing for the partner.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "tools/play_publisher.py",
+     "line": 1
+    }
+   ],
+   "reason": "Needs Play Console evidence (track listing or upload receipt); docs/test-reports has none."
+  },
+  {
+   "id": "doc14-3-M3-1",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M3 exit: study server upload working against staging.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.test_cases.details.tests_per_tc",
+     "quote": "TC-SYNC-01..20 >= 1"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 886,
+     "quote": "PlaceholderScreen(\"R08: Study Enrollment\")"
+    }
+   ],
+   "reason": "The client and server are tested on their own, but the app cannot enroll (R08 is a placeholder) and never schedules an upload. No staging run log exists beyond staging-setup.md."
+  },
+  {
+   "id": "doc14-3-M3-2",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M3 exit: screening flow built and tested with triageEnabled false.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "config/triage-config.json",
+     "line": 5,
+     "quote": "\"triageEnabled\": false,"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 568,
+     "quote": "sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION"
+    },
+    {
+     "inventory_key": "categories.triage_gate.details",
+     "quote": "S20ResultScreen.kt:60: triageEnabled: Boolean = true,"
+    }
+   ],
+   "reason": "The flow is hidden (config false, NavHost default false), but the built flow returns a fixed NO_FURTHER_ACTION result instead of the engines. S20ResultScreen also defaults triageEnabled to true."
+  },
+  {
+   "id": "doc14-3-M3-3",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M3 exit: all P1 and P2 cases pass on D1 to D4.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.test_cases.missing",
+     "quote": "35 TCs with zero tests incl. TC-API-30, TC-LOG-09, TC-LOG-11, TC-REL-07"
+    },
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 39,
+     "quote": "100% (216/216 P1 & P2 cases pass)"
+    }
+   ],
+   "reason": "Needs device runs. v1.0.md claims 216/216, but 35 TCs have no tests, some P1 cases have no implementation (TC-API-30), and the report claims passes that repo records contradict (TC-USE-03 wording is still a draft). Per-device run logs would settle it."
+  },
+  {
+   "id": "doc14-3-M3-4",
+   "kind": "gate",
+   "section": "3",
+   "claim": "M3 exit: gates S1 to S9 pass.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 60,
+     "quote": "\"$RUNNER_TEMP/gitleaks\" git --redact --exit-code 1 ."
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 35,
+     "quote": "run: python3 tools/check_manifest.py"
+    },
+    {
+     "file": "CLINICAL_SIGNOFF.md",
+     "line": 5,
+     "quote": "- **signed_by:** Draft Clinical Lead Placeholder"
+    }
+   ],
+   "reason": "S2/S3/S4/S5/S6/S9 are automated in CI. S1 (MobSF/MASVS) and S8 (restore drill) are claimed in v1.0.md with no artifacts. Clinical sign-off is a placeholder, which passes only because triageEnabled is false."
+  },
+  {
+   "id": "Gate P02",
+   "kind": "gate",
+   "section": "4",
+   "claim": "Card layout and QR formats approved before anything is printed or coded against it.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "card/spec/card-v1.md",
+     "line": 7,
+     "quote": "| Status | DRAFT — Awaiting P02 Review Gate |"
+    },
+    {
+     "commit": "a15ca55",
+     "quote": "feat(engine): implement :engine:cardtrust Ed25519 payload verification and unit tests"
+    }
+   ],
+   "reason": "No approval is recorded and both specs are still DRAFT, yet P05 (cardtrust, neogold-sign) and P08 (vision) were coded against them."
+  },
+  {
+   "id": "Gate P03",
+   "kind": "gate",
+   "section": "4",
+   "claim": "Config schema approved (structure the clinical lead will sign).",
+   "status": "Missing",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "CLINICAL_SIGNOFF.md",
+     "line": 5,
+     "quote": "- **signed_by:** Draft Clinical Lead Placeholder"
+    }
+   ],
+   "reason": "Searched specs, docs, commits, and CLINICAL_SIGNOFF.md: no recorded founder approval of the config schema."
+  },
+  {
+   "id": "Gate P08",
+   "kind": "gate",
+   "section": "4",
+   "claim": "Marker library (OpenCV or AprilTag) decided by measured size on both ABIs.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "card/spec/card-v1.json",
+     "line": 24,
+     "quote": "\"family_decision\": \"OPEN: decided by the v0.1 download-size measurement (doc 4 Section 16, item 1)."
+    },
+    {
+     "file": "docs/4_System_Architecture.md",
+     "line": 595,
+     "quote": "1. **Marker library:** OpenCV vs AprilTag, decided by measured download size against the 25 MB budget in v0.1."
+    }
+   ],
+   "reason": "There is no ADR row and the item is still open. The code ships a native AprilTag JNI detector with a Kotlin fallback (AprilTagNativeDetector.kt:67), the card artwork is ARUCO_4X4, and the only measurement is a host Python spike."
+  },
+  {
+   "id": "Gate P06",
+   "kind": "gate",
+   "section": "4",
+   "claim": "Model format (model.json) approved before the training pipeline writes it.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [],
+   "reason": "Searched docs, specs, commits, and the ng-p06 prompt: no recorded approval of model.json. The P06 and P07 commits landed the same day (2026-10-18)."
+  },
+  {
+   "id": "Gate P11",
+   "kind": "gate",
+   "section": "4",
+   "claim": "Database schema v1 approved before the first build that study phones install.",
+   "status": "Missing",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "docs/5_Database_Schema.md",
+     "line": 10,
+     "quote": "| Status | Awaiting founder review |"
+    }
+   ],
+   "reason": "No approval record in doc 5, commits, or specs, yet v0.5 and v1.0 builds are reported as released."
+  },
+  {
+   "id": "Gate Release P16",
+   "kind": "gate",
+   "section": "4",
+   "claim": "Release go/no-go for v0.5 decided with the second approver.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v0.5.md",
+     "line": 129,
+     "quote": "| Second Approver | Release Manager | **APPROVED** | 2026-10-20 |"
+    }
+   ],
+   "reason": "A sign-off row exists, but the approver is a role, not a person, and the clinical lead row (\"Partner Consultant Neonatologist\") conflicts with the placeholder in CLINICAL_SIGNOFF.md. There is no GitHub release-environment approval in the repo."
+  },
+  {
+   "id": "Gate Release P22",
+   "kind": "gate",
+   "section": "4",
+   "claim": "Release go/no-go for v1.0 decided with the second approver.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 171,
+     "quote": "| Second Approver | Release Manager, Kitalon Labs | **APPROVED** | 2026-10-25 |"
+    }
+   ],
+   "reason": "A sign-off row exists, but only by role, and it rests on report claims the repo contradicts (see M3 claims). No release-environment approval record."
+  },
+  {
+   "id": "doc14-6-3",
+   "kind": "other",
+   "section": "6",
+   "claim": "Each work package prompt is stored as a slash command in .claude/commands/.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": ".claude/commands/ng-p22.md",
+     "line": 1
+    }
+   ],
+   "reason": "ng-p00 to ng-p22 exist. P23 and P24 have no ng-pNN command (P23 ships as skills ng-spike and ng-assumptions)."
+  },
+  {
+   "id": "doc14-6-5a",
+   "kind": "other",
+   "section": "6",
+   "claim": "Reviewer subagents safety-reviewer and privacy-security-reviewer exist in .claude/agents/.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": ".claude/agents/safety-reviewer.md",
+     "line": 1
+    },
+    {
+     "file": ".claude/agents/privacy-security-reviewer.md",
+     "line": 1
+    }
+   ],
+   "reason": "Both agent files are present. Whether they were run on each package is not recorded."
+  },
+  {
+   "id": "doc14-6-5b",
+   "kind": "other",
+   "section": "6",
+   "claim": "Each package ends in a PR that the second approver reviews and merges.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "commit": "aa13ec1",
+     "quote": "P00: Repository bootstrap (#1)"
+    },
+    {
+     "commit": "72e2582",
+     "quote": "Merge pull request #23 from Kitalon-Labs-LLC/dev"
+    }
+   ],
+   "reason": "Only P00 carries a PR number. P01-P22 are plain commits with no merge or PR number (b4cdeb2 merged p02 into the p03 branch). PRs #23-#25 are bulk dev-to-main merges. Who approved them needs GitHub PR data."
+  }
+ ],
+ "counts": {
+  "Implemented": 16,
+  "Partial": 17,
+  "Missing": 4,
+  "Contradicted": 5,
+  "Deferred": 1,
+  "Unknown": 4
+ },
+ "notes": "Three of the five Contradicted claims are in the triage area (P21, M1-1, M3-2), so they decide the verdict. All rest on one fact: the app's screening flow (MainActivity.kt:523-571) throws away the capture and returns a fixed NO_FURTHER_ACTION result (estimate 8.2-10.1, threshold 12.0) without calling ScreeningPipelineUseCase or the triage engine. It is hidden only because triageEnabled=false. The research flow is wired the same way (fixed participant, TSB 14.2, card VERIFIED, export never runs, R08/R09 placeholders). The engines themselves are well tested. The test reports in docs/test-reports cannot be relied on: v0.5.md (committed 2026-10-20 15:56) reports TC-SYNC-01..14 and the server checks TC-SEC-11..13 as passed before the sync client (2026-10-25) and deploy stack (2026-10-24) existed. It also reports TC-CARD-10 (print batch) as passed. v1.0.md reports TC-USE-03 as passed while BANGLA_STRINGS_REVIEW.md is a draft. Its clinical lead APPROVED rows conflict with the placeholder in CLINICAL_SIGNOFF.md. For these reasons physical milestone criteria are marked Unknown, not Implemented. Inventory head 4f04aef differs from audited commit 4523908; product code is stated to be identical. Test counts are from reports/direction/2026-10-26/trace.txt."
+}

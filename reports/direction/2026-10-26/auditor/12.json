@@ -1,0 +1,1307 @@
+{
+ "doc": "docs/12_Deployment_Runbook.md",
+ "companions": [],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "doc-12-0-1",
+   "kind": "rule",
+   "section": "0",
+   "claim": "The first production release cannot be staged; v1.0.0 uses testing tracks, Bangladesh-only availability and managed publishing.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "This is Play Console behaviour and configuration. The repository can't show it; the Play Console release history would settle it."
+  },
+  {
+   "id": "doc-12-0-2a",
+   "kind": "rule",
+   "section": "0",
+   "claim": "The validUntil expiry in the config is the offline backstop for a dangerous triage result.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 42,
+     "quote": "if (today.isAfter(config.validUntil)) {"
+    },
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 44,
+     "quote": "reason = TriageUnavailableReason.CONFIG_EXPIRED,"
+    }
+   ],
+   "reason": "The engine refuses to give a result with CONFIG_EXPIRED once validUntil has passed."
+  },
+  {
+   "id": "doc-12-0-2b",
+   "kind": "other",
+   "section": "0",
+   "claim": "Play review can take hours to days [Certain, verified in docs/spikes/2026-10-26-play-review-latency.md].",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "docs/spikes/2026-10-26-play-review-latency.md",
+     "line": 33,
+     "quote": "python tools/play_publisher.py --help"
+    },
+    {
+     "file": "docs/spikes/2026-10-26-play-review-latency.md",
+     "line": 52,
+     "quote": "android/engine/triage/src/main/java/org/neogold/triage/TriageConfig.kt"
+    }
+   ],
+   "reason": "The spike's only command was play_publisher.py --help, and it cites no Play source for the latency. It also points to a path that does not exist; the real file is under src/main/kotlin/com/kitalonlabs/. The [Certain] tag is not backed by evidence. Play documentation or a timed review would settle it."
+  },
+  {
+   "id": "doc-12-1-appid",
+   "kind": "other",
+   "section": "1",
+   "claim": "Application ID is com.kitalonlabs.neogold.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 41,
+     "quote": "applicationId = \"com.kitalonlabs.neogold\""
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-1-image",
+   "kind": "other",
+   "section": "1",
+   "claim": "Backend image ghcr.io/<github-org>/neogold-intake, deployed by digest only.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 101,
+     "quote": "echo \"IMAGE_NAME=ghcr.io/$(echo \"${{ github.repository_owner }}\" | tr '[:upper:]' '[:lower:]')/neogold-intake\""
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 40,
+     "quote": "image: ${API_IMAGE:?}@${API_DIGEST:?set API_DIGEST, see neogold-deploy}"
+    }
+   ],
+   "reason": "The image name is built in CI and compose pins it by digest."
+  },
+  {
+   "id": "doc-12-2-versioncode",
+   "kind": "rule",
+   "section": "2",
+   "claim": "versionCode = major*1,000,000 + minor*10,000 + patch*100 + build, with parts 0..99; versionName is SemVer.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 21,
+     "quote": "return major * 1_000_000 + minor * 10_000 + patch * 100 + build"
+    }
+   ],
+   "reason": "This lives in the build-logic plugin, not android/app/build.gradle.kts as the doc excerpt shows. versionName can be overridden with -PversionName."
+  },
+  {
+   "id": "doc-12-2-tagcheck",
+   "kind": "rule",
+   "section": "2",
+   "claim": "The release workflow refuses a tag that does not match versionName.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 35,
+     "quote": "test \"v${version}\" = \"${GITHUB_REF_NAME}\" || { echo \"tag ${GITHUB_REF_NAME} does not match versionName ${version}\"; exit 1; }"
+    },
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 103,
+     "quote": "tasks.register(\"printVersionName\") {"
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-2-branches",
+   "kind": "rule",
+   "section": "2",
+   "claim": "Branches: main stable, dev integration, release/X.Y cut from main; two-person review protects main, dev and release/**.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "CONTRIBUTING.md",
+     "line": 1
+    }
+   ],
+   "reason": "Branch protection is a GitHub repository setting the repository can't show. The settings or the branch-protection API would settle it."
+  },
+  {
+   "id": "doc-12-2-schemacompat",
+   "kind": "rule",
+   "section": "2",
+   "claim": "The schema-compat CI job runs the previous release's tests against the new schema and blocks the image build if they fail.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 89,
+     "quote": "needs: [test, schema-compat]"
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 86,
+     "quote": "pytest -q --no-migrate    # previous code, current schema"
+    },
+    {
+     "file": "backend/tests/conftest.py",
+     "line": 40,
+     "quote": "\"--no-migrate\","
+    }
+   ],
+   "reason": "The job passes trivially until an intake-v* tag exists."
+  },
+  {
+   "id": "doc-12-3-android-ci",
+   "kind": "other",
+   "section": "3",
+   "claim": "android-ci.yml: PR/push main,dev,release/**/workflow_call; lint, unit, golden, differential, schema, unsigned build, S4/S5/S6, trace; scan job with S9 and Trivy.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 26,
+     "quote": "run: ./gradlew --no-daemon lintRelease detekt testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 54,
+     "quote": "- name: Gate S9, secrets scan"
+    }
+   ],
+   "reason": "All documented steps are present. S4 checks the arm64-v8a split APK rather than app-release-unsigned.apk, because ABI splits are on. CI also runs extra steps the doc does not list (see doc-12-A-drift)."
+  },
+  {
+   "id": "doc-12-3-release-gates",
+   "kind": "gate",
+   "section": "3",
+   "claim": "android-release.yml re-runs android-ci on the tag, then G1, tag check, signed bundle, signed asset manifest, SBOM, and S4/S5 on that bundle.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 10,
+     "quote": "uses: ./.github/workflows/android-ci.yml"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 26,
+     "quote": "run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 73,
+     "quote": "tools/check_16kb.sh \"$RUNNER_TEMP/universal.apk\""
+    }
+   ],
+   "reason": "Matches. The workflow also adds a trust-list gate and a license gate."
+  },
+  {
+   "id": "doc-12-3-upload",
+   "kind": "rule",
+   "section": "3",
+   "claim": "The release workflow uploads that same checked file to the internal track.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "tools/play_publisher.py",
+     "line": 80,
+     "quote": "if dry_run or not credentials_json:"
+    },
+    {
+     "file": "tools/play_publisher.py",
+     "line": 155,
+     "quote": "print(f\"SUCCESS (Simulated): Release {bundle_info['filename']} staged for '{track}' with priority {update_priority}.\")"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 79,
+     "quote": "run: ./gradlew --no-daemon publishReleaseBundle --track internal --artifact-dir \"$RUNNER_TEMP/upload\""
+    }
+   ],
+   "reason": "publishReleaseBundle runs tools/play_publisher.py. That script exits 0 without uploading when credentials are missing (line 80) or when googleapiclient is not installed (line 153). The workflow never installs googleapiclient, so on a stock runner the step reports success but uploads nothing."
+  },
+  {
+   "id": "doc-12-3-secrets",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Upload key, K3 and Play service account exist only in the protected release environment and are deleted in an always-run final step.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 15,
+     "quote": "environment: release   # requires reviewer approval in repository settings"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 90,
+     "quote": "if: always()"
+    }
+   ],
+   "reason": "Only the release job references secrets.*. Keystore passwords are passed as -P command-line properties (lines 49-53)."
+  },
+  {
+   "id": "doc-12-3-ghrelease",
+   "kind": "rule",
+   "section": "3",
+   "claim": "The release workflow creates a draft GitHub release with checksums of the uploaded files and release notes.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 87,
+     "quote": "--notes-file docs/release-notes/\"${GITHUB_REF_NAME}\".md \\"
+    },
+    {
+     "file": "docs/release-notes/v0.5.0.md",
+     "line": 1
+    }
+   ],
+   "reason": "The step exists, but it needs docs/release-notes/<tag>.md and only v0.5.0.md exists. A v1.0.0 tag would fail at this step, after the Play upload."
+  },
+  {
+   "id": "doc-12-3-backend-ci",
+   "kind": "other",
+   "section": "3",
+   "claim": "backend-ci.yml: PR, push main, tag intake-v*; ruff, bandit, pytest, spec diff, schema-compat, image with SBOM and provenance, image scan; packages: write only in image job.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 7,
+     "quote": "tags: [\"intake-v*.*.*\"]"
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 94,
+     "quote": "packages: write"
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 129,
+     "quote": "packages: read"
+    }
+   ],
+   "reason": "Matches. The scan job logs in to ghcr with a read-only token (packages: read)."
+  },
+  {
+   "id": "doc-12-A-drift",
+   "kind": "other",
+   "section": "Appendix A",
+   "claim": "Appendix A (and docs/ci-templates) are the three workflows as deployed.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 27,
+     "quote": "- name: Gate G1, clinical sign-off"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 27,
+     "quote": "- name: Gate: refuse TEST_ONLY keys in trust list"
+    },
+    {
+     "file": ".github/workflows/repo-ci.yml",
+     "line": 1,
+     "quote": "name: repo-ci"
+    }
+   ],
+   "reason": "The live workflows differ from Appendix A and docs/ci-templates. Additions: G1 and a license check in android-ci; trust-list and license gates plus -PupdatePriority and shred in the release workflow; ShellCheck, runtime-lock check, buildx, ghcr login in scan and ignore-unfixed in backend-ci. A fourth workflow, repo-ci.yml, is not in the Section 3 table, and Appendix B omits check_trust_list_release.py and check_licenses.py. The doc was not updated."
+  },
+  {
+   "id": "doc-12-3-nightly-ui",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Instrumented UI tests on emulators run nightly.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "I checked all four workflows in .github/workflows. None has a schedule: trigger or an emulator job."
+  },
+  {
+   "id": "Gate S1",
+   "kind": "gate",
+   "section": "3",
+   "claim": "MobSF scan (S1, TC-SEC-10) is run manually; the result and report SHA-256 are recorded in docs/test-reports/vX.Y.Z.md Section 4.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 115,
+     "quote": "| **S1** | MobSF Static Analysis & MASVS Review | Manual Containerized Scan | Zero High or Critical findings; Grade A score | **PASS** |"
+    }
+   ],
+   "reason": "The report claims PASS, but docs/security-scans/ does not exist and the row records no report hash. TC-SEC-10 is cited by 0 tests. The MobSF report file and its hash would settle it."
+  },
+  {
+   "id": "doc-12-3-locking",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Gradle dependency locking is on, with gradle.lockfile files committed.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build.gradle.kts",
+     "line": 15,
+     "quote": "lockAllConfigurations()"
+    },
+    {
+     "file": "android/app/gradle.lockfile",
+     "line": 1
+    }
+   ],
+   "reason": "Lockfiles are committed for every module."
+  },
+  {
+   "id": "doc-12-3-sha-pin",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Every action is pinned to a full commit SHA with the version in a comment; Dependabot proposes updates.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 102,
+     "quote": "- uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1"
+    },
+    {
+     "file": ".github/dependabot.yml",
+     "line": 49,
+     "quote": "- package-ecosystem: \"github-actions\""
+    }
+   ],
+   "reason": "Every uses: line in the four workflows has a 40-hex SHA, apart from the local reusable workflow."
+  },
+  {
+   "id": "doc-12-3-scanner-nosecrets",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Scanner jobs run with no secrets and a read-only token.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 46,
+     "quote": "# No secrets in this job: a compromised scanner has nothing to steal (doc 8 T12)."
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 127,
+     "quote": "permissions:"
+    }
+   ],
+   "reason": "secrets.* appears only in android-release.yml's release job. The reusable android-ci is called without secrets: inherit."
+  },
+  {
+   "id": "doc-12-3-trivy-verify",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Verify the pinned Trivy commit against Aqua's advisory before adopting it.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 61,
+     "quote": "# v0.36.0, verify before adopting"
+    }
+   ],
+   "reason": "The comment still says \"verify before adopting\" and no verification record exists. A check of the SHA against Aqua's advisory would settle it."
+  },
+  {
+   "id": "doc-12-3-release-env",
+   "kind": "rule",
+   "section": "3",
+   "claim": "The release environment requires founder and second approver, with prevent self-review on.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "This is a GitHub environment setting the repository can't show. Repository settings would settle it."
+  },
+  {
+   "id": "doc-12-3-pull-deploy",
+   "kind": "rule",
+   "section": "3",
+   "claim": "CI never holds server credentials; deployment is pull-based using the digest CI prints.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 121,
+     "quote": "echo \"Deploy with: neogold-deploy ${DIGEST}\" >> \"$GITHUB_STEP_SUMMARY\""
+    }
+   ],
+   "reason": "No workflow refers to server secrets or SSH."
+  },
+  {
+   "id": "Gate G1",
+   "kind": "gate",
+   "section": "4.1, B.1",
+   "claim": "G1 checks status SIGNED, canonical config hash, config_version, signoffRecordSha256, validUntil within 12 months, signed_by and registration.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 34,
+     "quote": "if signoff.get(\"status\") != \"SIGNED\":"
+    },
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 47,
+     "quote": "if valid_until > signed_on + dt.timedelta(days=366):"
+    }
+   ],
+   "reason": "Identical to Appendix B.1, except field values are .strip()ped. No repository test exercises the script itself."
+  },
+  {
+   "id": "doc-12-4.1-triage-off",
+   "kind": "gate",
+   "section": "4.1",
+   "claim": "Builds with triageEnabled false pass G1 without a sign-off record (TC-TRI-26).",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 24,
+     "quote": "if cfg.get(\"triageEnabled\") is False:"
+    },
+    {
+     "file": "config/triage-config.json",
+     "line": 5,
+     "quote": "\"triageEnabled\": false,"
+    }
+   ],
+   "reason": "The shipped config has triage off and clinicalSignoff.status DRAFT, so G1 passes. Whether a build with triage on could ship is left to the triage-area audit."
+  },
+  {
+   "id": "doc-12-4.1-hash",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "Sign-off hash is SHA-256 of canonical JSON (sorted keys, no whitespace, UTF-8) with clinicalSignoff removed.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 17,
+     "quote": "data = json.dumps(body, sort_keys=True, separators=(\",\", \":\"), ensure_ascii=False).encode()"
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-4.2-pathA",
+   "kind": "other",
+   "section": "4.2",
+   "claim": "Path A: internal, then closed partner-pilot, then production Bangladesh-only with managed publishing.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [
+    {
+     "file": "docs/12_Deployment_Runbook.md",
+     "line": 132,
+     "quote": "### 4.2 Path A: later public release with triage (needs G3)"
+    }
+   ],
+   "reason": "The doc defers this to the later public release."
+  },
+  {
+   "id": "doc-12-4.3-pathB",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "Path B: internal track then closed testing of the research build with triageEnabled false, for ethics-approved study sites.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "config/triage-config.json",
+     "line": 5,
+     "quote": "\"triageEnabled\": false,"
+    }
+   ],
+   "reason": "The config part is shown; the Play tracks and ethics approval are outside the repository. Play Console and the partner's ethics letter would settle it."
+  },
+  {
+   "id": "doc-12-4.4-targetapi",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "Target API level 36.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 43,
+     "quote": "targetSdk = 36"
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-4.4-declarations",
+   "kind": "other",
+   "section": "4.4",
+   "claim": "Play declarations: health apps, disclaimer, data safety, web privacy policy, adults, Bangladesh only.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "These are Play Console settings. The Console would settle it."
+  },
+  {
+   "id": "doc-12-5-staged",
+   "kind": "rule",
+   "section": "5",
+   "claim": "Staged rollouts 5/20/50/100% with holds, partner confirmation, and halt and hold criteria.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "This is an operational Play Console process from v1.0.1 onward. Rollout records would settle it."
+  },
+  {
+   "id": "NG-055",
+   "kind": "NG",
+   "section": "6.2",
+   "claim": "Update priority 4 or 5 makes NeoGold start the immediate in-app update flow.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/common/src/main/kotlin/com/kitalonlabs/neogold/core/common/update/InAppUpdateManager.kt",
+     "line": 28,
+     "quote": "priority >= 4 -> UpdateFlowType.IMMEDIATE"
+    },
+    {
+     "file": "android/core/common/src/main/kotlin/com/kitalonlabs/neogold/core/common/update/InAppUpdateManager.kt",
+     "line": 52,
+     "quote": "class FakeAppUpdateManager : InAppUpdateManager {"
+    }
+   ],
+   "reason": "The priority-to-flow mapping exists. The only implementation is FakeAppUpdateManager; there is no Play in-app update implementation and nothing in src/main calls it."
+  },
+  {
+   "id": "doc-12-6.2-priority",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "The release workflow sets in-app update priority when it creates the release.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 79,
+     "quote": "-PupdatePriority=\"${{ vars.UPDATE_PRIORITY || 2 }}\""
+    },
+    {
+     "file": "tools/play_publisher.py",
+     "line": 134,
+     "quote": "\"inAppUpdatePriority\": update_priority,"
+    }
+   ],
+   "reason": "This uses a custom tools/play_publisher.py, not the Gradle Play Publisher the doc names. The default is 2."
+  },
+  {
+   "id": "TC-OPS-10",
+   "kind": "other",
+   "section": "6.2, 14",
+   "claim": "TC-OPS-10 checks whether priority survives promotion between tracks.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "docs/12_Deployment_Runbook.md",
+     "line": 393,
+     "quote": "1. **Update priority through promotion:** confirm in TC-OPS-10"
+    }
+   ],
+   "reason": "Listed as an open issue in Section 14. trace.py --tests shows TC-OPS-10 cited by 0 tests."
+  },
+  {
+   "id": "NG-062",
+   "kind": "NG",
+   "section": "6.3",
+   "claim": "Over-the-air config updates would shorten the emergency path; they need offline K3 signing first.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [
+    {
+     "file": "docs/12_Deployment_Runbook.md",
+     "line": 216,
+     "quote": "Over-the-air config updates (NG-062) would shorten this path; they require offline signing of K3 first"
+    }
+   ],
+   "reason": "The doc says a config change is an app release in v1.0 and defers OTA updates."
+  },
+  {
+   "id": "doc-12-7.1-hardening",
+   "kind": "rule",
+   "section": "7.1",
+   "claim": "Every container runs non-root with all capabilities dropped, no-new-privileges, read-only root filesystem and size-capped /tmp.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 5,
+     "quote": "cap_drop: [ALL]"
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 4,
+     "quote": "read_only: true"
+    }
+   ],
+   "reason": "backend/deploy/docker-compose.yml is identical to Appendix C.1."
+  },
+  {
+   "id": "doc-12-7.1-caddy",
+   "kind": "rule",
+   "section": "7.1",
+   "claim": "A derived Caddy image removes cap_net_bind_service; Caddy listens on 8080/8443, mapped from 80/443.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/caddy/Dockerfile",
+     "line": 6,
+     "quote": "RUN setcap -r /usr/bin/caddy"
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 22,
+     "quote": "ports: [\"80:8080\", \"443:8443\"]   # unprivileged ports inside the container"
+    }
+   ],
+   "reason": "Identical to Appendix C.3. TC-OPS-11, which confirms it starts, has 0 tests."
+  },
+  {
+   "id": "doc-12-7.1-forwarded",
+   "kind": "rule",
+   "section": "7.1",
+   "claim": "Caddy has fixed IP 172.30.0.10 and the API trusts X-Forwarded-For only from it (TC-API-33).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 33,
+     "quote": "ipv4_address: 172.30.0.10      # the only proxy the API trusts (FORWARDED_ALLOW_IPS in api.env)"
+    },
+    {
+     "file": "backend/app/config.py",
+     "line": 19,
+     "quote": "FORWARDED_ALLOW_IPS: str = os.getenv("
+    }
+   ],
+   "reason": "The app's default also includes 127.0.0.1. One test cites TC-API-33."
+  },
+  {
+   "id": "doc-12-7.1-digest",
+   "kind": "rule",
+   "section": "7.1",
+   "claim": "API_DIGEST lives in .env and only neogold-deploy writes it.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-deploy",
+     "line": 14,
+     "quote": "printf 'API_DIGEST=%s\\n' \"$1\" >> \"$tmp\""
+    }
+   ],
+   "reason": "Written atomically, mode 0600."
+  },
+  {
+   "id": "doc-12-7.1-postgres",
+   "kind": "rule",
+   "section": "7.1",
+   "claim": "PostgreSQL 16 sits on an internal network with no published port.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 62,
+     "quote": "image: ${POSTGRES_IMAGE:?pin postgres 16 by digest in .env}"
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 99,
+     "quote": "internal: true"
+    }
+   ],
+   "reason": "The db service has no ports. The exact digest is set in the server's .env."
+  },
+  {
+   "id": "doc-12-C.2-caddyfile",
+   "kind": "rule",
+   "section": "Appendix C.2",
+   "claim": "Caddyfile: HSTS, nosniff, no-referrer, 20MB image body limit, 256KB for other /v1, 404 elsewhere.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 27,
+     "quote": "max_size 20MB"
+    },
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 34,
+     "quote": "max_size 256KB"
+    }
+   ],
+   "reason": "Identical to Appendix C.2."
+  },
+  {
+   "id": "doc-12-7.2-setup",
+   "kind": "other",
+   "section": "7.2",
+   "claim": "First-time staging setup: droplet, firewall, WireGuard-only SSH, unattended upgrades, journald 90 days, ownerships, restic init, bootstrap, first deploy (TC-OPS-11).",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/staging-setup.md",
+     "line": 1
+    }
+   ],
+   "reason": "staging-setup.md is an operator checklist; the host itself is outside the repository. TC-OPS-11 has 0 tests. A signed staging record would settle it."
+  },
+  {
+   "id": "doc-12-7.3-deploy",
+   "kind": "rule",
+   "section": "7.3, D.1",
+   "claim": "neogold-deploy backs up, writes the digest, pulls, migrates, restarts and smoke-tests; any later failure restores the previous digest and re-smokes.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-deploy",
+     "line": 34,
+     "quote": "systemctl start neogold-backup.service          # oneshot; returns when the backup has finished"
+    },
+    {
+     "file": "backend/deploy/neogold-deploy",
+     "line": 57,
+     "quote": "trap rollback ERR"
+    }
+   ],
+   "reason": "Identical to Appendix D.1, and ShellCheck runs in backend-ci. TC-OPS-04 is cited only by a conftest comment."
+  },
+  {
+   "id": "doc-12-7.3-staging-tests",
+   "kind": "rule",
+   "section": "7.3",
+   "claim": "Staging runs Schemathesis and the ten authentication cases against each new deployment (TC-API-08, TC-API-30).",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 41,
+     "quote": "run: pytest -q"
+    }
+   ],
+   "reason": "trace.py --tests: TC-API-08 has 1 test, TC-API-30 has 0. I found no Schemathesis run against a deployment."
+  },
+  {
+   "id": "doc-12-7.4-testsite",
+   "kind": "rule",
+   "section": "7.4",
+   "claim": "Production smoke uses a test site created with site add --test, which every export skips.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 934,
+     "quote": "site_add.add_argument(\"--test\", action=\"store_true\", help=\"Mark site as test site\")"
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 591,
+     "quote": "Site.is_test.is_(False),"
+    }
+   ],
+   "reason": "The export excludes is_test sites."
+  },
+  {
+   "id": "doc-12-7.5-rollback",
+   "kind": "rule",
+   "section": "7.5",
+   "claim": "--rollback runs no migration, and the self-test accepts the newer expand-only schema.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-deploy",
+     "line": 29,
+     "quote": "if [[ \"$mode\" != deploy ]]; then export NEOGOLD_ALLOW_NEWER_SCHEMA=1; fi"
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 498,
+     "quote": "allow_newer = os.getenv(\"NEOGOLD_ALLOW_NEWER_SCHEMA\", \"0\") in (\"1\", \"true\")"
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-D.2-selftest-backup",
+   "kind": "rule",
+   "section": "D.2",
+   "claim": "The smoke self-test checks that the last backup is under 26 hours old.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 520,
+     "quote": "if not skip_backup and backup_dir.exists():"
+    },
+    {
+     "file": "backend/deploy/neogold-backup",
+     "line": 15,
+     "quote": "rm -f \"$stage\"/neogold.dump \"$stage\"/globals.sql"
+    }
+   ],
+   "reason": "The check reads /srv/neogold/backup inside the api container. Compose mounts that directory only into db, and neogold-backup empties it after every run, so the age check is skipped silently and never fails."
+  },
+  {
+   "id": "doc-12-8.1-backup",
+   "kind": "rule",
+   "section": "8.1, D.3",
+   "claim": "Nightly pg_dump plus roles, a truncation check, one restic snapshot with images, retention 7/5/12, and a weekly 5% read check.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-backup",
+     "line": 12,
+     "quote": "restic backup \"$stage\" /srv/neogold/images --tag nightly --exclude /srv/neogold/images/.tmp"
+    },
+    {
+     "file": "backend/deploy/neogold-backup",
+     "line": 13,
+     "quote": "restic forget --tag nightly --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --prune"
+    }
+   ],
+   "reason": "Identical to Appendix D.3."
+  },
+  {
+   "id": "doc-12-D.4-timer",
+   "kind": "other",
+   "section": "D.4",
+   "claim": "The backup timer fires daily at 02:30 Asia/Dhaka, persistent.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-backup.timer",
+     "line": 5,
+     "quote": "OnCalendar=*-*-* 02:30:00 Asia/Dhaka"
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-8.2-restore",
+   "kind": "rule",
+   "section": "8.2",
+   "claim": "Restore: admin commands journaled on the host, audit since, --restore leaves Caddy stopped, restore mark sets data_generation.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-admin",
+     "line": 6,
+     "quote": "logger -t neogold-admin -- \"user=${SUDO_USER:-$USER} args=$*\""
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 462,
+     "quote": "study.data_generation = now_ts"
+    },
+    {
+     "file": "backend/deploy/neogold-deploy",
+     "line": 30,
+     "quote": "if [[ \"$mode\" == restore ]]; then export NEOGOLD_SMOKE_INTERNAL_ONLY=1; services=(api); else services=(api caddy); fi"
+    }
+   ],
+   "reason": "The tooling exists. The procedure itself is manual, and TC-OPS-05 has 0 tests."
+  },
+  {
+   "id": "Gate S8",
+   "kind": "gate",
+   "section": "8.3",
+   "claim": "Each environment runs a monthly restore test of its own repository, in-country for production.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 122,
+     "quote": "| **S8** | Encrypted Backup & Restore Drill | Staging Drill (`neogold-deploy`) | Verified in staging drill; zero data lost; admin actions reapplied | **PASS** |"
+    }
+   ],
+   "reason": "The report asserts PASS for staging only. A dated restore record with snapshot IDs would settle it."
+  },
+  {
+   "id": "doc-12-D.5-bootstrap",
+   "kind": "rule",
+   "section": "D.5",
+   "claim": "Bootstrap creates migrator, app, export and purge roles with default privileges: app no DELETE, export read-only, purge SELECT+DELETE.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 21,
+     "quote": "GRANT SELECT, INSERT, UPDATE ON TABLES TO neogold_app;"
+    },
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 27,
+     "quote": "GRANT SELECT, DELETE ON TABLES TO neogold_purge;"
+    }
+   ],
+   "reason": "Identical to Appendix D.5."
+  },
+  {
+   "id": "doc-12-9-8",
+   "kind": "other",
+   "section": "9",
+   "claim": "Checklist item 8: the signing certificate SHA-256 fingerprint is published on the website and in the README.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "README.md",
+     "line": 10,
+     "quote": "the signing certificate fingerprint is published here at release."
+    }
+   ],
+   "reason": "The README has only a placeholder sentence; no fingerprint is published."
+  },
+  {
+   "id": "doc-12-9-9",
+   "kind": "other",
+   "section": "9",
+   "claim": "Checklist item 9: SBOM and checksums are attached to the GitHub release.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 85,
+     "quote": "(cd \"$RUNNER_TEMP/upload\" && sha256sum app-release.aab bom.json > SHA256SUMS)   # the exact files uploaded"
+    }
+   ],
+   "reason": "The SBOM comes from tools/generate_sbom.py via the cyclonedxBom task."
+  },
+  {
+   "id": "doc-12-9-process",
+   "kind": "other",
+   "section": "9",
+   "claim": "Go/no-go items G2 card batches, G3 (Path A), closed-testing exit, usability round 2, release notes under 500 chars, halt drill within 90 days, reachability, second approver.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "These are process records outside the code. TC-OPS-06 (halt drill) has 0 tests, and v1.0.0 release notes do not exist yet. Signed records would settle it."
+  },
+  {
+   "id": "doc-12-10-ops",
+   "kind": "other",
+   "section": "10",
+   "claim": "Admin CLI has study create/pause/resume/close/set-min-app-version, site add, code issue, device list/revoke, status, participant withdraw, export, decrypt-export, retention check/purge.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 908,
+     "quote": "s_create.add_argument(\"--ethics-ref\", required=True, help=\"Ethics reference\")"
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 951,
+     "quote": "d_revoke.add_argument(\"--reason\", required=True, choices=[\"LOST\", \"STOLEN\", \"REASSIGNED\", \"COMPROMISED\", \"STUDY_ENDED\"])"
+    }
+   ],
+   "reason": "All listed commands exist in build_parser."
+  },
+  {
+   "id": "doc-12-10-sign",
+   "kind": "other",
+   "section": "10, 11",
+   "claim": "The offline neogold-sign tool provides study-profile and card-batch.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "card/tools/neogold-sign/neogold_sign.py",
+     "line": 917,
+     "quote": "p_batch = subparsers.add_parser(\"card-batch\", help=\"Pack and sign a card batch payload.\")"
+    },
+    {
+     "file": "card/tools/neogold-sign/neogold_sign.py",
+     "line": 930,
+     "quote": "p_study = subparsers.add_parser(\"study-profile\", help=\"Pack and sign a study profile payload.\")"
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-12-security",
+   "kind": "other",
+   "section": "12",
+   "claim": "Security reports are acknowledged within 3 working days via the SECURITY.md contact.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "SECURITY.md",
+     "line": 29,
+     "quote": "- **Acknowledgment:** Within **3 working days** of receiving your report."
+    }
+   ],
+   "reason": "Matches."
+  },
+  {
+   "id": "doc-12-13-K3",
+   "kind": "rule",
+   "section": "3, 13",
+   "claim": "K3 (release manifest key) exists only as a release-environment secret; rotation means updating the public key in the app.",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/integrity/BundleManifestVerifier.kt",
+     "line": 19,
+     "quote": "private val trustedK3PublicKeyHex: String = DEFAULT_TEST_K3_PUBLIC_HEX"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/NeoGoldApplication.kt",
+     "line": 28,
+     "quote": "val integrityResult = BundleManifestVerifier.verifyAssets(this)"
+    },
+    {
+     "file": "tools/sign_bundle_manifest.py",
+     "line": 24,
+     "quote": "# Default test K3 keypair (for local/debug builds when no key is passed)"
+    }
+   ],
+   "reason": "The app verifies the asset manifest with a test K3 public key, and the matching private key is committed in tools/sign_bundle_manifest.py:25. So the trusted K3 is not confined to the release environment, and no release gate refuses the test K3 key; check_trust_list_release.py covers only trust-list.json. A manifest signed with the real K3 secret would also fail verification."
+  },
+  {
+   "id": "Gate S2-S3-S9",
+   "kind": "gate",
+   "section": "3, 9",
+   "claim": "S2 (Trivy), S3 (SBOM) and S9 (gitleaks) run in the CI and release pipeline.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 61,
+     "quote": "- uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0, verify before adopting"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 60,
+     "quote": "\"$RUNNER_TEMP/gitleaks\" git --redact --exit-code 1 ."
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 48,
+     "quote": "./gradlew --no-daemon signAssetManifest bundleRelease cyclonedxBom \\"
+    }
+   ],
+   "reason": "All three are wired into the tagged release through the verify job."
+  },
+  {
+   "id": "Gate S4",
+   "kind": "gate",
+   "section": "B.3",
+   "claim": "check_16kb.sh: zipalign -P 16 and ELF LOAD alignment of at least 2**14 for 64-bit ABIs.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/check_16kb.sh",
+     "line": 15,
+     "quote": "if [ \"$exp\" -lt 14 ]; then echo \"S4 FAIL: ${so#\"$work\"/} LOAD segment aligned 2**$exp\"; fail=1; fi"
+    }
+   ],
+   "reason": "Identical to Appendix B.3. It runs in android-ci and on the release bundle."
+  },
+  {
+   "id": "Gate S5",
+   "kind": "gate",
+   "section": "B.2",
+   "claim": "check_manifest.py allow-lists exactly MainActivity, SystemJobService, DiagnosticsReceiver and ProfileInstallerReceiver as exported components.",
+   "status": "Contradicted",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/check_manifest.py",
+     "line": 27,
+     "quote": "\"androidx.profileinstaller.ProfileInstallReceiver\": \"android.permission.DUMP\","
+    },
+    {
+     "file": "docs/12_Deployment_Runbook.md",
+     "line": 800,
+     "quote": "\"androidx.profileinstaller.ProfileInstallerReceiver\": \"android.permission.DUMP\","
+    }
+   ],
+   "reason": "Commit ea5772b added a fifth exported entry, ProfileInstallReceiver (the real androidx class name), without updating doc 12 B.2 or doc 8 Section 6.1, which says the check allow-lists \"exactly these\". It is guarded by the same DUMP permission and is probably a doc typo fix. Still, the allow-list changed without the doc update CLAUDE.md requires. The inventory shows only MainActivity exported in the source manifests."
+  },
+  {
+   "id": "Gate S6",
+   "kind": "gate",
+   "section": "B.4",
+   "claim": "check_network_config.py: cleartext off, system CAs only, no debug-overrides.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/check_network_config.py",
+     "line": 22,
+     "quote": "if srcs != [\"system\"]:"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 33,
+     "quote": "run: python3 tools/check_network_config.py android/app/src/main/res/xml/network_security_config.xml"
+    }
+   ],
+   "reason": "Identical to Appendix B.4."
+  },
+  {
+   "id": "doc-12-B.5-trace",
+   "kind": "gate",
+   "section": "B.5",
+   "claim": "trace.py fails if a requirement, hazard, threat or gate lacks a test case, and runs in CI.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 42,
+     "quote": "run: python3 tools/trace.py docs"
+    }
+   ],
+   "reason": "The run at this commit reports FR 38/38, NFR 14/14, H 11/11, T 17/17, Gate 9/9 covered. The live script has an extra --tests mode not shown in B.5."
+  }
+ ],
+ "counts": {
+  "Implemented": 40,
+  "Partial": 5,
+  "Missing": 1,
+  "Contradicted": 4,
+  "Deferred": 3,
+  "Unknown": 12
+ },
+ "notes": "Three of the four Contradicted claims are in non-other areas, so they drive the verdict. (1) crypto: the app trusts a test K3 public key whose private key is committed (tools/sign_bundle_manifest.py:25). (2) privacy: the S5 exported allow-list gained ProfileInstallReceiver without a doc update, which is probably a doc typo. (3) other: Play upload can 'succeed' in simulated mode. Other drift: Appendix A and docs/ci-templates are stale relative to .github/workflows, and repo-ci.yml is undocumented. Partial findings: the backup-age self-test is ineffective; NG-055 has only a fake update manager; v1.0.0 release notes are missing. backend/deploy matches Appendix C and D byte for byte. trace.py --tests shows TC-OPS-01..03, 05, 06, 08..11, TC-SEC-10..14 and TC-API-30 at 0 tests. Whether a build with triage on can ship is left to the triage audit. The inventory JSON records commit 4f04aef while the prompt names 4523908."
+}

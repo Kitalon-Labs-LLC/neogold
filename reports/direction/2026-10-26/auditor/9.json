@@ -1,0 +1,1346 @@
+{
+ "doc": "docs/9_Test_Plan_Strategy.md",
+ "companions": [
+  "docs/10_Test_Cases.md"
+ ],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "doc9-3-unit",
+   "kind": "rule",
+   "section": "3",
+   "claim": "JVM unit tests for engines, validators, ViewModels run on every pull request.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 26,
+     "quote": "./gradlew --no-daemon lintRelease detekt testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema"
+    }
+   ],
+   "reason": "android-ci runs on PRs touching android/, config/, testdata/, tools/, docs/."
+  },
+  {
+   "id": "doc9-3-golden",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Golden-vector parity: Kotlin pipeline vs Python training pipeline, tolerance 1e-4, every PR.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build.gradle.kts",
+     "line": 122,
+     "quote": "dependsOn(\":engine:colorscience:test\", \":engine:estimation:test\")"
+    },
+    {
+     "file": "training/tests/test_parity.py",
+     "line": 34
+    }
+   ],
+   "reason": "verifyGoldenVectors runs only Kotlin tests. The Python side (training/tests/test_parity.py) is not run by any workflow, so no PR compares the two pipelines."
+  },
+  {
+   "id": "doc9-3-differential",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Differential triage: 10,000 generated cases through Kotlin engine and independent Python reference, on PRs touching :engine:triage or config.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageDifferentialTest.kt",
+     "line": 92,
+     "quote": "for (i in 1..10000) {"
+    },
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageDifferentialTest.kt",
+     "line": 207,
+     "quote": "assertThat(disagreements).isEqualTo(0)"
+    },
+    {
+     "file": "android/build.gradle.kts",
+     "line": 128
+    }
+   ],
+   "reason": "Boundary cases from doc 10 plus 10,000 seeded cases are compared against tools/triage_reference.py."
+  },
+  {
+   "id": "doc9-3-integration",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Integration tests (Room/SQLCipher, migrations, Tink, outbox with fake server, WorkManager) with Robolectric, MigrationTestHelper, work-testing, MockWebServer every PR.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/gradle/libs.versions.toml",
+     "line": 65,
+     "quote": "robolectric = { group = \"org.robolectric\", name = \"robolectric\", version.ref = \"robolectric\" }"
+    },
+    {
+     "file": "android/gradle/libs.versions.toml",
+     "line": 93
+    },
+    {
+     "file": "android/gradle/libs.versions.toml",
+     "line": 84
+    }
+   ],
+   "reason": "The libraries are declared and run under testReleaseUnitTest. Individual integration tests were not read."
+  },
+  {
+   "id": "doc9-3-contract",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Contract tests: client models vs openapi.yaml schemas; server matches spec, every PR.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/test/kotlin/com/kitalonlabs/neogold/sync/research/OpenApiContractTest.kt",
+     "line": 1
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 45,
+     "quote": "python3 backend/tools/diff_spec.py docs/api/openapi.yaml"
+    }
+   ]
+  },
+  {
+   "id": "doc9-3-backend",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Backend tests (pytest, httpx, Testcontainers PostgreSQL 16) on every backend PR.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 41,
+     "quote": "run: pytest -q"
+    },
+    {
+     "file": "backend/tests/conftest.py",
+     "line": 53,
+     "quote": "from testcontainers.postgres import PostgresContainer"
+    }
+   ],
+   "reason": "CI uses a postgres:16 service container. Testcontainers is used in conftest."
+  },
+  {
+   "id": "doc9-3-fuzz",
+   "kind": "rule",
+   "section": "3",
+   "claim": "API fuzzing with Schemathesis against staging on every release candidate.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 1
+    }
+   ],
+   "reason": "No Schemathesis reference in any workflow, requirements file or script. TC-API-30 has zero tests (trace.txt)."
+  },
+  {
+   "id": "doc9-3-ui",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Instrumented Compose UI tests on emulators API 26, 30, 34, 36 and an Android Go image, nightly and per release candidate.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/androidTest/kotlin/com/kitalonlabs/neogold/BackupRulesInstrumentedTest.kt",
+     "line": 1
+    }
+   ],
+   "reason": "Only one androidTest file exists. No workflow has a schedule or emulator job (.github only schedules dependabot)."
+  },
+  {
+   "id": "doc9-3-e2e",
+   "kind": "rule",
+   "section": "3",
+   "claim": "End-to-end journeys J1 to J3 via Maestro flows plus manual scripts on the device matrix per release candidate.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/maestro/j1_onboarding_qualification_flow.yaml",
+     "line": 1
+    },
+    {
+     "file": "android/maestro/device_matrix_checklist.md",
+     "line": 28,
+     "quote": "| **TC-DEV-01** | Device check capabilities | FR-03, NG-004 | [ ] | [ ] | [ ] |"
+    }
+   ],
+   "reason": "Flows exist. The run checklist is unticked, covers only D1, D2 and D4, and no run results are committed."
+  },
+  {
+   "id": "doc9-3-perf-chaos",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Performance (Macrobenchmark, Perfetto, dumpsys, batterystats, bundletool) and reliability/chaos (adb scripts, power pull) per release candidate.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "tools/reliability/adb_kill_loop.py",
+     "line": 6,
+     "quote": "- Random kills during 50 consecutive save operations (TC-RSH-14, NFR-09)"
+    },
+    {
+     "file": "android/benchmark/src/test/kotlin/com/kitalonlabs/neogold/benchmark/ScreeningPipelineBenchmarkTest.kt",
+     "line": 35
+    }
+   ],
+   "reason": "The adb chaos scripts exist. There is no Macrobenchmark dependency: the benchmark module is a JVM unit test. The device performance numbers are simulated (see doc9-11-method)."
+  },
+  {
+   "id": "doc9-3-security",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Security: MASVS checklist, manifest/network checks, Keystore loss, server hardening (MobSF, nmap, testssl.sh) every release, gates S1 to S9.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 35
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 60,
+     "quote": "\"$RUNNER_TEMP/gitleaks\" git --redact --exit-code 1 ."
+    }
+   ],
+   "reason": "S4, S5, S6, S9, S2 (Trivy) and S7 are automated. MobSF, nmap and testssl.sh are referenced nowhere in the repository. The S1 and S8 evidence is only prose in the test reports."
+  },
+  {
+   "id": "doc9-3-a11y",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Accessibility and localization checks including banned-word string lint.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/test/kotlin/com/kitalonlabs/neogold/core/designsystem/StringLintTest.kt",
+     "line": 24,
+     "quote": "private val englishBannedWords = listOf("
+    },
+    {
+     "file": "android/build.gradle.kts",
+     "line": 145
+    }
+   ],
+   "reason": "The string lint covers English and Bangla banned words. The TalkBack and font-scale parts are covered by doc 10 Section 17."
+  },
+  {
+   "id": "doc9-3-clinical",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Field pilot (v0.5 onward) and clinical validation against blood TSB (Phase B).",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [
+    {
+     "file": "docs/9_Test_Plan_Strategy.md",
+     "line": 81,
+     "quote": "| Clinical validation | Estimate against blood TSB | Partner protocol | Phase B (PRD Section 12) |"
+    }
+   ],
+   "reason": "The doc assigns this to the partner's Phase B study."
+  },
+  {
+   "id": "doc9-4.1",
+   "kind": "other",
+   "section": "4.1",
+   "claim": "Staging server on a DigitalOcean BLR1 droplet holds synthetic data only; production study server is touched only by the doc 12 smoke test.",
+   "status": "Unknown",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/staging-setup.md",
+     "line": 1
+    }
+   ],
+   "reason": "This is infrastructure. Settling it needs access to staging and the server inventory."
+  },
+  {
+   "id": "doc9-4.2",
+   "kind": "other",
+   "section": "4.2",
+   "claim": "Every RC runs full E2E on D1 to D4 and smoke on D5, D6; camera qualification and bench on all six phones; D7 16 KB check.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/maestro/device_matrix_checklist.md",
+     "line": 28
+    }
+   ],
+   "reason": "This needs physical phones. The committed checklist is unticked and lists only D1, D2 and D4. No raw device results are committed."
+  },
+  {
+   "id": "doc9-5-rig",
+   "kind": "other",
+   "section": "5",
+   "claim": "Bench rig: LED panels 2700/4000/6500 K, ColorChecker, measured/expired/counterfeit cards, skin-tone phantoms, angle jig 0 to 30 degrees.",
+   "status": "Unknown",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 69,
+     "quote": "[PENDING_BENCH_DATA] TC-CAP-03: Laboratory angle jig captures (10, 20, 30 deg) pending bench collection."
+    }
+   ],
+   "reason": "This is physical. The tests themselves report that bench data is pending."
+  },
+  {
+   "id": "doc9-5-benchdata",
+   "kind": "rule",
+   "section": "5",
+   "claim": "Bench images, measured reference values and phantom measurements live in testdata/bench/ with a SHA-256 manifest.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "testdata/bench/manifest.sha256",
+     "line": 1,
+     "quote": "7446eebf...  bench_captures.json"
+    },
+    {
+     "file": ".gitignore",
+     "line": 56,
+     "quote": "testdata/bench/*.json"
+    }
+   ],
+   "reason": "Only a hash manifest is committed. bench_captures.json is gitignored and generated synthetically by tools/generate_bench_phantoms.py. jig_angles, spot_light, mixed_light, mismatched_batch and home_printed_cards are absent."
+  },
+  {
+   "id": "doc9-6-golden",
+   "kind": "rule",
+   "section": "6",
+   "claim": "testdata/golden/ holds bench captures with expected features and estimates, regenerated only with a reviewed pull request.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/test/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationGoldenVectorsTest.kt",
+     "line": 64,
+     "quote": "goldenFile.writeText(goldenJson)"
+    },
+    {
+     "file": "android/engine/estimation/src/test/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationGoldenVectorsTest.kt",
+     "line": 68,
+     "quote": "manifestFile.writeText(manifestContent)"
+    }
+   ],
+   "reason": "Doc: 'Regenerated only with a reviewed pull request'. Code: every test run rewrites golden_estimation.json and its manifest from the Kotlin engine under test. EstimationMultiAbiDeterminismTest then reads those values as expected. The golden images are synthetic renders, not bench captures."
+  },
+  {
+   "id": "doc9-6-bad",
+   "kind": "rule",
+   "section": "6",
+   "claim": "testdata/bad/ is the bad image set from bench captures, each image labeled with its expected failure reason.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "testdata/bad/manifest.json",
+     "line": 3,
+     "quote": "\"count\": 13,"
+    }
+   ],
+   "reason": "There are 13 labeled synthetic images. The Section 5 list also names partial card, finger and shadow, and those are not in the set."
+  },
+  {
+   "id": "doc9-6-triage",
+   "kind": "rule",
+   "section": "6",
+   "claim": "testdata/triage/ is a synthetic config with round-number thresholds; triage tests never use the clinical config.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "testdata/triage/config.synthetic.json",
+     "line": 37
+    },
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 18
+    }
+   ],
+   "reason": "Only TC-TRI-17 and TC-TRI-21 read config/triage-config.json, and only for structure and status checks, as TC-TRI-17 requires."
+  },
+  {
+   "id": "doc9-6-api",
+   "kind": "rule",
+   "section": "6",
+   "claim": "testdata/api/ holds request/response fixtures and crafted JPEGs (GPS, XMP, MPF, thumbnails, decompression bomb).",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/tests/test_tc_api_images.py",
+     "line": 1
+    }
+   ],
+   "reason": "testdata/api/ does not exist. The crafted JPEGs are generated inside backend tests instead."
+  },
+  {
+   "id": "doc9-6-nodata",
+   "kind": "rule",
+   "section": "6",
+   "claim": "No real newborn image, register number or participant code enters the repository, a bug report or a CI log.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "testdata/bad/manifest.json",
+     "line": 10,
+     "quote": "Empty background with no card present"
+    },
+    {
+     "file": ".github/ISSUE_TEMPLATE/bug.yml",
+     "line": 15
+    }
+   ],
+   "reason": "The testdata manifests describe synthetic renders, and the issue form forbids baby data. No real data was found in testdata. Image pixels were not inspected one by one."
+  },
+  {
+   "id": "doc9-7-pr",
+   "kind": "rule",
+   "section": "7",
+   "claim": "PR pipeline (blocking): lint, detekt, Ruff, Bandit, unit, golden vectors, differential triage, integration, contract, backend, secrets scan, coverage.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 26
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 33,
+     "quote": "ruff check ."
+    },
+    {
+     "file": ".github/workflows/repo-ci.yml",
+     "line": 18,
+     "quote": "run: python3 tools/trace.py docs"
+    }
+   ],
+   "reason": "Whether the jobs are required checks depends on branch protection, which is not visible in the repository."
+  },
+  {
+   "id": "doc9-7-nightly",
+   "kind": "rule",
+   "section": "7",
+   "claim": "Nightly on main: instrumented UI tests on emulators, dependency and image vulnerability scans; failures open a defect automatically.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/dependabot.yml",
+     "line": 8
+    }
+   ],
+   "reason": "No workflow has a schedule trigger. Only dependabot schedules exist, and there is no auto-defect step."
+  },
+  {
+   "id": "doc9-7-rc",
+   "kind": "gate",
+   "section": "7",
+   "claim": "Release candidate tag runs everything above plus Schemathesis, MobSF, manifest, network, 16 KB checks, SBOM, clinical sign-off check, device matrix runs.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 10,
+     "quote": "uses: ./.github/workflows/android-ci.yml"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 26
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 73
+    }
+   ],
+   "reason": "The release workflow re-runs CI and adds sign-off, 16 KB, manifest and SBOM checks. Schemathesis, MobSF and device-matrix result attachment are absent."
+  },
+  {
+   "id": "doc9-7-flaky",
+   "kind": "rule",
+   "section": "7",
+   "claim": "Flaky tests quarantined within one day with a linked defect; a quarantined :engine:triage or :engine:cardtrust test blocks release.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 361,
+     "quote": "[PENDING_BENCH_DATA] TC-CARD-07: ..."
+    }
+   ],
+   "reason": "This is a process rule with no quarantine mechanism or record. Bench tests for TC-CAP-03/04/08/09 and TC-CARD-07 return early and pass with no assertion, which works as an unrecorded skip."
+  },
+  {
+   "id": "doc9-8-v0.1-pipeline",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v0.1 exit: pipeline runs end to end on 3 phones.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v0.1.md",
+     "line": 35
+    }
+   ],
+   "reason": "This is physical. The report claims 30 runs on D1, D2 and D4, but its timings match the random simulator (see doc9-11-method). No raw traces are committed."
+  },
+  {
+   "id": "doc9-8-v0.1-parity",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v0.1 exit: golden-vector parity passes.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/test/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationGoldenVectorsTest.kt",
+     "line": 82
+    }
+   ],
+   "reason": "The Kotlin side checks one hard-coded vector at 1e-4. The Python parity test is not in CI, and the golden file is self-generated by the Kotlin test."
+  },
+  {
+   "id": "doc9-8-v0.1-badset",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v0.1 exit: bad image set 100% rejected.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 277,
+     "quote": "assertThat(rejectedImages).isEqualTo(totalImages)"
+    },
+    {
+     "file": "docs/test-reports/v0.1.md",
+     "line": 39,
+     "quote": "100% of bad image set rejected (16/16 negative test frames)"
+    }
+   ],
+   "reason": "The automated test asserts 100% rejection on 13 synthetic images. The report claims 16/16, but the manifest has 13. There are no bench captures."
+  },
+  {
+   "id": "doc9-8-v0.1-camqual",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v0.1 exit: camera qualification measured on all six matrix phones.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v0.1.md",
+     "line": 84
+    }
+   ],
+   "reason": "The report lists QUALIFIED for D1 to D6 with Delta E values. The device checklist is unticked and the bench data is pending. Raw qualification captures would settle it."
+  },
+  {
+   "id": "doc9-8-v0.5-p1",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v0.5 exit: all P1 cases for research mode, sync, export, security pass.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 183,
+     "quote": "TESTS: TC-SEC-01 0"
+    }
+   ],
+   "reason": "All RSH, EXP and SYNC cases are cited. P1 TC-SEC-01, 02, 04, 05, 06, 10, 11, 12, 13 and 14 have no test code. 01/02/04/05/06 are partly covered by CI gate steps."
+  },
+  {
+   "id": "doc9-8-v0.5-kill",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v0.5 exit: zero records lost in 50 kill tests and 10 power-pull tests per phone.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "tools/reliability/adb_kill_loop.py",
+     "line": 6
+    }
+   ],
+   "reason": "The script exists, but no run logs are committed. This needs phones."
+  },
+  {
+   "id": "doc9-8-v0.5-closed",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v0.5 exit: research build on Play closed testing for the partner.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 79
+    }
+   ],
+   "reason": "The workflow publishes to the internal track only. Promotion to closed testing happens in Play Console."
+  },
+  {
+   "id": "doc9-8-v1.0-p1p2",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0 internal exit: all P1 and P2 cases pass on D1 to D4.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.test_cases.missing"
+    },
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 81
+    }
+   ],
+   "reason": "35 TCs have zero test code (many P1). The report claims 228/230 passed with no raw evidence. Device runs would settle it."
+  },
+  {
+   "id": "doc9-8-v1.0-defects",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0 internal exit: no open S1 or S2 defects.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/11_Bug_Defect_Log.md",
+     "line": 77,
+     "quote": "*No defects logged.*"
+    }
+   ],
+   "reason": "The log shows zero open, but it is not maintained (see doc9-9-log), so it cannot show this."
+  },
+  {
+   "id": "doc9-8-v1.0-perf",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0 internal exit: performance budgets met on D1 and D2.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 93
+    }
+   ],
+   "reason": "The reported numbers repeat the v0.1 simulated values (1.63 s / 1.77 s). Real Perfetto traces would settle it."
+  },
+  {
+   "id": "doc9-8-v1.0-gates",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0 internal exit: gates S1 to S9 pass.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 36
+    },
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 115
+    }
+   ],
+   "reason": "S2/S4/S5/S6/S7/S9 are automated and S3 runs at release. S1 (MobSF) and S8 (restore drill) are prose claims only. The MobSF report hash required by doc 12 is not recorded."
+  },
+  {
+   "id": "doc9-8-v1.0-usability",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0 closed testing exit: usability targets met (Section 13).",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 51
+    }
+   ],
+   "reason": "No session records or signed wording record are committed (TC-USE-01 to 03 have zero tests). Partner session notes would settle it."
+  },
+  {
+   "id": "doc9-8-v1.0-14days",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0 closed testing exit: 14 days with no S1 and no unresolved S2.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 52,
+     "quote": "Zero open S1 or S2 defects; 14 days stability"
+    },
+    {
+     "commit": "21410eb"
+    }
+   ],
+   "reason": "The v0.5 release pipeline landed 2026-10-20 and the v1.0 report is dated 2026-10-25, so 14 days of closed testing cannot have passed. Not met as of the audit date."
+  },
+  {
+   "id": "doc9-8-v1.0-release",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0 closed research release exit: research build with triageEnabled false on the closed track for all study sites.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "config/triage-config.json",
+     "line": 5,
+     "quote": "\"triageEnabled\": false,"
+    }
+   ],
+   "reason": "The config is correct. Closed-track publication is manual (the workflow targets the internal track) and is not evidenced."
+  },
+  {
+   "id": "doc9-8-public",
+   "kind": "gate",
+   "section": "8",
+   "claim": "Later public release: v1.0 study results; G1, G2, G3 met; doc 12 Section 9 production checklist complete.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [
+    {
+     "file": "docs/9_Test_Plan_Strategy.md",
+     "line": 169,
+     "quote": "| Later public release | v1.0 study results; **G1, G2, and G3 met** |"
+    }
+   ],
+   "reason": "The doc ties this to the later public release."
+  },
+  {
+   "id": "doc9-8-patch",
+   "kind": "gate",
+   "section": "8",
+   "claim": "v1.0.x patch: fix verified, regression suite passes, staged rollout criteria in doc 12 Section 5.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "docs/9_Test_Plan_Strategy.md",
+     "line": 170
+    }
+   ],
+   "reason": "No patch release has happened yet. This is a process criterion."
+  },
+  {
+   "id": "doc9-9-log",
+   "kind": "rule",
+   "section": "9.2",
+   "claim": "Defects are logged in 11_Bug_Defect_Log.md with severity S1 to S4; S1 blocks release.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "docs/11_Bug_Defect_Log.md",
+     "line": 86,
+     "quote": "*None.*"
+    },
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 146,
+     "quote": "| **S1 Critical** | **0** | 12 | All clinical safety, triage boundary, and crypto defects resolved |"
+    }
+   ],
+   "reason": "The v1.0 report lists 12 S1, 18 S2, 9 S3 and 14 S4 closed defects. The defect log has no entries, so there is no clinical-lead verification record for the S1s."
+  },
+  {
+   "id": "doc9-9-flag",
+   "kind": "rule",
+   "section": "9.1",
+   "claim": "Defects that could affect care are flagged Clinical: Yes and the bug form asks this.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": ".github/ISSUE_TEMPLATE/bug.yml",
+     "line": 20,
+     "quote": "label: Could this change what a health worker does for a baby?"
+    }
+   ]
+  },
+  {
+   "id": "doc9-10-ci",
+   "kind": "rule",
+   "section": "10",
+   "claim": "CI script parses doc 10 and fails if any FR, NFR, H or Gate S has no test case, or a test case cites an unknown ID.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/trace.py",
+     "line": 86
+    },
+    {
+     "file": "tools/trace.py",
+     "line": 111,
+     "quote": "return 1 if problems else 0"
+    },
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 1,
+     "quote": "FR: 38/38 covered, NFR: 14/14 covered, H: 11/11 covered, T: 17/17 covered, Gate: 9/9 covered"
+    }
+   ],
+   "reason": "This runs in android-ci and repo-ci. It checks doc coverage, not whether test code exists."
+  },
+  {
+   "id": "doc9-11-method",
+   "kind": "rule",
+   "section": "11",
+   "claim": "Capture to result measured from trace sections shutter to result, 30 runs per phone after warm-up; reported per phone as median and p95.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/benchmark_capture_to_result.py",
+     "line": 90,
+     "quote": "t_marker = rng.normal(loc=22.0 * factor, scale=2.5)"
+    },
+    {
+     "file": "tools/benchmark_capture_to_result.py",
+     "line": 104,
+     "quote": "t_warp = max(150.0, min(680.0, t_warp))"
+    },
+    {
+     "file": "docs/test-reports/v0.1.md",
+     "line": 59,
+     "quote": "p50: 680.0 ms, p95: 680.0 ms"
+    }
+   ],
+   "reason": "Doc: on-device trace sections. Code: the tool generates stage times with numpy random normals; the warm-up loop is 'pass'. The D4 warp values in the v0.1 report equal the simulator clamp, so the reported figures come from simulation, not devices."
+  },
+  {
+   "id": "doc9-11-budgets",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "Budgets: p50 <4 s, p95 <10 s on D1/D2; journey <60 s; peak memory <120 MB; download <25 MB, install <40 MB; battery <1% per screening.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 370
+    }
+   ],
+   "reason": "There is only a JVM buffer-allocation check. No real device, bundletool or batterystats output is committed. TC-PERF-01 to 06 have zero tests."
+  },
+  {
+   "id": "doc9-11-2gb",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "2 GB floor (D4): no out-of-memory kills; time budget set after v0.5 data.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "docs/9_Test_Plan_Strategy.md",
+     "line": 296,
+     "quote": "**2 GB budget:** set the time-to-result budget for D4 after v0.5 measurements."
+    }
+   ],
+   "reason": "Open issue 2 in the doc. There are no real v0.5 measurements yet."
+  },
+  {
+   "id": "doc9-15-reports",
+   "kind": "other",
+   "section": "15",
+   "claim": "Test summary per release in docs/test-reports/; bench and performance raw data committed with hashes; v1.0 report attached to the GitHub release.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "docs/test-reports/v1.0.md",
+     "line": 23
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 88,
+     "quote": "\"$RUNNER_TEMP/upload/bom.json\" \"$RUNNER_TEMP/upload/SHA256SUMS\""
+    }
+   ],
+   "reason": "Reports for v0.1, v0.5 and v1.0 exist and include the disclaimer. No raw bench or performance data is committed. The release attaches only the SBOM and checksums, not the report."
+  },
+  {
+   "id": "doc10-0",
+   "kind": "rule",
+   "section": "10/0",
+   "claim": "Synthetic triage config values match doc 10 Section 0 (GA38+ 10/12/17/20/20, GA36-37 15.5@48 h, GA35 14.0@48 h, zones 3.0/15.0/5.0, width 6.0).",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "testdata/triage/config.synthetic.json",
+     "line": 37
+    },
+    {
+     "file": "testdata/triage/config.synthetic.json",
+     "line": 46
+    }
+   ]
+  },
+  {
+   "id": "doc10-1",
+   "kind": "other",
+   "section": "10/1",
+   "claim": "Section 1 onboarding TCs (TC-ONB-01 to 06) are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 3
+    }
+   ],
+   "reason": "All six are cited, so there are no zero-test IDs. The UI-level cases have no instrumented emulator job. Tests were not read one by one."
+  },
+  {
+   "id": "doc10-2",
+   "kind": "other",
+   "section": "10/2",
+   "claim": "Section 2 device check and camera qualification TCs (TC-DEV-01 to 10) are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 9
+    }
+   ],
+   "reason": "There are no zero-test IDs. DEV-01 to 06 and 09 are E2E/BN on phones and the bench, and the checklist is unticked."
+  },
+  {
+   "id": "doc10-3",
+   "kind": "other",
+   "section": "10/3",
+   "claim": "Section 3 card verification TCs are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/cardtrust/src/test/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustEngineTest.kt",
+     "line": 84,
+     "quote": "assertThat(result).isEqualTo(VerificationResult.BadSignature)"
+    },
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 358
+    }
+   ],
+   "reason": "Zero tests: TC-CARD-10 (P1). CARD-01 to 06 assert the doc outcomes at engine level. The P1 TC-CARD-07 test is a placeholder that returns with no assertion."
+  },
+  {
+   "id": "doc10-4",
+   "kind": "other",
+   "section": "10/4",
+   "claim": "Section 4 capture and quality gate TCs (TC-CAP-01 to 17) are automated.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/test/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGateTest.kt",
+     "line": 84,
+     "quote": "val frame25 = renderer.renderFrame(SyntheticRenderConfig(tiltDegrees = 25.0))"
+    }
+   ],
+   "reason": "There are no zero-test IDs. The P1 bench cases CAP-03/04/08/09 have placeholder bench tests plus synthetic substitutes. CAP-03 tests 10 and 25 degrees, not the doc's 30 degrees and the 20-degree boundary record."
+  },
+  {
+   "id": "doc10-5",
+   "kind": "other",
+   "section": "10/5",
+   "claim": "Section 5 color correction and estimation TCs (TC-EST-01 to 07) are automated.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/test/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationEngineTest.kt",
+     "line": 184
+    },
+    {
+     "file": "android/engine/estimation/src/test/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationMultiAbiDeterminismTest.kt",
+     "line": 83
+    }
+   ],
+   "reason": "No zero-test IDs, and no expected value differs. EST-01 has no Python comparison in CI and self-generates its golden file. EST-05 uses simulated residuals rather than held-out public data. EST-07 runs twice on the JVM, not on arm64-v8a and armeabi-v7a builds."
+  },
+  {
+   "id": "doc10-6",
+   "kind": "other",
+   "section": "10/6",
+   "claim": "Section 6 triage TCs (TC-TRI-01 to 26) are automated and assert the doc's expected outputs.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 481,
+     "quote": "fun test_TC_TRI_19_config_signature_broken()"
+    },
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 516,
+     "quote": "assertThat(parsed.triageEnabled).isFalse()"
+    }
+   ],
+   "reason": "No zero-test IDs. The action, reason and threshold for TRI-01 to 16, 18, 20, 23, 24, 25 and 26 match doc 10. TRI-19 tests a parser rejecting bad units, not a broken signature. TRI-21 asserts DRAFT status, not a CI build failure. TRI-22 omits model and card versions. TRI-17 omits the non-monotonic flag."
+  },
+  {
+   "id": "doc10-7",
+   "kind": "other",
+   "section": "10/7",
+   "claim": "Section 7 result screen and wording TCs (TC-UI-01 to 14) are automated.",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/test/kotlin/com/kitalonlabs/neogold/feature/result/ResultScreenTest.kt",
+     "line": 14
+    }
+   ],
+   "reason": "There are no zero-test IDs. Several are cited only in file header comments, and the UI-level cases have no instrumented run."
+  },
+  {
+   "id": "doc10-8",
+   "kind": "other",
+   "section": "10/8",
+   "claim": "Section 8 screening log and retention TCs are automated.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 234,
+     "quote": "ZERO TESTS: TC-LOG-09"
+    }
+   ],
+   "reason": "Zero tests: TC-LOG-09 (P1, notification hides details) and TC-LOG-11 (P1, delete all data)."
+  },
+  {
+   "id": "doc10-9",
+   "kind": "other",
+   "section": "10/9",
+   "claim": "Section 9 shared phones and privacy TCs (TC-PRIV-01 to 05) are automated.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 105
+    }
+   ],
+   "reason": "There are no zero-test IDs. PRIV-01 and 02 are E2E and PRIV-03 and 04 are S-level device checks that a JVM test cannot fully cover."
+  },
+  {
+   "id": "doc10-10",
+   "kind": "other",
+   "section": "10/10",
+   "claim": "Section 10 research mode TCs (TC-RSH-01 to 16) are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/test/kotlin/com/kitalonlabs/neogold/feature/research/BlindedCaptureAccessibilityTest.kt",
+     "line": 30
+    }
+   ],
+   "reason": "There are no zero-test IDs. RSH-14 and 15 (kill and power loss, P1) and RSH-10 and 16 need phones, and no run results are committed."
+  },
+  {
+   "id": "doc10-11",
+   "kind": "other",
+   "section": "10/11",
+   "claim": "Section 11 export TCs (TC-EXP-01 to 04) are automated.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 126
+    }
+   ],
+   "reason": "All four are cited (2 sites each), with no zero-test IDs. The tests were not read one by one."
+  },
+  {
+   "id": "doc10-12",
+   "kind": "other",
+   "section": "10/12",
+   "claim": "Section 12 sync and outbox TCs (TC-SYNC-01 to 20) are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 130
+    }
+   ],
+   "reason": "There are no zero-test IDs. The P1 E2E cases SYNC-12, 14 and 19 need staging, with no results committed."
+  },
+  {
+   "id": "doc10-13",
+   "kind": "other",
+   "section": "10/13",
+   "claim": "Section 13 Study Intake API TCs (TC-API-01 to 33) are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 236,
+     "quote": "ZERO TESTS: TC-API-30"
+    }
+   ],
+   "reason": "Zero tests: TC-API-30 (P1, Schemathesis fuzzing). API-11 and 33 are E2E through Caddy on staging."
+  },
+  {
+   "id": "doc10-14",
+   "kind": "other",
+   "section": "10/14",
+   "claim": "Section 14 security TCs (TC-SEC-01 to 14) are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 237
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 35
+    }
+   ],
+   "reason": "Zero tests: TC-SEC-01, 02, 04, 05, 06, 10, 11, 12, 13, 14 (all P1). 01, 02 (static), 04, 05 (Trivy only, no OSV-Scanner) and 06 run as CI steps. 10 to 14 have no automation."
+  },
+  {
+   "id": "doc10-15",
+   "kind": "other",
+   "section": "10/15",
+   "claim": "Section 15 performance TCs (TC-PERF-01 to 07) are automated or measured.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 247,
+     "quote": "ZERO TESTS: TC-PERF-01"
+    }
+   ],
+   "reason": "Zero tests: TC-PERF-01 to 06 (01 to 04 are P1). Only TC-PERF-07 is cited, and the measurement script simulates timings."
+  },
+  {
+   "id": "doc10-16",
+   "kind": "other",
+   "section": "10/16",
+   "claim": "Section 16 reliability and clock TCs (TC-REL-01 to 08) are automated.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 253,
+     "quote": "ZERO TESTS: TC-REL-07"
+    }
+   ],
+   "reason": "Zero tests: TC-REL-07 (P1, battery manager kills the app overnight)."
+  },
+  {
+   "id": "doc10-17",
+   "kind": "other",
+   "section": "10/17",
+   "claim": "Section 17 accessibility and localization TCs (TC-A11Y-01 to 05) are automated.",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/test/kotlin/com/kitalonlabs/neogold/core/designsystem/StringLintTest.kt",
+     "line": 12
+    }
+   ],
+   "reason": "There are no zero-test IDs. A11Y-02 needs D5 rendering and A11Y-04 needs a TalkBack journey on a device."
+  },
+  {
+   "id": "doc10-18",
+   "kind": "other",
+   "section": "10/18",
+   "claim": "Section 18 usability and field TCs (TC-USE-01 to 05) have evidence.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 254,
+     "quote": "ZERO TESTS: TC-USE-01"
+    }
+   ],
+   "reason": "Zero tests: TC-USE-01 to 05. These are manual, but no session records or signed wording record (TC-USE-03) were found in the repository."
+  },
+  {
+   "id": "doc10-19",
+   "kind": "other",
+   "section": "10/19",
+   "claim": "Section 19 deployment and operations TCs (TC-OPS-01 to 11) are automated or drilled.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 259,
+     "quote": "ZERO TESTS: TC-OPS-01"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 44
+    }
+   ],
+   "reason": "Zero tests: TC-OPS-01, 02, 03, 05, 06, 08, 09, 10, 11. OPS-08 runs as a CI step. The OPS-01 gate runs only on the current config, with no test of the DRAFT or mismatch scenarios."
+  },
+  {
+   "id": "doc10-20",
+   "kind": "other",
+   "section": "10/20",
+   "claim": "Hazard verification map: every hazard H1 to H11 has verification cases.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [
+    {
+     "file": "reports/direction/2026-10-26/trace.txt",
+     "line": 1,
+     "quote": "H: 11/11 covered"
+    }
+   ],
+   "reason": "The doc mapping is complete. Some mapped cases have no tests: TC-CARD-10 (H4), TC-REL-07 (H10), TC-USE-01/02 (H11)."
+  },
+  {
+   "id": "doc10-21",
+   "kind": "other",
+   "section": "10/21",
+   "claim": "Traceability matrix is generated by tools/trace.py, not typed by hand.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/trace.py",
+     "line": 93,
+     "quote": "if \"--write\" in argv:"
+    },
+    {
+     "file": "docs/10_Test_Cases.md",
+     "line": 391
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "Implemented": 15,
+  "Partial": 31,
+  "Missing": 4,
+  "Contradicted": 3,
+  "Deferred": 3,
+  "Unknown": 15
+ },
+ "notes": "No Contradicted claim falls in the six verdict areas. Every triage test that asserts an action, reason or threshold matches doc 10 values, and the synthetic config matches doc 10 Section 0. The three Contradicted claims are all area other: (1) the performance tool simulates timings with random numbers, and the v0.1/v1.0 test reports present those numbers as device measurements (D4 warp p50=p95=680.0 equals the simulator clamp); (2) EstimationGoldenVectorsTest rewrites the golden vectors and their manifest on every run; (3) the defect log is empty while the v1.0 report lists 53 closed defects, including 12 S1. Because of (1) and (3), the committed test reports cannot count as evidence for physical exit criteria, so those are Unknown. Other gaps: bench tests for TC-CAP-03/04/08/09 and TC-CARD-07 return early and pass with no assertion; no nightly workflow; no Schemathesis or MobSF anywhere in the repository; Python parity tests are not in CI. Tests were not executed (Bash limited to git, drift_inventory and trace)."
+}
