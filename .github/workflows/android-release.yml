@@ -22,11 +22,16 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install locked Python tooling (signAssetManifest needs cryptography)
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
       - name: Gate G1, clinical sign-off
         run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md
-      - name: Gate: refuse TEST_ONLY keys in trust list
+      - name: Gate, refuse TEST_ONLY keys in trust list
         run: python3 tools/check_trust_list_release.py
-      - name: Gate: verify dependency licenses (TC-OPS-08)
+      - name: Gate, verify dependency licenses (TC-OPS-08)
         run: python3 tools/check_licenses.py
       - name: Tag matches versionName
         working-directory: android

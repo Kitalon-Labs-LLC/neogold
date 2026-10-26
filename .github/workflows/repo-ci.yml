@@ -20,6 +20,26 @@ jobs:
         run: python3 tools/check_licenses.py
       - name: ShellCheck on tools/*.sh
         run: shellcheck tools/*.sh
+  workflow-yaml:
+    # BUG-2026-014 (TC-OPS-01): a workflow file with invalid YAML starts no job at all, so it
+    # fails silently. This job also covers android-release.yml, which no other workflow runs on.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install locked Python tooling (PyYAML)
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
+      - name: Workflow files parse and pin every action to a commit SHA
+        run: python3 tools/check_workflows.py
+      - name: Workflow checker tests
+        run: python -m pytest -q tools/tests/test_check_workflows.py
   drift-check:
     # P24: fail on any dependency, permission, endpoint, table, column, screen, or config
     # key that no doc anchors and that is not in reports/direction/baseline.json.

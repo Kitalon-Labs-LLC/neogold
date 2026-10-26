@@ -21,9 +21,15 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
-      - name: Lint, unit, golden vectors, differential triage
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install locked Python tooling (signAssetManifest needs cryptography)
+        # :app preBuild runs tools/sign_bundle_manifest.py, so Python must be ready before the first Gradle step.
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
+      - name: Lint, unit, golden vectors, differential triage, string lint
         working-directory: android
-        run: ./gradlew --no-daemon lintRelease detekt testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema
+        run: ./gradlew --no-daemon lintRelease detekt testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema verifyStrings
       - name: Gate G1, clinical sign-off
         run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md
       - name: Build unsigned release
@@ -40,7 +46,7 @@ jobs:
           tools/check_16kb.sh android/app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
       - name: Requirement coverage (doc 9 Section 10)
         run: python3 tools/trace.py docs
-      - name: Gate: license check (TC-OPS-08)
+      - name: Gate, license check (TC-OPS-08)
         run: python3 tools/check_licenses.py
   scan:
     # No secrets in this job: a compromised scanner has nothing to steal (doc 8 T12).

@@ -11,3 +11,4 @@ This directory contains standalone gate-checking scripts, security scanners, and
 - `check_16kb.sh`: Release Gate S4 validator. Checks that all 64-bit ELF shared libraries inside the release APK are 16 KB page-size aligned.
 - `triage_reference.py`: Python reference implementation of the clinical triage decision algorithm for differential testing against the Kotlin engine.
 - `check_licenses.py`: CI license compliance checker (TC-OPS-08).
+- `check_workflows.py`: Fails when a GitHub Actions workflow is invalid YAML, has a step with neither `run` nor `uses`, or uses an action that is not pinned to a full commit SHA (BUG-2026-014, TC-OPS-01). Runs in `repo-ci`.
