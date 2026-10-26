@@ -79,11 +79,16 @@ def fill_storage(target_free_mb: int, serial: str | None):
     print(f"Storage fill complete. Available space: {final_free} MB")
 
 
-def cleanup_storage(serial: str | None):
+def cleanup_storage(serial: str | None) -> bool:
     print(f"Cleaning up dummy filler files in {DUMMY_DIR} ...")
     run_adb(["shell", "rm", "-rf", DUMMY_DIR], serial)
+    _, check_out = run_adb(["shell", f"ls -d {DUMMY_DIR} 2>/dev/null || echo 'REMOVED'"], serial)
     free_mb = get_free_storage_mb(serial)
+    if "REMOVED" not in check_out:
+        print(f"[FAIL] Cleanup could not remove {DUMMY_DIR}. Free storage: {free_mb} MB")
+        return False
     print(f"Cleanup finished. Free storage restored to: {free_mb} MB")
+    return True
 
 
 def test_app_under_low_storage(serial: str | None):

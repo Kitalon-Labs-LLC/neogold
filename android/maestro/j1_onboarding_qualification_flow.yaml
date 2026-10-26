@@ -109,5 +109,5 @@ appId: com.kitalonlabs.neogold
 # 7. Screen S09: Lands on Main Home Screen
 - extendedWaitUntil:
     visible:
-      id: "btn_start_screening"
+      id: "home_experimental_banner"
     timeout: 5000

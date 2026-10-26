@@ -13,7 +13,6 @@ Automates ADB clock manipulation to verify clinical and security time-safeguards
 
 import argparse
 import subprocess
-import sys
 import time
 
 PACKAGE_NAME = "com.kitalonlabs.neogold"

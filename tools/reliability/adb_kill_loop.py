@@ -69,8 +69,27 @@ def verify_database_integrity(serial: str | None) -> bool:
     code, out = run_adb(cmd, serial)
     if "NO_DIR" in out or "neogold.db" not in out:
         return True  # Fresh state or pre-creation
-    # Check for orphaned journals or WAL corruption indicators
-    return "corrupt" not in out.lower()
+
+    # Check logcat for SQLite corruption, disk I/O, or malformed database exceptions
+    _, log_out = run_adb([
+        "shell",
+        "logcat",
+        "-d",
+        "-s",
+        "SQLiteDatabase:E",
+        "SQLiteConnection:E",
+        "Room:E",
+        "AndroidRuntime:E",
+    ], serial)
+    corruption_markers = [
+        "corruptdatabaseexception",
+        "database disk image is malformed",
+        "file is not a database",
+        "sqlite_corrupt",
+    ]
+    if any(marker in log_out.lower() for marker in corruption_markers):
+        return False
+    return True
 
 
 def run_kill_loop(iterations: int, serial: str | None):
