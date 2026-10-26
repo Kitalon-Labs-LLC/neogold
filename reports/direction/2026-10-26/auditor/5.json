@@ -1,0 +1,1959 @@
+{
+ "doc": "docs/5_Database_Schema.md",
+ "companions": [],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "doc5-1-pk",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Primary keys are UUID v4 generated on the device and kept end to end.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 275,
+     "quote": "val sessionId = UUID.randomUUID().toString()"
+    },
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 188,
+     "quote": "id=session_id,"
+    }
+   ],
+   "reason": "Device generates UUIDs; server stores the same session UUID."
+  },
+  {
+   "id": "doc5-1-units",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Bilirubin in mg/dL: REAL on device, numeric(4,1) on backend.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 228,
+     "quote": "sa.Column(\"tsb_mg_dl\", sa.Numeric(precision=4, scale=1), nullable=False)"
+    },
+    {
+     "inventory_key": "categories.room_columns.actual"
+    }
+   ],
+   "reason": "Room estimate/tsb columns are REAL; PG numeric(4,1)."
+  },
+  {
+   "id": "doc5-1-versions",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Every clinical record stores app_version, model_version, config_version and the card batch_id.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 308,
+     "quote": "appVersion = \"1.0.0\", modelVersion = \"1.0.0-synthetic\", configVersion = \"2026.10.0\""
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 635,
+     "quote": "cardBatchId = \"NG-2026-001\", appVersion = \"1.0.0\""
+    }
+   ],
+   "reason": "Columns exist, but writers store hard-coded literals, not the running app/model/config version or the scanned batch; deviceProfileId is always null."
+  },
+  {
+   "id": "doc5-1-enums",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Enums are stored as upper-case text with CHECK constraints.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 183,
+     "quote": "card_status IN ('VERIFIED','EXPIRED','UNVERIFIED')"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 104,
+     "quote": "CREATE TRIGGER IF NOT EXISTS check_screening_session_insert"
+    }
+   ],
+   "reason": "PG has enum CHECKs; on device the triggers check only ranges and mode/participant, no enum-value checks (mode, status, triage_action, state, etc.)."
+  },
+  {
+   "id": "doc5-1-deletion",
+   "kind": "rule",
+   "section": "1",
+   "claim": "No soft deletes; deletion is real and recorded in the audit trail.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionManager.kt",
+     "line": 75,
+     "quote": "suspend fun cleanupAbandonedSessions(): Int {"
+    }
+   ],
+   "reason": "Retention purges and delete-all are audited, but abandoned-session deletion writes no audit event."
+  },
+  {
+   "id": "table device_profile",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "device_profile column set, types and nullability as documented (21 columns).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/DeviceProfileEntity.kt",
+     "line": 23
+    }
+   ],
+   "reason": "Inventory shows no missing/unplanned columns; exported createSql matches types and NOT NULL."
+  },
+  {
+   "id": "table card_batch (device)",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "card_batch column set, types and nullability as documented.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/CardBatchEntity.kt",
+     "line": 8
+    }
+   ],
+   "reason": "Schema 2.json: qr_payload BLOB NOT NULL, all others match."
+  },
+  {
+   "id": "table screening_session",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "screening_session column set, types, nullability and capture_attempts default 0.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ScreeningSessionEntity.kt",
+     "line": 74,
+     "quote": "@ColumnInfo(name = \"capture_attempts\", defaultValue = \"0\")"
+    }
+   ],
+   "reason": "All 30 columns present with documented nullability."
+  },
+  {
+   "id": "table capture (device)",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "capture column set with session_id FK ON DELETE CASCADE.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/CaptureEntity.kt",
+     "line": 23
+    }
+   ],
+   "reason": "Schema 2.json: FOREIGN KEY(session_id) REFERENCES screening_session(id) ON DELETE CASCADE."
+  },
+  {
+   "id": "table research_study",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "research_study columns, unique study_code, defaults (0, DAY_PLUS_OFFSETS, Asia/Dhaka, 14).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ResearchStudyEntity.kt",
+     "line": 44,
+     "quote": "val localRetentionAfterAckDays: Int = 14,"
+    }
+   ],
+   "reason": "createSql has the documented DEFAULTs and unique index on study_code."
+  },
+  {
+   "id": "table research_participant",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "research_participant columns and unique (study_id, participant_code).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ResearchParticipantEntity.kt",
+     "line": 1
+    }
+   ],
+   "reason": "Unique index index_research_participant_study_id_participant_code present."
+  },
+  {
+   "id": "table tsb_measurement (device)",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "tsb_measurement column set, types and nullability.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    }
+   ],
+   "reason": "session_id nullable, others NOT NULL, as documented."
+  },
+  {
+   "id": "table outbox",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "outbox columns, defaults 0, unique idempotency_key and unique (entity_type, entity_id).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/OutboxEntity.kt",
+     "line": 1
+    }
+   ],
+   "reason": "Schema 2.json has both unique indexes and DEFAULT 0 on revision, dependency_requeues, attempts."
+  },
+  {
+   "id": "table audit_event",
+   "kind": "table",
+   "section": "2.2",
+   "claim": "audit_event column set.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    }
+   ],
+   "reason": "id, occurred_at, event_type NOT NULL; details nullable."
+  },
+  {
+   "id": "doc5-2.2-profile-active",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "One device_profile row per calibration; only one is ACTIVE.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/dao/DeviceProfileDao.kt",
+     "line": 24,
+     "quote": "UPDATE device_profile SET status = 'SUPERSEDED' WHERE status = 'ACTIVE'"
+    }
+   ],
+   "reason": "DAO helper exists, but no main code inserts DeviceProfileEntity; qualification results are never persisted to the table."
+  },
+  {
+   "id": "doc5-2.2-card-batch-store",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "Card batches decoded from the QR are stored; unverified batches kept for research only.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 184,
+     "quote": "batchDao.update(batch.copy(serverStatus = \"ACCEPTED\"))"
+    }
+   ],
+   "reason": "Only server_status updates exist; no src/main code inserts CardBatchEntity, so sessions referencing a batch id (FKs on) have no parent row."
+  },
+  {
+   "id": "doc5-2.2-card-rejected",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "server_status REJECTED: that batch's sessions go up as UNVERIFIED.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 242,
+     "quote": "if (batch != null && batch.serverStatus != \"REJECTED\") {"
+    }
+   ],
+   "reason": "Otherwise cardStatus stays UNVERIFIED with null batch id."
+  },
+  {
+   "id": "doc5-2.2-session-ranges",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "CHECK age_hours 0..720 and gestational_age_weeks 22..44 on screening_session.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 111,
+     "quote": "WHEN NOT (NEW.age_hours >= 0.0 AND NEW.age_hours <= 720.0)"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ScreeningSessionEntity.kt",
+     "line": 100,
+     "quote": "require(gestationalAgeWeeks in 22..44)"
+    }
+   ],
+   "reason": "Insert trigger plus entity init require(). Note MainActivity clamps inputs with coerceIn before saving (lines 470, 472)."
+  },
+  {
+   "id": "doc5-2.2-session-mode-checks",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "Research sessions need participant_id; screening sessions never; no register_number in research.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 115,
+     "quote": "WHEN NOT (NEW.mode = 'SCREENING' OR NEW.participant_id IS NOT NULL)"
+    }
+   ],
+   "reason": "All three CHECKs present as triggers (lines 115-120) and in entity init."
+  },
+  {
+   "id": "doc5-2.2-age-hours",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "age_hours is computed from the entered birth date and time, which is then discarded.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R03ParticipantConsentScreen.kt",
+     "line": 64,
+     "quote": "var birthTimeMillis by remember { mutableStateOf(now - 48 * 3600 * 1000L) } // default 48h"
+    },
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R03ParticipantConsentScreen.kt",
+     "line": 191,
+     "quote": "onEditClicked = { },"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 99
+    }
+   ],
+   "reason": "Screening computes from birth time (S10), but research R03 stores a fixed 48.0 h default with a no-op edit button, so every research session records age 48 h. This is also a silent default on a clinical input."
+  },
+  {
+   "id": "doc5-2.2-guardian-consent",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "Screening sessions store guardian_consent_confirmed = 1, confirmed before the camera; no save without consent.",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 380,
+     "quote": "S10aGuardianConsentScreen("
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 471,
+     "quote": "guardianConsentConfirmed = 1,"
+    }
+   ],
+   "reason": "Value is a constant 1 at save; correctness relies on navigation always passing S10a first (not separately verified)."
+  },
+  {
+   "id": "doc5-2.2-triage-action",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "triage_action stores REFER_URGENT, BLOOD_TEST_TODAY, RECHECK, NO_FURTHER_ACTION_FROM_SCREEN, CANNOT_SCREEN_BLOOD_TEST, CANNOT_SCREEN_CLINICAL_REVIEW, BLOCKED.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 480,
+     "quote": "TriageReasonCode.R5 -> \"CANNOT_SCREEN\""
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 621,
+     "quote": "triageAction = sessionTriageAction.name,"
+    },
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 37,
+     "quote": "enum class TriageUiAction { REFER_URGENT, BLOOD_TEST, RECHECK, NO_FURTHER_ACTION, CANNOT_SCREEN }"
+    },
+    {
+     "file": "android/feature/log/src/main/kotlin/com/kitalonlabs/neogold/feature/log/S21LogScreen.kt",
+     "line": 213,
+     "quote": "\"BLOOD_TEST_TODAY\" -> stringResource(R.string.action_blood_test)"
+    }
+   ],
+   "reason": "Screening saves write CANNOT_SCREEN, BLOOD_TEST, NO_FURTHER_ACTION (UI enum names), not the documented codes the log screen expects; S19 also hard-codes NO_FURTHER_ACTION with fixed 8.2-10.1 interval and 12.0 threshold (lines 568-571)."
+  },
+  {
+   "id": "doc5-2.2-recheck-due",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "recheck_due_at is set only for RECHECK.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 605,
+     "quote": "val recheckDueTime = if (sessionTriageAction == TriageUiAction.RECHECK) {"
+    }
+   ],
+   "reason": "Null otherwise."
+  },
+  {
+   "id": "doc5-2.2-register-validation",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "Register number: letters, digits, / and -, max 20; rejects 17/10/13-digit IDs and 11-digit 01 mobiles.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/common/src/main/kotlin/com/kitalonlabs/neogold/core/common/validation/RegisterNumberValidator.kt",
+     "line": 18,
+     "quote": "Regex(\"^[A-Za-z0-9/-]{1,20}$\")"
+    },
+    {
+     "file": "android/core/common/src/main/kotlin/com/kitalonlabs/neogold/core/common/validation/RegisterNumberValidator.kt",
+     "line": 49,
+     "quote": "if (length == 10 || length == 13 || length == 17) {"
+    }
+   ],
+   "reason": "Mobile regex ^01[0-9]{9}$ at line 20."
+  },
+  {
+   "id": "doc5-2.2-estimate-hidden",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "estimate_hidden = 1 when blinded in research mode.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 304,
+     "quote": "estimateHidden = 1, // Mandatory blinded flag"
+    }
+   ],
+   "reason": "Research estimates are also stored as null (line 295)."
+  },
+  {
+   "id": "doc5-2.2-image-research-only",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "capture.image_file is research mode only; always null in screening mode.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 325,
+     "quote": "val captureEntity = CaptureEntity("
+    }
+   ],
+   "reason": "The only src/main CaptureEntity writer is the research repository; screening path saves no capture rows."
+  },
+  {
+   "id": "doc5-2.2-capture-checks",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "CHECK image_file IS NULL OR image_sha256 IS NOT NULL; attempt_number 1 to 3.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 133,
+     "quote": "WHEN NOT (NEW.image_file IS NULL OR NEW.image_sha256 IS NOT NULL)"
+    }
+   ],
+   "reason": "Also enforced in CaptureEntity init (lines 55-56)."
+  },
+  {
+   "id": "doc5-2.2-pin-hash",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "pin_hash = Argon2id of PIN then HMAC-SHA256 with a non-exportable Keystore key.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/Argon2PinHasher.kt",
+     "line": 58,
+     "quote": "Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/Argon2PinHasher.kt",
+     "line": 73,
+     "quote": "return hmacKeyProvider.computeHmac(argon2Output)"
+    }
+   ],
+   "reason": "Keystore HMAC key via PinHmacKeyProvider."
+  },
+  {
+   "id": "doc5-2.2-study-defaults",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "research_study defaults: failed_pin_attempts 0, DAY_PLUS_OFFSETS, Asia/Dhaka, local_retention_after_ack_days 14.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.room_columns.actual"
+    },
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 142,
+     "quote": "timestampPrecision = profile.timestampPrecision.name,"
+    }
+   ],
+   "reason": "Schema DEFAULTs match; time_zone is always written as Asia/Dhaka (line 143), not taken from the profile."
+  },
+  {
+   "id": "doc5-2.2-data-generation",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "A change in data_generation from GET /device triggers reconciliation.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/ReconciliationManager.kt",
+     "line": 114,
+     "quote": "suspend fun recheckAndResendAllHeldItems(studyId: String, newGeneration: Long) {"
+    }
+   ],
+   "reason": "Re-queues all held items and stores the new generation."
+  },
+  {
+   "id": "doc5-2.2-participant-formats",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "participant_code ^[A-Z]{2,5}-[0-9]{3,6}$ and consent_form_id ^[A-Z]{2,5}-[A-Z0-9-]{2,26}$.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchFormats.kt",
+     "line": 13,
+     "quote": "Regex(\"^[A-Z]{2,5}-[0-9]{3,6}$\")"
+    },
+    {
+     "file": "backend/app/models/api.py",
+     "line": 87
+    }
+   ],
+   "reason": "Same patterns on device and server."
+  },
+  {
+   "id": "doc5-2.2-consent-before-capture",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "Paper consent_form_id required before any research capture (FR-26).",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R03ParticipantConsentScreen.kt",
+     "line": 74,
+     "quote": "val areInputsComplete = isParticipantCodeValid && isConsentFormIdValid &&"
+    }
+   ],
+   "reason": "Continue is gated on a valid consent form ID."
+  },
+  {
+   "id": "doc5-2.2-tsb-check",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "CHECK tsb_mg_dl > 0 AND <= 40 on device.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 149,
+     "quote": "WHEN NOT (NEW.tsb_mg_dl > 0.0 AND NEW.tsb_mg_dl <= 40.0)"
+    }
+   ],
+   "reason": "Also in TsbMeasurementEntity init."
+  },
+  {
+   "id": "doc5-2.2-tsb-link",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "Linking a TSB to a session later re-sends the row once as a new revision.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 499,
+     "quote": "suspend fun linkTsbToSession("
+    }
+   ],
+   "reason": "Updates link and re-queues outbox with nextRevision (line 527)."
+  },
+  {
+   "id": "doc5-2.2-outbox-inflight",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "IN_FLIGHT outbox rows reset to PENDING when the worker starts.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 108,
+     "quote": "outboxDao.resetInFlightToPending()"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-2.2-outbox-requeues",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "dependency_requeues: at 3 the row becomes FAILED_PERMANENT.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/dao/OutboxDao.kt",
+     "line": 42,
+     "quote": "CASE WHEN dependency_requeues + 1 >= 3 THEN 'FAILED_PERMANENT' ELSE 'PENDING' END"
+    }
+   ],
+   "reason": "Called from OutboxProcessor line 418."
+  },
+  {
+   "id": "doc5-2.2-audit-types",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "audit_event.event_type is one of 13 listed types (CONFIG_LOADED ... DEVICE_RESEARCH_ONLY).",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 413,
+     "quote": "eventType = \"RESEARCH_SESSION_SAVED\","
+    }
+   ],
+   "reason": "Only DATA_DELETED, EXPORT_CREATED, PIN_FAILED, REGISTER_ERASURE, RETENTION_PURGE, STUDY_UNLOCKED are written to Room; CONFIG_LOADED, CONFIG_REJECTED, MODEL_LOADED, CARD_REJECTED, DEVICE_ENROLLED never emitted; unlisted RESEARCH_SESSION_SAVED is."
+  },
+  {
+   "id": "doc5-2.2-audit-details",
+   "kind": "rule",
+   "section": "2.2",
+   "claim": "audit_event.details never contains register numbers, participant codes, or estimates.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionManager.kt",
+     "line": 42,
+     "quote": "details = \"\"\"{\"count\":$count}\"\"\""
+    },
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 415,
+     "quote": "details = \"{\\\"session_id\\\":\\\"$sessionId\\\",\\\"captures\\\":${captures.size}}\""
+    }
+   ],
+   "reason": "Writers checked hold counts, ids, study_code only."
+  },
+  {
+   "id": "doc5-2.3-indexes",
+   "kind": "rule",
+   "section": "2.3",
+   "claim": "Room indexes: status, participant_id, capture(session_id,attempt), unique participant code, tsb, outbox(state,updated_at), audit(occurred_at).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ScreeningSessionEntity.kt",
+     "line": 29,
+     "quote": "Index(value = [\"mode\", \"created_at\"]),"
+    },
+    {
+     "inventory_key": "categories.room_tables.details.schemas"
+    }
+   ],
+   "reason": "All present in schema 2.json."
+  },
+  {
+   "id": "doc5-2.3-index-shape",
+   "kind": "rule",
+   "section": "2.3",
+   "claim": "screening_session (mode, created_at DESC) and partial (recheck_due_at) where not null.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ScreeningSessionEntity.kt",
+     "line": 31,
+     "quote": "Index(value = [\"recheck_due_at\"]),"
+    }
+   ],
+   "reason": "Indexes exist but without DESC order and without the WHERE NOT NULL partial clause."
+  },
+  {
+   "id": "doc5-2.4-keys",
+   "kind": "rule",
+   "section": "2.4",
+   "claim": "DataStore keys and defaults: language, safety_ack 0, onboarding false, 180, 60, keep log true, app lock false, WESTERN, crash opt-in false.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/datastore/NeoGoldDataStore.kt",
+     "line": 186,
+     "quote": "const val DEFAULT_SAFETY_ACK_VERSION = 0"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/datastore/NeoGoldDataStore.kt",
+     "line": 201,
+     "quote": "private fun resolveDefaultLanguage(): String {"
+    }
+   ],
+   "reason": "All ten keys at lines 175-198; language bn if system is Bangla else en."
+  },
+  {
+   "id": "doc5-2.4-ranges",
+   "kind": "rule",
+   "section": "2.4",
+   "claim": "screening_retention_days allowed 30-365; register_number_retention_days allowed 14-90.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/datastore/NeoGoldDataStore.kt",
+     "line": 107,
+     "quote": "require(days in MIN_SCREENING_RETENTION_DAYS..MAX_SCREENING_RETENTION_DAYS)"
+    }
+   ],
+   "reason": "Register range check at line 120."
+  },
+  {
+   "id": "doc5-2.4-keep-log",
+   "kind": "rule",
+   "section": "2.4",
+   "claim": "keep_screening_log false switches the screening log off entirely.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 693,
+     "quote": "val keepLog by dataStore.keepScreeningLog.collectAsState(initial = true)"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 640,
+     "quote": "db.screeningSessionDao().insert(entity)"
+    }
+   ],
+   "reason": "Setting is stored and toggled in S23, but neither screening save path (lines 464, 608) reads it."
+  },
+  {
+   "id": "doc5-2.5-register-erasure",
+   "kind": "rule",
+   "section": "2.5",
+   "claim": "Register number erasure runs daily (WorkManager) and on every app start; nulls register_number past retention.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionManager.kt",
+     "line": 30,
+     "quote": "suspend fun eraseRegisterNumbers(): Int {"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionWorker.kt",
+     "line": 48,
+     "quote": "fun scheduleDaily(context: Context) {"
+    }
+   ],
+   "reason": "Logic and worker exist, but scheduleDaily and runAllRetentionJobs are never called from app code and nothing runs on app start, so erasure never happens in the app."
+  },
+  {
+   "id": "doc5-2.5-screening-retention",
+   "kind": "rule",
+   "section": "2.5",
+   "claim": "Screening retention deletes SCREENING sessions and captures past retention, logs RETENTION_PURGE with count only.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionManager.kt",
+     "line": 53,
+     "quote": "suspend fun purgeScreeningSessions(): Int {"
+    }
+   ],
+   "reason": "Implemented and audited with count, but not scheduled daily or on app start (no caller of RetentionWorker.scheduleDaily)."
+  },
+  {
+   "id": "doc5-2.5-abandoned",
+   "kind": "rule",
+   "section": "2.5",
+   "claim": "Daily cleanup deletes IN_PROGRESS sessions older than 24 hours.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionManager.kt",
+     "line": 75,
+     "quote": "suspend fun cleanupAbandonedSessions(): Int {"
+    }
+   ],
+   "reason": "Logic exists; job not scheduled."
+  },
+  {
+   "id": "doc5-2.5-research-retention",
+   "kind": "rule",
+   "section": "2.5",
+   "claim": "Research data deleted N days after all outbox items ACKED and server reports COMPLETE/REJECTED; 404/RECEIVING re-queues.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/ReconciliationManager.kt",
+     "line": 31,
+     "quote": "suspend fun canDeleteSessionLocally("
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionWorker.kt",
+     "line": 32,
+     "quote": "val retentionManager = RetentionManager("
+    }
+   ],
+   "reason": "Server check and re-queue exist, but the worker builds RetentionManager with the default NoOp hook (always false), ResearchRetentionConfirmationHook is never instantiated, and the job is not scheduled; TSB rows are not deleted."
+  },
+  {
+   "id": "doc5-2.5-delete-all",
+   "kind": "rule",
+   "section": "2.5",
+   "claim": "Delete all wipes database, encrypted files and keys, then recreates an empty database.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/purge/DataPurgeManager.kt",
+     "line": 34,
+     "quote": "override suspend fun deleteAllData(): NeoGoldDatabase {"
+    }
+   ],
+   "reason": "Deletes DB files, files, keys, settings; rebuilds and logs DATA_DELETED."
+  },
+  {
+   "id": "doc5-2.6-sqlcipher",
+   "kind": "rule",
+   "section": "2.6",
+   "claim": "Database encrypted with SQLCipher; 32 random bytes key wrapped by Keystore AES key in app-private storage.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/DatabaseKeyProvider.kt",
+     "line": 91,
+     "quote": "SecureRandom().nextBytes(randomKey)"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 72,
+     "quote": "SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())"
+    }
+   ],
+   "reason": "KEY_SIZE_BYTES = 32; wrapped key in filesDir/security."
+  },
+  {
+   "id": "doc5-2.6-tink",
+   "kind": "rule",
+   "section": "2.6",
+   "claim": "Research images are Tink streaming AEAD files, keyset wrapped by a separate Keystore key.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/FileKeysetProvider.kt",
+     "line": 9,
+     "quote": "import com.google.crypto.tink.streamingaead.AesGcmHkdfStreamingKeyManager"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/MasterKeyProvider.kt",
+     "line": 30,
+     "quote": "const val ALIAS_FILE_MASTER = \"neogold_file_master_key\""
+    }
+   ],
+   "reason": "Separate alias from ALIAS_DB_MASTER."
+  },
+  {
+   "id": "doc5-2.7-export-schema",
+   "kind": "rule",
+   "section": "2.7",
+   "claim": "Room exportSchema = true; schema JSON committed.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 43,
+     "quote": "exportSchema = true"
+    },
+    {
+     "inventory_key": "categories.room_tables.details.schemas"
+    }
+   ],
+   "reason": "schemas/.../1.json and 2.json committed."
+  },
+  {
+   "id": "doc5-2.7-migration-test",
+   "kind": "rule",
+   "section": "2.7",
+   "claim": "Every schema change ships with a migration and a test opening the previous schema with fixture data.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 60,
+     "quote": "val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {"
+    },
+    {
+     "file": "android/core/data/src/test/kotlin/com/kitalonlabs/neogold/core/data/migration/MigrationHarnessTest.kt",
+     "line": 35,
+     "quote": "val db = helper.createDatabase(TEST_DB, 1)"
+    }
+   ],
+   "reason": "Migration 1->2 exists, but the harness only creates v1; no runMigrationsAndValidate to v2 with fixture data."
+  },
+  {
+   "id": "doc5-2.7-no-destructive",
+   "kind": "rule",
+   "section": "2.7",
+   "claim": "Destructive migration is forbidden for research tables.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 75,
+     "quote": ".addMigrations(MIGRATION_1_2)"
+    }
+   ],
+   "reason": "Builder has no fallbackToDestructiveMigration."
+  },
+  {
+   "id": "table study",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "study columns, defaults and CHECKs (timestamp_precision, max_image_bytes 1..20000000, status).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 23
+    },
+    {
+     "inventory_key": "categories.pg_columns.actual"
+    }
+   ],
+   "reason": "Defaults 'DAY_PLUS_OFFSETS', 'Asia/Dhaka', '1.0.0', true, 20000000, 60, 1, 'ACTIVE' match; ORM matches migration."
+  },
+  {
+   "id": "table site",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "site columns, is_test default false, UNIQUE (study_id, site_code).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 47
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "table enrollment_code",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "enrollment_code columns, unique code_hash, device FK enrollment_code_device_fk.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 101,
+     "quote": "sa.ForeignKeyConstraint([\"device_id\"], [\"device.id\"], name=\"enrollment_code_device_fk\"),"
+    }
+   ],
+   "reason": "FK inline rather than ALTER TABLE; same effect."
+  },
+  {
+   "id": "table device",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "device columns and CHECKs (ES256, attestation, android_api >= 26, qualification, revoked_reason).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 61
+    }
+   ],
+   "reason": "All CHECKs at lines 79-83; key_thumbprint UNIQUE."
+  },
+  {
+   "id": "table auth_nonce",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "auth_nonce (jti PK, device_id FK, expires_at).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 108
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "table card_batch (server)",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "card_batch columns incl. qr_payload bytea, issuer_key_id, date issued/expires.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 118
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "table participant",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "participant columns (client UUID, withdrawn_on, created_on default current_date), UNIQUE (site_id, participant_code).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 132
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "table participant_alias",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "participant_alias columns and FKs.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 146
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "table session",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "session columns, ranges, status/rejected_reason CHECKs and the two paired CHECKs.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 188,
+     "quote": "((card_status = 'UNVERIFIED') = (card_batch_id IS NULL))"
+    }
+   ],
+   "reason": "age_hours numeric(5,1) 0..720, GA 22..44, status default RECEIVING."
+  },
+  {
+   "id": "table capture (server)",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "capture columns, site/quality CHECKs, size_bytes bounds, has_image paired CHECKs, ON DELETE CASCADE.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 196
+    }
+   ],
+   "reason": "CHECKs at lines 212-218."
+  },
+  {
+   "id": "table tsb_measurement (server)",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "tsb_measurement columns, tsb 0..40, minutes_from_capture +-10080, method CHECK.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 223
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "table idempotency_record",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "idempotency_record PK (device_id, idempotency_key), state CHECK, DONE iff response_status.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 242
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "table audit_log",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "audit_log bigserial id, actor_type CHECK, details jsonb.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 257
+    }
+   ],
+   "reason": "BigInteger autoincrement PK."
+  },
+  {
+   "id": "table export_job",
+   "kind": "table",
+   "section": "3.2",
+   "claim": "export_job columns, status default PENDING with CHECK.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 271
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-3.3-indexes",
+   "kind": "rule",
+   "section": "3.3",
+   "claim": "14 PostgreSQL indexes incl. partial idx_device_site, idx_session_status, idx_capture_unverified.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 288,
+     "quote": "op.create_index(\"idx_device_site\", \"device\", [\"site_id\"], postgresql_where=sa.text(\"revoked_at IS NULL\"))"
+    }
+   ],
+   "reason": "All 14 at lines 288-301."
+  },
+  {
+   "id": "doc5-3.4-complete",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "Session COMPLETE only when every has_image capture is verified; SELECT FOR UPDATE in image txn; nightly backstop job.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 326,
+     "quote": "select(DbSession).where(DbSession.id == session_id).with_for_update()"
+    },
+    {
+     "file": "backend/app/jobs.py",
+     "line": 12,
+     "quote": "def complete_backstop_sessions(db: Session) -> int:"
+    }
+   ],
+   "reason": "API path implemented (lines 397-399); backstop function exists but nothing schedules it (deploy has only the backup timer)."
+  },
+  {
+   "id": "doc5-3.4-alias",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "Second phone's UUID with same code and consent form becomes participant_alias; data stored on canonical ID.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/participants.py",
+     "line": 114,
+     "quote": "if same_code_p.consent_form_id == body.consent_form_id:"
+    },
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 189,
+     "quote": "participant_id=canonical_participant.id,"
+    }
+   ],
+   "reason": "TSB also resolves aliases (tsb.py 76-82)."
+  },
+  {
+   "id": "doc5-3.4-tsb-once",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "A TSB row changes at most once, from session_id null to a session, setting linked_on.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/tsb.py",
+     "line": 112,
+     "quote": "# One allowed linking update"
+    }
+   ],
+   "reason": "Other changes raise ConflictImmutableError (line 139)."
+  },
+  {
+   "id": "doc5-3.4-revoked",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "Uploads from revoked devices are rejected in middleware.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 264,
+     "quote": "if device.revoked_at is not None:"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-3.4-code-site",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "A participant code belongs to exactly one site (unique constraint).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 143,
+     "quote": "sa.UniqueConstraint(\"site_id\", \"participant_code\"),"
+    }
+   ],
+   "reason": "Matches the documented DDL."
+  },
+  {
+   "id": "doc5-3.4-audit-append-only",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "audit_log is append-only: app role has INSERT and SELECT only; UPDATE and DELETE revoked.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 21,
+     "quote": "GRANT SELECT, INSERT, UPDATE ON TABLES TO neogold_app;"
+    },
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 29,
+     "quote": "Migrations grant DELETE on auth_nonce and idempotency_record to neogold_app and"
+    }
+   ],
+   "reason": "Default privileges give neogold_app UPDATE on every table incl. audit_log; the bootstrap says migrations revoke it, but 0001 has no GRANT/REVOKE (grep finds none in backend/alembic)."
+  },
+  {
+   "id": "doc5-3.4-idem-purge",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "Idempotency records older than 30 days are purged by a nightly job.",
+   "status": "Missing",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Looked in backend/app/jobs.py (backstop only), app/cli.py, deploy/ timers: no purge of idempotency_record by age."
+  },
+  {
+   "id": "doc5-3.4-nonce-purge",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "Expired auth_nonce rows (expires_at = exp + 30 s) are purged every 10 minutes.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 273,
+     "quote": "expires_at_dt = datetime.datetime.fromtimestamp(exp + 30, tz=datetime.UTC)"
+    },
+    {
+     "file": "backend/tests/test_device_auth.py",
+     "line": 197
+    }
+   ],
+   "reason": "exp+30 implemented; the purge job exists only as a statement inside a test, not in app code or deploy."
+  },
+  {
+   "id": "doc5-3.4-jti",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "A jti is accepted once; a second insert fails on the PK and the request is rejected as AUTH_REPLAY.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 274,
+     "quote": "nonce_exists = db.execute(select(AuthNonce).where(AuthNonce.jti == jti_uuid)).scalar_one_or_none()"
+    }
+   ],
+   "reason": "Replay detected by pre-SELECT; a concurrent duplicate hitting the PK raises IntegrityError, which is not mapped to AUTH_REPLAY."
+  },
+  {
+   "id": "doc5-3.4-retention-until",
+   "kind": "rule",
+   "section": "3.4",
+   "claim": "Data past study.retention_until is flagged, never auto-deleted; deletion needs explicit coordinator action.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 802,
+     "quote": "print(\"Error: retention purge requires --confirm flag to proceed\", file=sys.stderr)"
+    }
+   ],
+   "reason": "retention check warns (lines 771-792)."
+  },
+  {
+   "id": "doc5-3.5-migrator",
+   "kind": "rule",
+   "section": "3.5",
+   "claim": "neogold_migrator owns DDL, used only by Alembic.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 17,
+     "quote": "ALTER SCHEMA public OWNER TO neogold_migrator;"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-3.5-app",
+   "kind": "rule",
+   "section": "3.5",
+   "claim": "neogold_app: SELECT/INSERT/UPDATE; DELETE only on auth_nonce and idempotency_record; INSERT, SELECT on audit_log.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 21,
+     "quote": "GRANT SELECT, INSERT, UPDATE ON TABLES TO neogold_app;"
+    },
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 485,
+     "quote": "delete(IdempotencyRecord).where("
+    }
+   ],
+   "reason": "App role gets UPDATE on audit_log and no DELETE on auth_nonce/idempotency_record (no migration grants), yet the middleware deletes IN_PROGRESS idempotency rows."
+  },
+  {
+   "id": "doc5-3.5-purge",
+   "kind": "rule",
+   "section": "3.5",
+   "claim": "neogold_purge: SELECT, DELETE; used only by retention purge, session reject, participant withdraw; each run audited.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 27,
+     "quote": "GRANT SELECT, DELETE ON TABLES TO neogold_purge;"
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 372,
+     "quote": "db = SessionLocal()"
+    }
+   ],
+   "reason": "Grants match and retention purge/withdraw use get_purge_db, but session reject uses the app session; withdraw/purge also UPDATE rows and INSERT audit_log through the purge role, which it cannot."
+  },
+  {
+   "id": "doc5-3.5-export",
+   "kind": "rule",
+   "section": "3.5",
+   "claim": "neogold_export: SELECT only, used by the export command.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-bootstrap",
+     "line": 25,
+     "quote": "GRANT SELECT ON TABLES TO neogold_export;"
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 572,
+     "quote": "db = get_export_db()"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-3.6-layout",
+   "kind": "rule",
+   "section": "3.6",
+   "claim": "Image path <store-root>/<study_code>/<site_code>/<session_id>/<capture_id>.jpg; only codes and UUIDs.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 374,
+     "quote": "dest_file = store_dir / study.study_code / site.site_code / str(session_id) / f\"{capture_id}.jpg\""
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-3.6-encrypted-volume",
+   "kind": "rule",
+   "section": "3.6",
+   "claim": "Images stored on an encrypted volume or SSE bucket.",
+   "status": "Unknown",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Host disk encryption is a deployment property; needs the provisioned VM or runbook evidence."
+  },
+  {
+   "id": "doc5-3.6-hash-reverify",
+   "kind": "rule",
+   "section": "3.6",
+   "claim": "File hash re-verified on write and during export.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 339,
+     "quote": "if actual_hash != capture_row.sha256:"
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 680,
+     "quote": "shutil.copyfile(src_img, images_out_dir / img_dest_name)"
+    }
+   ],
+   "reason": "Body hash checked before write; stored file never re-read, and export copies files with no hash check."
+  },
+  {
+   "id": "doc5-3.7-alembic",
+   "kind": "rule",
+   "section": "3.7",
+   "claim": "Alembic forward-only in production; each migration tested against a fixture database copy.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/tests/conftest.py",
+     "line": 82,
+     "quote": "[sys.executable, \"-m\", \"alembic\", \"upgrade\", \"head\"],"
+    }
+   ],
+   "reason": "CI runs alembic upgrade head on an empty DB; no fixture-database migration test found."
+  },
+  {
+   "id": "doc5-3.7-backups",
+   "kind": "rule",
+   "section": "3.7",
+   "claim": "Nightly restic snapshots verified by a monthly test restore.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-backup.timer",
+     "line": 5,
+     "quote": "OnCalendar=*-*-* 02:30:00 Asia/Dhaka"
+    }
+   ],
+   "reason": "Nightly restic backup and weekly partial check exist; the monthly test restore is a manual procedure not visible in the repo."
+  },
+  {
+   "id": "doc5-4-session-id",
+   "kind": "rule",
+   "section": "4",
+   "claim": "screening_session.id maps to session.id unchanged.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 329,
+     "quote": "sessionId = session.id,"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-4-capture-date",
+   "kind": "rule",
+   "section": "4",
+   "claim": "created_at to capture_date in study time zone; captured_at only if FULL.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 250,
+     "quote": "val captureDate = formatCalendarDate(session.createdAt, study.timeZone)"
+    }
+   ],
+   "reason": "captured_at gated on FULL (251-253)."
+  },
+  {
+   "id": "doc5-4-age-round",
+   "kind": "rule",
+   "section": "4",
+   "claim": "age_hours is rounded to 0.1 before upload.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 311,
+     "quote": "age_hours = session.ageHours.toDouble(),"
+    },
+    {
+     "file": "backend/app/models/api.py",
+     "line": 151,
+     "quote": "age_hours: Annotated[float, Field(ge=0, le=720, multiple_of=0.1)]"
+    }
+   ],
+   "reason": "No rounding on device; server rejects values not a multiple of 0.1."
+  },
+  {
+   "id": "doc5-4-ga-flags",
+   "kind": "rule",
+   "section": "4",
+   "claim": "gestational_age_weeks and flags map unchanged.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 312,
+     "quote": "gestational_age_weeks = session.gestationalAgeWeeks,"
+    }
+   ],
+   "reason": "Flags converted 0/1 to boolean (313-315)."
+  },
+  {
+   "id": "doc5-4-estimates",
+   "kind": "rule",
+   "section": "4",
+   "claim": "estimate_*_mg_dl rounded to 0.1; never shown to study staff in-app.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 316,
+     "quote": "estimate_mg_dl = session.estimateMgDl?.toDouble(),"
+    },
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 295,
+     "quote": "estimateMgDl = null, // Strictly hidden / null in research mode UI"
+    }
+   ],
+   "reason": "Hidden (stored null), but no rounding, and the research path never computes an estimate to upload."
+  },
+  {
+   "id": "doc5-4-register",
+   "kind": "rule",
+   "section": "4",
+   "claim": "register_number is never sent to the server.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 305,
+     "quote": "val manifest = SessionManifest("
+    }
+   ],
+   "reason": "SessionManifest has no register field."
+  },
+  {
+   "id": "doc5-4-capture-metadata",
+   "kind": "rule",
+   "section": "4",
+   "claim": "capture metadata columns are packed into capture.capture_metadata JSON.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 296,
+     "quote": "camera_hardware_level = \"LIMITED\","
+    }
+   ],
+   "reason": "ISO, exposure, locks, gains packed; camera_hardware_level is hard-coded."
+  },
+  {
+   "id": "doc5-4-image",
+   "kind": "rule",
+   "section": "4",
+   "claim": "image_file is decrypted on device, sent over TLS, stored as object_key.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 360,
+     "quote": "imageStreamProvider = { encryptedFileStore.openDecryptedStream(imageFile) },"
+    }
+   ],
+   "reason": "Server sets object_key (sessions.py 384)."
+  },
+  {
+   "id": "doc5-4-tsb-offset",
+   "kind": "rule",
+   "section": "4",
+   "claim": "draw_time becomes minutes_from_capture on device; draw_time only if FULL.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 379,
+     "quote": "((tsb.drawTime - session.createdAt) / 60000).toInt()"
+    }
+   ],
+   "reason": "FULL gate at 383-385."
+  },
+  {
+   "id": "doc5-4-card-batch",
+   "kind": "rule",
+   "section": "4",
+   "claim": "card_batch_id maps to session card_batch_id/card_status plus one batch row per verified batch; unverified go up UNVERIFIED.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 244,
+     "quote": "cardStatus = if (batch.expiresAt < now) \"EXPIRED\" else \"VERIFIED\""
+    }
+   ],
+   "reason": "Status mapping exists, but no local card_batch rows are ever inserted, so batches are never sent; EXPIRED is judged at upload time, not capture time."
+  },
+  {
+   "id": "doc5-5-mode",
+   "kind": "rule",
+   "section": "5",
+   "claim": "mode enum: SCREENING, RESEARCH.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ScreeningSessionEntity.kt",
+     "line": 40,
+     "quote": "val mode: String, // SCREENING, RESEARCH"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-5-triage-action",
+   "kind": "rule",
+   "section": "5",
+   "claim": "triage_action enum has 7 values including BLOCKED.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageModels.kt",
+     "line": 6,
+     "quote": "enum class TriageAction {"
+    }
+   ],
+   "reason": "Engine enum has the six action names but no BLOCKED; the persisted values are a separate Contradicted claim (doc5-2.2-triage-action)."
+  },
+  {
+   "id": "doc5-5-site",
+   "kind": "rule",
+   "section": "5",
+   "claim": "site enum: STERNUM, FOREHEAD, SCLERA_FLASH, SCLERA_NOFLASH, CALIBRATION.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 213
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-5-quality-fail",
+   "kind": "rule",
+   "section": "5",
+   "claim": "quality_fail_reason enum: 10 values from NO_CARD to WINDOW_NOT_SKIN.",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionModels.kt",
+     "line": 11,
+     "quote": "enum class QualityReasonCode {"
+    }
+   ],
+   "reason": "All 10 values, same order (lines 12-21)."
+  },
+  {
+   "id": "doc5-5-reason-code",
+   "kind": "rule",
+   "section": "5",
+   "claim": "reason_code: R1-R5, QUALITY_FALLBACK, ABOVE_THRESHOLD, ZONE_WITHIN3, ZONE_ABS15, WIDE_INTERVAL, RECHECK_ZONE, CONFIG_INVALID, CARD_INVALID.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageModels.kt",
+     "line": 18,
+     "quote": "object TriageReasonCode {"
+    }
+   ],
+   "reason": "R1-R5 and six rule codes present; CARD_INVALID absent everywhere in src/main; CONFIG_INVALID is a TriageUnavailableReason, not a reason code."
+  },
+  {
+   "id": "doc5-5-outbox-state",
+   "kind": "rule",
+   "section": "5",
+   "claim": "outbox.state: PENDING, IN_FLIGHT, ACKED, FAILED_PERMANENT.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/dao/OutboxDao.kt",
+     "line": 34
+    }
+   ],
+   "reason": "Values used across DAO and processor."
+  },
+  {
+   "id": "doc5-5-card-status",
+   "kind": "rule",
+   "section": "5",
+   "claim": "card_status: VERIFIED, EXPIRED, UNVERIFIED.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/alembic/versions/0001_initial_study_intake.py",
+     "line": 183
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc5-6-identifiers",
+   "kind": "other",
+   "section": "6",
+   "claim": "Birth registration, national ID and mobile patterns to be confirmed with the partner before v1.0.",
+   "status": "Deferred",
+   "area": "privacy",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "Doc 5 Section 6 item 1 lists it as an open issue."
+  },
+  {
+   "id": "doc5-6-full-timestamps",
+   "kind": "other",
+   "section": "6",
+   "claim": "Whether the first study needs FULL timestamps.",
+   "status": "Deferred",
+   "area": "privacy",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "Doc 5 Section 6 item 2: open issue; default DAY_PLUS_OFFSETS."
+  }
+ ],
+ "counts": {
+  "Implemented": 72,
+  "Partial": 25,
+  "Missing": 2,
+  "Contradicted": 4,
+  "Deferred": 2,
+  "Unknown": 1
+ },
+ "notes": "Room and PostgreSQL column sets match the doc exactly (inventory room_columns/pg_columns: no missing or unplanned; ORM equals migration). The drift is in behavior. (1) Triage area: MainActivity saves triage_action as UI enum names (BLOOD_TEST, NO_FURTHER_ACTION, CANNOT_SCREEN), not the documented codes, and S19 hard-codes the result (8.2-10.1, threshold 12.0); the flow is hidden in v1.0 (triageEnabled false). (2) Research R03 records age_hours as a fixed 48 h default with a no-op edit, a silent default on a clinical input. (3) Retention jobs are coded but never scheduled or run at app start; research purge is wired to a NoOp hook. (4) Backend roles: no migration applies the GRANT DELETE / REVOKE UPDATE that the bootstrap promises, so audit_log is not append-only for neogold_app and app-side deletes would fail. Idempotency and auth_nonce purge jobs and the backstop scheduler are absent. (5) Device never inserts card_batch or device_profile rows, yet sessions set FK card_batch_id (hard-coded 'NG-2026-001' in screening) with foreign_keys ON."
+}
