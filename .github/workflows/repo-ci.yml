@@ -20,3 +20,24 @@ jobs:
         run: python3 tools/check_licenses.py
       - name: ShellCheck on tools/*.sh
         run: shellcheck tools/*.sh
+  drift-check:
+    # P24: fail on any dependency, permission, endpoint, table, column, screen, or config
+    # key that no doc anchors and that is not in reports/direction/baseline.json.
+    # No secrets: read-only token, nothing but the repository.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install backend lock (FastAPI OpenAPI and SQLAlchemy metadata)
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
+      - name: Drift inventory tooling tests
+        run: python -m pytest -q tools/tests/test_drift_inventory.py tools/tests/test_doc_auditor_guard.py
+      - name: Drift check against the baseline
+        run: python3 tools/drift_inventory.py --check

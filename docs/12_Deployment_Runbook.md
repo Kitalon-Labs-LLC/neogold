@@ -78,6 +78,7 @@ tasks.register("printVersionName") { doLast { println(appVersionName) } }
 |---|---|---|---|
 | `android-ci.yml` (Appendix A.1) | Pull request; push to `main`, `dev`, and `release/**`; called by the release workflow | Lint, unit, golden vectors, differential triage, config schema, unsigned release build, gates S4, S5, S6, requirement coverage; separate scan job with gate S9 (gitleaks) and Trivy | None |
 | `android-release.yml` (Appendix A.2) | Tag `v*.*.*` | Re-runs all of `android-ci.yml` on the tagged commit first; then gate G1, tag check, signed bundle, signed asset manifest, SBOM, gates S4 and S5 on that bundle, upload of **that same file** to the internal track, draft GitHub release with checksums of the uploaded files | Upload key, release manifest key (K3), Play service account; only in the protected `release` environment; deleted in an always-run final step |
+| `repo-ci.yml` | Pull request; push to `main`, `dev`, and `release/**` | Traceability (`trace.py`), license check (TC-OPS-08), ShellCheck; job `drift-check`: P24 tooling tests and `drift_inventory.py --check` against `reports/direction/baseline.json` | None (`contents: read`) |
 | `backend-ci.yml` (Appendix A.3) | Pull request, push to `main`, tag `intake-v*.*.*` | Ruff, Bandit, pytest (with the ten authentication cases), spec validation and server-spec diff, `schema-compat`, image build with SBOM and provenance, image scan | `GITHUB_TOKEN` with `packages: write` in the image job only |
 
 Two gates are not automated in CI and are recorded in the test summary instead: the MobSF scan (S1, TC-SEC-10) and the instrumented UI tests on emulators, which run nightly. Gradle dependency locking is on, with `gradle.lockfile` files committed, so the Trivy scan can see Maven dependencies.
@@ -797,6 +798,7 @@ ALLOWED_EXPORTED = {
     "com.kitalonlabs.neogold.MainActivity": None,
     "androidx.work.impl.background.systemjob.SystemJobService": "android.permission.BIND_JOB_SERVICE",
     "androidx.work.impl.diagnostics.DiagnosticsReceiver": "android.permission.DUMP",
+    "androidx.profileinstaller.ProfileInstallReceiver": "android.permission.DUMP",
     "androidx.profileinstaller.ProfileInstallerReceiver": "android.permission.DUMP",
 }
 

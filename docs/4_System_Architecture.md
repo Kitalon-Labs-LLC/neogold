@@ -136,13 +136,29 @@ flowchart TB
 | `:engine:triage` | Yes | Config parsing and signature check, hard rules, threshold lookup, action and reason codes |
 | `:engine:cardtrust` | Yes | QR payload decoding, Ed25519 batch signature verification against the trust list, expiry |
 | `:sync:research` | No | Outbox processing, chunk-free per-file upload with idempotency keys and SHA-256 verification |
+| `:benchmark` | No | JVM benchmark of the screening pipeline stages (not shipped in the app) |
+| `:neogold-decrypt` | Yes | Offline decrypt tool for research exports, built from `tools/neogold-decrypt` and used by export tests (not shipped in the app) |
+
+### 4.2a Additional module dependencies
+
+Production dependencies the diagram does not draw, approved in the 2026-10-26 direction check (P24, action A16). `tools/drift_inventory.py` reads this table; any other edge fails `--check`.
+
+| From | To | Reason |
+|---|---|---|
+| `:app` | `:core:common`, `:core:data`, `:core:designsystem`, `:core:model`, `:core:security`, `:engine:camera`, `:engine:cardtrust`, `:engine:colorscience`, `:engine:estimation`, `:engine:triage`, `:engine:vision`, `:sync:research` | `:app` is the composition root and wires every dependency by hand (ADR-017) |
+| `:benchmark` | `:core:common`, `:core:model`, `:engine:camera`, `:engine:cardtrust`, `:engine:colorscience`, `:engine:estimation`, `:engine:triage`, `:engine:vision`, `:feature:screening` | Benchmarks the real pipeline classes |
+| `:core:data` | `:core:model`, `:core:security` | Entities use the shared model; the database key comes from the Keystore wrapper |
+| `:sync:research` | `:core:model`, `:core:security`, `:engine:cardtrust` | Device key and request signing; study QR signature check |
+| `:engine:estimation` | `:engine:colorscience` | Features are computed from CIELAB values (pure Kotlin to pure Kotlin) |
+| `:engine:vision` | `:engine:colorscience` | Patch sampling returns color-science types |
+| `:engine:camera` | `:engine:vision`, `:engine:colorscience` | Camera qualification measures patches with the vision and color engines |
 
 ### 4.3 Technology choices
 
 | Concern | Choice | Why |
 |---|---|---|
 | Language and UI | Kotlin 2.x, Jetpack Compose, Material 3 | Founder's existing stack; first-class Android support |
-| DI | Hilt | Used in PayRadar and ScanLite [Certain] |
+| DI | Manual constructor wiring in `:app` (ADR-017) | No annotation processor or generated code; Hilt was planned but never adopted |
 | Async | Coroutines and Flow | Standard |
 | Navigation | Compose Navigation with type-safe routes | Standard |
 | Camera | CameraX with `Camera2Interop` | Needed to turn off scene modes and effects, lock AE and AWB where available, and read `CaptureResult` metadata; this is the reason Flutter was rejected (doc 1, Section 10) |
@@ -170,7 +186,8 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `org.jetbrains.kotlinx:kotlinx-coroutines-test` | any | test | P01 allowed list; doc 9 Section 3 |
 | `androidx.compose:*`, `androidx.compose.ui:*`, `androidx.compose.material3:*`, `androidx.compose.material:*` | any | all | P01 allowed list (Compose, Material 3); Section 4.3 |
 | `androidx.navigation:navigation-compose` | any | all | P01 allowed list; Section 4.3 Navigation |
-| `com.google.dagger:*` | any | all | P01 allowed list; Section 4.3 DI |
+| `androidx.core:core-ktx` | any | all | Added to every Android module by the convention plugins; required by Compose and AndroidX (P24, A15) |
+| `androidx.activity:activity-compose` | `:app` | all | Compose host for `MainActivity` (`setContent`); part of Compose (P24, A15) |
 | `androidx.lifecycle:*` | any | all | P01 allowed list (Lifecycle) |
 | `junit:junit`, `com.google.truth:truth`, `app.cash.turbine:turbine`, `org.robolectric:robolectric` | any | test | P01 allowed list; doc 9 Section 3 |
 | `io.gitlab.arturbosch.detekt:*` | any | all | P01 allowed list |
@@ -178,6 +195,8 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `androidx.room:room-runtime`, `androidx.room:room-ktx`, `androidx.room:room-compiler` | any | all | Section 4.3 Local DB; ADR-008 |
 | `androidx.room:room-testing` | any | test | doc 9 Section 3 (`MigrationTestHelper`) |
 | `net.zetetic:sqlcipher-android` | `:core:data` | all | Section 4.3 Local DB; ADR-008 |
+| `androidx.sqlite:sqlite`, `androidx.sqlite:sqlite-framework` | `:core:data` | all | SupportSQLite bridge between Room and SQLCipher; ADR-008 (P24, A15) |
+| `org.bouncycastle:bcprov-jdk18on` | `:core:security` | all | ADR-016; doc 8 Section 6.2 |
 | `com.google.crypto.tink:tink` | any | all | Section 4.3 File encryption and Signatures; ADR-008 |
 | `androidx.work:work-runtime-ktx` | any | all | Section 4.3 Background work |
 | `androidx.work:work-testing` | any | test | doc 9 Section 3 |
@@ -587,6 +606,8 @@ Detailed in `12_Deployment_Runbook.md`. Summary:
 | ADR-013 | DigitalOcean (dedicated droplet) for staging; Bangladesh-hosted production | Existing shared droplet; DigitalOcean for everything | Isolation, handover, data protection law |
 | ADR-014 | Nothing time-critical depends on background work | Rely on WorkManager and notifications | Budget Android skins kill background work |
 | ADR-015 | Monotone piecewise-linear linearization with PAVA isotonic filtering | Cubic splines (PCHIP, natural splines), unconstrained polynomials | Unconditional monotonicity across all inputs without Runge oscillations or spline overshoot; noise-resilient with 6 to 7 gray patches; exact node fidelity; zero matrix inversion |
+| ADR-016 | Bouncy Castle Argon2id (pure Java) for the research PIN hash, in `:core:security` only | argon2kt over JNI | No extra native library to build and 16 KB-align on two ABIs; R8 shrinks it. Timing on the 2 GB floor phone is not yet measured [Guessing]; switch to argon2kt if a hash takes over 1 s (doc 8 Section 6.2). Recorded in the 2026-10-26 direction check (P24, A15) |
+| ADR-017 | Manual dependency wiring in `:app` | Hilt | The app was built without it; adopting Hilt now is a cross-module refactor with no user-facing gain. Recorded in the 2026-10-26 direction check (P24, A17) |
 
 ---
 

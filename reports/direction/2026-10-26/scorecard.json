@@ -199,6 +199,8 @@
   "skipped_categories": [],
   "bash_guard_active": false,
   "action_items": 18,
-  "decided": 0,
-  "previous_report": null
+  "decided": 18,
+  "previous_report": null,
+  "decisions_by": "CTO under founder delegation, 2026-10-26",
+  "pending_removal_in_baseline": 4
 }

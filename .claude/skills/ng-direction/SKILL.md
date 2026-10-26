@@ -93,7 +93,7 @@ Write `$OUT/report.md` and `$OUT/scorecard.json`.
 - **Drifting:** any other Contradicted item, or more than 5 unplanned items.
 - **On course:** otherwise.
 
-"Unplanned items" for this rule means inventory items in the gated categories that are **not in `reports/direction/baseline.json`** (the baseline holds the items the owner already decided to keep), plus WON'T HAVE matches. With no baseline, every gated unplanned item counts. Unreferenced commits are listed and trended but do not count toward the threshold: they measure commit-message habits, not product drift.
+"Unplanned items" for this rule means inventory items in the gated categories that are **not in `reports/direction/baseline.json`**, plus baseline items whose `decisions` entry says `remove` (still in the code, so still drift), plus WON'T HAVE matches. Baseline items the owner decided to keep have a doc anchor and no longer appear as unplanned at all. With no baseline, every gated unplanned item counts. Unreferenced commits are listed and trended but do not count toward the threshold: they measure commit-message habits, not product drift.
 
 ### Step e: Action list
 One entry per Contradicted item, unplanned item (items of the same kind may be grouped, for example one library in many modules), and Missing item in M1 to M3 scope. Each entry has:

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document | 11 of 13 |
-| Version | 0.2 (first entries: 31 defects from the 26 October 2026 build audit, `reports/direction/2026-10-26/report.md`) |
+| Version | 0.2 (first entries: 31 defects from the 26 October 2026 build audit, `reports/direction/2026-10-26/build-audit.md`) |
 | Date | 26 October 2026 |
 | Owner | Sowad Al-Mughni, Kitalon Labs |
 | Depends on | `9_Test_Plan_Strategy.md` Section 9 (severity and handling), `10_Test_Cases.md` |
@@ -71,7 +71,7 @@ flowchart LR
 
 ## 4. Open Defects
 
-Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: a code review plus a local test run on commit `91c1125` (`reports/direction/2026-10-26/report.md`). None involves newborn data. Rule 3 says to tell the clinical lead about clinical defects the same day. No clinical lead is named yet (PRD Section 16, open item 1), so entries 001 to 008 are waiting for that person. "Fix package" in the notes refers to the remediation packages R1 to R7 in the audit report.
+Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: a code review plus a local test run on commit `91c1125` (`reports/direction/2026-10-26/build-audit.md`). None involves newborn data. Rule 3 says to tell the clinical lead about clinical defects the same day. No clinical lead is named yet (PRD Section 16, open item 1), so entries 001 to 008 are waiting for that person. "Fix package" in the notes refers to the remediation packages R1 to R7 in the audit report.
 
 | ID | Title | Found | Source | Build | Device | Area | Severity | Clinical | Hazard | Priority | Status | Owner | Test case | Fix version |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -357,7 +357,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 - Both record a clinical lead approval, but no clinical lead is named.
 - Both report device, kill, power-loss, and nurse-panel passes for features the app does not run.
 
-**Evidence** `reports/direction/2026-10-26/report.md` Section 5.
+**Evidence** `reports/direction/2026-10-26/build-audit.md` Section 5.
 
 **Notes** Severity S1, because a go or no-go based on these reports could release a build that fabricates results. The 26 October correction marks each row Supported, Unverified, or Contradicted. Rows stay corrected until raw data is attached.
 
