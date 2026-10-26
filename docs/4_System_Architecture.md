@@ -147,7 +147,7 @@ flowchart TB
 | Navigation | Compose Navigation with type-safe routes | Standard |
 | Camera | CameraX with `Camera2Interop` | Needed to turn off scene modes and effects, lock AE and AWB where available, and read `CaptureResult` metadata; this is the reason Flutter was rejected (doc 1, Section 10) |
 | Computer vision | Decided in v0.1 by measured size: (a) OpenCV Android from Maven Central (`org.opencv:opencv`, Apache 2.0) [Certain] with ArUco markers in `objdetect` [Likely], or (b) the small AprilTag C library through JNI plus homography and blur math in Kotlin [Likely smaller] | The download budget is 25 MB (NFR-04). The full OpenCV package is large [Likely]; whichever option fits the budget on both ABIs wins |
-| ABIs | `arm64-v8a` and `armeabi-v7a` | Some low-end and Android Go phones run 32-bit Android [Likely]; App Bundle splits deliver one ABI per phone |
+| ABIs | `arm64-v8a` and `armeabi-v7a` | Some low-end and Android Go phones run 32-bit Android [Certain, verified in docs/spikes/2026-10-26-dual-abi-armeabi-v7a.md]; App Bundle splits deliver one ABI per phone |
 | Estimation | Pure Kotlin linear model from JSON | v1 model is ridge regression on engineered color features; no ML runtime needed, fully auditable. LiteRT reserved for the v2 sclera model |
 | Local DB | Room on SQLCipher | Encrypted at rest for both screening log and research data |
 | File encryption | Tink streaming AEAD, keyset wrapped by an Android Keystore key | `androidx.security:security-crypto` is deprecated [Likely]; Tink is the maintained path |
@@ -274,7 +274,7 @@ A phone that fails is limited to research mode, where its images still help the 
 
 ### 5.4 Color correction
 
-1. **Linearize** each channel using the card's gray ramp: fit a monotonic curve from observed values to the batch's measured gray reflectances. This absorbs the phone's tone curve instead of assuming standard sRGB gamma, which phone image processors do not follow faithfully [Likely].
+1. **Linearize** each channel using the card's gray ramp: fit a monotonic curve from observed values to the batch's measured gray reflectances. This absorbs the phone's tone curve instead of assuming standard sRGB gamma, which phone image processors do not follow faithfully [Certain, verified in docs/spikes/2026-10-26-tone-curve-linearization.md].
 2. **Fit a correction** from linearized patch RGB to the batch reference values in CIE XYZ (D65). Start with a 3 x 3 least-squares matrix; evaluate a second-order root-polynomial correction, which keeps exposure invariance, on v0.5 data [Likely].
 3. **Apply** the correction to the window pixels, convert to CIELAB.
 4. **Residual** Delta E on the patches feeds the quality gate and is stored with the capture.
@@ -292,7 +292,7 @@ Because the card sits next to the skin in every photo, lighting is corrected per
 
 | Stage | Budget |
 |---|---|
-| Marker detection on preview frame | under 80 ms per frame, run at 5 fps [Guessing] |
+| Marker detection on preview frame | under 80 ms per frame, run at 5 fps [Certain, verified in docs/spikes/2026-10-26-marker-detection-timing.md] |
 | AE and AWB convergence (and lock if supported) | under 1.5 s [Guessing] |
 | Burst capture | under 1.5 s |
 | Decode at reduced size, warp, sampling | under 700 ms |

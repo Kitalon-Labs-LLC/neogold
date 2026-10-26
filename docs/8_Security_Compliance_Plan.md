@@ -20,7 +20,7 @@ Four findings change what you should do, so they come before the controls.
 1. **Decided 11 October 2026 (PRD D10 to D12): v1.0 is a closed research build, so G3 applies only to a later public release.** The legal risk described here is unchanged for that release. Bangladesh's Personal Data Protection Ordinance 2025 says a data fiduciary "shall not conduct activities such as tracking, monitoring, profiling or targeted advertising" of a specific child (section 9(3)), and defines profiling as automated processing to "evaluate, analyse or predict aspects" of a person (section 2(14)) [Certain, ordinance text in unofficial English translation]. Whether a triage suggestion for a named baby fits that wording is the lawyer's call [Guessing]. Separately, the Drug and Cosmetics Act 2023 brings software into the medical device definition [Certain, per regulatory guide]; regulators judge a product by what it does, so the decision-support framing (D11) helps but does not settle the question [Likely]. The v1.0 study runs under the partner's ethics approval and the research exemption (section 24(1)(h)) [Certain on the section].
 2. **Most of the ordinance already applies.** Only section 23 (Chief Data Officers) and sections 31 to 46 (offences and penalties) wait for a government notification after 18 months (section 1(3)) [Certain]. Consent, children's data, security, retention, and breach duties are in force now; only the penalties are deferred, to around May 2027 at the earliest [Likely].
 3. **A repackaged APK cannot be stopped by code.** Anyone who modifies the app can also remove the checks that would detect it. In a market where apps travel by messaging apps and file sharing [Likely], the real controls are distribution (Play Store only), published signing fingerprints, a trademark rule for forks, and training (T3, H9).
-4. **Budget phones can lose Keystore keys** after some OS updates or factory-level resets [Likely]. When that happens, everything encrypted on the phone is unreadable by design. The paper register stays the record of truth for screening, and research mode uploads or exports often (Section 6.1).
+4. **Budget phones can lose Keystore keys** after some OS updates or factory-level resets [Certain, verified in docs/spikes/2026-10-26-keystore-key-invalidation.md]. When that happens, everything encrypted on the phone is unreadable by design. The paper register stays the record of truth for screening, and research mode uploads or exports often (Section 6.1).
 
 The earlier PRD and architecture text overstated one legal point (that the ordinance requires confidential data to be stored only in Bangladesh). It has been corrected in PRD v0.3.1 and doc 4 v0.2.1; the hosting decision stands, for the reasons in Section 13.1.
 
@@ -467,7 +467,7 @@ G3 was adopted on 11 October 2026 together with the decision to keep v1.0 a clos
 | Card design and documentation | CC BY 4.0 (PRD) | Attribution |
 | OpenCV (if chosen) | Apache 2.0 [Certain] | Notice file |
 | Tink | Apache 2.0 [Certain] | Notice file |
-| SQLCipher for Android, community edition | BSD-style [Likely] | Notice in app |
+| SQLCipher for Android, community edition | BSD 3-Clause [Certain, verified in docs/spikes/2026-10-26-sqlcipher-license.md] | Notice in app |
 | Bouncy Castle (if chosen) | MIT-style Bouncy Castle license [Certain] | Notice |
 | Noto Sans and Noto Sans Bengali | SIL Open Font License 1.1 [Certain] | Include license |
 

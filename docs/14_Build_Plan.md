@@ -52,8 +52,9 @@ Confidence tags: **[Certain]** from the docs or verified, **[Likely]** strong in
 | P20 | Research sync client and enrollment | 9 Sync | P14, P17 | NG-042 | TC-SYNC-01 to 20, TC-API-07 | 3 |
 | P21 | Screening flow (built, hidden in v1.0) | 10 Screening | P10, P13 | NG-012, NG-017 to NG-024, NG-026, NG-040, NG-043, NG-047, NG-048, NG-051, NG-056 | TC-UI-01 to 03, 09 to 14, TC-LOG-01 to 03, 06, 08 to 10, 12, TC-REL-01 to 07, TC-CAP-13, 14, 16, TC-CARD-08, 09 | 3 to 4 |
 | P22 | Device matrix and release candidates | 10 Release v1.0 | all | NG-046 | TC-PERF-05 to 07, TC-USE-01 to 05, TC-OPS-06, 09, remaining E2E | 2 to 3 |
+| P23 | Spike and assumption check | 11 Agent quality loop | P00 | none (process) | tooling tests in tools/tests/ | 1 to 2 |
 
-Total: about 50 to 60 sessions [Guessing].
+Total: about 50 to 62 sessions [Guessing].
 
 ---
 
@@ -64,6 +65,7 @@ flowchart LR
     P00 --> P01
     P00 --> P02
     P00 --> P17
+    P00 --> P23
     P01 --> P03
     P01 --> P04
     P01 --> P11
@@ -100,13 +102,14 @@ flowchart LR
     P21 --> P22
 ```
 
-**Parallel tracks.** Three can run at the same time in separate Claude Code sessions, each in its own git worktree:
+**Parallel tracks.** Four can run at the same time in separate Claude Code sessions, each in its own git worktree:
 
 | Track | Packages | Notes |
 |---|---|---|
 | Android | P01, P03 to P06, P08 to P16, P20 to P22 | The main line |
 | Training | P07 | Starts once P04 and the P06 model format exist |
 | Backend | P17 to P19 | Starts right after P00; only needs `docs/api/openapi.yaml` |
+| Quality loop | P23 | Spike protocol and assumption check infrastructure |
 
 ---
 

@@ -24,6 +24,7 @@ All design decisions live in `docs/`. Read the sections a task names before writ
 | Test strategy and the 230 test cases (TC-xxx) | `docs/9_Test_Plan_Strategy.md`, `docs/10_Test_Cases.md` |
 | CI, deployment, backups, release procedure | `docs/12_Deployment_Runbook.md` |
 | Work packages and order | `docs/14_Build_Plan.md` |
+| Agent quality loop, spikes, and prompts | `docs/16_Agent_Quality_Prompts.md` |
 
 ---
 
@@ -93,6 +94,8 @@ Fill this in as work packages create them; keep it current.
 | Model reproduction (TC-OPS-07) | `make reproduce` (or `python training/reproduce.py`) |
 | Training pipeline tests | `pytest training/tests` |
 | Release gates | `python3 tools/verify_clinical_signoff.py ...`, `tools/check_manifest.py`, `tools/check_network_config.py`, `tools/check_16kb.sh`, `tools/check_trust_list_release.py` |
+| Audit unverified assumptions | `/ng-assumptions` (or `python3 tools/assumptions.py --report`) |
+| Run isolated spike on a claim | `/ng-spike "<claim>"` |
 
 ---
 

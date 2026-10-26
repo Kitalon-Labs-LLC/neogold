@@ -28,7 +28,7 @@ What could not be tested here: no Docker daemon was available, so the containers
 ## 0. Read This First
 
 1. **The first production release cannot be staged** [Certain, Play Console help]. For v1.0.0 the stages are the testing tracks, plus Bangladesh-only availability and managed publishing. Staged percentages apply from v1.0.1.
-2. **There is no fast kill switch, by design.** The app is offline, so the quickest way to stop a dangerous triage result is a new release through Play review with an immediate-update priority. Play review can take hours to days [Likely]. The halt procedure (Section 6) is therefore rehearsed before v1.0, and the `validUntil` expiry in the config is the backstop.
+2. **There is no fast kill switch, by design.** The app is offline, so the quickest way to stop a dangerous triage result is a new release through Play review with an immediate-update priority. Play review can take hours to days [Certain, verified in docs/spikes/2026-10-26-play-review-latency.md]. The halt procedure (Section 6) is therefore rehearsed before v1.0, and the `validUntil` expiry in the config is the backstop.
 3. **Play cannot roll back a version** [Certain that halting leaves updated users on the new version; Play Console help]. Rollback means a new, higher `versionCode` with the bad change reverted. Because the on-device database migrates forward only, a "rollback" build must keep the newest schema. It is made by reverting commits on the release branch, never by rebuilding an old tag.
 4. **v1.0 follows Path B** (PRD D10, 11 October 2026): a closed research build on Play closed testing, with triage hidden. Path A stays documented for a later public release, which needs the study results and the legal opinion (G3) first.
 
