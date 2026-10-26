@@ -1,357 +1,206 @@
 {
   "date": "2026-10-26",
-  "commit": "91c1125",
-  "scope": "docs/15_Claude_Code_Prompts.md work packages P00 to P22",
-  "overall": "components_built_app_not_integrated",
-  "release_readiness": {
-    "v1.0_closed_testing": "not_ready",
-    "reason": "Research mode does not work in the app"
-  },
-  "work_packages": {
-    "P00": {
-      "verdict": "done",
-      "main_gap": "`.idea/` tracked in git"
+  "commit": "4523908",
+  "inventory_commit": "4f04aefb4bae512c227e8fad51569a403b4144f0",
+  "is_main": true,
+  "since": null,
+  "verdict": "Off course",
+  "verdict_reason": "38 Contradicted items in verdict areas (triage, clinical wording, consent, quality gate, privacy, crypto); root causes R1 to R10 in report.md Section 1",
+  "counts_by_doc": {
+    "docs/2_PRD.md": {
+      "Implemented": 36,
+      "Partial": 35,
+      "Missing": 1,
+      "Contradicted": 9,
+      "Deferred": 4,
+      "Unknown": 26
     },
-    "P01": {
-      "verdict": "partial",
-      "main_gap": "Hilt unused; network rule is a unit test, not a Gradle check; PR #8 merged on red CI"
+    "docs/3_Feature_Backlog.md": {
+      "Implemented": 18,
+      "Partial": 29,
+      "Missing": 1,
+      "Contradicted": 7,
+      "Deferred": 18,
+      "Unknown": 0
     },
-    "P02": {
-      "verdict": "done_gate_not_evidenced",
-      "main_gap": "Merged into P03 branch before its review gate"
+    "docs/4_System_Architecture.md": {
+      "Implemented": 45,
+      "Partial": 16,
+      "Missing": 3,
+      "Contradicted": 9,
+      "Deferred": 2,
+      "Unknown": 1
     },
-    "P03": {
-      "verdict": "done",
-      "main_gap": "Gate not evidenced"
+    "docs/5_Database_Schema.md": {
+      "Implemented": 72,
+      "Partial": 25,
+      "Missing": 2,
+      "Contradicted": 4,
+      "Deferred": 2,
+      "Unknown": 1
     },
-    "P04": {
-      "verdict": "done",
-      "main_gap": null
+    "docs/6_UI_UX_Guidelines.md": {
+      "Implemented": 74,
+      "Partial": 53,
+      "Missing": 7,
+      "Contradicted": 12,
+      "Deferred": 1,
+      "Unknown": 3
     },
-    "P05": {
-      "verdict": "done",
-      "main_gap": null
+    "docs/7_API_Documentation.md": {
+      "Implemented": 89,
+      "Partial": 26,
+      "Missing": 7,
+      "Contradicted": 6,
+      "Deferred": 3,
+      "Unknown": 0
     },
-    "P06": {
-      "verdict": "done",
-      "main_gap": "TC-EST-07 two-ABI is JVM only"
+    "docs/8_Security_Compliance_Plan.md": {
+      "Implemented": 63,
+      "Partial": 25,
+      "Missing": 5,
+      "Contradicted": 5,
+      "Deferred": 2,
+      "Unknown": 11
     },
-    "P07": {
-      "verdict": "done",
-      "main_gap": null
+    "docs/9_Test_Plan_Strategy.md": {
+      "Implemented": 15,
+      "Partial": 31,
+      "Missing": 4,
+      "Contradicted": 3,
+      "Deferred": 3,
+      "Unknown": 15
     },
-    "P08": {
-      "verdict": "partial",
-      "main_gap": "Custom detector; spike decision unrecorded; tests use own renderer"
+    "docs/12_Deployment_Runbook.md": {
+      "Implemented": 40,
+      "Partial": 5,
+      "Missing": 1,
+      "Contradicted": 4,
+      "Deferred": 3,
+      "Unknown": 12
     },
-    "P09": {
-      "verdict": "partial",
-      "main_gap": "S07 qualification hardcoded; device_profile never saved"
-    },
-    "P10": {
-      "verdict": "not_met",
-      "main_gap": "Pipeline not wired; no Macrobenchmark; v0.1 report simulated"
-    },
-    "P11": {
-      "verdict": "partial",
-      "main_gap": "Retention not scheduled; purge not wired; :core:data lock stale"
-    },
-    "P12": {
-      "verdict": "partial",
-      "main_gap": "Integrity result unused; test K3 trusted, private half committed"
-    },
-    "P13": {
-      "verdict": "partial",
-      "main_gap": "String lint ignores Kotlin; fonts not bundled; no real in-app update"
-    },
-    "P14": {
-      "verdict": "not_met",
-      "main_gap": "Research mode unreachable, any PIN accepted, nothing saved"
-    },
-    "P15": {
-      "verdict": "partial",
-      "main_gap": "Export screen never writes a file"
-    },
-    "P16": {
-      "verdict": "partial",
-      "main_gap": "Android workflows invalid YAML; no release tags; v1.0.0 notes missing"
-    },
-    "P17": {
-      "verdict": "done",
-      "main_gap": null
-    },
-    "P18": {
-      "verdict": "mostly_done",
-      "main_gap": "No Schemathesis run (TC-API-30)"
-    },
-    "P19": {
-      "verdict": "done_in_repo",
-      "main_gap": "Droplet steps are the founder's"
-    },
-    "P20": {
-      "verdict": "partial",
-      "main_gap": "Upload never started by the app; R08 and R09 placeholders"
-    },
-    "P21": {
-      "verdict": "not_met",
-      "main_gap": "Fake capture and result; rules in UI; wording; enums; versions"
-    },
-    "P22": {
-      "verdict": "not_met",
-      "main_gap": "Reports claim unrun tests; no release candidate on a track"
+    "docs/14_Build_Plan.md": {
+      "Implemented": 16,
+      "Partial": 17,
+      "Missing": 4,
+      "Contradicted": 5,
+      "Deferred": 1,
+      "Unknown": 4
     }
   },
-  "defects": {
-    "log": "docs/11_Bug_Defect_Log.md",
-    "s1": [
-      "BUG-2026-001",
-      "BUG-2026-002",
-      "BUG-2026-003",
-      "BUG-2026-004",
-      "BUG-2026-005",
-      "BUG-2026-006",
-      "BUG-2026-007",
-      "BUG-2026-008",
-      "BUG-2026-009",
-      "BUG-2026-010",
-      "BUG-2026-011",
-      "BUG-2026-012",
-      "BUG-2026-013",
-      "BUG-2026-014",
-      "BUG-2026-015"
-    ],
-    "s1_clinical": [
-      "BUG-2026-001",
-      "BUG-2026-002",
-      "BUG-2026-003",
-      "BUG-2026-004",
-      "BUG-2026-005",
-      "BUG-2026-006",
-      "BUG-2026-007",
-      "BUG-2026-008"
-    ],
-    "s2": [
-      "BUG-2026-016",
-      "BUG-2026-017",
-      "BUG-2026-018",
-      "BUG-2026-019",
-      "BUG-2026-020",
-      "BUG-2026-021",
-      "BUG-2026-022",
-      "BUG-2026-023",
-      "BUG-2026-024",
-      "BUG-2026-025",
-      "BUG-2026-026",
-      "BUG-2026-027",
-      "BUG-2026-028",
-      "BUG-2026-029",
-      "BUG-2026-030",
-      "BUG-2026-031"
-    ]
-  },
-  "ci": {
-    "android-ci.yml": {
-      "ever_passed": false,
-      "runs_checked": 38,
-      "cause": "invalid YAML since 21410eb; earlier: gradlew not executable, gitleaks 2 findings"
-    },
-    "android-release.yml": {
-      "ever_ran_a_job": false,
-      "cause": "invalid YAML"
-    },
-    "backend-ci.yml": {
-      "status_on_main": "green"
-    },
-    "repo-ci.yml": {
-      "status_on_main": "green"
-    }
-  },
-  "local_run": {
-    "android_jvm": {
-      "tests": 359,
-      "failures": 0,
-      "note": ":core:data (12) needs one lock entry updated; fails from a clean checkout"
-    },
-    "backend": {
-      "tests": 37,
-      "failures": 0
-    },
-    "card": {
-      "tests": 29,
-      "failures": 0
-    },
-    "training": {
-      "tests": 10,
-      "failures": 0
-    },
-    "verifyConfigSchema": "5 configs pass",
-    "trace": "FR 38/38, NFR 14/14, H 11/11, T 17/17, Gate 9/9, NG 55/63"
-  },
-  "test_case_evidence": {
-    "by_area": {
-      "ONB": {
-        "total": 6,
-        "automated": 6,
-        "jvm_standin_only": 0,
-        "no_test": 0
+  "milestones": {
+    "M1": [
+      {
+        "criterion": "Pipeline runs end to end on 3 phones",
+        "status": "Not met",
+        "evidence": "app discards capture, constant result (MainActivity.kt:523-571)"
       },
-      "DEV": {
-        "total": 10,
-        "automated": 3,
-        "jvm_standin_only": 7,
-        "no_test": 0
+      {
+        "criterion": "Golden-vector parity passes",
+        "status": "Partial",
+        "evidence": "golden file self-regenerates; Python parity not in CI"
       },
-      "CARD": {
-        "total": 10,
-        "automated": 7,
-        "jvm_standin_only": 2,
-        "no_test": 1
+      {
+        "criterion": "Bad image set 100% rejected",
+        "status": "Met",
+        "evidence": "VisionQualityGateTest.kt:277 on 13 synthetic images"
       },
-      "CAP": {
-        "total": 17,
-        "automated": 12,
-        "jvm_standin_only": 5,
-        "no_test": 0
-      },
-      "EST": {
-        "total": 7,
-        "automated": 5,
-        "jvm_standin_only": 2,
-        "no_test": 0
-      },
-      "TRI": {
-        "total": 26,
-        "automated": 25,
-        "jvm_standin_only": 1,
-        "no_test": 0
-      },
-      "UI": {
-        "total": 14,
-        "automated": 13,
-        "jvm_standin_only": 1,
-        "no_test": 0
-      },
-      "LOG": {
-        "total": 12,
-        "automated": 10,
-        "jvm_standin_only": 1,
-        "no_test": 1
-      },
-      "PRIV": {
-        "total": 5,
-        "automated": 1,
-        "jvm_standin_only": 4,
-        "no_test": 0
-      },
-      "RSH": {
-        "total": 16,
-        "automated": 10,
-        "jvm_standin_only": 6,
-        "no_test": 0
-      },
-      "EXP": {
-        "total": 4,
-        "automated": 2,
-        "jvm_standin_only": 2,
-        "no_test": 0
-      },
-      "SYNC": {
-        "total": 20,
-        "automated": 14,
-        "jvm_standin_only": 6,
-        "no_test": 0
-      },
-      "API": {
-        "total": 33,
-        "automated": 30,
-        "jvm_standin_only": 2,
-        "no_test": 1
-      },
-      "SEC": {
-        "total": 14,
-        "automated": 0,
-        "jvm_standin_only": 4,
-        "no_test": 10
-      },
-      "PERF": {
-        "total": 7,
-        "automated": 0,
-        "jvm_standin_only": 0,
-        "no_test": 7
-      },
-      "REL": {
-        "total": 8,
-        "automated": 4,
-        "jvm_standin_only": 2,
-        "no_test": 2
-      },
-      "A11Y": {
-        "total": 5,
-        "automated": 5,
-        "jvm_standin_only": 0,
-        "no_test": 0
-      },
-      "USE": {
-        "total": 5,
-        "automated": 0,
-        "jvm_standin_only": 0,
-        "no_test": 5
-      },
-      "OPS": {
-        "total": 11,
-        "automated": 0,
-        "jvm_standin_only": 2,
-        "no_test": 9
+      {
+        "criterion": "Camera qualification measured on all six phones",
+        "status": "Unknown",
+        "evidence": "no raw captures; S07 does not measure"
       }
-    },
-    "totals": {
-      "total": 230,
-      "automated": 147,
-      "jvm_standin_only": 47,
-      "no_test": 36
-    },
-    "no_test": [
-      "TC-API-30",
-      "TC-CARD-10",
-      "TC-LOG-09",
-      "TC-OPS-01",
-      "TC-OPS-02",
-      "TC-OPS-03",
-      "TC-OPS-05",
-      "TC-OPS-06",
-      "TC-OPS-08",
-      "TC-OPS-09",
-      "TC-OPS-10",
-      "TC-OPS-11",
-      "TC-PERF-01",
-      "TC-PERF-02",
-      "TC-PERF-03",
-      "TC-PERF-04",
-      "TC-PERF-05",
-      "TC-PERF-06",
-      "TC-PERF-07",
-      "TC-REL-04",
-      "TC-REL-07",
-      "TC-SEC-01",
-      "TC-SEC-02",
-      "TC-SEC-04",
-      "TC-SEC-05",
-      "TC-SEC-06",
-      "TC-SEC-10",
-      "TC-SEC-11",
-      "TC-SEC-12",
-      "TC-SEC-13",
-      "TC-SEC-14",
-      "TC-USE-01",
-      "TC-USE-02",
-      "TC-USE-03",
-      "TC-USE-04",
-      "TC-USE-05"
+    ],
+    "M2": [
+      {
+        "criterion": "All P1 research, sync, export, security cases pass",
+        "status": "Not met",
+        "evidence": "TC-SEC P1 without tests; research UI not wired"
+      },
+      {
+        "criterion": "Zero records lost in 50 kill and 10 power-pull tests per phone",
+        "status": "Unknown",
+        "evidence": "no run logs"
+      },
+      {
+        "criterion": "Encrypted USB export",
+        "status": "Partial",
+        "evidence": "engine tested; R07 never exports"
+      },
+      {
+        "criterion": "Research build on Play closed testing",
+        "status": "Unknown",
+        "evidence": "no Play evidence"
+      }
+    ],
+    "M3": [
+      {
+        "criterion": "Study server upload working against staging",
+        "status": "Not met",
+        "evidence": "R08 placeholder; aud mismatch likely"
+      },
+      {
+        "criterion": "Screening flow built and tested with triageEnabled false",
+        "status": "Not met",
+        "evidence": "constant result"
+      },
+      {
+        "criterion": "All P1 and P2 cases pass on D1 to D4",
+        "status": "Unknown",
+        "evidence": "35 TCs without tests; no device logs"
+      },
+      {
+        "criterion": "No open S1 or S2 defects",
+        "status": "Unknown",
+        "evidence": "defect log empty vs 53 closed in v1.0.md"
+      },
+      {
+        "criterion": "Performance budgets met on D1 and D2",
+        "status": "Unknown",
+        "evidence": "reported figures simulated"
+      },
+      {
+        "criterion": "Gates S1 to S9 pass",
+        "status": "Partial",
+        "evidence": "S1, S8 without artifacts"
+      },
+      {
+        "criterion": "Closed testing usability targets and 14 days without S1",
+        "status": "Unknown",
+        "evidence": "no session records; 14 days not elapsed"
+      },
+      {
+        "criterion": "Closed research release with triageEnabled false",
+        "status": "Partial",
+        "evidence": "config correct; research mode unusable"
+      }
     ]
   },
-  "test_reports": {
-    "docs/test-reports/v0.1.md": "not_passed_under_correction",
-    "docs/test-reports/v0.5.md": "not_passed_under_correction",
-    "docs/test-reports/v1.0.md": "not_passed_under_correction_do_not_promote"
-  }
+  "unplanned": {
+    "modules": 2,
+    "module_edges": 32,
+    "libraries": 20,
+    "permissions": 0,
+    "exported_components": 0,
+    "room_tables": 0,
+    "room_columns": 0,
+    "pg_tables": 0,
+    "pg_columns": 0,
+    "endpoints": 0,
+    "error_codes": 0,
+    "screens": 0,
+    "config_keys": 0,
+    "screening_network": 0,
+    "triage_gate": 1
+  },
+  "unplanned_new_since_baseline": 55,
+  "unreferenced_commits": 12,
+  "zero_test_tcs": 35,
+  "skipped_categories": [],
+  "bash_guard_active": false,
+  "action_items": 18,
+  "decided": 18,
+  "previous_report": null,
+  "decisions_by": "CTO under founder delegation, 2026-10-26",
+  "pending_removal_in_baseline": 4
 }

@@ -51,7 +51,7 @@
 
 | ID | Epic | Item | Description | Size | Release | Depends on | PRD ref |
 |---|---|---|---|---|---|---|---|
-| NG-001 | E1 | Project scaffold | Multi-module Kotlin project, Jetpack Compose, Hilt, Clean Architecture (reuse ScanLite module pattern), CI build | M | v0.1 | None | Section 13 |
+| NG-001 | E1 | Project scaffold | Multi-module Kotlin project, Jetpack Compose, manual dependency wiring (ADR-017), Clean Architecture (reuse ScanLite module pattern), CI build | M | v0.1 | None | Section 13 |
 | NG-002 | E1 | Language selection | Bangla and English at first launch and in settings; all strings externalized | S | v1.0 | NG-001 | FR-01, NFR-06 |
 | NG-003 | E1 | Safety notice | Three-screen notice with explicit "I understand"; re-shown after major model updates | S | v1.0 | NG-002 | FR-02 |
 | NG-004 | E1 | Device check | Detect RAM, Android version, and available camera controls (recorded, used when present, never required); show brand-specific battery settings steps for TECNO, Infinix, itel, Xiaomi, Samsung | M | v0.5 | NG-001 | FR-03, NFR-12 |

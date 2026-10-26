@@ -133,7 +133,7 @@ SHA-256: 9B:8C:7A:D3:4E:2F:10:98:5C:6B:3A:7E:1F:2D:4C:8A:9B:0E:3F:5A:6D:7C:8B:9E
 
 For the closed testing track only (doc 12 Section 4.3). Install only at study sites with the partner's ethics approval in place.
 
-> **Correction, 26 October 2026: do not publish these notes yet.** The text below describes features that do not work in the build at commit `91c1125` (`reports/direction/2026-10-26/report.md`):
+> **Correction, 26 October 2026: do not publish these notes yet.** The text below describes features that do not work in the build at commit `91c1125` (`reports/direction/2026-10-26/build-audit.md`):
 >
 > - Research mode cannot be reached from the app (`BUG-2026-024`).
 > - The unlock screen accepts any PIN (`BUG-2026-012`).

@@ -1,0 +1,1984 @@
+{
+ "doc": "docs/8_Security_Compliance_Plan.md",
+ "companions": [],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "K1",
+   "kind": "other",
+   "section": "4",
+   "claim": "Play app signing key is managed by Google Play App Signing.",
+   "status": "Unknown",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "Play Console setting; not visible in repository. Settled by Play Console App Signing page."
+  },
+  {
+   "id": "K2",
+   "kind": "other",
+   "section": "4",
+   "claim": "Upload key lives on the founder's machine, encrypted, plus offline backup.",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "docs/8_Security_Compliance_Plan.md",
+     "line": 105,
+     "quote": "Founder's machine, encrypted, plus offline backup"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 39,
+     "quote": "UPLOAD_KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_B64 }}"
+    }
+   ],
+   "reason": "The release workflow decodes the upload keystore from a GitHub Actions secret, so K2 lives in CI secrets, not only on the founder's machine. CLAUDE.md allows CI secrets, so this is likely doc drift; doc 8 K2 row should be reconciled."
+  },
+  {
+   "id": "K3",
+   "kind": "other",
+   "section": "4",
+   "claim": "Release manifest key K3 is a GitHub Actions secret in a protected release environment with required reviewer.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 15,
+     "quote": "environment: release   # requires reviewer approval in repository settings"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 43,
+     "quote": "RELEASE_MANIFEST_KEY_B64: ${{ secrets.RELEASE_MANIFEST_KEY_B64 }}"
+    }
+   ],
+   "reason": "Required reviewer is a repository setting and cannot be confirmed from code."
+  },
+  {
+   "id": "K4-K5",
+   "kind": "other",
+   "section": "4",
+   "claim": "Card issuer (K4) and study issuer (K5) keys live offline on an air-gapped laptop with a two-person passphrase.",
+   "status": "Unknown",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [],
+   "reason": "Physical key custody; settled by the signing ceremony record."
+  },
+  {
+   "id": "doc-4-signing-log",
+   "kind": "other",
+   "section": "4",
+   "claim": "Each K4/K5 signing event is logged in a signed text log copied to the repository's signing-log/.",
+   "status": "Missing",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [],
+   "reason": "Glob for signing-log/** found no directory or files. May be legitimately empty if no production batch or profile has been signed yet."
+  },
+  {
+   "id": "K6",
+   "kind": "other",
+   "section": "4",
+   "claim": "Device signing keys are ECDSA P-256 in Android Keystore, non-exportable, per enrollment.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceKeyManager.kt",
+     "line": 66,
+     "quote": ".setAlgorithmParameterSpec(ECGenParameterSpec(\"secp256r1\"))"
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceKeyManager.kt",
+     "line": 45,
+     "quote": "KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, keyStoreType)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "K7",
+   "kind": "other",
+   "section": "4, 5.1",
+   "claim": "256-bit random SQLCipher key wrapped by a Keystore AES-256-GCM key, passed in raw-key form x'<64 hex>'.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/DatabaseKeyProvider.kt",
+     "line": 64,
+     "quote": "return \"x'$hex'\".toByteArray(Charsets.UTF_8)"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 72,
+     "quote": "SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "K8",
+   "kind": "other",
+   "section": "4, 5.1",
+   "claim": "Research images use a Tink AES256_GCM_HKDF_4KB streaming keyset wrapped by a separate Keystore key, write-to-temp then rename.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/FileKeysetProvider.kt",
+     "line": 69,
+     "quote": "KeysetHandle.generateNew(AesGcmHkdfStreamingKeyManager.aes256GcmHkdf4KBTemplate())"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/EncryptedFileStore.kt",
+     "line": 84,
+     "quote": "Files.move("
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "K9",
+   "kind": "other",
+   "section": "4, 6.2",
+   "claim": "PIN verifier key K9 is a non-exportable Keystore HMAC-SHA256 key, so a copied database cannot be brute-forced off the phone.",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/PinHmacKeyProvider.kt",
+     "line": 54,
+     "quote": "FakePinHmacKeyProvider.STATIC_KEY"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/PinHmacKeyProvider.kt",
+     "line": 73,
+     "quote": "val DEFAULT_TEST_KEY = byteArrayOf(0x01, 0x02, 0x03, ..."
+    }
+   ],
+   "reason": "Production KeystorePinHmacKeyProvider catches any Keystore exception and silently falls back to a hard-coded static HMAC key committed in the repo. On that path the PIN hash is not device-bound and can be brute-forced off the phone. Doc says the last step 'only runs inside this phone's Keystore'."
+  },
+  {
+   "id": "K10",
+   "kind": "other",
+   "section": "4, 5.2",
+   "claim": "Research exports are encrypted with a fresh streaming AEAD key wrapped with Tink HPKE (X25519, HKDF-SHA256, AES-256-GCM) to the study export key.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/export/ExportCryptoEngine.kt",
+     "line": 56,
+     "quote": "wraps it with Tink HPKE (X25519, HKDF-SHA256, AES-256-GCM)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "K11",
+   "kind": "other",
+   "section": "4",
+   "claim": "TLS certificate keys are managed by Caddy in the Caddy data volume.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 28,
+     "quote": "- /srv/neogold/caddy/data:/data"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "K12",
+   "kind": "other",
+   "section": "4",
+   "claim": "Enrollment code secret is 256-bit random, kept in the server environment file (mode 0600).",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/config.py",
+     "line": 17,
+     "quote": "\"ENROLLMENT_CODE_SECRET\", \"default-study-enrollment-secret-key-32b\""
+    },
+    {
+     "file": "docs/8_Security_Compliance_Plan.md",
+     "line": 115,
+     "quote": "256-bit random | HMAC of enrollment codes | Server environment file, mode 0600"
+    }
+   ],
+   "reason": "If the variable is missing from api.env, the server silently uses a fixed, public default secret for enrollment-code HMACs. There is no startup guard that refuses the default. That breaks the 'random secret' property and the no-secrets-in-repo rule."
+  },
+  {
+   "id": "K13",
+   "kind": "other",
+   "section": "4",
+   "claim": "Database role passwords are random, in the server environment file.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 42,
+     "quote": "env_file: /etc/neogold/api.env    # DATABASE_URL, ..."
+    },
+    {
+     "file": "backend/app/config.py",
+     "line": 11,
+     "quote": "\"DATABASE_URL\", \"postgresql://postgres:test@localhost:5432/postgres\""
+    }
+   ],
+   "reason": "Deployment reads credentials from env files, but config.py has a hard-coded superuser/password default. It points at localhost, so it fails closed in the compose deployment (db is on another host). Still, a default credential sits in code."
+  },
+  {
+   "id": "K14",
+   "kind": "other",
+   "section": "4",
+   "claim": "restic password is in a root-owned mode-0600 file read by the backup job.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/neogold-backup",
+     "line": 3,
+     "quote": "RESTIC_REPOSITORY, RESTIC_PASSWORD_FILE (mode 0600)"
+    }
+   ],
+   "reason": "Only a comment documents the file mode. Ownership and offline copies cannot be verified from the repo."
+  },
+  {
+   "id": "K15-K16",
+   "kind": "other",
+   "section": "4",
+   "claim": "Admin SSH/WireGuard keys on admins' machines; GitHub accounts use hardware key or TOTP 2FA.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "Org and host settings; settled by GitHub org 2FA policy and host authorized_keys."
+  },
+  {
+   "id": "doc-4-trust-list",
+   "kind": "rule",
+   "section": "4",
+   "claim": "Trust list keys are accepted only for their stated purpose (CARD_ISSUER or STUDY_ISSUER), with revoked batch IDs and study codes.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 71,
+     "quote": "if (key.purpose != KeyPurpose.CARD_ISSUER) {"
+    },
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 199,
+     "quote": "if (key.purpose != KeyPurpose.STUDY_ISSUER) {"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-5.1-master-keys",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "Keystore master keys are AES-256-GCM, non-exportable, StrongBox where present else TEE, with no user-authentication requirement.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/MasterKeyProvider.kt",
+     "line": 102,
+     "quote": ".setUserAuthenticationRequired(false)"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/MasterKeyProvider.kt",
+     "line": 105,
+     "quote": "builder.setIsStrongBoxBacked(true)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-5.1-keystore-loss",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "On Keystore loss the app tells the user, resets the encrypted stores, keeps working; the path has its own instrumented test.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/KeystoreRecoveryManager.kt",
+     "line": 51,
+     "quote": "override fun resetEncryptedStores() {"
+    }
+   ],
+   "reason": "Detection and reset logic exist. Grep finds no non-test caller of checkKeystoreHealth or DefaultKeystoreRecoveryManager, so nothing wires them into the app and no user message is shown. No instrumented test was confirmed."
+  },
+  {
+   "id": "doc-5.1-no-security-crypto",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "androidx.security:security-crypto is not used; Tink is used.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.actual",
+     "quote": ":core:security com.google.crypto.tink:tink prod (no androidx.security entry)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "FR-33",
+   "kind": "FR",
+   "section": "5.2",
+   "claim": "Screening log export excludes register numbers by default.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/log/src/main/kotlin/com/kitalonlabs/neogold/feature/log/ScreeningLogExportManager.kt",
+     "line": 23,
+     "quote": "includeRegisterNumbers: Boolean = false"
+    }
+   ],
+   "reason": "The warning screen before writing was not checked."
+  },
+  {
+   "id": "doc-5.3-nsc",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "Android network security config sets cleartextTrafficPermitted=false and trusts system CAs only.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/res/xml/network_security_config.xml",
+     "line": 3,
+     "quote": "<base-config cleartextTrafficPermitted=\"false\">"
+    },
+    {
+     "file": "android/app/src/main/res/xml/network_security_config.xml",
+     "line": 5,
+     "quote": "<certificates src=\"system\" />"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-5.3-hsts",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "Strict-Transport-Security max-age=31536000 is added explicitly in the Caddyfile.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 18,
+     "quote": "Strict-Transport-Security \"max-age=31536000\""
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-5.3-no-pinning",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "No certificate pinning in v1.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/res/xml/network_security_config.xml",
+     "line": 2,
+     "quote": "<network-security-config> (no pin-set)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.1-backup",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "allowBackup=false plus fullBackupContent and dataExtractionRules excluding every domain for cloud backup and device transfer.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/AndroidManifest.xml",
+     "line": 15,
+     "quote": "android:allowBackup=\"false\""
+    },
+    {
+     "file": "android/app/src/main/res/xml/data_extraction_rules.xml",
+     "line": 10,
+     "quote": "<device-transfer>"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.1-exported",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Only the launcher activity plus permission-guarded WorkManager/profileinstaller components are exported; CI allow-lists exactly these.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.exported_components.actual",
+     "quote": "com.kitalonlabs.neogold.MainActivity; unplanned []"
+    },
+    {
+     "file": "tools/check_manifest.py",
+     "line": 27,
+     "quote": "\"androidx.profileinstaller.ProfileInstallReceiver\": \"android.permission.DUMP\","
+    }
+   ],
+   "reason": "The allow-list also has 'ProfileInstallReceiver', a name that does not exist, next to the documented 'ProfileInstallerReceiver'. That is harmless, but it is not 'exactly' the doc set."
+  },
+  {
+   "id": "doc-6.1-debuggable",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Release is not debuggable; CI fails if a release APK is debuggable.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/check_manifest.py",
+     "line": 41,
+     "quote": "if app.get(A + \"debuggable\") == \"true\":"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.1-permissions",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Permission set is exactly CAMERA, INTERNET, ACCESS_NETWORK_STATE, FGS(+DATA_SYNC), WAKE_LOCK, BOOT, biometric, own receiver perm, POST_NOTIFICATIONS; CI allow-lists it.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.permissions.details.check_manifest_vs_doc8",
+     "quote": "in_tool_not_doc: [], in_doc_not_tool: []"
+    },
+    {
+     "file": "tools/check_manifest.py",
+     "line": 10,
+     "quote": "ALLOWED_PERMISSIONS = {"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.1-network-isolation",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Only :sync:research may depend on the HTTP client; a Gradle rule fails the build otherwise.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build.gradle.kts",
+     "line": 26,
+     "quote": "if (path != \":sync:research\") {"
+    },
+    {
+     "inventory_key": "categories.screening_network.actual",
+     "quote": "[]"
+    }
+   ],
+   "reason": "The rule checks declared dependencies, not transitive ones; the inventory shows no screening network edge."
+  },
+  {
+   "id": "doc-6.1-screenshots",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "FLAG_SECURE on screens with register numbers or research data; setRecentsScreenshotEnabled(false) on API 33+.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/privacy/SecureScreenHelper.kt",
+     "line": 17,
+     "quote": "val SECURE_DESTINATIONS = setOf("
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 76,
+     "quote": "SecureScreenHelper.setRecentsScreenshotEnabled(this, false)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.1-overlay",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "filterTouchesWhenObscured on result confirmation and consent buttons for API 26 to 30.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 79,
+     "quote": "SecureScreenHelper.setFilterTouchesWhenObscured(window, true)"
+    }
+   ],
+   "reason": "Applied to the whole window decor view on all API levels, which is broader than claimed."
+  },
+  {
+   "id": "doc-6.1-webview",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "No WebView in the app.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.actual",
+     "quote": "no androidx.webkit entry; grep finds no WebView in main sources"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.1-16kb",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Every .so is checked for 16 KB page alignment.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "tools/check_16kb.sh",
+     "line": 15,
+     "quote": "if [ \"$exp\" -lt 14 ]; then echo \"S4 FAIL: ..."
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 40,
+     "quote": "tools/check_16kb.sh android/app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.1-r8",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "R8 full mode code shrinking in release.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 78,
+     "quote": "isMinifyEnabled = true"
+    }
+   ],
+   "reason": "Full mode is the AGP 9 default; no override in gradle.properties."
+  },
+  {
+   "id": "doc-6.1-release-logging",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "android.util.Log calls stripped by R8; Timber release tree drops everything below WARN.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/proguard-rules.pro",
+     "line": 9,
+     "quote": "-assumenosideeffects class android.util.Log {"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/logging/TimberReleaseTree.kt",
+     "line": 15,
+     "quote": "return priority >= Log.WARN"
+    }
+   ],
+   "reason": "R8 strips only v/d/i; w/e remain, as intended."
+  },
+  {
+   "id": "doc-6.2-pin-policy",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "PIN is at least 6 digits; rejects repeated digits, simple sequences, and the top 100 common PINs.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/PinPolicyValidator.kt",
+     "line": 28,
+     "quote": "private const val MIN_LENGTH = 6"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/PinPolicyValidator.kt",
+     "line": 57,
+     "quote": "if (pin in TOP_100_PINS) {"
+    }
+   ],
+   "reason": "TC-RSH-04 test exists (ResearchPinSecurityTest.kt line 65)."
+  },
+  {
+   "id": "doc-6.2-argon2",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Argon2id m=19 MiB, t=2, p=1, 16-byte random salt; fallback m=12 MiB, t=3 if over 1 s on the 2 GB phone.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/Argon2PinHasher.kt",
+     "line": 19,
+     "quote": "STANDARD(memoryKiB = 19 * 1024, iterations = 2, parallelism = 1),"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/Argon2PinHasher.kt",
+     "line": 38,
+     "quote": "const val SALT_LENGTH_BYTES = 16"
+    }
+   ],
+   "reason": "The CONSTRAINED profile is defined but nothing selects it. Choosing it depends on a device timing measurement that has not been done."
+  },
+  {
+   "id": "doc-6.2-library",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Argon2 from Bouncy Castle (pure Java) or argon2kt.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.unplanned",
+     "quote": ":core:security org.bouncycastle:bcprov-jdk18on prod"
+    }
+   ],
+   "reason": "The inventory flags it as having no row in doc 4 Section 4.3a."
+  },
+  {
+   "id": "doc-6.2-lockout",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Failure counter written before each check; 5 fails 1 min, 10 fails 15 min, 15+ 1 hour per attempt.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/pin/ResearchPinManager.kt",
+     "line": 90,
+     "quote": "studyDao.update(preCheckStudy)"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/pin/ResearchPinManager.kt",
+     "line": 79,
+     "quote": "nextAttempts >= LOCKOUT_TIER_3_ATTEMPTS -> LOCKOUT_1_HOUR_MS"
+    }
+   ],
+   "reason": "The logic is correct, and TC-RSH-05 (ResearchPinSecurityTest.kt line 107) covers it. But the app's R01 screen never calls ResearchPinManager, so the lockout is not in effect in the shipped flow (see doc-6.2-enforcement)."
+  },
+  {
+   "id": "doc-6.2-enforcement",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Research mode is gated by the research PIN (Argon2id + K9 verify).",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 766,
+     "quote": "onUnlockWithPin = { _ -> navController.navigate(Destinations.R02_STUDY_HOME) },"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 769,
+     "quote": "onEnrollWithPin = { _, _ -> navController.navigate(Destinations.R02_STUDY_HOME) }"
+    }
+   ],
+   "reason": "The app's navigation discards the entered PIN and opens Study Home for any PIN. No hash check, lockout, or K9 binding runs. ResearchViewModel and ResearchPinManager are never constructed in :app."
+  },
+  {
+   "id": "doc-6.2-no-wipe",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "No data wipe on repeated PIN failures.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/pin/ResearchPinManager.kt",
+     "line": 112,
+     "quote": "// Failure: Record audit event and return lockout / wrong pin result"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.2-session",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Research mode re-locks after 5 minutes in the background or on screen off.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/ResearchSessionManager.kt",
+     "line": 21,
+     "quote": "const val INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000L // 5 minutes"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/ResearchSessionManager.kt",
+     "line": 97,
+     "quote": "fun registerScreenOffReceiver(context: Context) {"
+    }
+   ],
+   "reason": "The manager exists and TC-RSH-07 tests it. Nothing in main sources constructs it or calls registerScreenOffReceiver or onAppBackgrounded."
+  },
+  {
+   "id": "doc-6.2-forgotten-pin",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Forgotten PIN: re-enroll with a coordinator code while keeping local data.",
+   "status": "Deferred",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "The doc marks it as open issue 3 (Section 6.2 row and Section 15 item 3)."
+  },
+  {
+   "id": "FR-35",
+   "kind": "FR",
+   "section": "6.3",
+   "claim": "Optional app lock through BiometricPrompt allowing device credential, with KeyguardManager confirm-credential fallback.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/applock/AppLockManager.kt",
+     "line": 143,
+     "quote": "BiometricManager.Authenticators.BIOMETRIC_STRONG or DEVICE_CREDENTIAL"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/applock/AppLockManager.kt",
+     "line": 165,
+     "quote": "unlock()"
+    }
+   ],
+   "reason": "The prompt and fallback exist. However, _isLocked starts false and no main code calls lock(), so with the lock enabled a cold start opens unlocked; it locks only after 5 minutes in the background. It also fails open when the device has no screen lock."
+  },
+  {
+   "id": "NG-048",
+   "kind": "NG",
+   "section": "6.3",
+   "claim": "Notifications never show baby details, only 'A recheck is due'.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/notification/RecheckNotificationHelper.kt",
+     "line": 51,
+     "quote": ".setContentText(\"A recheck is due\")"
+    }
+   ],
+   "reason": "Hard-coded English instead of the notif_recheck_body string resource (no Bangla)."
+  },
+  {
+   "id": "FR-36",
+   "kind": "FR",
+   "section": "6.3",
+   "claim": "Home due list shows register numbers only after the app lock, when the lock is enabled.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 140,
+     "quote": "if (isLocked) { AppLockScreen("
+    }
+   ],
+   "reason": "The whole nav host is gated by isLocked, but because of the cold-start gap in FR-35 the due list can show before any unlock."
+  },
+  {
+   "id": "doc-6.4-jpeg-strip",
+   "kind": "rule",
+   "section": "6.4",
+   "claim": "Research JPEGs are rewritten keeping image segments and an Exif block with orientation only; GPS, dates, maker notes, XMP, MPF, thumbnails removed.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/research/ResearchJpegSanitizer.kt",
+     "line": 86,
+     "quote": "writeMinimalApp1OrientationOnly(out, orientation)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.4-server-allowlist",
+   "kind": "rule",
+   "section": "6.4",
+   "claim": "Server accepts only an allow-list of JPEG segments and rejects others with IMAGE_METADATA_NOT_ALLOWED.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/security/jpeg.py",
+     "line": 192,
+     "quote": "raise ImageMetadataNotAllowedError(\"APP1 segment is not Exif\")"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.4-screening-images",
+   "kind": "rule",
+   "section": "6.4",
+   "claim": "Screening images never leave memory and are never written to disk.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/BurstCaptureController.kt",
+     "line": 74,
+     "quote": "object : ImageCapture.OnImageCapturedCallback() {"
+    }
+   ],
+   "reason": "In-memory capture callback. Grep finds no FileOutputStream, OutputFileOptions, or MediaStore writes in camera or screening main sources."
+  },
+  {
+   "id": "doc-6.5-startup-check",
+   "kind": "rule",
+   "section": "6.5",
+   "claim": "Bundle manifest (model, config, trust lists) is verified at startup; a failed check disables screening.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/NeoGoldApplication.kt",
+     "line": 28,
+     "quote": "val integrityResult = BundleManifestVerifier.verifyAssets(this)"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningStateMachine.kt",
+     "line": 69,
+     "quote": "if (!integrityChecker.isScreeningAllowed()) {"
+    }
+   ],
+   "reason": "The mechanism works; the trusted key is wrong (see doc-6.5-k3-key)."
+  },
+  {
+   "id": "doc-6.5-k3-key",
+   "kind": "rule",
+   "section": "6.5",
+   "claim": "Bundle manifest is signed with K3 (release secret) and the app verifies against K3.",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/integrity/BundleManifestVerifier.kt",
+     "line": 19,
+     "quote": "private val trustedK3PublicKeyHex: String = DEFAULT_TEST_K3_PUBLIC_HEX"
+    },
+    {
+     "file": "tools/sign_bundle_manifest.py",
+     "line": 25,
+     "quote": "DEFAULT_TEST_K3_PRIVATE_HEX = \"86b0...8893\""
+    }
+   ],
+   "reason": "The app always verifies against a test public key whose private key is committed in the repo, and no build-time override exists. Either a release signed with the real K3 secret fails integrity (screening disabled), or the release passes only because it uses the public test key, which defeats on-device tamper detection."
+  },
+  {
+   "id": "doc-6.5-cards-profiles",
+   "kind": "rule",
+   "section": "6.5",
+   "claim": "Card batches (K4) and study profiles (K5) are separately signed and verified offline.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 103,
+     "quote": "if (payload.batchId in trustList.revokedCardBatches) {"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-6.6-no-sdk",
+   "kind": "rule",
+   "section": "6.6",
+   "claim": "No third-party crash reporting SDK in v1.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.actual",
+     "quote": "no crash/analytics SDK in any module"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "NG-049",
+   "kind": "NG",
+   "section": "6.6",
+   "claim": "In-house handler writes crash reports to an encrypted local file with class names and frames; exception messages dropped.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/crash/CrashReport.kt",
+     "line": 130,
+     "quote": "exceptionClass = t.javaClass.name,"
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/crash/CrashReportManager.kt",
+     "line": 52,
+     "quote": "val encryptedBytes = masterKeyProvider.wrap("
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "FR-34",
+   "kind": "FR",
+   "section": "6.6",
+   "claim": "Next launch offers 'Share crash report' via the share sheet; nothing is sent automatically.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 119,
+     "quote": "CrashReportManager.shareReport(this@MainActivity)"
+    }
+   ],
+   "reason": "The dialog text is hard-coded English, not string resources."
+  },
+  {
+   "id": "doc-8.2-containers",
+   "kind": "rule",
+   "section": "8.2",
+   "claim": "Containers run non-root, cap_drop ALL, no-new-privileges, read_only, db on an internal network, resource limits.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 5,
+     "quote": "cap_drop: [ALL]"
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 99,
+     "quote": "internal: true"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-8.2-digests",
+   "kind": "rule",
+   "section": "8.2",
+   "claim": "Images are pinned by digest.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 40,
+     "quote": "image: ${API_IMAGE:?}@${API_DIGEST:?set API_DIGEST, see neogold-deploy}"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-8.3-forbid",
+   "kind": "rule",
+   "section": "8.3",
+   "claim": "Pydantic request models forbid extra fields.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/models/api.py",
+     "line": 11,
+     "quote": "model_config = ConfigDict(extra=\"forbid\")"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-8.3-pixels",
+   "kind": "rule",
+   "section": "8.3",
+   "claim": "JPEG decoded with Pillow under an 8192x8192 pixel limit.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/security/jpeg.py",
+     "line": 9,
+     "quote": "MAX_PIXELS = 8192 * 8192"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-8.3-errors",
+   "kind": "rule",
+   "section": "8.3",
+   "claim": "Errors return problem details without stack traces; traces go to the server log with request_id.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/main.py",
+     "line": 121,
+     "quote": "logger.exception(\"Unhandled server error [request_id=%s]: %s\", request_id, exc)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-8.3-sql-lint",
+   "kind": "rule",
+   "section": "8.3",
+   "claim": "A lint rule rejects string-formatted SQL.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 34,
+     "quote": "bandit -q -r app"
+    }
+   ],
+   "reason": "Comes from Bandit (B608); ruff.toml does not select the S rules."
+  },
+  {
+   "id": "doc-8.4-db",
+   "kind": "rule",
+   "section": "8.4",
+   "claim": "PostgreSQL 16 with scram-sha-256, listening on the internal Docker network only.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 69,
+     "quote": "networks: [internal]"
+    }
+   ],
+   "reason": "Internal-only network confirmed; scram-sha-256 is the image default and is not set explicitly."
+  },
+  {
+   "id": "doc-10-secrets-scan",
+   "kind": "rule",
+   "section": "10",
+   "claim": "gitleaks secrets scanning on every pull request and push.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 60,
+     "quote": "\"$RUNNER_TEMP/gitleaks\" git --redact --exit-code 1 ."
+    }
+   ],
+   "reason": "Runs only in android-ci, which is path-filtered. repo-ci and backend-ci do not run gitleaks."
+  },
+  {
+   "id": "doc-10-dependabot",
+   "kind": "rule",
+   "section": "10",
+   "claim": "Dependabot weekly for Gradle, pip, Docker, and GitHub Actions.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/dependabot.yml",
+     "line": 49,
+     "quote": "- package-ecosystem: \"github-actions\""
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-10-vuln-scan",
+   "kind": "rule",
+   "section": "10",
+   "claim": "OSV-Scanner on lockfiles and Trivy on images, every PR and nightly.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 61,
+     "quote": "uses: aquasecurity/trivy-action@ed142fd0..."
+    }
+   ],
+   "reason": "Trivy runs on the android fs and the backend image. No OSV-Scanner, no nightly schedule, and no scan of the backend lockfile on PRs."
+  },
+  {
+   "id": "doc-10-mobsf",
+   "kind": "rule",
+   "section": "10",
+   "claim": "MobSF static scan of the release APK each release candidate.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "Grep for MobSF outside docs/.claude finds nothing in workflows or tools."
+  },
+  {
+   "id": "doc-10-schemathesis",
+   "kind": "rule",
+   "section": "10",
+   "claim": "Schemathesis API fuzzing against staging each release candidate.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Grep for schemathesis outside docs/.claude finds nothing."
+  },
+  {
+   "id": "doc-10-security-md",
+   "kind": "rule",
+   "section": "10",
+   "claim": "SECURITY.md names a contact, enables private reporting, 3-working-day acknowledgment, 90-day disclosure.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "SECURITY.md",
+     "line": 12,
+     "quote": "Use [GitHub Private Vulnerability Reporting]"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "doc-T12-sha-pins",
+   "kind": "rule",
+   "section": "9 T12",
+   "claim": "GitHub Actions are pinned by full commit SHA.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 18,
+     "quote": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1"
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 109,
+     "quote": "docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc"
+    }
+   ],
+   "reason": "Every 'uses:' in all four workflows is a 40-hex SHA or a local reusable workflow."
+  },
+  {
+   "id": "doc-T12-scanner-secrets",
+   "kind": "rule",
+   "section": "9 T12",
+   "claim": "Scanner jobs get no secrets.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 46,
+     "quote": "# No secrets in this job: a compromised scanner has nothing to steal"
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 129,
+     "quote": "packages: read"
+    }
+   ],
+   "reason": "The backend scan job uses only the read-only GITHUB_TOKEN to pull the image."
+  },
+  {
+   "id": "doc-11-request-log",
+   "kind": "rule",
+   "section": "11",
+   "claim": "Server request log holds time, request_id, device_id, route, status, latency; never bodies, Authorization, codes; 90 days.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 43,
+     "quote": "log { output stdout format json }"
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 9,
+     "quote": "driver: journald            # journald MaxRetentionSec=90day"
+    }
+   ],
+   "reason": "Caddy's JSON access log is the only request log. No app-level log records device_id/route/status/latency; Caddy redacts Authorization by default."
+  },
+  {
+   "id": "Gate G1",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Signed CLINICAL_SIGNOFF.md whose hash matches the config blocks any build that shows a triage result.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 36,
+     "quote": "if fields.get(\"config_sha256\") != canonical_hash(cfg):"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 26,
+     "quote": "run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md"
+    }
+   ],
+   "reason": "Passes when triageEnabled is false (current config line 5)."
+  },
+  {
+   "id": "Gate G2",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Signed, measured card batches in circulation before a build shows triage.",
+   "status": "Unknown",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Physical card measurement; settled by measured batch records."
+  },
+  {
+   "id": "Gate G3",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Written Bangladeshi legal opinion before any public build shows a triage result.",
+   "status": "Deferred",
+   "area": "triage",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Doc 13.3: 'applies to public release only, PRD D10'."
+  },
+  {
+   "id": "Gate S1",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "MASVS checklist reviewed for this release.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Process record; no checklist artifact found to check."
+  },
+  {
+   "id": "Gate S2",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "No open critical or high vulnerabilities at release.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 65,
+     "quote": "severity: CRITICAL,HIGH"
+    }
+   ],
+   "reason": "Trivy blocks CRITICAL/HIGH findings in the android fs and the backend image; no OSV, MobSF, or tracking of open issues."
+  },
+  {
+   "id": "Gate S3",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "SBOMs generated and attached to each GitHub release (Android and backend).",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 88,
+     "quote": "\"$RUNNER_TEMP/upload/bom.json\" \"$RUNNER_TEMP/upload/SHA256SUMS\""
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 115,
+     "quote": "sbom: true"
+    }
+   ],
+   "reason": "The Android SBOM is attached to the GitHub release. The backend SBOM exists only as an image attestation, not as a release attachment."
+  },
+  {
+   "id": "Gate S4",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "All native libraries pass the 16 KB alignment checks.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 73,
+     "quote": "tools/check_16kb.sh \"$RUNNER_TEMP/universal.apk\""
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "Gate S5",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Merged-manifest checks pass.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 74,
+     "quote": "python3 tools/check_manifest.py \"$(find android/app/build/intermediates ..."
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "Gate S6",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Network config: no cleartext, system CAs only.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 33,
+     "quote": "run: python3 tools/check_network_config.py android/app/src/main/res/xml/network_security_config.xml"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "Gate S7",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Authentication test cases 10 of 10 (doc 7 Section 12.3) pass.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/tests/test_device_auth.py",
+     "line": 45,
+     "quote": "def test_tc_api_08_ten_authentication_cases(client: TestClient, db, enrolled_device, test_study_and_site):"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "Gate S8",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Backup restore test passed within the last 30 days before go-live and each backend release.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Looked in backend/app/cli.py, backend/deploy and workflows. 'restore mark' only writes a RESTORE_MARKED audit row, and the self-test checks backup age (26 h). Nothing checks for a restore within 30 days."
+  },
+  {
+   "id": "Gate S9",
+   "kind": "gate",
+   "section": "13.3",
+   "claim": "Secrets scan clean on the release commit.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 10,
+     "quote": "uses: ./.github/workflows/android-ci.yml"
+    }
+   ],
+   "reason": "The release reruns android-ci, including the gitleaks scan job; backend releases have no gitleaks."
+  },
+  {
+   "id": "T1",
+   "kind": "other",
+   "section": "9",
+   "claim": "Lost phone: SQLCipher, Tink, Keystore keys, app lock, Keystore-bound research PIN, retention, device revocation.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/NeoGoldDatabase.kt",
+     "line": 72,
+     "quote": "SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())"
+    }
+   ],
+   "reason": "Encryption at rest is in place. The PIN is not enforced in the app (doc-6.2-enforcement), K9 can fall back to a static key, and the app lock has a cold-start gap."
+  },
+  {
+   "id": "T2",
+   "kind": "other",
+   "section": "9",
+   "claim": "Shared phone: app lock, FLAG_SECURE, detail-free notifications, screening log can be off.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/privacy/SecureScreenHelper.kt",
+     "line": 17,
+     "quote": "val SECURE_DESTINATIONS = setOf("
+    }
+   ],
+   "reason": "FLAG_SECURE and notifications are fine; the app lock does not engage on cold start (FR-35)."
+  },
+  {
+   "id": "T3",
+   "kind": "other",
+   "section": "9",
+   "claim": "Repackaged APK: Play-only channel, published signing fingerprint, fork trademark rule, training, validUntil.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "CONTRIBUTING.md",
+     "line": 12,
+     "quote": "MUST use a distinctly different application name and launcher icon"
+    },
+    {
+     "file": "README.md",
+     "line": 10,
+     "quote": "the signing certificate fingerprint is published here at release."
+    }
+   ],
+   "reason": "The fingerprint is not published yet (pending first release); training material was not checked."
+  },
+  {
+   "id": "T4",
+   "kind": "other",
+   "section": "9",
+   "claim": "Counterfeit card: signature on reference values, HIGH_RESIDUAL check, batch expiry and revocation.",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGate.kt",
+     "line": 192,
+     "quote": "failureReasons.add(QualityReasonCode.HIGH_RESIDUAL)"
+    }
+   ],
+   "reason": "Effectiveness against real counterfeits is untested (v0.5 bench)."
+  },
+  {
+   "id": "T5",
+   "kind": "other",
+   "section": "9",
+   "claim": "Card issuer key theft: offline K4, two-person passphrase, signing log, purpose-bound trust list.",
+   "status": "Unknown",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [],
+   "reason": "Physical custody; the purpose binding is covered under doc-4-trust-list."
+  },
+  {
+   "id": "T6",
+   "kind": "other",
+   "section": "9",
+   "claim": "Forged study QR: signed study profile (K5); host shown before confirming.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 199,
+     "quote": "if (key.purpose != KeyPurpose.STUDY_ISSUER) {"
+    }
+   ],
+   "reason": "The verifier exists, but app R01 passes scannedProfile = null and QR scanning is a stub (MainActivity.kt line 765), so the host-display step is not wired."
+  },
+  {
+   "id": "T7",
+   "kind": "other",
+   "section": "9",
+   "claim": "Network attacker: TLS, system CAs only, no cleartext, request signing with body hash.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 219,
+     "quote": "required_claims = [\"iss\", \"aud\", \"iat\", \"exp\", \"jti\", \"htm\", \"htu\", \"bsh\"]"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "T8",
+   "kind": "other",
+   "section": "9",
+   "claim": "Stolen enrollment code: single use, 72 h, site-bound, atomic, attestation challenge bound to the code.",
+   "status": "Unknown",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Enrollment semantics are the doc 7 audit's scope. The challenge binding is seen at DeviceKeyManager.kt line 44 but was not traced end to end."
+  },
+  {
+   "id": "T9",
+   "kind": "other",
+   "section": "9",
+   "claim": "Forged or replayed uploads: ES256 per request, jti replay table, method/URL/body binding.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 276,
+     "quote": "raise AuthReplayError(\"Token jti replay detected\")"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "T10",
+   "kind": "other",
+   "section": "9",
+   "claim": "Server compromise: hardened host, dedicated machine, WireGuard SSH, encrypted volume, encrypted backups.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 4,
+     "quote": "read_only: true"
+    }
+   ],
+   "reason": "Container hardening is present; host firewall, WireGuard, and volume encryption are host configuration not visible in the repo."
+  },
+  {
+   "id": "T11",
+   "kind": "other",
+   "section": "9",
+   "claim": "Insider: CLI-only export, append-only audit log, de-identified exports, separate export role.",
+   "status": "Unknown",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Covered by the doc 5 and doc 7 audits (roles, audit_log grants); not traced here."
+  },
+  {
+   "id": "T12",
+   "kind": "other",
+   "section": "9",
+   "claim": "Supply chain: Gradle verification metadata, pip hash lock, SHA-pinned actions, Dependabot, 2FA, branch protection, SBOMs.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/gradle/verification-metadata.xml",
+     "line": 1,
+     "quote": "(file present)"
+    },
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 29,
+     "quote": "pip install --require-hashes -r requirements.lock"
+    }
+   ],
+   "reason": "The code-side controls are present; 2FA and branch protection are repository settings that cannot be confirmed."
+  },
+  {
+   "id": "T13",
+   "kind": "other",
+   "section": "9",
+   "claim": "DoS: rate and size limits; uploads wait in the outbox.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 27,
+     "quote": "max_size 20MB"
+    }
+   ],
+   "reason": "There is also backend/app/middleware/rate_limit.py."
+  },
+  {
+   "id": "T14",
+   "kind": "other",
+   "section": "9",
+   "claim": "Crafted image: only enrolled devices upload, pixel limits, non-root read-only container.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/security/jpeg.py",
+     "line": 96,
+     "quote": "Image.MAX_IMAGE_PIXELS = MAX_PIXELS"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "T15",
+   "kind": "other",
+   "section": "9",
+   "claim": "Re-identification: codes only, day-precision dates, JPEG metadata stripped, per-participant date shift in exports.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/research/ResearchJpegSanitizer.kt",
+     "line": 67,
+     "quote": "fun sanitize(inputJpeg: ByteArray, forcedOrientation: Int? = null): ByteArray {"
+    }
+   ],
+   "reason": "JPEG stripping is confirmed; the date shift and day precision belong to the doc 5 and doc 7 audits and were not traced."
+  },
+  {
+   "id": "T16",
+   "kind": "other",
+   "section": "9",
+   "claim": "Disputes: local audit_event with config, model, card batch versions per session.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "Session version fields are the doc 5 audit's scope."
+  },
+  {
+   "id": "T17",
+   "kind": "other",
+   "section": "9",
+   "claim": "Backup or debugging extraction: backup disabled, release not debuggable.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/AndroidManifest.xml",
+     "line": 15,
+     "quote": "android:allowBackup=\"false\""
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "H1",
+   "kind": "rule",
+   "section": "14",
+   "claim": "False reassurance: upper-bound zones (within 3 mg/dL of threshold, or 15+), wide-interval rule, hard rules.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "config/triage-config.json",
+     "line": 46,
+     "quote": "\"withinOfThreshold\": 3.0,"
+    },
+    {
+     "file": "config/triage-config.json",
+     "line": 47,
+     "quote": "\"absoluteAtOrAbove\": 15.0"
+    }
+   ],
+   "reason": "The values match the doc. Validation-study evidence is pending."
+  },
+  {
+   "id": "H2",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Wrong age: screening blocked if clock is before build time or, in research, over 10 min from server offset; auto-time warning.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/clock/ClockIntegrityValidator.kt",
+     "line": 24,
+     "quote": "const val MAX_RESEARCH_CLOCK_DRIFT_MS = 10 * 60 * 1000L"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/clock/ClockIntegrityValidator.kt",
+     "line": 21,
+     "quote": "const val DEFAULT_BUILD_TIMESTAMP_EPOCH_MS = 1791676800000L"
+    }
+   ],
+   "reason": "The 'build time' is a hard-coded constant (about 2026-10-11), not injected at build, so later builds check against a stale date."
+  },
+  {
+   "id": "H3",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Wrong gestational age: required field; under 35 weeks goes to blood test (R3).",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "config/triage-config.json",
+     "line": 12,
+     "quote": "\"minGestationalAgeWeeks\": 35,"
+    }
+   ],
+   "reason": "TC-UI-11 covers no pre-fill (ScreeningFlowTest.kt line 38); unknown-GA handling is for the clinical lead."
+  },
+  {
+   "id": "H4",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Counterfeit or faded card: signature, residual check, card integrity check (NG-043), expiry.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 113,
+     "quote": "if (evaluationDate.isBefore(key.validFrom) || evaluationDate.isAfter(key.validUntil)) {"
+    }
+   ],
+   "reason": "Signature, residual, and expiry are present; the NG-043 integrity check was not traced. Aged-card and counterfeit tests are v0.5 bench work."
+  },
+  {
+   "id": "H5",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Camera processing: device qualification, duplicate-patch check; RESEARCH_ONLY phones cannot screen.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/qualification/CameraQualifier.kt",
+     "line": 25,
+     "quote": "* - RESEARCH_ONLY: limited to research mode (TC-DEV-05)"
+    }
+   ],
+   "reason": "Qualification exists; no screening-entry block on RESEARCH_ONLY was confirmed."
+  },
+  {
+   "id": "H6",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Light that defeats correction: light-uniformity and residual checks.",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "config/triage-config.json",
+     "line": 56,
+     "quote": "\"maxPatchNonuniformityDelta\": 2.0,"
+    },
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGate.kt",
+     "line": 192,
+     "quote": "failureReasons.add(QualityReasonCode.HIGH_RESIDUAL)"
+    }
+   ],
+   "reason": ""
+  },
+  {
+   "id": "H7",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Wrong or corrupted config/model: signed manifest, schema check, golden vectors, sign-off hash in CI.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 26,
+     "quote": "verifyGoldenVectors triageDifferentialTest verifyConfigSchema"
+    }
+   ],
+   "reason": "The schema and G1 checks run, but the on-device signed-manifest control trusts a test key with a committed private key (doc-6.5-k3-key). The verifyGoldenVectors and triageDifferentialTest root tasks only depend on the module tests and print a message."
+  },
+  {
+   "id": "H8",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Outdated build: validUntil (12 months maximum) disables triage and asks for an update.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 42,
+     "quote": "if (today.isAfter(config.validUntil)) {"
+    },
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 47,
+     "quote": "if valid_until > signed_on + dt.timedelta(days=366):"
+    }
+   ],
+   "reason": "The 12-month cap is enforced only when triageEnabled is true."
+  },
+  {
+   "id": "H9",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Modified copy: T3 controls, training, published fingerprint.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "README.md",
+     "line": 10,
+     "quote": "Install only from Google Play; the signing certificate fingerprint is published here at release."
+    }
+   ],
+   "reason": "Same gaps as T3."
+  },
+  {
+   "id": "H10",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Missed recheck: Home due list, paper register, battery guidance screen.",
+   "status": "Unknown",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Needs a field test on target phones; due list and battery screen are the doc 6 audit's scope."
+  },
+  {
+   "id": "H11",
+   "kind": "rule",
+   "section": "14",
+   "claim": "Result misread: color+icon+border+words, Bangla wording signed by nurse panel, 320 dp layout check.",
+   "status": "Unknown",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Needs the nurse panel sign-off record and a usability test."
+  },
+  {
+   "id": "doc-14-hazard-log",
+   "kind": "other",
+   "section": "14",
+   "claim": "Maintained hazard log lives at docs/safety/HAZARD_LOG.md.",
+   "status": "Missing",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Glob docs/safety/* returned no files."
+  }
+ ],
+ "counts": {
+  "Implemented": 63,
+  "Partial": 25,
+  "Missing": 5,
+  "Contradicted": 5,
+  "Deferred": 2,
+  "Unknown": 11
+ },
+ "notes": "Inventory commit is 4f04aef; audit commit 4523908, product code identical. Five Contradicted claims, four in crypto: (1) K9 PinHmacKeyProvider falls back to a hard-coded static HMAC key when the Keystore throws; (2) the app shell's R01 unlock goes to R02 on any PIN, so Argon2id, lockout and K9 never run in the shipped flow; (3) BundleManifestVerifier trusts only DEFAULT_TEST_K3_PUBLIC_HEX, whose private key is committed in tools/sign_bundle_manifest.py line 25; (4) backend/app/config.py defaults ENROLLMENT_CODE_SECRET to a fixed public string with no startup guard. The fifth, K2 location (CI secret vs founder's machine), is crypto-area too but likely doc drift. Also notable: the app lock never engages on cold start (no lock() call); KeystoreRecoveryManager and ResearchSessionManager are not wired into :app; no S8 restore-recency gate; no OSV, MobSF or Schemathesis. No real newborn data seen."
+}

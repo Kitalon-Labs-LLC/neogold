@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neogold.invalid/reports/direction/auditor.schema.json",
+  "title": "doc-auditor output (P24)",
+  "description": "One doc-auditor run: every checkable claim in one plan document, with one status and the evidence for it. Implemented without evidence is invalid; use Unknown.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["doc", "commit", "inventory", "claims", "counts"],
+  "properties": {
+    "doc": {"type": "string", "pattern": "^docs/[0-9]+_[A-Za-z_]+\\.md$"},
+    "companions": {"type": "array", "items": {"type": "string"}},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "inventory": {"type": "string", "description": "Path of the drift_inventory.py JSON the auditor used"},
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Implemented", "Partial", "Missing", "Contradicted", "Deferred", "Unknown"],
+      "properties": {
+        "Implemented": {"type": "integer", "minimum": 0},
+        "Partial": {"type": "integer", "minimum": 0},
+        "Missing": {"type": "integer", "minimum": 0},
+        "Contradicted": {"type": "integer", "minimum": 0},
+        "Deferred": {"type": "integer", "minimum": 0},
+        "Unknown": {"type": "integer", "minimum": 0}
+      }
+    },
+    "notes": {"type": "string"}
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {"type": "string", "description": "Repository-relative path"},
+        "line": {"type": "integer", "minimum": 1},
+        "inventory_key": {"type": "string", "description": "categories.<name>.<actual|unplanned|missing|details...> key from the inventory"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+        "quote": {"type": "string", "maxLength": 300}
+      },
+      "anyOf": [
+        {"required": ["file", "line"]},
+        {"required": ["inventory_key"]},
+        {"required": ["commit"]}
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "section", "claim", "status", "evidence", "area"],
+      "properties": {
+        "id": {"type": "string", "description": "FR-12, NFR-04, NG-042, S20, POST /enrollments, table outbox, Gate S5, or doc-section-n for an unnumbered claim"},
+        "kind": {"enum": ["FR", "NFR", "NG", "screen", "endpoint", "table", "rule", "gate", "other"]},
+        "section": {"type": "string", "description": "Doc section, e.g. '6.2'"},
+        "claim": {"type": "string", "maxLength": 400},
+        "status": {"enum": ["Implemented", "Partial", "Missing", "Contradicted", "Deferred", "Unknown"]},
+        "area": {
+          "enum": ["triage", "clinical-wording", "consent", "quality-gate", "privacy", "crypto", "other"],
+          "description": "Drives the verdict: a Contradicted claim in any area but 'other' means Off course"
+        },
+        "milestone": {"enum": ["M1", "M2", "M3", "v1.x", "none"]},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "reason": {"type": "string", "maxLength": 600, "description": "Why this status; for Deferred, where the doc defers it"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["Implemented", "Partial", "Contradicted"]}}},
+          "then": {"properties": {"evidence": {"minItems": 1}}}
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["Deferred", "Unknown", "Missing"]}}},
+          "then": {"required": ["reason"]}
+        }
+      ]
+    }
+  }
+}
