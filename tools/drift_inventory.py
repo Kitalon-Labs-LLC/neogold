@@ -44,7 +44,11 @@ SCREENING_MODULES = (":feature:screening", ":feature:result", ":feature:log",
                      ":feature:calibration")
 HTTP_LIBS = ("com.squareup.okhttp3:", "com.squareup.retrofit2:", "io.ktor:",
              "com.android.volley:", "org.apache.httpcomponents:")
-NETWORK_SOURCE_RE = re.compile(r"\b(HttpURLConnection|HttpsURLConnection|java\.net\.URL\(|URL\(\s*\"https?:|java\.net\.Socket|OkHttpClient|DatagramSocket)\b")
+# Word tokens keep \b on both sides; the URL( forms end in punctuation, where a trailing
+# \b could never match before the opening quote.
+NETWORK_SOURCE_RE = re.compile(
+    r"(\b(?:HttpURLConnection|HttpsURLConnection|java\.net\.Socket|OkHttpClient|DatagramSocket)\b"
+    r"|\bjava\.net\.URL\(|\bURL\(\s*\"https?:)")
 WONT_HAVE_SIGNALS = {
     "library": ("com.android.billingclient:", "com.google.android.gms:play-services-ads",
                 "com.google.firebase:", "io.sentry:", "com.google.android.gms:play-services-analytics",

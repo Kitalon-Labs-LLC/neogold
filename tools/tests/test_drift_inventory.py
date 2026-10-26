@@ -344,6 +344,22 @@ def test_network_api_in_screening_source_is_reported(repo):
     assert any("HttpURLConnection" in k or "java.net.URL(" in k for k in keys)
 
 
+@pytest.mark.parametrize("line, token", [
+    ('val u = URL("https://example.invalid/upload")\n', 'URL("https:'),
+    ('val u = java.net.URL(endpoint)\n', "java.net.URL("),
+    ('val u = java.net.URL("http://example.invalid")\n', "java.net.URL("),
+])
+def test_literal_url_alone_is_reported(repo, line, token):
+    write(repo, "android/engine/triage/src/main/kotlin/Leak.kt", line)
+    keys = unplanned(repo, "screening_network")
+    assert any(f"network API {token} in android/engine/triage/src/main/kotlin/Leak.kt" in k for k in keys), keys
+
+
+def test_network_token_inside_longer_identifier_is_ignored(repo):
+    write(repo, "android/engine/triage/src/main/kotlin/Name.kt", "class MyHttpURLConnectionX\nval CURL = 1\n")
+    assert unplanned(repo, "screening_network") == []
+
+
 def test_new_permission_fails_check(repo, capsys):
     run(repo, "--write-baseline")
     mf = repo / "android/app/src/main/AndroidManifest.xml"
