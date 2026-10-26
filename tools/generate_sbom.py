@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_licenses import resolve_dependency_license
 
 
-def generate_cyclonedx_sbom(lockfile_path: Path, output_path: Path, app_version: str = "0.5.0") -> dict:
+def generate_cyclonedx_sbom(lockfile_path: Path, output_path: Path, app_version: str = "1.0.0") -> dict:
     if not lockfile_path.is_file():
         raise FileNotFoundError(f"Lockfile not found at {lockfile_path}")
 
@@ -121,7 +121,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate CycloneDX 1.5 JSON SBOM for Android.")
     parser.add_argument("--lockfile", type=Path, default=Path("android/app/gradle.lockfile"), help="Path to gradle.lockfile")
     parser.add_argument("--output", type=Path, default=Path("android/app/build/reports/bom.json"), help="Output bom.json path")
-    parser.add_argument("--app-version", type=str, default="0.5.0", help="App version string")
+    parser.add_argument("--app-version", type=str, default="1.0.0", help="App version string")
 
     args = parser.parse_args()
 

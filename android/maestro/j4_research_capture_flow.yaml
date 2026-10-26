@@ -1,0 +1,145 @@
+appId: com.kitalonlabs.neogold
+---
+# ==============================================================================
+# NeoGold Journey J4: Research Mode Blinded Capture Flow (doc 2 Section 6, doc 10 TC-RSH-08..10, TC-RSH-16)
+# Target devices: D1 (Transsion), D2 (Xiaomi), D3 (Samsung), D4 (Android Go 2GB), D5, D6
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Screen R01: Research Unlock with 6-digit PIN (TC-RSH-01, TC-RSH-05)
+- extendedWaitUntil:
+    visible:
+      id: "unlock_pin_field"
+    timeout: 8000
+
+- tapOn:
+    id: "unlock_pin_field"
+- inputText: "654321"
+
+- tapOn:
+    id: "unlock_button"
+
+# 2. Screen R02: Study Home Screen
+- extendedWaitUntil:
+    visible:
+      id: "research_mode_badge"
+    timeout: 8000
+
+- assertVisible:
+    id: "study_info_card"
+
+- tapOn:
+    id: "new_session_button"
+
+# 3. Screen R03: Participant & Paper Consent Verification (TC-RSH-08, TC-RSH-09)
+- extendedWaitUntil:
+    visible:
+      id: "participant_code_field"
+    timeout: 5000
+
+- tapOn:
+    id: "participant_code_field"
+- inputText: "SKP-0142"
+
+- tapOn:
+    id: "consent_form_id_field"
+- inputText: "SKP-C-0142"
+
+# Set gestational age (e.g. 38 weeks)
+- tapOn:
+    id: "gestational_age_stepper"
+
+# Answer safety questions (No default answers allowed per clinical safety rules)
+- tapOn:
+    id: "early_jaundice_buttons"
+- tapOn:
+    id: "danger_signs_buttons"
+- tapOn:
+    id: "prior_phototherapy_buttons"
+
+- assertVisible:
+    id: "start_captures_button"
+- tapOn:
+    id: "start_captures_button"
+
+# 4. Screen R04: 4-Site Protocol Captures (TC-RSH-10, TC-RSH-16)
+# Site 1: Sternum
+- extendedWaitUntil:
+    visible:
+      id: "r04_capture_button"
+    timeout: 5000
+- tapOn:
+    id: "r04_capture_button"
+
+# Site 2: Forehead
+- extendedWaitUntil:
+    visible:
+      id: "r04_capture_button"
+    timeout: 5000
+- tapOn:
+    id: "r04_capture_button"
+
+# Site 3: Sclera Flash
+- extendedWaitUntil:
+    visible:
+      id: "r04_capture_button"
+    timeout: 5000
+- tapOn:
+    id: "r04_capture_button"
+
+# Site 4: Sclera No-Flash
+- extendedWaitUntil:
+    visible:
+      id: "r04_capture_button"
+    timeout: 5000
+- tapOn:
+    id: "r04_capture_button"
+
+# Protocol completed - Strictly Blinded: Verify NO estimate or triage text displayed (TC-RSH-10)
+- assertVisible:
+    id: "r04_complete_card"
+- assertNotVisible:
+    text: ".*mg/dL.*"
+- assertNotVisible:
+    text: ".*Refer.*"
+
+- tapOn:
+    id: "r04_proceed_button"
+
+# 5. Screen R05: Paired TSB Entry (TC-RSH-11)
+- extendedWaitUntil:
+    visible:
+      id: "r05_tsb_input"
+    timeout: 5000
+
+- tapOn:
+    id: "r05_tsb_input"
+- inputText: "14.2"
+
+- tapOn:
+    id: "r05_method_diazo"
+
+- tapOn:
+    id: "r05_save_button"
+
+# 6. Screen R06: Session Complete & Encrypted Storage Confirmation (TC-RSH-13)
+- extendedWaitUntil:
+    visible:
+      id: "r06_done_button"
+    timeout: 8000
+
+- assertVisible:
+    id: "r06_participant_code"
+- assertVisible:
+    id: "r06_captures_count"
+
+# Finish and return to Study Home
+- tapOn:
+    id: "r06_done_button"
+
+- extendedWaitUntil:
+    visible:
+      id: "new_session_button"
+    timeout: 5000

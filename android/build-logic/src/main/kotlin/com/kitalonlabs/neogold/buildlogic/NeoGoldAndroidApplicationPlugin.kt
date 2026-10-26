@@ -11,7 +11,7 @@ import org.gradle.kotlin.dsl.getByType
 
 class NeoGoldAndroidApplicationPlugin : Plugin<Project> {
     companion object {
-        const val APP_VERSION_NAME = "0.5.0"
+        const val APP_VERSION_NAME = "1.0.0"
 
         fun versionCodeOf(name: String, build: Int): Int {
             val parts = name.split(".").map(String::toInt)

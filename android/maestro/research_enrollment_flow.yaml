@@ -1,0 +1,66 @@
+appId: com.kitalonlabs.neogold
+---
+# ==============================================================================
+# NeoGold Study Enrollment Flow (doc 7 Section 4, doc 10 TC-RSH-01, TC-API-02)
+# Target devices: D1 (Transsion), D2 (Xiaomi), D3 (Samsung), D4 (Android Go 2GB), D5, D6
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Screen R08: Study Enrollment (TC-RSH-01, TC-API-02)
+- extendedWaitUntil:
+    visible:
+      id: "enroll_code_input"
+    timeout: 8000
+
+- assertVisible:
+    id: "enroll_badge"
+
+# Input valid one-time enrollment code issued by study administrator
+- tapOn:
+    id: "enroll_code_input"
+- inputText: "DHAKA-SITE01-ENROLL2026"
+
+- assertVisible:
+    id: "enroll_study_card"
+
+# Trigger device keypair registration and attestation binding
+- tapOn:
+    id: "enroll_join_button"
+
+# Confirm enrollment dialog
+- extendedWaitUntil:
+    visible:
+      id: "enroll_dialog_confirm"
+    timeout: 5000
+- tapOn:
+    id: "enroll_dialog_confirm"
+
+# 2. Screen R01: Set 6-Digit Research Mode PIN (TC-RSH-04, TC-RSH-05)
+- extendedWaitUntil:
+    visible:
+      id: "set_pin_field"
+    timeout: 10000
+
+- tapOn:
+    id: "set_pin_field"
+- inputText: "654321"
+
+- tapOn:
+    id: "confirm_pin_field"
+- inputText: "654321"
+
+- tapOn:
+    id: "enroll_button"
+
+# 3. Screen R02: Enrolled Study Home Verified
+- extendedWaitUntil:
+    visible:
+      id: "study_info_card"
+    timeout: 8000
+
+- assertVisible:
+    id: "new_session_button"
+- assertVisible:
+    id: "sync_status_chip"

@@ -175,7 +175,7 @@ tasks.register<Exec>("cyclonedxBom") {
         outputDir.mkdirs()
     }
     val appVersion = providers.gradleProperty("versionName").getOrElse(
-        providers.gradleProperty("appVersionName").getOrElse("0.5.0")
+        providers.gradleProperty("appVersionName").getOrElse("1.0.0")
     )
     commandLine(pythonCmd + listOf("tools/generate_sbom.py", "--lockfile", "android/app/gradle.lockfile", "--output", "android/app/build/reports/bom.json", "--app-version", appVersion))
 }

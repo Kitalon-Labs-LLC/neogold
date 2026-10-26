@@ -1,0 +1,55 @@
+appId: com.kitalonlabs.neogold
+---
+# ==============================================================================
+# NeoGold Research Mode: Manual Upload Now Flow (doc 7 Section 5, doc 10 TC-SYNC-10, TC-SYNC-12)
+# Target devices: D1 (Transsion), D2 (Xiaomi), D3 (Samsung), D4 (Android Go 2GB), D5, D6
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Screen R02: Study Home Screen
+- extendedWaitUntil:
+    visible:
+      id: "export_data_button"
+    timeout: 8000
+
+- tapOn:
+    id: "export_data_button"
+
+# 2. Screen R07: Research Export & Cloud Sync Screen
+- extendedWaitUntil:
+    visible:
+      id: "cloud_sync_card"
+    timeout: 8000
+
+- assertVisible:
+    id: "upload_waiting_text"
+
+# Trigger immediate foreground sync (TC-SYNC-10)
+- assertVisible:
+    id: "upload_now_button"
+- tapOn:
+    id: "upload_now_button"
+
+# 3. Verify Progress Indicator and In-Flight Sync Execution
+- extendedWaitUntil:
+    visible:
+      id: "export_progress_indicator"
+    timeout: 5000
+    optional: true
+
+# 4. Verify Sync Completion & Outbox Drained
+- extendedWaitUntil:
+    visible:
+      text: ".*0 items waiting.*"
+    timeout: 30000
+
+# 5. Return to Study Home
+- tapOn:
+    id: "export_back_button"
+
+- extendedWaitUntil:
+    visible:
+      id: "new_session_button"
+    timeout: 5000
