@@ -158,6 +158,37 @@ flowchart TB
 | Min SDK | API 26 (Android 8.0) | Decided (PRD D6). About 89% of Android web traffic in Bangladesh is on Android 11 or newer and the rest is older [Certain, StatCounter September 2026]; API 26 covers effectively all phones still in use, including Android Go |
 | Target SDK | Latest required by Google Play at release time | Play policy |
 
+### 4.3a Approved libraries
+
+`tools/drift_inventory.py` (P24) reads this table. A library declared in any Gradle module that matches no row here is reported as unplanned, and `drift_inventory.py --check` fails a pull request that adds one. To approve a library, add a row in the same pull request, with the decision it rests on (an ADR in Section 15, or the doc section that already chose it).
+
+Each row transcribes an approval that already exists elsewhere in the documents; nothing is approved here for the first time. `group:*` matches every artifact in a group. "Allowed in" is `any` or a comma-separated list of modules. "Use" is `all` (any configuration) or `test` (only `test…`, `androidTest…`, and `debug…` configurations).
+
+| Library | Allowed in | Use | Source |
+|---|---|---|---|
+| `org.jetbrains.kotlinx:kotlinx-coroutines-core`, `org.jetbrains.kotlinx:kotlinx-coroutines-android` | any | all | P01 allowed list (doc 15, P01 Constraints); Section 4.3 Async |
+| `org.jetbrains.kotlinx:kotlinx-coroutines-test` | any | test | P01 allowed list; doc 9 Section 3 |
+| `androidx.compose:*`, `androidx.compose.ui:*`, `androidx.compose.material3:*`, `androidx.compose.material:*` | any | all | P01 allowed list (Compose, Material 3); Section 4.3 |
+| `androidx.navigation:navigation-compose` | any | all | P01 allowed list; Section 4.3 Navigation |
+| `com.google.dagger:*` | any | all | P01 allowed list; Section 4.3 DI |
+| `androidx.lifecycle:*` | any | all | P01 allowed list (Lifecycle) |
+| `junit:junit`, `com.google.truth:truth`, `app.cash.turbine:turbine`, `org.robolectric:robolectric` | any | test | P01 allowed list; doc 9 Section 3 |
+| `io.gitlab.arturbosch.detekt:*` | any | all | P01 allowed list |
+| `androidx.camera:*` | `:engine:camera` | all | Section 4.3 Camera |
+| `androidx.room:room-runtime`, `androidx.room:room-ktx`, `androidx.room:room-compiler` | any | all | Section 4.3 Local DB; ADR-008 |
+| `androidx.room:room-testing` | any | test | doc 9 Section 3 (`MigrationTestHelper`) |
+| `net.zetetic:sqlcipher-android` | `:core:data` | all | Section 4.3 Local DB; ADR-008 |
+| `com.google.crypto.tink:tink` | any | all | Section 4.3 File encryption and Signatures; ADR-008 |
+| `androidx.work:work-runtime-ktx` | any | all | Section 4.3 Background work |
+| `androidx.work:work-testing` | any | test | doc 9 Section 3 |
+| `com.squareup.okhttp3:okhttp` | `:sync:research` | all | Section 4.3 HTTP client (research mode only); CLAUDE.md privacy rule |
+| `com.squareup.okhttp3:mockwebserver` | `:sync:research` | test | doc 9 Section 3; doc 10 Section 15 |
+| `org.jetbrains.kotlinx:kotlinx-serialization-json` | `:sync:research` | all | Section 4.3 HTTP client |
+| `androidx.datastore:datastore-preferences` | any | all | Section 4.3 Settings |
+| `com.jakewharton.timber:timber` | any | all | doc 8 Section 6.1 Release logging |
+| `androidx.biometric:biometric` | any | all | doc 8 Section 6.3 (`BiometricPrompt`) |
+| `androidx.test.ext:junit`, `androidx.test.espresso:espresso-core` | any | test | doc 9 Section 3 UI (instrumented) |
+
 ### 4.4 Screening state machine
 
 The screening flow is one state machine in the domain layer. The UI only renders state; it never decides clinical flow.
