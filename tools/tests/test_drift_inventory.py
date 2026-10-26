@@ -561,3 +561,44 @@ def test_real_repository_smoke():
                 "pg_tables", "pg_columns", "screens", "config_keys", "triage_gate", "test_cases"):
         assert inv["categories"][cat]["status"] == "ok", cat
     assert inv["categories"]["config_keys"]["details"]["triageEnabled"] is False
+
+
+def test_section_4_2a_allows_extra_edges(repo):
+    bf = repo / "android/engine/triage/build.gradle.kts"
+    bf.write_text(bf.read_text().replace("}\n", '    implementation(project(":feature:screening"))\n}\n'))
+    assert ":engine:triage -> :feature:screening" in unplanned(repo, "module_edges")
+    doc = repo / "docs/4_System_Architecture.md"
+    doc.write_text(doc.read_text().replace(
+        "### 4.3 Technology choices",
+        "### 4.2a Additional module dependencies\n\n| From | To | Reason |\n|---|---|---|\n"
+        "| `:engine:triage` | `:feature:screening`, `:core:model` | test only |\n\n### 4.3 Technology choices"))
+    assert unplanned(repo, "module_edges") == []
+
+
+def test_baseline_keeps_decisions_and_reports_pending_removal(repo, capsys):
+    bf = repo / "android/core/model/build.gradle.kts"
+    bf.write_text("dependencies {\n    implementation(libs.leftpad)\n}\n")
+    run(repo, "--write-baseline")
+    path = repo / "reports/direction/baseline.json"
+    base = json.loads(path.read_text())
+    key = "libraries :core:model com.example:leftpad prod"
+    base["decisions"] = {key: {"decision": "remove", "action": "A99"},
+                         "libraries gone-item": {"decision": "keep", "action": "A98"}}
+    path.write_text(json.dumps(base))
+    capsys.readouterr()
+    assert run(repo, "--check") == 0
+    assert f"PENDING REMOVAL: {key} (A99)" in capsys.readouterr().out
+    run(repo, "--write-baseline")
+    rewritten = json.loads(path.read_text())
+    assert rewritten["decisions"] == {key: {"decision": "remove", "action": "A99"}}
+
+
+def test_hyphenated_module_names_are_parsed(repo):
+    s = repo / "android/settings.gradle.kts"
+    s.write_text(s.read_text() + 'include(":neogold-decrypt")\n')
+    write(repo, "android/neogold-decrypt/build.gradle.kts", "dependencies {\n}\n")
+    assert unplanned(repo, "modules") == [":neogold-decrypt"]
+    doc = repo / "docs/4_System_Architecture.md"
+    doc.write_text(doc.read_text().replace("| `:engine:triage` | Yes | Rules |",
+                                           "| `:engine:triage` | Yes | Rules |\n| `:neogold-decrypt` | Yes | Tool |"))
+    assert unplanned(repo, "modules") == []

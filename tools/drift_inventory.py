@@ -141,7 +141,7 @@ def doc_module_map(root):
         if line == "end":
             current = None
             continue
-        for nid, label in re.findall(r'(\w+)\["(:[a-z:]+)', line):
+        for nid, label in re.findall(r'(\w+)\["(:[a-z0-9:-]+)', line):
             nodes[nid] = label
             if current:
                 groups[current].add(label)
@@ -155,7 +155,15 @@ def doc_module_map(root):
         return {nodes[name]} if name in nodes else set()
 
     allowed = {(a, b) for x, y in edges for a in expand(x) for b in expand(y) if a != b}
-    modules = set(nodes.values()) | set(re.findall(r"^\| `(:[a-z:]+)` \|", text, re.M))
+    modules = set(nodes.values()) | set(re.findall(r"^\| `(:[a-z0-9:-]+)` \|", text, re.M))
+    # Section 4.2a lists approved edges the diagram does not draw: | `:from` | `:to`, `:to2` | reason |
+    extra = section(read(root, "docs/4_System_Architecture.md"), "### 4.2a Additional module dependencies")
+    for line in extra.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 3 and re.fullmatch(r"`:[a-z0-9:-]+`", cells[0]):
+            src = cells[0].strip("`")
+            for dst in re.findall(r"`(:[a-z0-9:-]+)`", cells[1]):
+                allowed.add((src, dst))
     return modules, allowed
 
 
@@ -233,7 +241,7 @@ def approved_libraries(root):
         if len(cells) < 4 or not cells[0].startswith("`"):
             continue
         coords = re.findall(r"`([^`]+)`", cells[0])
-        allowed = "any" if cells[1] == "any" else set(re.findall(r"`?(:[a-z:]+)`?", cells[1]))
+        allowed = "any" if cells[1] == "any" else set(re.findall(r"`?(:[a-z0-9:-]+)`?", cells[1]))
         rows.append({"coords": coords, "allowed": allowed, "use": cells[2], "source": cells[3]})
     return rows
 
@@ -902,14 +910,26 @@ def check(inv, baseline, allow_skipped=False):
     if blocked:
         lines.append("FAIL: a gated category could not be inventoried (install backend/requirements.lock, or pass --allow-skipped)")
         return 2, lines
+    for key in pending_removal(baseline):
+        lines.append(f"PENDING REMOVAL: {key} ({baseline['decisions'][key].get('action', 'no action id')})")
     lines.append("PASS: no new unplanned items")
     return 0, lines
 
 
-def baseline_from(inv):
+def baseline_from(inv, previous=None):
+    """Known unplanned items. Recorded decisions survive a rewrite; items that disappeared drop out."""
+    unplanned = {cat: inv["categories"][cat]["unplanned"] for cat in GATED if cat in inv["categories"]}
+    known = {f"{cat} {key}" for cat, keys in unplanned.items() for key in keys}
+    decisions = {k: v for k, v in ((previous or {}).get("decisions") or {}).items() if k in known}
     return {"schema": 1, "commit": inv["commit"],
-            "note": "Accepted unplanned items. Change only in a PR that also updates the doc explaining the change (P24).",
-            "unplanned": {cat: inv["categories"][cat]["unplanned"] for cat in GATED if cat in inv["categories"]}}
+            "note": ("Known unplanned items, so --check fails only on new ones. Change only in a PR that also "
+                     "updates the doc explaining the change (P24). 'decisions' maps '<category> <key>' to "
+                     "the owner's call: remove = still drift, tracked until the code change lands."),
+            "unplanned": unplanned, "decisions": dict(sorted(decisions.items()))}
+
+
+def pending_removal(baseline):
+    return sorted(k for k, v in (baseline.get("decisions") or {}).items() if v.get("decision") == "remove")
 
 
 def main(argv=None):
@@ -928,7 +948,8 @@ def main(argv=None):
     inv = inventory(root, args.since, args.merged_manifest, args.python)
     if args.write_baseline:
         out = safe_out(root, args.baseline)
-        out.write_text(json.dumps(baseline_from(inv), indent=2) + "\n")
+        previous = json.loads(out.read_text()) if out.exists() else None
+        out.write_text(json.dumps(baseline_from(inv, previous), indent=2) + "\n")
         print(f"wrote {rel(root, out)}")
         return 0
     if args.check:
