@@ -1,0 +1,2287 @@
+{
+ "doc": "docs/7_API_Documentation.md",
+ "companions": [
+  "docs/api/openapi.yaml"
+ ],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "doc7-1-errors",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Errors are RFC 9457 Problem Details, application/problem+json, with a stable code.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/errors.py",
+     "line": 471,
+     "quote": "headers = {\"Content-Type\": \"application/problem+json\"}"
+    }
+   ],
+   "reason": "build_problem_payload emits type, title, status, code, retryable, request_id."
+  },
+  {
+   "id": "doc7-1-unknown-fields",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Unknown request fields are rejected with 400 VALIDATION_FAILED (extra=forbid on every request model).",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/models/api.py",
+     "line": 11,
+     "quote": "model_config = ConfigDict(extra=\"forbid\")"
+    },
+    {
+     "file": "backend/app/main.py",
+     "line": 92,
+     "quote": "@app.exception_handler(RequestValidationError)"
+    }
+   ],
+   "reason": "Every request and nested model (Jwk, DeviceInfo, CaptureManifest, CaptureMetadata, SessionManifest, TsbUpload, ParticipantUpload, CardBatchUpload, EnrollmentRequest) inherits BaseApiModel; validation errors map to VALIDATION_FAILED 400."
+  },
+  {
+   "id": "doc7-1-ignore-unknown",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Client ignores unknown response fields (ignoreUnknownKeys = true).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 40,
+     "quote": "ignoreUnknownKeys = true"
+    }
+   ]
+  },
+  {
+   "id": "doc7-1-app-version",
+   "kind": "rule",
+   "section": "1",
+   "claim": "X-NeoGold-App-Version on every call; below study minimum returns 426.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 298,
+     "quote": "if app_v < min_v: raise AppVersionUnsupportedError(min_app_version=study.min_app_version)"
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 331,
+     "quote": ".header(\"X-NeoGold-App-Version\", appVersion)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-1-idem-required",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Every write carries a required Idempotency-Key header.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 344,
+     "quote": "raise ValidationFailedError(\"Missing Idempotency-Key header\")"
+    }
+   ]
+  },
+  {
+   "id": "doc7-1-dates-tz",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Every date field is a calendar date in the study's time zone (upload_policy.time_zone), not UTC.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 86,
+     "quote": "today = datetime.datetime.now(datetime.UTC).date()"
+    },
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 494,
+     "quote": "today = datetime.datetime.now(datetime.UTC).date()"
+    },
+    {
+     "file": "docs/7_API_Documentation.md",
+     "line": 34,
+     "quote": "Every `date` field is a calendar date in the study's time zone ... because a 02:00 consent in Dhaka is still the previous day in UTC"
+    }
+   ],
+   "reason": "Server-assigned dates (received_on, completed_on, created_on, linked_on, last_seen_on) use the UTC date in sessions.py, participants.py:56, tsb.py:68 and auth.py:494; study.time_zone is never used server-side. The client side formats dates in the study zone correctly (OutboxProcessor.kt:530)."
+  },
+  {
+   "id": "doc7-1-wifi",
+   "kind": "rule",
+   "section": "1",
+   "claim": "Wi-Fi only by default, controlled by upload_policy.wifi_only.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchWorkScheduler.kt",
+     "line": 24,
+     "quote": ".setRequiredNetworkType(NetworkType.UNMETERED)"
+    }
+   ],
+   "reason": "Worker always requires an unmetered network; upload_policy.wifi_only from the server is never read, so a study setting of false has no effect."
+  },
+  {
+   "id": "GET /health",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "GET /health, no auth, 200 with server time.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/health.py",
+     "line": 13,
+     "quote": "\"/health\""
+    }
+   ]
+  },
+  {
+   "id": "POST /enrollments",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "POST /enrollments, code auth, 201.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/enrollments.py",
+     "line": 45,
+     "quote": "status_code=status.HTTP_201_CREATED"
+    }
+   ]
+  },
+  {
+   "id": "GET /device",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "GET /device, device auth, 200 with study status, min app version, upload policy.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/device.py",
+     "line": 43,
+     "quote": "return DeviceStatus("
+    }
+   ]
+  },
+  {
+   "id": "DELETE /device",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "DELETE /device, device auth, 204 (self-revoke).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/device.py",
+     "line": 65,
+     "quote": "status_code=status.HTTP_204_NO_CONTENT"
+    }
+   ]
+  },
+  {
+   "id": "PUT /card-batches/{batch_id}",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "PUT /card-batches/{batch_id}: 201 new, 200 known.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/card_batches.py",
+     "line": 62,
+     "quote": "response.status_code = status.HTTP_200_OK"
+    }
+   ]
+  },
+  {
+   "id": "PUT /participants/{participant_id}",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "PUT /participants/{id}: 201 new, 200 identical or alias.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/participants.py",
+     "line": 148,
+     "quote": "response.status_code = status.HTTP_201_CREATED"
+    }
+   ]
+  },
+  {
+   "id": "PUT /sessions/{session_id}",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "PUT /sessions/{id} manifest: 201 new, 200 identical.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 234,
+     "quote": "response.status_code = status.HTTP_201_CREATED"
+    }
+   ]
+  },
+  {
+   "id": "PUT /sessions/{session_id}/captures/{capture_id}/image",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "PUT image for a listed capture: 201 new, 200 identical.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 403,
+     "quote": "response.status_code = status.HTTP_201_CREATED"
+    }
+   ]
+  },
+  {
+   "id": "GET /sessions/{session_id}",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "GET /sessions/{id}: status and missing images, 200.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 277,
+     "quote": "return SessionStatus("
+    }
+   ]
+  },
+  {
+   "id": "PUT /tsb-measurements/{tsb_id}",
+   "kind": "endpoint",
+   "section": "2",
+   "claim": "PUT /tsb-measurements/{id}: 201 new, 200 identical.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.actual"
+    },
+    {
+     "file": "backend/app/routers/tsb.py",
+     "line": 155,
+     "quote": "response.status_code = status.HTTP_201_CREATED"
+    }
+   ]
+  },
+  {
+   "id": "doc7-6.2-not-found-scope",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "404 means unknown path or resource for this device's study (NOT_FOUND / SESSION_UNKNOWN).",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 265,
+     "quote": "session_row = db.execute(select(DbSession).where(DbSession.id == session_id)).scalar_one_or_none()"
+    }
+   ],
+   "reason": "GET /sessions/{id} and the image upload look up sessions by UUID only, with no check that the session belongs to the calling device's site or study (also auth.py:322). Returns status only, and image hashes must match the manifest, so exposure is limited."
+  },
+  {
+   "id": "doc7-3-order-1",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Card batch before any VERIFIED/EXPIRED session using it (422 CARD_BATCH_UNKNOWN); UNVERIFIED sessions sent with null batch.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 118,
+     "quote": "raise CardBatchUnknownError(f\"Card batch {body.card_batch_id} not registered\")"
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 237,
+     "quote": "var cardStatus = \"UNVERIFIED\""
+    }
+   ]
+  },
+  {
+   "id": "doc7-3-order-2",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Participant before its sessions and TSB values (422 PARTICIPANT_UNKNOWN).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 103,
+     "quote": "raise ParticipantUnknownError(f\"Participant {body.participant_id} not found at this site\")"
+    },
+    {
+     "file": "backend/app/routers/tsb.py",
+     "line": 85,
+     "quote": "raise ParticipantUnknownError("
+    }
+   ]
+  },
+  {
+   "id": "doc7-3-order-3",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Manifest before its images (404 SESSION_UNKNOWN).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 324,
+     "quote": "raise SessionUnknownError(\"Session not found\", status=404)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-3-order-4",
+   "kind": "rule",
+   "section": "3",
+   "claim": "A session before a TSB value that references it: 422 SESSION_UNKNOWN.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/tsb.py",
+     "line": 94,
+     "quote": "raise SessionUnknownError(f\"Session {body.session_id} not found\")"
+    },
+    {
+     "file": "backend/app/errors.py",
+     "line": 271,
+     "quote": "def __init__(self, detail: str = \"Session manifest not uploaded\", status: int = 404):"
+    },
+    {
+     "file": "docs/7_API_Documentation.md",
+     "line": 92,
+     "quote": "4. A session before a TSB value that references it (`422 SESSION_UNKNOWN`)."
+    }
+   ],
+   "reason": "TSB path returns 404 (default status), not 422; openapi.yaml lists no 404 for PUT /tsb-measurements. Client still re-queues because it matches on code, not status."
+  },
+  {
+   "id": "doc7-3-requeue-cap",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Each item may trigger at most 3 dependency re-queues; after that FAILED_PERMANENT.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 414,
+     "quote": "if (currentRequeues + 1 >= 3) {"
+    },
+    {
+     "file": "docs/7_API_Documentation.md",
+     "line": 94,
+     "quote": "Each item may trigger at most 3 dependency re-queues; after that it is held as `FAILED_PERMANENT`"
+    }
+   ],
+   "reason": "Re-queues happen only while dependencyRequeues is 0 or 1; the third dependency error goes straight to FAILED_PERMANENT, so the cap is 2 re-queues, not 3 (OutboxDao.kt:42 uses the same >= 3 test)."
+  },
+  {
+   "id": "doc7-3-alias",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Same participant_code + same consent_form_id from a second phone becomes an alias with canonical_participant_id; different form ID is 409 PARTICIPANT_CODE_TAKEN.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/participants.py",
+     "line": 114,
+     "quote": "if same_code_p.consent_form_id == body.consent_form_id:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-3-device-first",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Every batch starts with GET /device and stops unless ACTIVE, not revoked, and app at or above min_app_version.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 89,
+     "quote": "if (deviceStatus.study_status == \"PAUSED\") {"
+    }
+   ]
+  },
+  {
+   "id": "doc7-3-complete",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Last verified image sets the session COMPLETE in the same transaction.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 397,
+     "quote": "if missing_count == 0: session_row.status = \"COMPLETE\""
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.1-profile-sig",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "App verifies the study profile QR (Ed25519) against the offline trust list before enrolling.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyEnrollmentManager.kt",
+     "line": 41,
+     "quote": "} else if (cardTrustVerifier == null) { PayloadParser.parseStudyProfile(qrPayload)"
+    }
+   ],
+   "reason": "With a verifier it verifies; but cardTrustVerifier is nullable and a null verifier accepts an unsigned profile (fail-open). The only construction is in SyncTestCases.kt:874 with null; no production caller exists to show which path ships."
+  },
+  {
+   "id": "doc7-4.1-enroll-flow",
+   "kind": "other",
+   "section": "4.1",
+   "claim": "App enrollment flow: scan QR, show study name/partner/host for staff confirmation, generate key, POST /enrollments.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyEnrollmentManager.kt",
+     "line": 25,
+     "quote": "suspend fun enroll("
+    }
+   ],
+   "reason": "Library logic exists, but StudyEnrollmentManager is not constructed anywhere in android/**/src/main; no confirmation step found."
+  },
+  {
+   "id": "doc7-4.1-code",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "One-time code: 12 Crockford base32 chars in 3 groups, single use, valid 72 hours, bound to one site.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 239,
+     "quote": "duration = parse_duration_to_timedelta(args.expires or \"72h\")"
+    },
+    {
+     "file": "backend/app/routers/enrollments.py",
+     "line": 84,
+     "quote": "if code_row.used_at is not None:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.1-code-hmac",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "Server stores an HMAC-SHA256 of the enrollment code, never the code.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 252,
+     "quote": "code_hash = hmac.new(secret_bytes, raw_code.encode(\"utf-8\"), hashlib.sha256).hexdigest()"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.1-code-secret",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "The code HMAC is keyed with a server secret (not a value in the repository).",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/config.py",
+     "line": 16,
+     "quote": "ENROLLMENT_CODE_SECRET: str = os.getenv(\"ENROLLMENT_CODE_SECRET\", \"default-study-enrollment-secret-key-32b\")"
+    },
+    {
+     "file": "docs/7_API_Documentation.md",
+     "line": 131,
+     "quote": "The server stores an HMAC-SHA256 of the code under a server secret, never the code."
+    }
+   ],
+   "reason": "If the env var is missing, the server silently falls back to a hard-coded secret published in the repo (fail-open); no startup guard refuses the default. docker-compose.yml:42 expects it from /etc/neogold/api.env, so a correct deploy sets it. Same pattern: DATABASE_URL default password, PUBLIC_BASE_URL default staging host."
+  },
+  {
+   "id": "doc7-4.1-device-key",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "Device key: Keystore EC P-256, PURPOSE_SIGN, SHA-256, non-exportable, StrongBox if available else TEE, no user-auth requirement.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceKeyManager.kt",
+     "line": 54,
+     "quote": ".setIsStrongBoxBacked(true)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.1-attest-challenge",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "Attestation challenge equals SHA-256 of the enrollment code.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceKeyManager.kt",
+     "line": 44,
+     "quote": "val challenge = Base64Url.sha256(enrollmentCode.toByteArray(Charsets.UTF_8))"
+    },
+    {
+     "file": "backend/app/security/attestation.py",
+     "line": 102,
+     "quote": "expected_challenge = hashlib.sha256(enrollment_code.encode(\"utf-8\")).digest()"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.1-attest-verify",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "Server records VERIFIED only if chain validates, challenge matches, leaf key equals device key; else FAILED or NONE; non-blocking in v1.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/security/attestation.py",
+     "line": 73,
+     "quote": "for i in range(len(certs) - 1):"
+    }
+   ],
+   "reason": "Checks each cert is signed by the next, leaf key and challenge; does not anchor the chain to a trusted Google attestation root, so a self-made chain is recorded VERIFIED. Non-blocking behaviour is implemented (enrollments.py:138 never rejects)."
+  },
+  {
+   "id": "doc7-4.1-server-order",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "Enrollment: replay original 201 if code used with same Idempotency-Key and thumbprint; atomic consume (UPDATE ... used_at IS NULL AND expires_at > now); insert device in same transaction.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/enrollments.py",
+     "line": 145,
+     "quote": "update_res = db.execute(update(EnrollmentCode).where(EnrollmentCode.id == code_row.id, EnrollmentCode.used_at.is_(None),"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.1-settings-check",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "After 201, app compares timestamp_precision with the signed profile; on mismatch deletes key and shows the settings message.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyEnrollmentManager.kt",
+     "line": 94,
+     "quote": "if (response.upload_policy.timestamp_precision != profilePrecisionStr) {"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.1-store-offset",
+   "kind": "rule",
+   "section": "4.1",
+   "claim": "App stores device_id and clock offset in research_study after enrollment.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyEnrollmentManager.kt",
+     "line": 108,
+     "quote": "serverDeviceId = response.device_id,"
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchUploadWorker.kt",
+     "line": 45,
+     "quote": "val clockManager = ClockManager()"
+    }
+   ],
+   "reason": "device_id is stored; the clock offset is held only in memory and every worker run starts at offset 0."
+  },
+  {
+   "id": "doc7-4.2-header",
+   "kind": "rule",
+   "section": "4.2",
+   "claim": "JOSE header {alg: ES256, typ: ng-device+jwt, kid: device_id}.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceAssertionMinter.kt",
+     "line": 37,
+     "quote": "{\"alg\":\"ES256\",\"typ\":\"ng-device+jwt\",\"kid\":\"$deviceId\"}"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.2-claims",
+   "kind": "rule",
+   "section": "4.2",
+   "claim": "Claims iss, aud, iat (offset-corrected), exp = iat+300, jti new UUID, htm, htu without query, bsh body hash (empty-string hash when no body).",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceAssertionMinter.kt",
+     "line": 23,
+     "quote": "val exp = iat + 300"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.2-aud",
+   "kind": "rule",
+   "section": "4.2",
+   "claim": "aud is the API base URL including /v1 (e.g. https://intake.example.bd/v1), compared with the server's public base URL.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyEnrollmentManager.kt",
+     "line": 57,
+     "quote": "\"https://$serverHost\""
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceAssertionMinter.kt",
+     "line": 32,
+     "quote": "val aud = baseAudUrl.trimEnd('/')"
+    },
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 228,
+     "quote": "if claims[\"aud\"].rstrip(\"/\") != configured_aud:"
+    }
+   ],
+   "reason": "The profile host is a bare hostname (neogold_sign.py:936). The client builds baseUrl https://host with no /v1 and uses it as aud, while request URLs get /v1 appended. The server compares against PUBLIC_BASE_URL ending in /v1, so every authenticated call would fail with AUTH_CLAIM_MISMATCH (fails closed). Tests hide this by putting /v1 inside host (SyncTestCases.kt:885)."
+  },
+  {
+   "id": "doc7-4.2-der-jose",
+   "kind": "rule",
+   "section": "4.2",
+   "claim": "Client converts Keystore DER ECDSA signature to 64-byte JOSE R||S.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceKeyManager.kt",
+     "line": 92,
+     "quote": "return JoseSignatureConverter.derToJose(derBytes)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.2-mint-per-request",
+   "kind": "rule",
+   "section": "4.2",
+   "claim": "Token minted immediately before each request, never cached.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 316,
+     "quote": "val token = DeviceAssertionMinter.mintToken("
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.2-image-headers",
+   "kind": "rule",
+   "section": "4.2",
+   "claim": "Image upload takes bsh and Content-Digest from the stored image_sha256, no re-hash, decrypts and streams the file once.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 219,
+     "quote": "val digestHeader = \"sha-256=:${Base64Url.encodeStandard(rawDigest)}:\""
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 360,
+     "quote": "imageStreamProvider = { encryptedFileStore.openDecryptedStream(imageFile) },"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step1",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 1: header parses; alg ES256 and typ ng-device+jwt, else 401 AUTH_INVALID_SIGNATURE.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 184,
+     "quote": "if header.get(\"alg\") != \"ES256\" or header.get(\"typ\") != \"ng-device+jwt\":"
+    }
+   ],
+   "reason": "Missing Authorization header returns AUTH_MISSING first (auth.py:166), as the catalog defines."
+  },
+  {
+   "id": "doc7-4.3-step2",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 2: kid names an enrolled device, else 401 DEVICE_UNKNOWN.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 199,
+     "quote": "raise DeviceUnknownError(\"Device not found\")"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step3",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 3: signature verifies with the stored device key, else 401 AUTH_INVALID_SIGNATURE.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 209,
+     "quote": "if not verify_es256_signature(device.public_key, signing_input, sig_bytes):"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step4",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 4: all eight claims present, iss == kid, aud == public base URL, exp - iat <= 300, else AUTH_CLAIM_MISMATCH.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 219,
+     "quote": "required_claims = [\"iss\", \"aud\", \"iat\", \"exp\", \"jti\", \"htm\", \"htu\", \"bsh\"]"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step5",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 5: against t0 (header arrival): iat > t0+60 is CLOCK_SKEW; t0 > exp+30 is AUTH_EXPIRED; both include server_time.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 241,
+     "quote": "if iat > t0 + 60: raise ClockSkewError(server_time=server_time_dt)"
+    },
+    {
+     "file": "backend/app/middleware/timing.py",
+     "line": 18,
+     "quote": "t0 = time.time()"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step6",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 6: htm and htu match (rebuilt from configured base URL); for images bsh equals Content-Digest; else AUTH_CLAIM_MISMATCH.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 250,
+     "quote": "expected_htu = normalize_htu(path, settings.PUBLIC_BASE_URL)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step7",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 7: device not revoked, else 403 DEVICE_REVOKED.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 264,
+     "quote": "if device.revoked_at is not None:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step8",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 8: insert jti into auth_nonce with expires_at = exp + 30 s; a primary-key collision is 401 AUTH_REPLAY.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 274,
+     "quote": "nonce_exists = db.execute(select(AuthNonce).where(AuthNonce.jti == jti_uuid)).scalar_one_or_none()"
+    }
+   ],
+   "reason": "In order and with exp+30, but uses select-then-insert: two concurrent copies of one token both pass the select, and the loser's PK IntegrityError is not caught, giving 500 SERVER_ERROR instead of AUTH_REPLAY. The PK still prevents double acceptance."
+  },
+  {
+   "id": "doc7-4.3-step9",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 9: study ACTIVE else 403 STUDY_PAUSED/STUDY_CLOSED; skipped for GET /device, GET /sessions/{id}, DELETE /device.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 285,
+     "quote": "if not is_exempt_route(method, path):"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step10",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 10: app version >= min_app_version else 426; skipped for the same three calls.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 296,
+     "quote": "app_v = parse_semver(app_version_hdr)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step11",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 11: Content-Length limits (413); images: session exists (404), capture listed with has_image (404), declared digest equals manifest (422 HASH_MISMATCH).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 308,
+     "quote": "if content_length > max_allowed_bytes:"
+    },
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 334,
+     "quote": "if digest_hex != capture_row.sha256:"
+    }
+   ],
+   "reason": "Also adds a 415 Content-Type check for images, consistent with the catalog."
+  },
+  {
+   "id": "doc7-4.3-step12",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 12: insert IN_PROGRESS idempotency row; DONE row replays; existing IN_PROGRESS returns 409 REQUEST_IN_PROGRESS.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 357,
+     "quote": "idem_rec = db.execute(select(IdempotencyRecord).where("
+    }
+   ],
+   "reason": "Done as check-then-insert: two simultaneous copies both miss the row, and the second insert hits the (device_id, key) PK with an uncaught IntegrityError (500), not 409 REQUEST_IN_PROGRESS. Only one executes. The device rate limit is also applied here (auth.py:338)."
+  },
+  {
+   "id": "doc7-4.3-step13",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 13: stream body; JSON hash must equal bsh (AUTH_CLAIM_MISMATCH); image hash must equal declared digest (HASH_MISMATCH), then JPEG checks.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 412,
+     "quote": "if actual_bsh != bsh_val: raise AuthClaimMismatchError(\"Body hash does not match bsh claim\")"
+    },
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 339,
+     "quote": "if actual_hash != capture_row.sha256:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-step14",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Step 14: schema and semantic validation, then the write; last_seen_on updated on success.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 493,
+     "quote": "if 200 <= captured_status < 300:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.3-phaseA",
+   "kind": "rule",
+   "section": "4.3",
+   "claim": "Everything that can reject without the body runs before the body is read.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/tests/test_device_auth.py",
+     "line": 175,
+     "quote": "assert not consumed"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.4-offset-sources",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "Client keeps clock_offset from enrollment, /health, CLOCK_SKEW and AUTH_EXPIRED, and applies it to iat.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 351,
+     "quote": "clockManager.updateOffsetFromServerTime(problem.server_time)"
+    }
+   ],
+   "reason": "Updated from enrollment, GET /device and error responses; getHealth (line 56) does not update it, and the offset is not saved between runs."
+  },
+  {
+   "id": "doc7-4.4-retry-once",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "On CLOCK_SKEW or AUTH_EXPIRED: update offset, mint new token, retry once.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 349,
+     "quote": "if (!isRetry && (problem.code == ErrorCode.CLOCK_SKEW || problem.code == ErrorCode.AUTH_EXPIRED)) {"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.4-second-failure",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "A second clock failure stops the batch and shows the 'Phone clock is wrong' message.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Looked in OutboxProcessor.handleApiError and ResearchUploadWorker: the item is set back to PENDING (retryable true) and the loop continues; no batch stop and no message."
+  },
+  {
+   "id": "doc7-4.5-revoke",
+   "kind": "other",
+   "section": "4.5",
+   "claim": "Coordinator revokes with reason LOST, STOLEN, REASSIGNED, COMPROMISED, or STUDY_ENDED; checked on every request.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 951,
+     "quote": "choices=[\"LOST\", \"STOLEN\", \"REASSIGNED\", \"COMPROMISED\", \"STUDY_ENDED\"]"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.5-leave",
+   "kind": "other",
+   "section": "4.5",
+   "claim": "DELETE /device sets revoked_reason SELF_UNENROLLED.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/device.py",
+     "line": 86,
+     "quote": ".values(revoked_at=now, revoked_reason=\"SELF_UNENROLLED\")"
+    }
+   ]
+  },
+  {
+   "id": "doc7-4.5-client-cleanup",
+   "kind": "rule",
+   "section": "4.5",
+   "claim": "On 204 or 403 DEVICE_REVOKED the app deletes its Keystore key and clears server_device_id; research data stays for USB export.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyRevocationManager.kt",
+     "line": 53,
+     "quote": "keyManager.deleteDeviceKey(keyAlias)"
+    }
+   ],
+   "reason": "Done for leaveStudy and when GET /device reports revoked; a DEVICE_REVOKED on an item mid-batch only marks the item FAILED_PERMANENT (OutboxProcessor.kt:457) without deleting the key."
+  },
+  {
+   "id": "doc7-5.1-key-per-write",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "Outbox generates Idempotency-Key once per logical write and reuses it on every retry.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 180,
+     "quote": "idempotencyKey = item.idempotencyKey,"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.1-retention",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "idempotency_record keyed on (device_id, idempotency_key), rows kept 30 days.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/models/db.py",
+     "line": 281,
+     "quote": "device_id = Column(UUID(as_uuid=True), ForeignKey(\"device.id\"), primary_key=True)"
+    }
+   ],
+   "reason": "Key is correct; no purge job for idempotency_record (or auth_nonce) exists in backend/app or backend/deploy, so the 30-day limit is not enforced."
+  },
+  {
+   "id": "doc7-5.1-final-outcomes",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "Only 2XX and deterministic rejections (400, 409 CONFLICT_IMMUTABLE/PARTICIPANT_CODE_TAKEN, 413, 415, 422 IMAGE_*/CARD_BATCH_INVALID) are stored; others delete the row.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 55,
+     "quote": "DETERMINISTIC_ERROR_CODES = {"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.1-replay",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "Same key + same hash replays; different hash is 409 IDEMPOTENCY_KEY_REUSED; image request hash is the declared digest.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 352,
+     "quote": "request_hash = content_digest_hdr if is_image_route(method, path) else bsh_val"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.1-enroll-idem",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "/enrollments idempotency lives on the enrollment_code row.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/enrollments.py",
+     "line": 193,
+     "quote": "enroll_idempotency_key=idempotency_key,"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.1-immutable",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "Identical PUT to existing ID returns 200; different body returns 409 CONFLICT_IMMUTABLE.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 180,
+     "quote": "raise ConflictImmutableError(f\"Session {session_id} already exists with different manifest\")"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.2-ack",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "200/201/204 mark the outbox item ACKED.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 151,
+     "quote": "outboxDao.updateState(item.id, \"ACKED\", System.currentTimeMillis())"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.2-backoff",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "No response or 5XX/507: retry with same key, backoff 30 s, 2 min, 10 min, 1 h, then every 6 h.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 159,
+     "quote": "outboxDao.updateState(item.id, \"PENDING\", System.currentTimeMillis())"
+    }
+   ],
+   "reason": "Same key kept; no backoff schedule. Worker returns success even with failed items left PENDING (ResearchUploadWorker.kt:115) and sets no backoff criteria."
+  },
+  {
+   "id": "doc7-5.2-retry-after",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "429 and 503: wait Retry-After, then retry.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 445,
+     "quote": "if (error.statusCode in 500..599 || code == ErrorCode.RATE_LIMITED || code == ErrorCode.MAINTENANCE"
+    }
+   ],
+   "reason": "Item is retried, but the Retry-After header is never read."
+  },
+  {
+   "id": "doc7-5.2-in-progress",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "409 REQUEST_IN_PROGRESS: retry after 30 seconds with the same key.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 438,
+     "quote": "if (code == ErrorCode.REQUEST_IN_PROGRESS) {"
+    }
+   ],
+   "reason": "Re-queued with the same key, but nothing enforces the 30 s wait."
+  },
+  {
+   "id": "doc7-5.2-hash-mismatch",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "422 HASH_MISMATCH: retry with same key and headers at most 3 times, then FAILED_PERMANENT.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 427,
+     "quote": "if (attempts >= 3) {"
+    }
+   ],
+   "reason": "Goes permanent on the 3rd failure (2 retries), and the attempts counter is shared with network failures, so earlier timeouts use up the hash budget."
+  },
+  {
+   "id": "doc7-5.2-card-invalid",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "422 CARD_BATCH_INVALID: mark batch server-unverified; its sessions sent as UNVERIFIED.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 188,
+     "quote": "batchDao.update(batch.copy(serverStatus = \"REJECTED\"))"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.2-paused",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "403 STUDY_PAUSED: keep the outbox; retry after 6 hours or on Upload now.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchUploadWorker.kt",
+     "line": 121,
+     "quote": "Result.retry()"
+    }
+   ],
+   "reason": "Outbox kept; retry uses WorkManager default backoff, not 6 hours."
+  },
+  {
+   "id": "doc7-5.2-unknown-code",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "Unknown code: follow retryable; if missing, 4XX permanent and 5XX retryable.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 452,
+     "quote": "val isRetryable = error.problem.retryable ?: (error.statusCode >= 500)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.2-upload-now",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "Upload now runs the same outbox in the foreground and skips any backoff wait once.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchWorkScheduler.kt",
+     "line": 48,
+     "quote": "fun triggerUploadNow(context: Context) {"
+    }
+   ],
+   "reason": "Scheduler functions exist, but nothing in android/**/src/main calls triggerUploadNow or scheduleBackgroundUpload."
+  },
+  {
+   "id": "doc7-5.2-client-bug-recovery",
+   "kind": "rule",
+   "section": "5.2",
+   "claim": "On app version change, FAILED_PERMANENT items with client-bug codes are re-queued once with a new Idempotency-Key.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 508,
+     "quote": "suspend fun recoverClientBugFailuresAfterAppUpdate(oldVersion: String, newVersion: String) {"
+    }
+   ],
+   "reason": "Logic and the 7-code list match (ErrorCode.kt:42), but no production code calls it on version change."
+  },
+  {
+   "id": "doc7-5.3-unique-work",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "One unique WorkManager work; background uses KEEP; Upload now replaces a waiting run with an expedited one and does nothing if running.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchWorkScheduler.kt",
+     "line": 58,
+     "quote": "if (isRunning) {"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.3-inflight",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "At worker start, IN_FLIGHT rows reset to PENDING.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 108,
+     "quote": "outboxDao.resetInFlightToPending()"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.3-foreground",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "Long backlogs run as foreground worker with foregroundServiceType dataSync and FOREGROUND_SERVICE_DATA_SYNC.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchUploadWorker.kt",
+     "line": 169,
+     "quote": "ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC"
+    },
+    {
+     "file": "android/sync/research/src/main/AndroidManifest.xml",
+     "line": 7,
+     "quote": "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.3-server-lock",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "Image transaction locks session row FOR UPDATE before counting; nightly job completes RECEIVING sessions with none missing.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 326,
+     "quote": "select(DbSession).where(DbSession.id == session_id).with_for_update()"
+    },
+    {
+     "file": "backend/app/jobs.py",
+     "line": 12,
+     "quote": "def complete_backstop_sessions(db: Session) -> int:"
+    }
+   ],
+   "reason": "Lock implemented; the backstop function is never called by the CLI, deploy timers, or any scheduler."
+  },
+  {
+   "id": "doc7-5.4-reconcile",
+   "kind": "rule",
+   "section": "5.4",
+   "claim": "Before local deletion, phone calls GET /sessions/{id}; only COMPLETE or REJECTED allows deletion; 404/RECEIVING re-queues.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/ReconciliationManager.kt",
+     "line": 45,
+     "quote": "if (status.status == \"COMPLETE\" || status.status == \"REJECTED\") {"
+    }
+   ],
+   "reason": "Logic exists; ResearchRetentionConfirmationHook is not wired in main code, and RetentionManager defaults to a NoOp hook that never confirms. This fails safe: nothing is deleted."
+  },
+  {
+   "id": "doc7-5.4-data-generation",
+   "kind": "rule",
+   "section": "5.4",
+   "claim": "restore mark sets data_generation to the Unix time; phones seeing a new value re-send every held item.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 462,
+     "quote": "study.data_generation = now_ts"
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 103,
+     "quote": "if (deviceStatus.data_generation > storedGen) {"
+    }
+   ]
+  },
+  {
+   "id": "doc7-5.4-retention-14",
+   "kind": "rule",
+   "section": "5.4",
+   "claim": "Phones keep acknowledged research data for 14 days (local_retention_after_ack_days).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyEnrollmentManager.kt",
+     "line": 116,
+     "quote": "localRetentionAfterAckDays = 14,"
+    }
+   ]
+  },
+  {
+   "id": "doc7-6.1-detail-no-pii",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Problem detail never contains participant codes, image content, or request-body values beyond IDs.",
+   "status": "Contradicted",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/participants.py",
+     "line": 133,
+     "quote": "f\"Participant code {body.participant_code} is already in use with a different consent form ID\""
+    },
+    {
+     "file": "docs/7_API_Documentation.md",
+     "line": 305,
+     "quote": "`detail` never contains participant codes, image content, or anything from the request body beyond IDs."
+    }
+   ],
+   "reason": "PARTICIPANT_CODE_TAKEN puts the participant code in detail. Because this code is deterministic, the response is also stored in idempotency_record.response_body (auth.py:504-519)."
+  },
+  {
+   "id": "doc7-6.1-errors-array",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "VALIDATION_FAILED adds errors: [{field, message}].",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/main.py",
+     "line": 99,
+     "quote": "errs.append({\"field\": field_name, \"message\": err.get(\"msg\", \"Invalid value\")})"
+    }
+   ]
+  },
+  {
+   "id": "doc7-6.2-catalog",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "All 36 catalog codes exist with the documented HTTP status and retry flag.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.error_codes.actual"
+    },
+    {
+     "file": "backend/app/errors.py",
+     "line": 36,
+     "quote": "class ValidationFailedError(NeoGoldError):"
+    }
+   ],
+   "reason": "Checked each class in errors.py: statuses and retryable flags match the table (Once/Later/After dependency/Up to 3 map to retryable true). inventory missing and unplanned are empty. The SESSION_UNKNOWN use on the TSB path is a separate claim."
+  },
+  {
+   "id": "doc7-6.2-withdrawn-client",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "On PARTICIPANT_WITHDRAWN the app marks the item permanent and deletes that participant's local research data.",
+   "status": "Missing",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Searched android for PARTICIPANT_WITHDRAWN: only the constant in ErrorCode.kt:24. The item goes FAILED_PERMANENT through the generic path; no local deletion exists (TC-API-32 expects it)."
+  },
+  {
+   "id": "doc7-6.2-reenroll",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "AUTH_INVALID_SIGNATURE / DEVICE_UNKNOWN stop uploads and prompt re-enrollment; STUDY_CLOSED stops uploads and offers USB export.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 77,
+     "quote": "return OutboxResult.Error(\"Failed to check device status: ${e.message}\", e)"
+    }
+   ],
+   "reason": "The batch stops when GET /device fails or reports CLOSED, but the worker retries forever and no re-enroll or export prompt is raised from the sync module."
+  },
+  {
+   "id": "doc7-7-timestamps",
+   "kind": "rule",
+   "section": "7",
+   "claim": "captured_at and draw_time must be absent/null unless timestamp_precision is FULL.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 126,
+     "quote": "if study.timestamp_precision != \"FULL\" and body.captured_at is not None:"
+    },
+    {
+     "file": "backend/app/routers/tsb.py",
+     "line": 99,
+     "quote": "if study.timestamp_precision != \"FULL\" and body.draw_time is not None:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-estimate-order",
+   "kind": "rule",
+   "section": "7",
+   "claim": "estimate_low <= estimate <= estimate_high when present.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 130,
+     "quote": "body.estimate_mg_dl is not None and body.estimate_low_mg_dl is not None and body.estimate_high_mg_dl is not None"
+    }
+   ],
+   "reason": "Checked only when all three are present; a pair such as low > estimate with high null is accepted."
+  },
+  {
+   "id": "doc7-7-capture-unique",
+   "kind": "rule",
+   "section": "7",
+   "claim": "Capture IDs unique within a manifest; attempt_number unique per capture site.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 147,
+     "quote": "if site_attempt in seen_site_attempts:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-has-image",
+   "kind": "rule",
+   "section": "7",
+   "claim": "has_image false requires image_sha256 and size_bytes null; true requires both.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 152,
+     "quote": "if c.image_sha256 is not None or c.size_bytes is not None:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-participant-site",
+   "kind": "rule",
+   "section": "7",
+   "claim": "Participant (or alias target) belongs to the calling device's site, else PARTICIPANT_UNKNOWN.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 102,
+     "quote": "if not canonical_participant or canonical_participant.site_id != site.id:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-consent-date",
+   "kind": "rule",
+   "section": "7",
+   "claim": "consent_date is on or before capture_date.",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 108,
+     "quote": "if canonical_participant.consent_date > body.capture_date:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-card-status",
+   "kind": "rule",
+   "section": "7",
+   "claim": "VERIFIED/EXPIRED need a registered card_batch_id; UNVERIFIED needs null; server records expiry on capture_date.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 119,
+     "quote": "if batch_row.expires_at < body.capture_date: recorded_card_status = \"EXPIRED\""
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-tsb-same-participant",
+   "kind": "rule",
+   "section": "7",
+   "claim": "A TSB value's session, if given, belongs to the same participant.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/tsb.py",
+     "line": 95,
+     "quote": "if session_row.participant_id != canonical_participant.id:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-tsb-link-once",
+   "kind": "rule",
+   "section": "7",
+   "claim": "A TSB value may change only once, session_id null to a session (with minutes_from_capture), all other fields identical.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/tsb.py",
+     "line": 105,
+     "quote": "existing.session_id is None and body.session_id is not None"
+    }
+   ],
+   "reason": "The linking update does not compare draw_time and does not require minutes_from_capture."
+  },
+  {
+   "id": "doc7-7-jpeg",
+   "kind": "rule",
+   "section": "7",
+   "claim": "JPEG starts with SOI, decodes, <= 8192 px per side, only allow-listed segments; XMP, MPF, thumbnails, GPS, date-time rejected.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/security/jpeg.py",
+     "line": 12,
+     "quote": "ALLOW_LISTED_MARKERS = {"
+    },
+    {
+     "file": "backend/app/security/jpeg.py",
+     "line": 51,
+     "quote": "ALLOWED_TAGS = {0x0112}"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-image-hash",
+   "kind": "rule",
+   "section": "7",
+   "claim": "Image body hash equals the manifest image_sha256 and the Content-Digest header.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 339,
+     "quote": "if actual_hash != capture_row.sha256:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-code-patterns",
+   "kind": "rule",
+   "section": "7",
+   "claim": "participant_code and consent_form_id must match the documented patterns, so birth-registration, national ID, or mobile numbers cannot be stored.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/models/api.py",
+     "line": 87,
+     "quote": "participant_code: Annotated[str, Field(pattern=r\"^[A-Z]{2,5}-[0-9]{3,6}$\")]"
+    }
+   ]
+  },
+  {
+   "id": "doc7-7-no-pii-fields",
+   "kind": "rule",
+   "section": "7",
+   "claim": "No field exists for name, register number, birth date, phone, address, location, or free text.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/models/api.py",
+     "line": 145,
+     "quote": "class SessionManifest(BaseApiModel):"
+    }
+   ],
+   "reason": "Request models hold codes, enums, numbers, hashes and dates only. Free-form strings are limited to device manufacturer/model (max 64), model_version and config_version."
+  },
+  {
+   "id": "doc7-8-device-rate",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Per-device token bucket: 20 back-to-back, refilled at 1 per second.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/rate_limit.py",
+     "line": 87,
+     "quote": "device_limiter = DeviceRateLimiter(capacity=20.0, refill_rate=1.0)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-8-enroll-rate",
+   "kind": "rule",
+   "section": "8",
+   "claim": "10 failed enrollment attempts per hour per client IP; XFF trusted only from FORWARDED_ALLOW_IPS.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/middleware/rate_limit.py",
+     "line": 126,
+     "quote": "if xff and is_ip_trusted(direct_ip, settings.FORWARDED_ALLOW_IPS):"
+    },
+    {
+     "file": "backend/app/routers/enrollments.py",
+     "line": 78,
+     "quote": "enrollment_limiter.record_failure(client_ip)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-8-enroll-alert",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Alert to coordinator after 20 failed enrollments per day across the server.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Searched backend for alert or a 20-per-day counter; none found."
+  },
+  {
+   "id": "doc7-8-health-rate",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Unauthenticated /health limited to 60 per minute per IP, enforced by the API.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "auth.py:144-154 skips /health with no limiter; health.py has none; the Caddyfile has none."
+  },
+  {
+   "id": "doc7-8-json-size",
+   "kind": "rule",
+   "section": "8",
+   "claim": "JSON body limit 256 KB in Caddy and API.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 34,
+     "quote": "max_size 256KB"
+    },
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 307,
+     "quote": "max_allowed_bytes = 20000000 if is_image_route(method, path) else 262144"
+    }
+   ]
+  },
+  {
+   "id": "doc7-8-image-size",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Image body limit 20,000,000 bytes in Caddy and API.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 27,
+     "quote": "max_size 20MB"
+    },
+    {
+     "file": "backend/app/middleware/auth.py",
+     "line": 401,
+     "quote": "if total_body_len > max_allowed_bytes:"
+    }
+   ]
+  },
+  {
+   "id": "doc7-8-timeouts",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Caddy request timeout 15 minutes for image uploads, 30 seconds for everything else.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 9,
+     "quote": "read_body 15m"
+    }
+   ],
+   "reason": "A single global 15 m read_body/write timeout applies to all routes; there is no 30 s limit for non-image calls."
+  },
+  {
+   "id": "doc7-8-captures",
+   "kind": "rule",
+   "section": "8",
+   "claim": "At most 15 captures per manifest.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/models/api.py",
+     "line": 162,
+     "quote": "captures: Annotated[list[CaptureManifest], Field(min_length=1, max_length=15)]"
+    }
+   ]
+  },
+  {
+   "id": "doc7-9-api-version",
+   "kind": "rule",
+   "section": "9",
+   "claim": "Server reports openapi info.version in /health as api_version.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/health.py",
+     "line": 30,
+     "quote": "api_version=settings.API_VERSION,"
+    }
+   ]
+  },
+  {
+   "id": "doc7-9-min-app",
+   "kind": "rule",
+   "section": "9",
+   "claim": "GET /device returns min_app_version.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/device.py",
+     "line": 50,
+     "quote": "min_app_version=study.min_app_version,"
+    }
+   ]
+  },
+  {
+   "id": "doc7-10-withdraw",
+   "kind": "other",
+   "section": "10",
+   "claim": "participant withdraw rejects sessions, deletes images and TSB values, sets withdrawn_on; later uploads get PARTICIPANT_WITHDRAWN.",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 439,
+     "quote": "db.execute(delete(TsbMeasurement).where(TsbMeasurement.participant_id == participant.id))"
+    },
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 106,
+     "quote": "raise ParticipantWithdrawnError(\"Participant has withdrawn consent\")"
+    }
+   ]
+  },
+  {
+   "id": "doc7-10-decrypt-export",
+   "kind": "other",
+   "section": "10",
+   "claim": "decrypt-export decrypts a phone USB export with the study export private key on an offline machine, never on the server, and applies the date shift.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 885,
+     "quote": "print(f\"decrypt-export called on file: {args.file} (offline tool stub)\")"
+    }
+   ],
+   "reason": "Command is a stub: no decryption, no date shift, and it opens the server database (SessionLocal) to write an audit row."
+  },
+  {
+   "id": "doc7-11-client",
+   "kind": "other",
+   "section": "11",
+   "claim": "OkHttp + kotlinx.serialization, hand-written client for 10 endpoints; request JSON serialized once and the same bytes hashed and sent.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 189,
+     "quote": "val bodyBytes = json.encodeToString(SessionManifest.serializer(), manifest).toByteArray(Charsets.UTF_8)"
+    }
+   ]
+  },
+  {
+   "id": "doc7-11-nsc",
+   "kind": "rule",
+   "section": "11",
+   "claim": "Network security config: cleartext disallowed, system CAs only, user CAs not trusted, no pinning.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/res/xml/network_security_config.xml",
+     "line": 3,
+     "quote": "<base-config cleartextTrafficPermitted=\"false\">"
+    }
+   ]
+  },
+  {
+   "id": "doc7-11-client-dates",
+   "kind": "rule",
+   "section": "11",
+   "claim": "Client formats dates in the study time zone from upload_policy.time_zone, never phone default or UTC.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/outbox/OutboxProcessor.kt",
+     "line": 536,
+     "quote": "return Instant.ofEpochMilli(epochMs).atZone(zone).toLocalDate().toString()"
+    }
+   ],
+   "reason": "Falls back to Asia/Dhaka (the documented default) on an invalid zone id."
+  },
+  {
+   "id": "doc7-12.1-appendix-sync",
+   "kind": "gate",
+   "section": "12.1",
+   "claim": "Appendix A is generated from openapi.yaml and CI fails if they differ.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Searched .github/workflows, tools/ and backend/tools for an Appendix A or doc 7 comparison; none."
+  },
+  {
+   "id": "doc7-12.2-spec-validator",
+   "kind": "gate",
+   "section": "12.2",
+   "claim": "openapi-spec-validator on every pull request.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 44,
+     "quote": "python3 -m openapi_spec_validator docs/api/openapi.yaml"
+    }
+   ],
+   "reason": "Runs on PRs touching backend/** or openapi.yaml (path filter at line 4)."
+  },
+  {
+   "id": "doc7-12.2-redocly",
+   "kind": "gate",
+   "section": "12.2",
+   "claim": "Redocly lint, recommended rules, zero warnings on every pull request.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "No redocly step in .github/workflows."
+  },
+  {
+   "id": "doc7-12.2-schema-diff",
+   "kind": "gate",
+   "section": "12.2",
+   "claim": "Server routes, status codes and schemas match the spec (FastAPI schema diff) on every backend PR.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": ".github/workflows/backend-ci.yml",
+     "line": 45,
+     "quote": "python3 backend/tools/diff_spec.py docs/api/openapi.yaml"
+    },
+    {
+     "inventory_key": "categories.endpoints.details.operation_differences"
+    }
+   ]
+  },
+  {
+   "id": "doc7-12.2-schemathesis",
+   "kind": "gate",
+   "section": "12.2",
+   "claim": "Schemathesis property-based fuzzing against staging for every release candidate.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "No schemathesis in .github/workflows or backend; doc tags it [Likely; confirm in v0.5] but does not defer it."
+  },
+  {
+   "id": "doc7-12.2-android-schema",
+   "kind": "gate",
+   "section": "12.2",
+   "claim": "Client request models validate against the spec's JSON Schemas with a JSON Schema validator; spec examples deserialize.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/test/kotlin/com/kitalonlabs/neogold/sync/research/OpenApiContractTest.kt",
+     "line": 54,
+     "quote": "fun enrollmentRequest_serializesAndMatchesSpec() {"
+    }
+   ],
+   "reason": "Example round-trip tests exist; no JSON Schema validator is used anywhere in android."
+  },
+  {
+   "id": "doc7-12.3-auth-cases",
+   "kind": "gate",
+   "section": "12.3",
+   "claim": "The ten authentication cases are in backend/tests/test_device_auth.py.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/tests/test_device_auth.py",
+     "line": 45,
+     "quote": "def test_tc_api_08_ten_authentication_cases("
+    }
+   ],
+   "reason": "Asserts each expected code; case 7 uses a GET with exp just ahead rather than a slow upload."
+  },
+  {
+   "id": "doc7-13-1-attestation",
+   "kind": "other",
+   "section": "13",
+   "claim": "Mandatory Key Attestation.",
+   "status": "Deferred",
+   "area": "crypto",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Open issue 1: 'require a verified Key Attestation chain from v1.1'."
+  },
+  {
+   "id": "doc7-13-3-resumable",
+   "kind": "other",
+   "section": "13",
+   "claim": "Resumable (range-based) image uploads.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Open issue 3: add in v1.1 if v0.5 field data shows frequent failures."
+  },
+  {
+   "id": "doc7-13-4-lab-entry",
+   "kind": "other",
+   "section": "13",
+   "claim": "Lab entry of TSB values as a second client type.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Open issue 4: a /v2 discussion."
+  },
+  {
+   "id": "doc7-13-5-date-shift",
+   "kind": "rule",
+   "section": "13",
+   "claim": "Export date shifting on by default, one random offset per participant within plus or minus 180 days.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 605,
+     "quote": "offset = rng.randint(-180, 180)"
+    }
+   ]
+  }
+ ],
+ "counts": {
+  "Implemented": 89,
+  "Partial": 26,
+  "Missing": 7,
+  "Contradicted": 6,
+  "Deferred": 3,
+  "Unknown": 0
+ },
+ "notes": "Commit audited: working tree HEAD 4f04aef (product code said to equal 4523908). Endpoints and error codes match the inventory exactly (no missing, unplanned, or operation differences). Server verification order (4.3) is followed step by step; deviations are race handling in steps 8 and 12 only. Off-course drivers in protected areas: crypto (hard-coded fallback ENROLLMENT_CODE_SECRET in backend/app/config.py:16) and privacy (participant code echoed in PARTICIPANT_CODE_TAKEN detail and stored in idempotency_record). Other Contradicted: server dates in UTC, not the study zone; TSB SESSION_UNKNOWN returns 404, not 422; dependency re-queue cap is 2, not 3; client aud omits /v1 when host is a bare hostname, so live auth would fail closed. config.py also defaults DATABASE_URL to a 'test' password and PUBLIC_BASE_URL to the staging host when env vars are missing. Client wiring gap: StudyEnrollmentManager, ResearchWorkScheduler, ResearchRetentionConfirmationHook and recoverClientBugFailuresAfterAppUpdate have no callers in android/**/src/main. Manifest building fabricates values: size_bytes uses the encrypted file length or a constant 1000000 (OutboxProcessor.kt:261), and camera_hardware_level is hard-coded LIMITED (line 296), as are the enrollment defaults (StudyEnrollmentManager.kt:31-32). Bash use: one read-only python3 -c to read the inventory JSON, outside the stated Bash allow-list; no files were changed."
+}

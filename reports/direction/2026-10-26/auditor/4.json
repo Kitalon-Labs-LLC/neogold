@@ -1,0 +1,1444 @@
+{
+ "doc": "docs/4_System_Architecture.md",
+ "companions": [],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "doc4-1-offline",
+   "kind": "rule",
+   "section": "1, 2, ADR-002",
+   "claim": "The screening path makes zero network calls.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.screening_network.actual",
+     "quote": "[] (no network-capable dependency reachable from the screening start modules)"
+    }
+   ],
+   "reason": "The inventory finds no HTTP client reachable from the screening modules."
+  },
+  {
+   "id": "doc4-4.1-pure-engines",
+   "kind": "rule",
+   "section": "4.1, 4.2",
+   "claim": "colorscience, estimation, triage and cardtrust are pure Kotlin with no Android dependency.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.actual",
+     "quote": ":engine:triage, :engine:colorscience, :engine:estimation declare only junit/truth; :engine:cardtrust adds only tink"
+    }
+   ],
+   "reason": "No androidx library is declared in the four pure engines."
+  },
+  {
+   "id": "doc4-4.2-modules",
+   "kind": "other",
+   "section": "4.2",
+   "claim": "Module map: :app, 7 :feature modules, 6 :engine modules, 6 :core modules, :sync:research.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.modules.actual"
+    },
+    {
+     "inventory_key": "categories.modules.unplanned",
+     "quote": ":benchmark, :neogold-decrypt"
+    }
+   ],
+   "reason": "Every documented module exists. Two modules that are not in the map (:benchmark, :neogold-decrypt) are a doc gap."
+  },
+  {
+   "id": "doc4-4.2-edges",
+   "kind": "rule",
+   "section": "4.2",
+   "claim": "Engines depend only on :core:model, :feature:research depends on :sync:research, and :sync:research depends on :core:data.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.module_edges.unplanned",
+     "quote": ":engine:camera -> :engine:triage, :engine:camera -> :core:designsystem, :engine:vision -> :engine:colorscience, :sync:research -> :engine:cardtrust"
+    }
+   ],
+   "reason": "32 edges are unplanned, including engine-to-engine and engine-to-designsystem edges. :feature:research does not depend on :sync:research; :app wires it instead."
+  },
+  {
+   "id": "doc4-4.3-di",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "Dependency injection uses Hilt.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.missing",
+     "quote": "com.google.dagger:*"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 73,
+     "quote": "dataStore = DefaultNeoGoldDataStore(applicationContext)"
+    }
+   ],
+   "reason": "No Gradle module declares Dagger or Hilt. Dependencies are built by hand in MainActivity."
+  },
+  {
+   "id": "doc4-4.3-nav",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "Navigation uses Compose Navigation with type-safe routes.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/navigation/Destinations.kt",
+     "line": 9,
+     "quote": "const val S01_LANGUAGE = \"s01_language\""
+    }
+   ],
+   "reason": "navigation-compose is used, but routes are string constants, not type-safe routes."
+  },
+  {
+   "id": "doc4-4.3-camera",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "Camera uses CameraX with Camera2Interop.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/CameraControlHelper.kt",
+     "line": 110,
+     "quote": "val interop = Camera2Interop.Extender(builder)"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-cv",
+   "kind": "other",
+   "section": "4.3, 5.2, 16.1",
+   "claim": "The marker library (OpenCV or AprilTag over JNI) is decided in v0.1 by measured download size.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "docs/4_System_Architecture.md",
+     "line": 595,
+     "quote": "Marker library: OpenCV vs AprilTag, decided by measured download size against the 25 MB budget in v0.1."
+    },
+    {
+     "file": "android/engine/vision/src/main/cpp/CMakeLists.txt",
+     "line": 2,
+     "quote": "project(\"apriltag_jni\" C)"
+    }
+   ],
+   "reason": "The doc still lists this as open issue 16.1. The code already ships an AprilTag JNI detector plus a Kotlin AprilTag/ArUco fallback, so the doc is behind the code."
+  },
+  {
+   "id": "doc4-4.3-abis",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "ABIs are arm64-v8a and armeabi-v7a.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 53,
+     "quote": "include(\"arm64-v8a\", \"armeabi-v7a\")"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-sdk",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "minSdk is API 26; targetSdk is the level Play requires.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 42,
+     "quote": "minSdk = 26"
+    },
+    {
+     "file": "android/build-logic/src/main/kotlin/com/kitalonlabs/neogold/buildlogic/NeoGoldAndroidApplicationPlugin.kt",
+     "line": 43,
+     "quote": "targetSdk = 36"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-estimation",
+   "kind": "other",
+   "section": "4.3, ADR-004",
+   "claim": "Estimation is a pure Kotlin linear model loaded from JSON, with no ML runtime.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/main/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationMath.kt",
+     "line": 39,
+     "quote": "Computes linear ridge regression prediction: y = intercept + sum_i (z_i * w_i)."
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-localdb",
+   "kind": "other",
+   "section": "4.3, ADR-008",
+   "claim": "The local database is Room on SQLCipher.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.actual",
+     "quote": ":core:data net.zetetic:sqlcipher-android prod"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-file-enc",
+   "kind": "other",
+   "section": "4.3, 8",
+   "claim": "Research files are encrypted with Tink streaming AEAD.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/EncryptedFileStore.kt",
+     "line": 68,
+     "quote": "val encryptingStream = fileKeysetProvider.getStreamingAead()"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-signatures",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "Card batch signatures are verified with Ed25519 through Tink.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 80,
+     "quote": "val verifier = Ed25519Verify(key.publicKeyBytes)"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-http",
+   "kind": "other",
+   "section": "4.3",
+   "claim": "OkHttp and kotlinx.serialization are used only in :sync:research.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.actual",
+     "quote": ":sync:research com.squareup.okhttp3:okhttp prod (no other module declares okhttp)"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3-workmanager",
+   "kind": "other",
+   "section": "4.3, 9",
+   "claim": "Background work uses WorkManager.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchWorkScheduler.kt",
+     "line": 36,
+     "quote": "WorkManager.getInstance(context).enqueueUniqueWork("
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.3a-libs",
+   "kind": "rule",
+   "section": "4.3a",
+   "claim": "Every library declared in a Gradle module matches an approved row in 4.3a.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.libraries.unplanned",
+     "quote": "androidx.core:core-ktx (13 modules), androidx.activity:activity-compose, androidx.sqlite:sqlite(-framework), org.bouncycastle:bcprov-jdk18on"
+    }
+   ],
+   "reason": "20 declarations have no row. bcprov (Argon2 PIN hash) is approved in doc 8 Section 6.2 but was never copied into 4.3a. Rows for lifecycle, dagger, detekt and androidx.test match nothing that is declared."
+  },
+  {
+   "id": "doc4-4.4-domain-sm",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "The screening flow is one state machine in the domain layer. The UI only renders state and never decides clinical flow.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningStateMachine.kt",
+     "line": 39,
+     "quote": "class ScreeningStateMachine("
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 407,
+     "quote": "if (isEarlyJaundice) { sessionRuleOutcome = TriageReasonCode.R2"
+    }
+   ],
+   "reason": "ScreeningStateMachine exists, but nothing in app code uses it. Hard rules are decided inside navigation lambdas in the NavHost composable."
+  },
+  {
+   "id": "doc4-4.4-rule-order-app",
+   "kind": "rule",
+   "section": "4.4, 6.2 step 2, 6.2 step 7",
+   "claim": "Hard rules are evaluated in order R1 to R5, and the first match gives the one reason code.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 408,
+     "quote": "sessionRuleOutcome = TriageReasonCode.R2 (S11 asked before S12 danger signs)"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 440,
+     "quote": "sessionRuleOutcome = TriageReasonCode.R4 ... else if (sessionGaWeeks < 35) R3"
+    }
+   ],
+   "reason": "In the app flow, R2 is checked before R1 and R4 before R3. A baby with both danger signs and early jaundice is logged as R2, not R1, and danger signs are never asked. The engine order (TriageEngine.kt:61-109) is correct, but the app does not use it."
+  },
+  {
+   "id": "doc4-4.4-cardcheck",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "CardCheck runs after RuleCheck: an unverified or expired card gives Blocked; a verified batch goes on to Capture.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningStateMachine.kt",
+     "line": 188,
+     "quote": "is VerificationResult.BadSignature -> { ScreeningState.Blocked(inputs, CardBlockReason.UNVERIFIED_SIGNATURE)"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 449,
+     "quote": "navController.navigate(Destinations.S15_CAPTURE_GUIDE)"
+    }
+   ],
+   "reason": "The domain state machine implements the card check, but the app goes from S13 straight to the capture guide with no card verification."
+  },
+  {
+   "id": "doc4-4.4-quality-loop",
+   "kind": "rule",
+   "section": "4.4, 5",
+   "claim": "A failed quality check loops back to capture while attempts are under 3; 3 failures give BloodTestFallback.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningStateMachine.kt",
+     "line": 229,
+     "quote": "if (attempt < 3) {"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 523,
+     "quote": "onCaptureCompleted = { _ -> sessionCapturesCount++ navigate(S18_FOREHEAD_PHOTO)"
+    }
+   ],
+   "reason": "The state machine implements the loop, but the app discards the frame and never runs the quality gate. S17 (photo problem) is never navigated to."
+  },
+  {
+   "id": "doc4-4.4-analysis",
+   "kind": "rule",
+   "section": "4.4, 5, 6.2",
+   "claim": "Analysis computes the estimate and interval from the corrected capture, and the triage engine gives the Result.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 568,
+     "quote": "sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION; sessionEstimatedLow = 8.2; High = 10.1; sessionThreshold = 12.0"
+    }
+   ],
+   "reason": "S19 sets a hardcoded NO_FURTHER_ACTION result after a 1.2 s delay. ScreeningPipelineUseCase and TriageEngine are never called from the app. Today this is unreachable only because triageEnabled is hardcoded false."
+  },
+  {
+   "id": "doc4-4.4-savedstate",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "Inputs are mirrored to SavedStateHandle, so after process death the app restores them and restarts capture.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 239,
+     "quote": "var sessionAgeHours by remember { mutableDoubleStateOf(0.0) }"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 240,
+     "quote": "var sessionGaWeeks by remember { mutableIntStateOf(38) }"
+    }
+   ],
+   "reason": "There is no SavedStateHandle or rememberSaveable anywhere. Inputs live in plain remember with defaults GA 38 and age 0 h. The nav back stack is restored after process death, so the rule check in S13 and the saved row would use these silent defaults. S10 itself requires an explicit GA (S10BirthTimeGaScreen.kt:89)."
+  },
+  {
+   "id": "doc4-4.4-inputs-valid",
+   "kind": "rule",
+   "section": "4.4, 8",
+   "claim": "RuleCheck runs only on valid inputs, and age in hours is computed from the entered birth time.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 89,
+     "quote": "Gestational age stepper: NO pre-filled value by default (H3, TC-UI-11)"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 86,
+     "quote": "mutableLongStateOf(initialBirthTimeMs ?: (currentPhoneTimeEpochMs - 48 * 3600 * 1000L))"
+    }
+   ],
+   "reason": "GA has no default. Birth time is pre-set to 48 h before now, and Next is enabled without touching it, so age can be a silent default (CLAUDE.md: no silent defaults on clinical inputs). Cross-check against doc 6 and PRD FR-05."
+  },
+  {
+   "id": "doc4-4.4-terminal-row",
+   "kind": "rule",
+   "section": "4.4",
+   "claim": "Every terminal state writes one screening_session row, including referrals that never reached the camera.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 462,
+     "quote": "onSaveToLog = { registerNumber -> coroutineScope.launch { val entity = ScreeningSessionEntity("
+    }
+   ],
+   "reason": "A row is written only when the user taps save on S14 or S20. Leaving the screen, or reaching Blocked, writes nothing."
+  },
+  {
+   "id": "doc4-4.6-onboarding",
+   "kind": "other",
+   "section": "4.6",
+   "claim": "Onboarding runs language, safety notice, device check, card scan, calibration, then Home.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 263,
+     "quote": "composable(Destinations.S01_LANGUAGE) ... S02_S04_SAFETY_NOTICE ... S05 ... S06 ... S07 ... S08 -> S09_HOME"
+    }
+   ]
+  },
+  {
+   "id": "doc4-4.6-screening-nav",
+   "kind": "other",
+   "section": "4.6",
+   "claim": "Screening runs inputs, safety questions, rule outcome, capture guide, camera, analysis, then Result.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 379,
+     "quote": "composable(Destinations.S10A_GUARDIAN_CONSENT) ... S10 ... S11 ... S12 ... S13 ... S14/S15 ... S16 ... S19 ... S20"
+    }
+   ],
+   "reason": "The screen sequence exists. Its clinical logic is covered by the claims above."
+  },
+  {
+   "id": "doc4-4.6-research-pin",
+   "kind": "rule",
+   "section": "4.6",
+   "claim": "Research mode is a separate graph behind the study PIN.",
+   "status": "Contradicted",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 766,
+     "quote": "onUnlockWithPin = { _ -> navController.navigate(Destinations.R02_STUDY_HOME) }"
+    }
+   ],
+   "reason": "The PIN argument is ignored and any entry opens study home. Research routes sit in the same flat NavHost, and nothing navigates to R01. R08 and R09 are PlaceholderScreen (lines 886-887)."
+  },
+  {
+   "id": "doc4-5.1-controls",
+   "kind": "rule",
+   "section": "5.1",
+   "claim": "Camera requests effects off, and AE and AWB lock where the phone supports it.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/CameraControlHelper.kt",
+     "line": 115,
+     "quote": "CaptureRequest.CONTROL_EFFECT_MODE, CaptureRequest.CONTROL_EFFECT_MODE_OFF"
+    },
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/CameraControlHelper.kt",
+     "line": 135,
+     "quote": "interop.setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, true)"
+    }
+   ]
+  },
+  {
+   "id": "doc4-5.1-burst",
+   "kind": "rule",
+   "section": "5.1, 5.6",
+   "claim": "Capture is a burst of 3 frames, dropping to 2 on low memory.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/BurstCaptureController.kt",
+     "line": 36,
+     "quote": "val burstFrameCount: Int = if (isLowRamDevice) 2 else 3"
+    }
+   ]
+  },
+  {
+   "id": "doc4-5.1-qualification",
+   "kind": "rule",
+   "section": "5.1, FR-04",
+   "claim": "Camera qualification limits: repeatability under 1.5, uniformity under 2.0, accuracy under 3.0 Delta E 2000.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/qualification/CameraQualificationModels.kt",
+     "line": 52,
+     "quote": "maxRepeatabilityDeltaE: Double = 1.5, maxUniformityDeltaE: Double = 2.0, maxAccuracyDeltaE: Double = 3.0"
+    }
+   ],
+   "reason": "Defaults match the doc. Uniformity and accuracy read the quality-gate keys maxPatchNonuniformityDelta and maxCorrectionResidualDeltaE (line 68), so the two gates share thresholds. The doc does not say this."
+  },
+  {
+   "id": "doc4-5.3-quality-gate",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "The quality gate has nine checks with reason codes NO_CARD to WINDOW_NOT_SKIN.",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGate.kt",
+     "line": 76,
+     "quote": "// 1. NO_CARD (Fewer than 4 corner markers detected)"
+    },
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGate.kt",
+     "line": 197,
+     "quote": "failureReasons.add(QualityReasonCode.WINDOW_NOT_SKIN)"
+    }
+   ],
+   "reason": "All ten codes exist in the engine, and TC-CAP-02 to 12 have tests (trace.txt). The app does not call the gate (see doc4-4.4-quality-loop)."
+  },
+  {
+   "id": "doc4-5.3-thresholds-config",
+   "kind": "rule",
+   "section": "5.3",
+   "claim": "Quality thresholds live in the triage config, so tuning needs no code change.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.config_keys.actual",
+     "quote": "qualityThresholds.maxCardAngleDegrees ... qualityThresholds.minExposureMidGray"
+    }
+   ],
+   "reason": "The keys exist in the config, but no app code parses triage-config.json at runtime. TriageConfigParser is called only from TriageCli, so the shipped thresholds are code defaults."
+  },
+  {
+   "id": "doc4-5.4-color-correction",
+   "kind": "rule",
+   "section": "5.4, ADR-006",
+   "claim": "Each channel is linearized from the card's gray ramp, a 3x3 least-squares correction is fitted to XYZ, and the window is converted to CIELAB.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningPipelineUseCase.kt",
+     "line": 137,
+     "quote": "val linearizer = PerChannelLinearizer.fit(observedGrays, GRAY_RAMP_REFLECTANCES)"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningPipelineUseCase.kt",
+     "line": 135,
+     "quote": "sampledPatches[patchId] ?: Rgb(0.5, 0.5, 0.5)"
+    }
+   ],
+   "reason": "Implemented, but a missing gray patch is silently replaced with mid-gray instead of failing. Gray reflectances are hardcoded (line 59) instead of read from the batch QR."
+  },
+  {
+   "id": "doc4-5.5-estimation",
+   "kind": "rule",
+   "section": "5.5, ADR-007",
+   "claim": "Ridge regression per site, a split-conformal 90% interval, and a weighted mean when both sites are captured.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/main/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationEngine.kt",
+     "line": 41,
+     "quote": "val q90 = siteModel.residualQuantile90"
+    },
+    {
+     "file": "android/engine/estimation/src/main/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationEngine.kt",
+     "line": 75,
+     "quote": "val (combinedEstimate, combinedQuantile) = EstimationMath.combineSites("
+    }
+   ],
+   "reason": "TC-EST-01 to 07 have tests (trace.txt)."
+  },
+  {
+   "id": "doc4-5.5-multisite-pipeline",
+   "kind": "rule",
+   "section": "5.5",
+   "claim": "The pipeline combines sternum and forehead captures when both exist.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningPipelineUseCase.kt",
+     "line": 161,
+     "quote": "estimationEngine.estimateSite(BodySite.STERNUM, correctedSkinLab)"
+    }
+   ],
+   "reason": "The pipeline labels every capture STERNUM, so a forehead capture is never combined."
+  },
+  {
+   "id": "doc4-5.6-budget",
+   "kind": "NFR",
+   "section": "5.6, NFR-02, NFR-04b",
+   "claim": "On the Helio G81/G85 reference phone: capture to result under 4 s target and 10 s hard limit, marker detection under 80 ms per frame, peak memory under 120 MB.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "docs/spikes/2026-10-26-marker-detection-timing.md",
+     "line": 24,
+     "quote": "Host Python 3.14 with OpenCV cv2.aruco running benchmarks"
+    }
+   ],
+   "reason": "TC-PERF-01 to 06 have zero tests (trace.txt). The spike behind the [Certain] tag on marker timing ran Python OpenCV on a host machine, not the shipped detector on a reference phone. Settling this needs device runs."
+  },
+  {
+   "id": "doc4-6.1-config-keys",
+   "kind": "other",
+   "section": "6.1",
+   "claim": "triage-config.json has configVersion, triageEnabled, validUntil, clinicalSignoff, scope, hardRules, thresholds, zones and maxIntervalWidth.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.config_keys.missing",
+     "quote": "[]"
+    },
+    {
+     "inventory_key": "categories.config_keys.details",
+     "quote": "triageEnabled: false, validUntil: 2027-12-31, clinicalSignoff_status: DRAFT"
+    }
+   ]
+  },
+  {
+   "id": "doc4-6.2-coverage",
+   "kind": "rule",
+   "section": "6.2 step 8",
+   "claim": "Threshold tables must cover 0 to 336 hours for every band, and the schema rejects a table that does not.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "config/schema/triage-config.schema.json",
+     "line": 224,
+     "quote": "{ \"type\": \"number\", \"const\": 336 }"
+    }
+   ]
+  },
+  {
+   "id": "doc4-6.2-config-check-engine",
+   "kind": "rule",
+   "section": "6.2 step 1",
+   "claim": "triageEnabled false, an unsigned config in a public build, or a date past validUntil means no triage result and a blood-test message.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 25,
+     "quote": "if (!config.triageEnabled) { return TriageResult.Unavailable("
+    },
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 42,
+     "quote": "if (today.isAfter(config.validUntil)) {"
+    }
+   ],
+   "reason": "Covered by TC-TRI-18, 20 and 26. TC-TRI-19 (signature broken) only checks malformed JSON. The release signature is checked by BundleManifestVerifier, not the engine."
+  },
+  {
+   "id": "doc4-6.2-triageEnabled-app",
+   "kind": "rule",
+   "section": "6.2 step 1, PRD D10",
+   "claim": "The app takes triageEnabled from the signed config; when it is false, no triage result is ever shown.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 225,
+     "quote": "triageEnabled: Boolean = false"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 152,
+     "quote": "NeoGoldNavHost(navController = navController, dataStore = dataStore, modifier = ...)"
+    }
+   ],
+   "reason": "triageEnabled is hardcoded as a NavHost default and never read from triage-config.json; app code never parses the config. Today's behavior matches the asset value (false), but changing the config would not change the app."
+  },
+  {
+   "id": "doc4-6.2-S20-default",
+   "kind": "rule",
+   "section": "6.2 step 1",
+   "claim": "No result screen shows triage unless the gate allows it.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.triage_gate.unplanned",
+     "quote": "S20ResultScreen.kt: Kotlin parameter defaults to true"
+    },
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 60,
+     "quote": "triageEnabled: Boolean = true,"
+    }
+   ],
+   "reason": "MainActivity.kt:602 passes the flag explicitly, but the S20 default fails open for any other caller."
+  },
+  {
+   "id": "doc4-6.2-hard-rules-engine",
+   "kind": "rule",
+   "section": "6.1, 6.2 step 2",
+   "claim": "Engine hard rules: R1 danger signs and R2 jaundice under 24 h give REFER_URGENT; R3 GA under 35 and R4 prior phototherapy give CANNOT_SCREEN_BLOOD_TEST; R5 age over 336 h gives CLINICAL_REVIEW. First match wins.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 61,
+     "quote": "// Step 2: Hard rules in strict order R1 to R5 (first match wins)"
+    },
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 158,
+     "quote": "fun test_TC_TRI_06_rule_order() { ... assertThat(action.reasonCode).isEqualTo(TriageReasonCode.R1)"
+    }
+   ],
+   "reason": "TriageInputs gives dangerSigns, jaundiceOnsetUnder24h and priorPhototherapy a default of false (TriageModels.kt:82-85)."
+  },
+  {
+   "id": "doc4-6.2-quality-fallback",
+   "kind": "rule",
+   "section": "6.2 step 3",
+   "claim": "Three failed captures give BLOOD_TEST_TODAY.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 112,
+     "quote": "if (inputs.qualityFailedAttempts >= 3) {"
+    }
+   ]
+  },
+  {
+   "id": "doc4-6.2-threshold",
+   "kind": "rule",
+   "section": "6.2 step 4",
+   "claim": "T is interpolated linearly in the GA band's table at the current age in hours.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageArithmetic.kt",
+     "line": 69,
+     "quote": "fun interpolateThresholdTenths("
+    }
+   ],
+   "reason": "Covered by TC-TRI-14 and 16."
+  },
+  {
+   "id": "doc4-6.2-actions",
+   "kind": "rule",
+   "section": "6.2 step 6",
+   "claim": "E>=T gives REFER_URGENT; U>=T-3 or U>=15 gives BLOOD_TEST_TODAY; U-L>maxIntervalWidth gives BLOOD_TEST_TODAY; U>=T-5 gives RECHECK; otherwise NO_FURTHER_ACTION.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 146,
+     "quote": "if (eTenths >= tTenths) {"
+    },
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 186,
+     "quote": "if (uTenths >= tTenths - recheckWithinTenths) {"
+    }
+   ],
+   "reason": "Covered by TC-TRI-07 to 13."
+  },
+  {
+   "id": "doc4-6.2-reason-code",
+   "kind": "rule",
+   "section": "6.2 step 7",
+   "claim": "Output is the action, one reason code (the first rule that matched), the threshold, the interval and the config version.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 149,
+     "quote": "reasonCode = TriageReasonCode.ABOVE_THRESHOLD,"
+    },
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 521,
+     "quote": "fun test_TC_TRI_22_output_traceability()"
+    }
+   ],
+   "reason": "True in the engine. In the app path the hard-rule reason code is wrong (doc4-4.4-rule-order-app)."
+  },
+  {
+   "id": "doc4-6.2-integer-tenths",
+   "kind": "rule",
+   "section": "6.2 step 8",
+   "claim": "Values are compared in integer tenths of mg/dL, rounding toward more care: threshold down, estimate and upper bound up, lower bound down.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 135,
+     "quote": "val eTenths = TriageArithmetic.toTenthsCeiling(estimate) / lTenths = toTenthsFloor(lower) / uTenths = toTenthsCeiling(upper)"
+    },
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageArithmetic.kt",
+     "line": 104,
+     "quote": "return t.multiply(BigDecimal.TEN).setScale(0, RoundingMode.FLOOR).intValueExact()"
+    }
+   ],
+   "reason": "Covered by TC-TRI-23 and 25. Zone widths from the config are rounded half-up (line 139)."
+  },
+  {
+   "id": "doc4-6.2-strictmath",
+   "kind": "rule",
+   "section": "6.2 step 8",
+   "claim": "The color and estimation engines use StrictMath for powers, roots and exponentials.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/colorscience/src/main/kotlin/com/kitalonlabs/neogold/engine/colorscience/ColorConversions.kt",
+     "line": 62,
+     "quote": "StrictMath.pow((c + 0.055) / 1.055, 2.4)"
+    },
+    {
+     "file": "android/engine/colorscience/src/main/kotlin/com/kitalonlabs/neogold/engine/colorscience/Ciede2000.kt",
+     "line": 103,
+     "quote": "val deltaTheta = 30.0 * StrictMath.exp("
+    }
+   ]
+  },
+  {
+   "id": "doc4-6.2-boundary-tests",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Table-driven tests cover every rule and every boundary (exactly at T and at T-3.0).",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 177,
+     "quote": "fun test_TC_TRI_07_estimate_exactly_at_threshold()"
+    },
+    {
+     "file": "android/engine/triage/src/test/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngineTest.kt",
+     "line": 214,
+     "quote": "fun test_TC_TRI_09_upper_bound_at_T_minus_3()"
+    }
+   ],
+   "reason": "TC-TRI-01 to 26 are all cited in tests (trace.txt). TC-TRI-21 falls back to a hardcoded Windows path (line 514)."
+  },
+  {
+   "id": "doc4-6.2-output-logged",
+   "kind": "rule",
+   "section": "1 driver 3, 6.2 step 7",
+   "claim": "Every result is traceable to its action, reason code, config, model and card batch.",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 479,
+     "quote": "TriageReasonCode.R3, TriageReasonCode.R4 -> \"BLOOD_TEST_TODAY\"; R5 -> \"CANNOT_SCREEN\""
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 496,
+     "quote": "cardBatchId = \"NG-2026-001\", appVersion = \"1.0.0\", modelVersion = null, configVersion = \"2026.10.0\""
+    }
+   ],
+   "reason": "Logged actions differ from the config actions (CANNOT_SCREEN_BLOOD_TEST, CANNOT_SCREEN_CLINICAL_REVIEW). Versions and card batch are hardcoded: the asset config is 2026.10.0-draft."
+  },
+  {
+   "id": "doc4-6.3-ci-gate",
+   "kind": "gate",
+   "section": "6.3",
+   "claim": "CI fails the release build if the config hash does not match CLINICAL_SIGNOFF.md or the config is still DRAFT.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 34,
+     "quote": "if signoff.get(\"status\") != \"SIGNED\":"
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 26,
+     "quote": "run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md"
+    }
+   ],
+   "reason": "As 6.2 allows, a config with triageEnabled false passes without sign-off (line 24)."
+  },
+  {
+   "id": "doc4-6.3-12-months",
+   "kind": "gate",
+   "section": "6.3",
+   "claim": "Each signed config is valid for at most 12 months.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "tools/verify_clinical_signoff.py",
+     "line": 47,
+     "quote": "if valid_until > signed_on + dt.timedelta(days=366):"
+    }
+   ]
+  },
+  {
+   "id": "doc4-6.3-release-key",
+   "kind": "rule",
+   "section": "6.3, 12",
+   "claim": "The release key signs the config bundle, and corrupted or modified assets are rejected at runtime.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/integrity/BundleManifestVerifier.kt",
+     "line": 26,
+     "quote": "const val DEFAULT_TEST_K3_PUBLIC_HEX ="
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/NeoGoldApplication.kt",
+     "line": 28,
+     "quote": "val integrityResult = BundleManifestVerifier.verifyAssets(this)"
+    }
+   ],
+   "reason": "The Ed25519 manifest check runs at startup, but it is pinned to a test K3 public key with no build-time override. If CI signs with a different release key, a release build would fail its own check."
+  },
+  {
+   "id": "doc4-7-card-verify",
+   "kind": "rule",
+   "section": "7, ADR-009",
+   "claim": "The QR payload is verified offline with Ed25519 against the bundled trust list, with expiry checked.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 80,
+     "quote": "val verifier = Ed25519Verify(key.publicKeyBytes)"
+    }
+   ],
+   "reason": "TC-CARD-01 to 09 have tests. TC-CARD-10 has zero (trace.txt)."
+  },
+  {
+   "id": "doc4-7-blocks-screening",
+   "kind": "rule",
+   "section": "7",
+   "claim": "A bad signature, unknown issuer or expired batch blocks screening; research mode continues with a warning and records card_status.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningStateMachine.kt",
+     "line": 194,
+     "quote": "is VerificationResult.Expired -> { ScreeningState.Blocked(inputs, CardBlockReason.BATCH_EXPIRED)"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 780,
+     "quote": "cardStatus = ...CardTrustStatus.VERIFIED,"
+    }
+   ],
+   "reason": "The domain logic exists but is not wired. The screening flow has no card check, and research study home hardcodes VERIFIED."
+  },
+  {
+   "id": "doc4-8-retention",
+   "kind": "rule",
+   "section": "8, PRD D7",
+   "claim": "Register numbers are erased at 60 days and records purged at 180 days by default.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/datastore/NeoGoldDataStore.kt",
+     "line": 188,
+     "quote": "const val DEFAULT_SCREENING_RETENTION_DAYS = 180"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/datastore/NeoGoldDataStore.kt",
+     "line": 192,
+     "quote": "const val DEFAULT_REGISTER_NUMBER_RETENTION_DAYS = 60"
+    }
+   ],
+   "reason": "S23 shows 90 as the initial value before the stored value loads (MainActivity.kt:692). This is display only."
+  },
+  {
+   "id": "doc4-8-images-memory",
+   "kind": "rule",
+   "section": "8, 4.5",
+   "claim": "Screening images stay in memory only and are discarded after analysis.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 523,
+     "quote": "onCaptureCompleted = { _ ->"
+    }
+   ],
+   "reason": "The frame is discarded. :feature:screening main code has no file-write calls (searched for FileOutputStream, writeBytes, filesDir and cacheDir)."
+  },
+  {
+   "id": "doc4-8-no-birthdate",
+   "kind": "rule",
+   "section": "8, ADR-011",
+   "claim": "Birth date and time are never stored; only age in hours is stored.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/local/entity/ScreeningSessionEntity.kt",
+     "line": 47,
+     "quote": "val ageHours: Double,"
+    }
+   ],
+   "reason": "sessionBirthTimeMs is kept only in Compose memory (MainActivity.kt:241) and is not in the entity."
+  },
+  {
+   "id": "doc4-8-no-backup",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Backup and device-transfer rules exclude all NeoGold data.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/AndroidManifest.xml",
+     "line": 15,
+     "quote": "android:allowBackup=\"false\""
+    }
+   ]
+  },
+  {
+   "id": "doc4-8-atomic-writes",
+   "kind": "NFR",
+   "section": "8, NFR-09",
+   "claim": "File writes are write-to-temp-then-rename.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/EncryptedFileStore.kt",
+     "line": 94,
+     "quote": "if (!tempFile.renameTo(targetFile)) {"
+    }
+   ]
+  },
+  {
+   "id": "doc4-9-sync",
+   "kind": "rule",
+   "section": "9",
+   "claim": "Upload runs as one unique WorkManager work on unmetered networks, with an idempotency key on each request and a SHA-256 digest on each image.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchWorkScheduler.kt",
+     "line": 24,
+     "quote": ".setRequiredNetworkType(NetworkType.UNMETERED)"
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt",
+     "line": 426,
+     "quote": ".header(\"Content-Digest\", digestHeader)"
+    }
+   ],
+   "reason": "TC-SYNC-01 to 20 have tests (trace.txt)."
+  },
+  {
+   "id": "doc4-9-upload-now",
+   "kind": "rule",
+   "section": "9, ADR-014",
+   "claim": "Research home shows N waiting to upload and an Upload now button that runs the outbox in the foreground.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 781,
+     "quote": "pendingUploadsCount = 0,"
+    }
+   ],
+   "reason": "The UI widgets exist (R07ExportScreen.kt:209), but the app passes a hardcoded count of 0 and does not wire onUploadNowClicked."
+  },
+  {
+   "id": "doc4-10.2-stack",
+   "kind": "other",
+   "section": "10.2",
+   "claim": "Deployment is Caddy, an api image from CI pinned by digest, PostgreSQL 16 and nightly restic backups.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 40,
+     "quote": "image: ${API_IMAGE:?}@${API_DIGEST:?set API_DIGEST, see neogold-deploy}"
+    },
+    {
+     "file": "backend/deploy/docker-compose.yml",
+     "line": 62,
+     "quote": "image: ${POSTGRES_IMAGE:?pin postgres 16 by digest in .env}"
+    }
+   ],
+   "reason": "backend/deploy/neogold-backup uses restic."
+  },
+  {
+   "id": "doc4-10.2-s3",
+   "kind": "other",
+   "section": "10.2",
+   "claim": "Image storage is one small interface with two implementations: an encrypted filesystem volume and an S3-compatible adapter.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/sessions.py",
+     "line": 365,
+     "quote": "store_dir = Path(settings.IMAGE_STORE_DIR)"
+    }
+   ],
+   "reason": "Searched backend/ for S3, boto and storage classes. Images are written straight to a filesystem path, with no storage interface and no S3 adapter."
+  },
+  {
+   "id": "doc4-10.2-limits",
+   "kind": "rule",
+   "section": "10.2",
+   "claim": "Caddy enforces request size limits, and rate limiting is done in the API.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/deploy/Caddyfile",
+     "line": 27,
+     "quote": "max_size 20MB"
+    },
+    {
+     "file": "backend/app/middleware/rate_limit.py",
+     "line": 13,
+     "quote": "def __init__(self, capacity: float = 20.0, refill_rate: float = 1.0):"
+    }
+   ]
+  },
+  {
+   "id": "doc4-10.2-admin-cli",
+   "kind": "other",
+   "section": "10.2",
+   "claim": "The admin CLI creates studies and sites, issues enrollment codes, revokes devices, lists upload status and exports.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/cli.py",
+     "line": 939,
+     "quote": "c_issue = code_sub.add_parser(\"issue\", help=\"Issue enrollment codes\")"
+    },
+    {
+     "file": "backend/app/cli.py",
+     "line": 990,
+     "quote": "exp_parser = subparsers.add_parser(\"export\", help=\"Export de-identified data\")"
+    }
+   ]
+  },
+  {
+   "id": "doc4-10.3-enrollment",
+   "kind": "endpoint",
+   "section": "10.3",
+   "claim": "Enrollment binds a hardware-backed Keystore key to the study and site, and every later request is signed by it.",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/crypto/DeviceKeyManager.kt",
+     "line": 44,
+     "quote": "val challenge = Base64Url.sha256(enrollmentCode.toByteArray(Charsets.UTF_8))"
+    },
+    {
+     "inventory_key": "categories.endpoints.actual",
+     "quote": "POST /enrollments, DELETE /device"
+    }
+   ]
+  },
+  {
+   "id": "doc4-11-training",
+   "kind": "rule",
+   "section": "11",
+   "claim": "Splits are by participant, and Kotlin and Python golden-vector parity fails the build beyond 1e-4.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "training/neogold_train/split.py",
+     "line": 20,
+     "quote": "def split_by_participant("
+    },
+    {
+     "file": "training/tests/test_parity.py",
+     "line": 20,
+     "quote": "verify_colorscience_conversions_parity(conv_path, tolerance=1e-4)"
+    }
+   ]
+  },
+  {
+   "id": "doc4-12-manifest-four",
+   "kind": "rule",
+   "section": "12",
+   "claim": "The bundle manifest lists the SHA-256 of model.json, model-card.json, triage-config.json and trust-list.json, signed by the release key.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/assets/bundle-manifest.json",
+     "line": 3,
+     "quote": "\"model.json\": ..., \"triage-config.json\": ..., \"trust-list.json\": ..."
+    }
+   ],
+   "reason": "Only three files are listed. model-card.json is not in the assets or in REQUIRED_FILES (BundleManifestVerifier.kt:29)."
+  },
+  {
+   "id": "doc4-12-mismatch-disables",
+   "kind": "rule",
+   "section": "12",
+   "claim": "At startup the app verifies the manifest signature and every hash, and any mismatch disables screening.",
+   "status": "Partial",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/NeoGoldApplication.kt",
+     "line": 30,
+     "quote": "if (!integrityResult.isScreeningAllowed) { Timber.w(... \"Screening disabled.\""
+    }
+   ],
+   "reason": "Verification runs and the result is stored, but the UI never reads it. Only the unused ScreeningStateMachine and ScreeningPipelineUseCase check it, and their default is IntegrityChecker { true }."
+  },
+  {
+   "id": "doc4-12-ota",
+   "kind": "NG",
+   "section": "12, NG-062",
+   "claim": "Over-the-air updates of model, config and trust list.",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [
+    {
+     "file": "docs/4_System_Architecture.md",
+     "line": 546,
+     "quote": "Over-the-air updates of these artifacts are a v1.1 Could-have (NG-062); in v1.0 they change only with an app release."
+    }
+   ],
+   "reason": "The doc defers this to v1.1 as a Could-have."
+  },
+  {
+   "id": "doc4-13-local-log",
+   "kind": "rule",
+   "section": "13",
+   "claim": "On the device: a local structured log (ring buffer, no personal data) that the user can export.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "Searched android/**/src/main for ring buffer, DiagnosticLog and LocalLog: none found. TimberReleaseTree only writes to logcat."
+  },
+  {
+   "id": "doc4-13-crash-optin",
+   "kind": "FR",
+   "section": "13, FR-34",
+   "claim": "Crash reporting is off by default and opt-in only.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/NeoGoldApplication.kt",
+     "line": 17,
+     "quote": "InHouseCrashHandler.install(this)"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 92,
+     "quote": "mutableStateOf<Boolean>(CrashReportManager.hasPendingReport(this@MainActivity))"
+    }
+   ],
+   "reason": "A report leaves the phone only when the user taps Share. But the handler always records locally, and the crashReportingOptIn setting is never checked."
+  },
+  {
+   "id": "doc4-13-health",
+   "kind": "endpoint",
+   "section": "13",
+   "claim": "The backend has a /health endpoint.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "backend/app/routers/health.py",
+     "line": 14,
+     "quote": "\"/health\","
+    }
+   ]
+  },
+  {
+   "id": "doc4-14-android-ci",
+   "kind": "gate",
+   "section": "14",
+   "claim": "Android CI runs lint, unit tests, golden-vector parity, instrumented UI tests on an emulator, bundle manifest verification, the sign-off check and signed builds.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 26,
+     "quote": "lintRelease detekt testReleaseUnitTest verifyGoldenVectors triageDifferentialTest verifyConfigSchema"
+    }
+   ],
+   "reason": "No workflow runs instrumented emulator tests (searched for connectedAndroidTest and emulator). The release workflow signs the manifest (android-release.yml:48) but does not verify the bundled manifest."
+  }
+ ],
+ "counts": {
+  "Implemented": 45,
+  "Partial": 16,
+  "Missing": 3,
+  "Contradicted": 9,
+  "Deferred": 2,
+  "Unknown": 1
+ },
+ "notes": "The engines (triage, colorscience, estimation, cardtrust, vision) match Section 6.2 closely. The app layer does not use them: MainActivity hardcodes triageEnabled=false instead of reading the config, decides hard rules in UI lambdas in a different order (R2 before R1, R4 before R3), shows a hardcoded estimate and NO_FURTHER_ACTION from S19, skips the card check and the quality gate, keeps inputs in plain remember with silent defaults (GA 38, age 0 h), and logs hardcoded configVersion, cardBatchId and action names. The fake result is unreachable in v1.0 only because the hardcoded false hides New screening (S09HomeScreen.kt:113). Also: the research PIN is ignored at R01 and R01 is unreachable from Home; S10 pre-sets birth time to 48 h before now; TriageInputs gives the three safety answers a default of false. The 'Certain, verified' tags in 4.3 and 5.6 point to spikes run on a host machine, not reference phones. The inventory was generated at commit 4f04aef; per the prompt, product code is identical to main."
+}

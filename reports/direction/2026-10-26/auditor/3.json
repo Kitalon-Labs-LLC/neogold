@@ -1,0 +1,1393 @@
+{
+ "doc": "docs/3_Feature_Backlog.md",
+ "companions": [],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "NG-001",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Multi-module Kotlin project, Jetpack Compose, Hilt, Clean Architecture, CI build",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "inventory_key": "categories.modules.actual"
+    },
+    {
+     "inventory_key": "categories.libraries.missing",
+     "quote": "com.google.dagger:*"
+    },
+    {
+     "file": ".github/workflows/android-ci.yml",
+     "line": 28
+    }
+   ],
+   "reason": "21 planned modules, Compose and CI exist. Hilt is declared in libs.versions.toml but no module uses it (inventory lists com.google.dagger:* as missing); MainActivity builds its dependencies by hand."
+  },
+  {
+   "id": "NG-002",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Bangla and English at first launch and in settings; all strings externalized",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values-bn/strings.xml",
+     "line": 31
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 112,
+     "quote": "title = { Text(\"Share Crash Report?\") }"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/notification/RecheckNotificationHelper.kt",
+     "line": 51,
+     "quote": ".setContentText(\"A recheck is due\")"
+    }
+   ],
+   "reason": "S01 and S23 language choice and values-bn exist. Not all strings are externalized: hardcoded English in MainActivity (crash dialog, lock screen, S20 nextStepText lines 591-595), the notification, S10a:94, S20:137 and S24:124."
+  },
+  {
+   "id": "NG-003",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Three-screen safety notice with explicit 'I understand'; re-shown after major model updates",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgSafetyNoticePager.kt",
+     "line": 45,
+     "quote": "rememberPagerState(pageCount = { 3 })"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 282,
+     "quote": "dataStore.setSafetyAckVersion(1)"
+    }
+   ],
+   "reason": "The three-page pager ends in 'I understand'. The re-show logic is missing: the ack version is hardcoded to 1 and never read, and the NavHost always starts at S01 (line 224), so onboardingComplete and safetyAckVersion are never checked."
+  },
+  {
+   "id": "NG-004",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Detect RAM, Android version, camera controls (recorded, never required); brand battery steps for TECNO, Infinix, itel, Xiaomi, Samsung",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S05DeviceCheckScreen.kt",
+     "line": 61,
+     "quote": "report ?: DeviceChecker.checkDevice(context)"
+    },
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/device/DeviceBatteryGuidance.kt",
+     "line": 15
+    }
+   ],
+   "reason": "Detection and all five brand guides exist and S05 shows them. Recording is missing: the device_profile row is built from S07's fabricated 'SampleModel' profile, and only an id goes to DataStore (MainActivity:321). The real capabilities are not persisted."
+  },
+  {
+   "id": "NG-005",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Results never conveyed by color alone; 4.5:1 contrast; large touch targets usable with gloves",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 70,
+     "quote": "val (solidHeaderColor, bodyTintColor, bodyTextColor, icon, actionText, borderStroke) = when (action) {"
+    },
+    {
+     "file": "android/core/designsystem/src/test/kotlin/com/kitalonlabs/neogold/core/designsystem/ContrastTokensTest.kt",
+     "line": 11
+    }
+   ],
+   "reason": "The triage card uses color, icon, border and text together. A contrast test checks every token pair against 4.5:1. ResultButtonHeight is 64 dp. TC-A11Y-01 to 05 are cited by tests."
+  },
+  {
+   "id": "NG-006",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Card v1 with skin and gray patches, duplicates in opposite corners, corner markers, punched skin window, print spec",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "card/spec/card-v1.md",
+     "line": 109,
+     "quote": "Duplicate patches in opposite corners (4 patches)"
+    },
+    {
+     "file": "card/spec/card-v1.md",
+     "line": 48
+    }
+   ],
+   "reason": "The spec, card-v1.json, generator and tests exist (card/tests). The physical print was not checked."
+  },
+  {
+   "id": "NG-007",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Three card photos measure repeatability, uniformity, accuracy; pass qualifies phone for screening, fail limits to research; store profile",
+   "status": "Contradicted",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S07QualificationScreen.kt",
+     "line": 154,
+     "quote": "val result = simulateResult ?: createDefaultQualificationResult()"
+    },
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S07QualificationScreen.kt",
+     "line": 187,
+     "quote": "qualification = QualificationStatus.QUALIFIED,"
+    },
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/qualification/CameraQualifier.kt",
+     "line": 70
+    }
+   ],
+   "reason": "CameraQualifier.qualifyCamera implements the three measurements. The shipped S07 takes no photos: three button taps return a hardcoded QUALIFIED profile with invented Delta E values (0.85, 1.10, 1.65). Every phone therefore qualifies for screening without measurement."
+  },
+  {
+   "id": "NG-039",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Scan card QR; verify Ed25519 batch signature offline against trust list; load reference colors; enforce expiry; unverified cards research only",
+   "status": "Contradicted",
+   "area": "crypto",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S06CardScanScreen.kt",
+     "line": 44,
+     "quote": "initialBatchId: String = \"NG-2026-001\","
+    },
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S06CardScanScreen.kt",
+     "line": 127,
+     "quote": "text = \"VERIFIED\","
+    },
+    {
+     "file": "android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/CardTrustVerifier.kt",
+     "line": 12
+    },
+    {
+     "inventory_key": "categories.backlog_refs.missing",
+     "quote": "NG-039"
+    }
+   ],
+   "reason": "The CardTrustVerifier engine exists (commit a15ca55; TC-CARD-01 to 06 are tested). S06 never scans or verifies: it pre-fills batch NG-2026-001 and shows a VERIFIED badge. Screening sessions hardcode cardBatchId NG-2026-001 (MainActivity:496, 635). Any card, verified or not, reaches screening."
+  },
+  {
+   "id": "NG-045",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Card Production Kit: print spec, matte lamination and window spec, spectrophotometer and interim chart-transfer protocol, batch tolerances, QR signing CLI",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "card/spec/card-v1.md",
+     "line": 182
+    },
+    {
+     "file": "card/tools/neogold-sign/README.md",
+     "line": 45
+    }
+   ],
+   "reason": "The print, lamination and window spec, spectrophotometer protocol, batch tolerances and neogold-sign CLI exist. No 'interim chart-transfer method' appears anywhere under card/ (a grep finds it only in docs 2, 3 and 9). TC-CARD-10 has zero tests."
+  },
+  {
+   "id": "NG-008",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Camera screen with card placement guide and distance cue",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgCaptureOverlay.kt",
+     "line": 37
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S15CaptureGuideScreen.kt",
+     "line": 134
+    }
+   ],
+   "reason": "The placement overlay and the static 20 cm guide on S15 exist. No live distance cue was found in the camera overlay or LiveCardAnalyzer."
+  },
+  {
+   "id": "NG-009",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "CameraX with Camera2 interop; scene modes, effects, extensions off; AE/AWB lock when available; record capture metadata",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/CameraControlHelper.kt",
+     "line": 114,
+     "quote": "CaptureRequest.CONTROL_SCENE_MODE, CaptureRequest.CONTROL_SCENE_MODE_DISABLED"
+    },
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/CameraControlHelper.kt",
+     "line": 135
+    }
+   ],
+   "reason": "Scene and effect modes are off, AE and AWB locks are conditional, and ISO and exposure are read from CaptureResult (line 175)."
+  },
+  {
+   "id": "NG-010",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Locate card via fiducials; extract patch colors; reject partial or angled cards",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionModels.kt",
+     "line": 13,
+     "quote": "CARD_ANGLE,"
+    },
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionEngine.kt",
+     "line": 15
+    }
+   ],
+   "reason": "The engine does this, and TC-CAP tests are cited. The app's screening flow never calls it (see NG-011)."
+  },
+  {
+   "id": "NG-011",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Quality gate checks card present, patches readable, glare, blur, under/over exposure, skin region size",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionModels.kt",
+     "line": 11
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 525,
+     "quote": "navController.navigate(Destinations.S18_FOREHEAD_PHOTO)"
+    }
+   ],
+   "reason": "VisionQualityGate implements every check, and ScreeningPipelineUseCase calls it. The app's S16 onCaptureCompleted ignores the frame and goes straight to S18, so the gate never runs in the app and S17 is unreachable."
+  },
+  {
+   "id": "NG-012",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Plain-language reason for each failure; after three failures recommend blood test",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 112,
+     "quote": "if (inputs.qualityFailedAttempts >= 3) {"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 540
+    }
+   ],
+   "reason": "The retake strings, the S17 screen and the engine's 3-failure fallback exist. No route navigates to S17_PHOTO_PROBLEM, so the user never sees the guidance or the fallback."
+  },
+  {
+   "id": "NG-013",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Map image to standard color space using card patches plus device profile",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningPipelineUseCase.kt",
+     "line": 149,
+     "quote": "val ccm = ColorCorrectionFitter.fit("
+    },
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/qualification/CameraQualifier.kt",
+     "line": 224,
+     "quote": "residualCorrectionJson = null,"
+    }
+   ],
+   "reason": "Linearization and a 3x3 CCM from the card patches are implemented. The device profile residual correction is always null and never applied."
+  },
+  {
+   "id": "NG-014",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Extract skin from punched window after perspective correction; reject cloth, shadow, fingers (no NN)",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionModels.kt",
+     "line": 21,
+     "quote": "WINDOW_NOT_SKIN"
+    },
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/CardWarper.kt",
+     "line": 1
+    }
+   ],
+   "reason": "The engine has warping and skin-plausibility rejection. It is not reached from the app flow (see NG-011)."
+  },
+  {
+   "id": "NG-015",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Extract chromaticity features; run regression model with LiteRT; no network call",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 568,
+     "quote": "sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 569,
+     "quote": "sessionEstimatedLow = 8.2"
+    },
+    {
+     "file": "docs/4_System_Architecture.md",
+     "line": 151,
+     "quote": "Pure Kotlin linear model from JSON ... LiteRT reserved for the v2 sclera model"
+    }
+   ],
+   "reason": "EstimationEngine (a pure Kotlin JSON ridge model) works in the domain layer. S19 never runs it: after a 1.2 s delay it injects an estimate of 8.2-10.1 mg/dL, a threshold of 12.0 and NO_FURTHER_ACTION, and S20 saves these to the log. The backlog says LiteRT, but ADR doc 4 says a JSON model; the backlog is stale."
+  },
+  {
+   "id": "NG-016",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Return estimated range; widen toward referral when uncertainty or image quality is marginal",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/main/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationEngine.kt",
+     "line": 82,
+     "quote": "lowerBound = combinedEstimate - combinedQuantile,"
+    }
+   ],
+   "reason": "The engine returns a split-conformal interval, and triage sends wide intervals to blood test (maxIntervalWidth). No widening for marginal image quality was found in the estimation engine. The app uses hardcoded ranges (see NG-015)."
+  },
+  {
+   "id": "NG-017",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Screening inputs: birth date and time (age in hours), gestational age in weeks",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 86,
+     "quote": "mutableLongStateOf(initialBirthTimeMs ?: (currentPhoneTimeEpochMs - 48 * 3600 * 1000L))"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 112
+    }
+   ],
+   "reason": "S10 computes age in hours, and gestational age has no default (Next stays disabled until it is set). Birth time is silently pre-filled to 48 h before now, and Next does not require the user to touch it. That is a silent default on an input that drives the threshold (CLAUDE.md: no silent defaults on clinical inputs)."
+  },
+  {
+   "id": "NG-056",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Before safety questions, worker confirms guardian agreed; stored on session without a name; 'No' ends screen with no photo",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10aGuardianConsentScreen.kt",
+     "line": 106,
+     "quote": "if (answer) {"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 471,
+     "quote": "guardianConsentConfirmed = 1,"
+    }
+   ],
+   "reason": "S10a comes first from Home, has no default answer, and on 'No' shows consent_no and returns with nothing saved. TC-UI-13 is cited by 3 tests."
+  },
+  {
+   "id": "NG-018",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Safety questions: jaundice onset under 24 h, danger signs, prior phototherapy",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 404
+    },
+    {
+     "inventory_key": "categories.screens.details.evidence.S12"
+    }
+   ],
+   "reason": "S11, S12 and S13 exist with NgYesNoButtons and no default. One issue: on an early exit to S14, the questions that were never asked are stored as 0 (MainActivity:473-475)."
+  },
+  {
+   "id": "NG-019",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Rule engine runs before camera; urgent referral for early jaundice or danger signs; cannot screen for phototherapy, GA<35 wk, age>14 d",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageEngine.kt",
+     "line": 61,
+     "quote": "if (inputs.dangerSigns) {"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 408,
+     "quote": "sessionRuleOutcome = TriageReasonCode.R2"
+    }
+   ],
+   "reason": "TriageEngine and ScreeningStateMachine implement R1-R5 in doc 4 order (TC-TRI tested). The app does not call the engine. It re-implements the rules inline as S11 R2, then S12 R1, then S13 R4, then R3, then R5, which is not R1-R5 order. A baby with both early jaundice and danger signs gets R2 recorded, not R1. R3 and R4 are stored as BLOOD_TEST_TODAY instead of CANNOT_SCREEN_BLOOD_TEST (line 479)."
+  },
+  {
+   "id": "NG-020",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Thresholds and bands in signed, versioned config reviewed by clinical advisor; never hardcoded",
+   "status": "Contradicted",
+   "area": "triage",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 442,
+     "quote": "} else if (sessionGaWeeks < 35) {"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 445,
+     "quote": "} else if (sessionAgeHours > 336.0) {"
+    },
+    {
+     "file": "config/triage-config.json",
+     "line": 12,
+     "quote": "\"minGestationalAgeWeeks\": 35,"
+    }
+   ],
+   "reason": "The config file, schema, signoff block and engine loading are in place. The app's screening flow hardcodes the scope values (35 weeks, 336 h) in MainActivity instead of reading them from the config. triageEnabled is also a hardcoded Kotlin default (MainActivity:225), not read from the config, and S20 defaults it to true (inventory triage_gate). The values match today."
+  },
+  {
+   "id": "NG-021",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Result screen: four triage actions with color, icon, text; estimated range; model version; blood test reminder",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 91
+    },
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 104
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 591,
+     "quote": "TriageUiAction.REFER_URGENT -> \"Refer urgently to neonatal inpatient unit\""
+    }
+   ],
+   "reason": "The S20 UI is complete (TC-UI-01 to 03). It is fed only by hardcoded inputs and English next-step text from MainActivity, never by TriageResult. With triageEnabled false it shows the blood test card."
+  },
+  {
+   "id": "NG-022",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Triage result shown behind clear 'experimental, research use' label until Phase B published",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 78,
+     "quote": "NgExperimentalBanner(modifier = Modifier.testTag(\"experimental_banner\"))"
+    },
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 9
+    }
+   ],
+   "reason": "The banner is always shown at the top of S20 (TC-UI-02)."
+  },
+  {
+   "id": "NG-023",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Room log; no name; optional register number with ID blocking; register erased at 60 d, records at 180 d; Home lists rechecks due",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/datastore/NeoGoldDataStore.kt",
+     "line": 188,
+     "quote": "const val DEFAULT_SCREENING_RETENTION_DAYS = 180"
+    },
+    {
+     "file": "android/core/data/src/main/kotlin/com/kitalonlabs/neogold/core/data/retention/RetentionWorker.kt",
+     "line": 48,
+     "quote": "fun scheduleDaily(context: Context) {"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 338
+    }
+   ],
+   "reason": "The log, RegisterNumberValidator, 60/180-day defaults, RetentionManager and the Home due list exist. RetentionWorker.scheduleDaily is never called from app code, so automatic erasure never runs."
+  },
+  {
+   "id": "NG-024",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Screening images deleted from memory and storage after analysis unless research mode",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/BurstCaptureController.kt",
+     "line": 64,
+     "quote": "Captures a single frame purely in-memory using ImageCapture.takePicture."
+    },
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/DownsampledImageDecoder.kt",
+     "line": 58
+    }
+   ],
+   "reason": "Capture is in memory only (OnImageCapturedCallback). No FileOutputStream, OutputFileOptions or cacheDir writes exist in engine/camera or feature/screening."
+  },
+  {
+   "id": "NG-025",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Every record stores app, model, config, and device model versions",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 638,
+     "quote": "configVersion = \"2026.10.0\""
+    },
+    {
+     "file": "android/app/src/main/assets/triage-config.json",
+     "line": 2,
+     "quote": "\"configVersion\": \"2026.10.0-draft\","
+    },
+    {
+     "file": "android/app/src/main/assets/model.json",
+     "line": 12,
+     "quote": "\"modelVersion\": \"1.0.0-synthetic\","
+    }
+   ],
+   "reason": "The columns exist, but the app writes hardcoded strings: app 1.0.0, model 1.0.0, config 2026.10.0, card NG-2026-001, deviceProfileId null (lines 494-499 and 634-638). These do not match the bundled assets, so stored versions are wrong."
+  },
+  {
+   "id": "NG-026",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "User can export the log or wipe all local data",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 661
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 741,
+     "quote": "dataStore.clearAll()"
+    }
+   ],
+   "reason": "CSV export works through a share intent. 'Delete all' clears only DataStore; the Room database, encrypted files and keys remain. DefaultDataPurgeManager exists but is never called, and TC-LOG-11 has zero tests."
+  },
+  {
+   "id": "NG-027",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "About screen: model card summary, validation population, limitations, license, version",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S24AboutScreen.kt",
+     "line": 124,
+     "quote": "text = \"Data sources: Multicenter prospective observational validation study data.\","
+    },
+    {
+     "file": "MODEL_CARD.md",
+     "line": 19,
+     "quote": "This model was trained on calibrated synthetic bench phantoms ... It has NO CLINICAL MEANING"
+    }
+   ],
+   "reason": "S24 exists with a model card summary and licenses. It says the model comes from validation study data, but the model card says synthetic bench phantoms, and the version defaults (model 1.0.0) differ from model.json (1.0.0-synthetic)."
+  },
+  {
+   "id": "NG-057",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Exclude app data from backup and transfer; block screenshots on screens with register numbers or research data; no register numbers in notifications",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/res/xml/data_extraction_rules.xml",
+     "line": 4
+    },
+    {
+     "file": "android/app/src/main/AndroidManifest.xml",
+     "line": 15,
+     "quote": "android:allowBackup=\"false\""
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/privacy/SecureScreenHelper.kt",
+     "line": 17
+    }
+   ],
+   "reason": "Backup and transfer exclusions are in place, FLAG_SECURE covers S20-S22 and R02-R07, and the notification text is generic. S14 (s14_rule_outcome) has a register-number field (S14RuleOutcomeScreen.kt:123) but is missing from SECURE_DESTINATIONS."
+  },
+  {
+   "id": "NG-028",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Scanning the signed study QR plus a PIN unlocks research mode",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 766,
+     "quote": "onUnlockWithPin = { _ ->"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 765,
+     "quote": "onScanQrClicked = { /* QR scan integration */ },"
+    }
+   ],
+   "reason": "ResearchPinManager, Argon2PinHasher, StudyEnrollmentManager and ResearchViewModel exist (TC-RSH tested). In the app, R01 ignores the PIN and the QR scan does nothing. Nothing navigates to R01, so research mode is unreachable in a build whose purpose is research (PRD D10)."
+  },
+  {
+   "id": "NG-029",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Paper consent form ID required before any research capture",
+   "status": "Partial",
+   "area": "consent",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R03ParticipantConsentScreen.kt",
+     "line": 73,
+     "quote": "val isConsentFormIdValid = ResearchFormats.isValidConsentFormId(consentFormId)"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 802
+    }
+   ],
+   "reason": "R03 requires a valid consent form ID before Continue. The app discards the entered values (the callback ignores all eight arguments), so nothing is persisted, and R03 is unreachable (see NG-028)."
+  },
+  {
+   "id": "NG-030",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Estimate hidden from user during study sessions",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 304,
+     "quote": "estimateHidden = 1, // Mandatory blinded flag"
+    },
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R04ResearchCaptureScreen.kt",
+     "line": 84
+    }
+   ],
+   "reason": "No research screen renders an estimate, and the repository stores the session blinded (TC-RSH-10)."
+  },
+  {
+   "id": "NG-031",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "TSB value and draw time, same session or later by participant code",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 824,
+     "quote": "onSaveTsb = { _, _, _, _ ->"
+    }
+   ],
+   "reason": "The R05 screen, TsbMeasurementDao and repository support exist. The app discards the entered TSB, and R06 shows a hardcoded tsbMgDl 14.2 (line 839)."
+  },
+  {
+   "id": "NG-032",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Scripts that rebuild the model from data; documented environment; exports LiteRT model",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "training/neogold_train/export.py",
+     "line": 3,
+     "quote": "Exports schema-valid model.json, MODEL_CARD.md, and metrics.json with byte-for-byte determinism."
+    },
+    {
+     "file": "docs/4_System_Architecture.md",
+     "line": 151
+    }
+   ],
+   "reason": "The pipeline, pinned environment, Dockerfile and reproduce.py exist (TC-OPS-07). It exports a JSON ridge model, not LiteRT. The code follows ADR doc 4, so the backlog text is stale."
+  },
+  {
+   "id": "NG-033",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Model card: data sources, population, metrics with confidence intervals, failure modes, intended use",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "MODEL_CARD.md",
+     "line": 5,
+     "quote": "| Model Version | `1.0.0-synthetic` |"
+    },
+    {
+     "file": "MODEL_CARD.md",
+     "line": 43
+    }
+   ],
+   "reason": "A model card exists for the synthetic bench model. Its metrics have no confidence intervals (only point MAE and Bland-Altman LoA), and a real-data card awaits partner data."
+  },
+  {
+   "id": "NG-034",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Research images and records encrypted at rest; keys in Android Keystore",
+   "status": "Implemented",
+   "area": "crypto",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/EncryptedFileStore.kt",
+     "line": 44
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/MasterKeyProvider.kt",
+     "line": 46
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/DatabaseKeyProvider.kt",
+     "line": 40
+    }
+   ],
+   "reason": "Tink file encryption, SQLCipher for Room (net.zetetic:sqlcipher-android in the inventory) and a Keystore master key. TC-SEC-07 and 08 are cited."
+  },
+  {
+   "id": "NG-035",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "Atomic writes; no record lost on crash or battery death",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/AtomicFileStorage.kt",
+     "line": 10
+    },
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/data/ResearchRepository.kt",
+     "line": 235
+    }
+   ],
+   "reason": "Atomic file storage and a transactional session save exist (TC-RSH-13 to 16 cited). Not exercised from the app (see NG-028)."
+  },
+  {
+   "id": "NG-036",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "CSV plus images to local storage or USB, encrypted to study export public key; no identifiers beyond participant code",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/export/ResearchExportManager.kt",
+     "line": 65
+    },
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/export/ExportCryptoEngine.kt",
+     "line": 35
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 860
+    }
+   ],
+   "reason": "The export manager, HPKE crypto and decrypt tool exist (TC-EXP-01 to 04). The app's R07 only sets a 'Preparing' progress state after a destination is picked and never calls ResearchExportManager."
+  },
+  {
+   "id": "NG-037",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "README, MIT license for code, CC BY 4.0 for card and docs, card print guide, contribution guide",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "LICENSE",
+     "line": 1,
+     "quote": "MIT License"
+    },
+    {
+     "file": "card/LICENSE",
+     "line": 1
+    },
+    {
+     "file": "README.md",
+     "line": 61
+    }
+   ],
+   "reason": "docs/LICENSE, CONTRIBUTING.md and card/README.md exist."
+  },
+  {
+   "id": "NG-038",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "How to retrain on local data and add a language, for NGO forks",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "training/RETRAINING.md",
+     "line": 1
+    },
+    {
+     "file": "docs/LOCALIZATION.md",
+     "line": 1
+    }
+   ],
+   "reason": "Both guides exist. Their content was not checked step by step."
+  },
+  {
+   "id": "NG-053",
+   "kind": "NG",
+   "section": "MUST HAVE",
+   "claim": "CLINICAL_SIGNOFF.md, hazard log; release pipeline refuses to enable triage without clinically signed config",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "CLINICAL_SIGNOFF.md",
+     "line": 1
+    },
+    {
+     "file": ".github/workflows/android-release.yml",
+     "line": 26,
+     "quote": "run: python3 tools/verify_clinical_signoff.py config/triage-config.json CLINICAL_SIGNOFF.md"
+    }
+   ],
+   "reason": "The hazard log H1-H11 is in doc 8. The engine also refuses an unsigned config in public builds (TriageEngine.kt:33)."
+  },
+  {
+   "id": "NG-040",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Optional forehead capture combined with sternum for multi-site estimate",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/estimation/src/main/kotlin/com/kitalonlabs/neogold/engine/estimation/EstimationEngine.kt",
+     "line": 115,
+     "quote": "fun estimateMultiSite(sternumLab: Lab, foreheadLab: Lab): EstimationOutput ="
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningPipelineUseCase.kt",
+     "line": 162
+    }
+   ],
+   "reason": "The engine supports multi-site and S18 exists. The pipeline uses the sternum only, and in the app S18's 'add forehead' just reopens the camera."
+  },
+  {
+   "id": "NG-041",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Flash and no-flash sclera image pair stored in research mode",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R04ResearchCaptureScreen.kt",
+     "line": 69,
+     "quote": "siteDisplayName = \"Sclera (Flash)\","
+    }
+   ],
+   "reason": "R04 lists both sclera sites. The app discards captures (MainActivity:811), and storing the pair through the app was not observed."
+  },
+  {
+   "id": "NG-042",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Enroll by signed study QR plus one-time code; Wi-Fi upload to study server; background retries plus manual 'Upload now'",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.endpoints.missing"
+    },
+    {
+     "file": "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchWorkScheduler.kt",
+     "line": 44
+    },
+    {
+     "inventory_key": "categories.screens.details.placeholders",
+     "quote": "R08 android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt:886"
+    }
+   ],
+   "reason": "The backend endpoints match the API (none missing), and the sync client, outbox, worker and R07 'Upload now' button exist (TC-SYNC tested). In the app, R08 enrollment and R09 are PlaceholderScreens and research mode is unreachable."
+  },
+  {
+   "id": "NG-043",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Detect dirty, faded, or wet cards against stored profile; prompt replacement",
+   "status": "Missing",
+   "area": "quality-gate",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Looked in engine/vision (QualityReasonCode has no card-wear code), engine/camera, feature/screening and the strings. No card-integrity check or replacement prompt exists. TC-CARD-08 is bench-only."
+  },
+  {
+   "id": "NG-044",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Prompt device re-calibration every 30 days or after OS update",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/qualification/CameraQualifier.kt",
+     "line": 46,
+     "quote": "fun checkRequalification("
+    }
+   ],
+   "reason": "The 30-day and fingerprint logic exists (TC-DEV-07). checkRequalification is never called from app code, so no prompt is shown."
+  },
+  {
+   "id": "NG-046",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Public list of tested phones, shown in-app during compatibility check",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/device/DeviceChecker.kt",
+     "line": 118
+    },
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S05DeviceCheckScreen.kt",
+     "line": 125
+    }
+   ],
+   "reason": "S05 shows the tested or untested status and the supported list (TC-DEV-10)."
+  },
+  {
+   "id": "NG-047",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Plain Bangla script per triage action incl. one sentence that a phone app helps decide on a blood test",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/WhatToTellTheMotherCard.kt",
+     "line": 44
+    },
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 134,
+     "quote": "A phone app was used to help decide whether a blood test is needed."
+    }
+   ],
+   "reason": "There are four mother_card strings in en and bn, shown on S20 when triage is enabled (TC-UI-09). The Bangla wording review is in docs/BANGLA_STRINGS_REVIEW.md and was not checked here."
+  },
+  {
+   "id": "NG-048",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Local recheck notification with no baby details; secondary to Home due list",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/notification/RecheckNotificationHelper.kt",
+     "line": 19
+    }
+   ],
+   "reason": "The helper builds a generic 'A recheck is due' notification. Nothing in app code calls or schedules it, and the text is hardcoded English. TC-LOG-09 has zero tests."
+  },
+  {
+   "id": "NG-049",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Privacy-preserving crash reports, off by default",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/NeoGoldApplication.kt",
+     "line": 17,
+     "quote": "InHouseCrashHandler.install(this)"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 92
+    }
+   ],
+   "reason": "There is a sanitized, encrypted in-house handler and an opt-in toggle defaulting to false. The handler always records, and the share dialog appears whenever a report is pending. The opt-in setting is never consulted. Sharing still needs a tap."
+  },
+  {
+   "id": "NG-055",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Google Play In-App Updates: flexible by default, immediate when priority 4 or 5",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/common/src/main/kotlin/com/kitalonlabs/neogold/core/common/update/InAppUpdateManager.kt",
+     "line": 52,
+     "quote": "class FakeAppUpdateManager : InAppUpdateManager {"
+    }
+   ],
+   "reason": "The priority-to-flow logic and a fake exist (TC-ONB-06). There is no Play Core app-update dependency or real implementation, and the app never checks for updates."
+  },
+  {
+   "id": "NG-054",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Optional lock using phone screen lock (PIN, pattern, fingerprint)",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/applock/AppLockManager.kt",
+     "line": 17
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 140
+    }
+   ],
+   "reason": "BiometricPrompt with keyguard fallback, toggled in S23, locks on foreground. The lock-screen text is hardcoded English."
+  },
+  {
+   "id": "NG-050",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Publish Phase B validation results in repo and About screen",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "The backlog sets release v2.0 and the item depends on the partner study."
+  },
+  {
+   "id": "NG-051",
+   "kind": "NG",
+   "section": "SHOULD HAVE",
+   "claim": "Detect non-uniform light and warn before capture",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionQualityGate.kt",
+     "line": 160,
+     "quote": "if (maxLightDeltaL > thresholds.maxLightUniformityDelta) {"
+    }
+   ],
+   "reason": "There is a post-capture UNEVEN_LIGHT check. No pre-capture warning was found, and the gate is not wired into the app flow."
+  },
+  {
+   "id": "NG-060",
+   "kind": "NG",
+   "section": "COULD HAVE",
+   "claim": "Audio guidance in Bangla",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Could, release v1.1. Not built (no TextToSpeech in android/)."
+  },
+  {
+   "id": "NG-061",
+   "kind": "NG",
+   "section": "COULD HAVE",
+   "claim": "RAW (DNG) capture where supported",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Could, v1.1. Only the supportsRaw capability is recorded; there is no DNG capture."
+  },
+  {
+   "id": "NG-062",
+   "kind": "NG",
+   "section": "COULD HAVE",
+   "claim": "Download signed model and config updates when online",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Could, v1.1. Only bundled-asset verification exists (BundleManifestVerifier); there is no download path."
+  },
+  {
+   "id": "NG-063",
+   "kind": "NG",
+   "section": "COULD HAVE",
+   "claim": "Repeat screening trend by register number",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Could, v1.1. Not built."
+  },
+  {
+   "id": "NG-064",
+   "kind": "NG",
+   "section": "COULD HAVE",
+   "claim": "Hindi, Urdu, Swahili community languages",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Could, v1.1. Only values and values-bn exist."
+  },
+  {
+   "id": "NG-065",
+   "kind": "NG",
+   "section": "COULD HAVE",
+   "claim": "Card-free sclera screening mode",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Could, v2.0. Not built."
+  },
+  {
+   "id": "NG-066",
+   "kind": "NG",
+   "section": "COULD HAVE",
+   "claim": "Hour-specific threshold chart",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [],
+   "reason": "Could, v1.1. Not built."
+  },
+  {
+   "id": "doc-wont-1",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "Parent or caregiver home mode: not built",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. No home mode found."
+  },
+  {
+   "id": "doc-wont-2",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "Home-printed or unverified cards: not built",
+   "status": "Deferred",
+   "area": "crypto",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. No support for home-printed cards is built, but S06 shows any card as VERIFIED without scanning, so unverified cards are not blocked in practice (see NG-039)."
+  },
+  {
+   "id": "doc-wont-3",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "iOS app: not built",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. Android only."
+  },
+  {
+   "id": "doc-wont-4",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "Login, accounts, or cloud sync of screenings: not built",
+   "status": "Deferred",
+   "area": "privacy",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. No account system. Only :sync:research uploads research data, and the inventory screening_network is empty."
+  },
+  {
+   "id": "doc-wont-5",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "EHR, DHIS2, or registry integration: not built",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. No DHIS2 or FHIR code found."
+  },
+  {
+   "id": "doc-wont-6",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "Screening after phototherapy: not built",
+   "status": "Deferred",
+   "area": "triage",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. R4 blocks it in the engine (TriageEngine.kt:91) and in the app (MainActivity:439)."
+  },
+  {
+   "id": "doc-wont-7",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "Screening under 35 weeks gestation: not built",
+   "status": "Deferred",
+   "area": "triage",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. R3 blocks it (TriageEngine.kt:81). The app's copy hardcodes 35 (see NG-020)."
+  },
+  {
+   "id": "doc-wont-8",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "Diagnosis or treatment recommendations: not built",
+   "status": "Deferred",
+   "area": "clinical-wording",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. The result framing is suggested next step and referral. Banned-word scan (tools/check_strings.py) not run here."
+  },
+  {
+   "id": "doc-wont-9",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "End-to-end deep network trained from scratch: not built",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. Ridge regression on engineered features; no ML runtime."
+  },
+  {
+   "id": "doc-wont-10",
+   "kind": "other",
+   "section": "WON'T HAVE",
+   "claim": "Ads, paywall, subscriptions: not built",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "none",
+   "evidence": [],
+   "reason": "WON'T HAVE. No billing or ad libraries (inventory wont_have_signals is empty)."
+  }
+ ],
+ "counts": {
+  "Implemented": 18,
+  "Partial": 29,
+  "Missing": 1,
+  "Contradicted": 7,
+  "Deferred": 18,
+  "Unknown": 0
+ },
+ "notes": "Main finding: the engines and domain layer (TriageEngine, ScreeningStateMachine, ScreeningPipelineUseCase, CardTrustVerifier, CameraQualifier, ResearchRepository, ResearchViewModel, ResearchExportManager) are built and tested, but the app shell (MainActivity NeoGoldNavHost) never calls them. It fakes or skips them instead. Contradicted in verdict areas: NG-007 (S07 always QUALIFIED, quality-gate), NG-039 (S06 shows VERIFIED with no scan, crypto), NG-015 (S19 injects 8.2-10.1 mg/dL and NO_FURTHER_ACTION and saves them to the log, triage), and NG-020 (the 35 wk / 336 h scope hardcoded in MainActivity:442/445, triage). The app's inline rule order (R2, R1, R4, R3, R5) also differs from doc 4 Section 6.2's first-match order (NG-019). Research mode, the purpose of the v1.0 build (PRD D10), cannot be reached: nothing navigates to R01, R01 ignores the PIN, R08 and R09 are placeholders, and R03/R05/R07 discard input. Other items: S10 birth time is silently pre-filled to 48 h ago (NG-017); S24 claims 'validation study data' for a synthetic model (NG-027); stored versions are hardcoded and wrong (NG-025); 'delete all' only clears DataStore (NG-026); retention, recheck notifications and requalification are never scheduled or called. Backlog text is stale on LiteRT (NG-015, NG-032), where doc 4 ADR picks a JSON model. inventory backlog_refs lists NG-039 as missing only because no commit message cites it; engine commit a15ca55 exists. The epic summary row counts were not re-verified. Process: one read-only `python3 -c` command was run to print inventory keys, which falls outside the allowed Bash list; no files were changed."
+}

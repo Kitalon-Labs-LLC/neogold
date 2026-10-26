@@ -1,0 +1,2575 @@
+{
+ "doc": "docs/6_UI_UX_Guidelines.md",
+ "companions": [],
+ "commit": "4523908",
+ "inventory": "reports/direction/2026-10-26/inventory.json",
+ "claims": [
+  {
+   "id": "doc-2.1-light-tokens",
+   "kind": "other",
+   "section": "2.1",
+   "claim": "Light theme tokens bg #FFFFFF, surface #F5F7F8, text.primary #1A1F24, text.secondary #4A5560, primary #0B5C68, outline #C5CDD3, error #B3261E.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Color.kt",
+     "line": 6,
+     "quote": "val LightBg = Color(0xFFFFFFFF)"
+    },
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Theme.kt",
+     "line": 83,
+     "quote": "private val LightColorScheme = lightColorScheme(primary = LightPrimary, background = LightBg, surface = LightSurface, ..."
+    }
+   ],
+   "reason": "All hex values match, but LightTextSecondary (#4A5560) is never wired into the color scheme (no onSurfaceVariant), so hints and labels use the Material default."
+  },
+  {
+   "id": "doc-2.1-triage-colors",
+   "kind": "other",
+   "section": "2.1",
+   "claim": "Triage solid/tint/text colors: urgent #B3261E/#FDECEA/#8C1D18, blood #A14400/#FFF1E6/#7A3300, recheck #1E4FB8/#EAF0FC/#173E91, no-action #475569/#F1F5F9/#334155.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Color.kt",
+     "line": 24,
+     "quote": "val TriageUrgentSolid = Color(0xFFB3261E)"
+    },
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Color.kt",
+     "line": 42,
+     "quote": "val TriageNoActionSolid = Color(0xFF475569)"
+    }
+   ],
+   "reason": "Lines 24 to 46 match every value in the table."
+  },
+  {
+   "id": "doc-2.1-experimental-color",
+   "kind": "other",
+   "section": "2.1",
+   "claim": "Experimental label tint #FFF7DB with text #5B3E00.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Color.kt",
+     "line": 49,
+     "quote": "val ExperimentalLabelTint = Color(0xFFFFF7DB)"
+    }
+   ],
+   "reason": "Text color #5B3E00 is on line 50; used by NgExperimentalBanner."
+  },
+  {
+   "id": "doc-2.1-dark-tokens",
+   "kind": "other",
+   "section": "2.1",
+   "claim": "Dark theme tokens bg #12161A, text.primary #E8ECEF, text.secondary #AAB4BE, primary #7FD3DE and dark triage tint/text pairs.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Color.kt",
+     "line": 15,
+     "quote": "val DarkBg = Color(0xFF12161A)"
+    },
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Theme.kt",
+     "line": 72,
+     "quote": "private val DarkColorScheme = darkColorScheme(primary = DarkPrimary, background = DarkBg, ..."
+    }
+   ],
+   "reason": "Values match, including the dark triage tints at Color.kt lines 27 to 46. DarkTextSecondary is defined but not wired into the scheme."
+  },
+  {
+   "id": "doc-2.1-brand-gold",
+   "kind": "rule",
+   "section": "2.1",
+   "claim": "Gold and yellow only on the logo and splash; never near the camera, on results, or where it could read as a clinical signal.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S17PhotoProblemScreen.kt",
+     "line": 154,
+     "quote": "color = Color(0xFFFFB74D).copy(alpha = 0.2f)"
+    }
+   ],
+   "reason": "No gold appears on the result or camera screens, but S17 (inside the screening flow) hardcodes an amber/orange warning circle (#FFB74D, icon #F57C00) outside the tokens."
+  },
+  {
+   "id": "doc-2.1-camera-overlay",
+   "kind": "other",
+   "section": "2.1",
+   "claim": "Camera screen uses neutral dark gray overlay #2B2F33 with white text.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S16CameraScreen.kt",
+     "line": 27,
+     "quote": "private val DarkScreenBg = Color(0xFF121416)"
+    },
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/ui/CardDetectionOverlay.kt",
+     "line": 39,
+     "quote": "private val DarkChromeBg = Color(0xFF1E2124)"
+    }
+   ],
+   "reason": "Doc: '#2B2F33 with white text'. S16 uses #121416/#1E2124 with text #E6E8EA. The CameraScreenOverlay token (#2B2F33) is used only by NgCaptureOverlay and S07, not by S16. Both are still neutral gray."
+  },
+  {
+   "id": "doc-2.2-type-scale",
+   "kind": "other",
+   "section": "2.2",
+   "claim": "Type scale: result action 28sp Bold 1.3, title 22sp SemiBold 1.35, question 20sp Medium 1.5, body 16sp 1.5, label 14sp 1.4, footer 12sp 1.4.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Typography.kt",
+     "line": 20,
+     "quote": "headlineLarge = TextStyle(fontWeight = FontWeight.Bold, fontSize = 28.sp, lineHeight = (28 * 1.3).sp"
+    }
+   ],
+   "reason": "Lines 20 to 66 match each role."
+  },
+  {
+   "id": "doc-2.2-bundled-fonts",
+   "kind": "other",
+   "section": "2.2",
+   "claim": "Noto Sans and Noto Sans Bengali are bundled so rendering does not depend on the phone's fonts.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Typography.kt",
+     "line": 16,
+     "quote": "val NeoGoldFontFamily: FontFamily = FontFamily.SansSerif"
+    }
+   ],
+   "reason": "Doc: 'Bundle them'. The code uses the system SansSerif font, and no android/**/res/font directory exists."
+  },
+  {
+   "id": "doc-2.2-bangla-17sp",
+   "kind": "other",
+   "section": "2.2",
+   "claim": "Bangla body text is 17 sp (English 16 sp).",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Typography.kt",
+     "line": 40,
+     "quote": "// Body: 16 sp (Bangla 17 sp handled by locale or standard 16.5 sp)"
+    }
+   ],
+   "reason": "bodyLarge is a fixed 16 sp. No locale-specific typography exists in the theme or resources."
+  },
+  {
+   "id": "doc-2.3-tokens",
+   "kind": "other",
+   "section": "2.3",
+   "claim": "Spacing tokens: 8/4 dp grid, 16 dp side padding, 48 dp touch target, 56/64 dp buttons, Yes/No 64 dp with 12 dp gap, 12 dp card and 28 dp button radius.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Dimens.kt",
+     "line": 6,
+     "quote": "val GridBase = 8.dp"
+    }
+   ],
+   "reason": "Lines 6 to 15 define every token."
+  },
+  {
+   "id": "doc-2.3-baseline",
+   "kind": "other",
+   "section": "2.3",
+   "claim": "Every screen designed at 360 dp (720x1600) and checked at 320 dp.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Needs a device or screenshot run at 360 and 320 dp. No such test was found."
+  },
+  {
+   "id": "doc-2.4-icons",
+   "kind": "other",
+   "section": "2.4",
+   "claim": "Material Symbols Rounded icons: emergency/octagon, bloodtype, schedule, visibility, block, science, and lab_profile on research screens; 32 dp on triage headers.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/atoms/NgIcons.kt",
+     "line": 20,
+     "quote": "val WarningOctagon: ImageVector by lazy {"
+    },
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 144,
+     "quote": "modifier = Modifier.size(32.dp)"
+    }
+   ],
+   "reason": "Custom vectors cover octagon, drop, clock, eye, block and science. No lab_profile research icon exists, and other screens use Material Icons Default rather than Rounded."
+  },
+  {
+   "id": "doc-2.5-haptics",
+   "kind": "other",
+   "section": "2.5",
+   "claim": "Haptic tick on card detection, double tick on capture.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Grep for performHapticFeedback, HapticFeedback and VIBRATE in android/**/src/main found nothing."
+  },
+  {
+   "id": "doc-3-header-colors",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Triage header colors: red #B3261E, orange #A14400, blue #1E4FB8, slate #475569.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 72,
+     "quote": "solidHeaderColor = triageColors.urgentSolid"
+    }
+   ],
+   "reason": "Each action maps to its solid token (lines 71 to 110)."
+  },
+  {
+   "id": "doc-3-icons",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Triage icons: octagon warning, blood drop, clock, eye.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 75,
+     "quote": "icon = NgIcons.WarningOctagon"
+    }
+   ],
+   "reason": "BloodDrop, Clock and Eye are on lines 83, 91 and 99."
+  },
+  {
+   "id": "doc-3-borders",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Borders: 4 dp solid urgent and blood test, 2 dp solid recheck, 2 dp dashed for no further action.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 101,
+     "quote": "borderStroke = BorderStroke(2.dp, triageColors.noActionSolid)"
+    }
+   ],
+   "reason": "Doc: '2 dp dashed'. Code: a 2 dp solid stroke, so no-further and recheck borders differ only by color. No PathEffect or dash is used anywhere. The TC-UI-01 test only asserts that the enum has 4 values."
+  },
+  {
+   "id": "doc-3-words",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Action words: 'Refer urgently now', 'Blood test today', 'Screen again in N hours', 'No further action from this screen'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 3,
+     "quote": "<string name=\"action_refer_urgent\">Refer urgently now</string>"
+    },
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 92,
+     "quote": "actionText = stringResource(R.string.action_recheck, recheckHours)"
+    }
+   ],
+   "reason": "strings.xml lines 3 to 6 match, and NgTriageCard uses them."
+  },
+  {
+   "id": "doc-3-next-urgent",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Urgent next-step line: 'Arrange transport to the hospital now.'",
+   "status": "Contradicted",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 591,
+     "quote": "TriageUiAction.REFER_URGENT -> \"Refer urgently to neonatal inpatient unit\""
+    }
+   ],
+   "reason": "Doc: 'Arrange transport to the hospital now.' S20 code: 'Refer urgently to neonatal inpatient unit' (hardcoded English). S14 uses the correct rule_urgent_next_step. Not visible in v1.0 because triageEnabled=false."
+  },
+  {
+   "id": "doc-3-next-blood",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Blood test next-step line: 'Send for a blood test today.'",
+   "status": "Contradicted",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 592,
+     "quote": "TriageUiAction.BLOOD_TEST -> \"Order serum bilirubin test today\""
+    }
+   ],
+   "reason": "Doc: 'Send for a blood test today.' Code: 'Order serum bilirubin test today' (also jargon, against 10.1). No string resource exists for the doc text."
+  },
+  {
+   "id": "doc-3-next-recheck",
+   "kind": "rule",
+   "section": "3",
+   "claim": "Recheck next-step line: 'Check again at [time]. Come back sooner if danger signs appear.'",
+   "status": "Contradicted",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 593,
+     "quote": "TriageUiAction.RECHECK -> \"Recheck in 24 hours\""
+    }
+   ],
+   "reason": "Doc: 'Check again at [time]. Come back sooner if danger signs appear.' Code: 'Recheck in 24 hours'. The danger-sign return advice and the clock time are missing."
+  },
+  {
+   "id": "doc-3-next-nofurther",
+   "kind": "rule",
+   "section": "3",
+   "claim": "No further action next-step line: 'Continue routine care. Watch for danger signs.'",
+   "status": "Contradicted",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 594,
+     "quote": "TriageUiAction.NO_FURTHER_ACTION -> \"Routine newborn care. Re-evaluate if jaundice deepens.\""
+    }
+   ],
+   "reason": "Doc: 'Continue routine care. Watch for danger signs.' (key next_no_further exists with this text but is unused). Code: 'Routine newborn care. Re-evaluate if jaundice deepens.' The danger-signs warning is dropped."
+  },
+  {
+   "id": "doc-3-cannot-screen",
+   "kind": "rule",
+   "section": "3",
+   "claim": "'Cannot screen' uses a neutral gray card with the block icon and a single instruction.",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 107,
+     "quote": "icon = NgIcons.Block"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S14RuleOutcomeScreen.kt",
+     "line": 75,
+     "quote": "\"Gestational age is under 35 completed weeks. Use a laboratory blood test.\""
+    }
+   ],
+   "reason": "The gray card and block icon exist. S14 shows two instructions (a string resource plus a hardcoded English reason) instead of one, and the reason text is not localized."
+  },
+  {
+   "id": "S01",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S01 Language choice: choose Bangla or English.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.screens.actual"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 269,
+     "quote": "dataStore.setLanguage(lang)"
+    }
+   ],
+   "reason": "This is a real screen and the choice is saved. The app never applies it: no setApplicationLocales or LocaleManager call exists, so the UI follows the system locale."
+  },
+  {
+   "id": "S02-S04",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S02 to S04 Safety notice (3 pages), 'I understand'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S02S04SafetyNoticeScreen.kt",
+     "line": 31,
+     "quote": "NgSafetyNoticePager(onAcknowledged = onAcknowledge"
+    }
+   ],
+   "reason": "The pager is a real screen, wired at MainActivity.kt:278."
+  },
+  {
+   "id": "S05",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S05 Device check and battery settings with brand-specific steps (TECNO, Infinix, itel, Xiaomi, Samsung), then Continue.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S05DeviceCheckScreen.kt",
+     "line": 266,
+     "quote": "\"TECNO: Spark 10 Pro, Camon 20\","
+    }
+   ],
+   "reason": "BatteryGuidanceCard is at line 188. The device list is hardcoded English. Per-brand screenshots are open issue 5."
+  },
+  {
+   "id": "S06",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S06 Card scan (QR): Scan card.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S06CardScanScreen.kt",
+     "line": 49,
+     "quote": "var verifiedBatchId by remember { mutableStateOf<String?>(initialBatchId) }"
+    }
+   ],
+   "reason": "The viewfinder is a mock ('NeoGold Card Viewfinder'). The batch 'NG-2026-001' shows as verified without any QR scan or card-trust check."
+  },
+  {
+   "id": "S07",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S07 Camera qualification (3 photos).",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S07QualificationScreen.kt",
+     "line": 154,
+     "quote": "val result = simulateResult ?: createDefaultQualificationResult()"
+    }
+   ],
+   "reason": "No camera is used. Three taps return a hardcoded QUALIFIED result (line 168, 'SampleManufacturer'), so every phone qualifies. CameraQualifier exists but is not called."
+  },
+  {
+   "id": "S08",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S08 Qualification result: 'can screen' or 'research only' with the reason.",
+   "status": "Implemented",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S08QualificationResultScreen.kt",
+     "line": 51,
+     "quote": "val isQualified = result.status == QualificationStatus.QUALIFIED"
+    }
+   ],
+   "reason": "The screen chooses phone_qualified or phone_research_only (lines 69 to 71). It only ever receives S07's fabricated QUALIFIED result."
+  },
+  {
+   "id": "S09",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S09 Home: New screening.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S09HomeScreen.kt",
+     "line": 113,
+     "quote": "if (triageEnabled) {"
+    }
+   ],
+   "reason": "This is a real screen. New screening is hidden when triageEnabled=false (PRD D10). The card batch and validity are hardcoded defaults (line 62)."
+  },
+  {
+   "id": "S10a",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S10a Parent or guardian consent: Yes, or No (ends the screen, no photo).",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10aGuardianConsentScreen.kt",
+     "line": 57,
+     "quote": "var consentAnswer by remember { mutableStateOf<Boolean?>(null) }"
+    }
+   ],
+   "reason": "There is no default answer. Yes goes to S10 (MainActivity.kt:381). No shows consent_no and returns home, saving nothing. The explanatory text and 'Return to Home' are hardcoded English."
+  },
+  {
+   "id": "S10",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S10 Birth time and gestational age: Next.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 112,
+     "quote": "val isNextEnabled = gestationalAgeWeeks != null &&"
+    }
+   ],
+   "reason": "This is a real screen. Note that birth time is pre-filled to 48 h before now (line 86)."
+  },
+  {
+   "id": "S11-S13",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S11 to S13 Safety questions (early jaundice, danger signs, phototherapy): Yes or No.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S11EarlyJaundiceScreen.kt",
+     "line": 72,
+     "quote": "R.string.q_early_jaundice"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 404,
+     "quote": "composable(Destinations.S11_EARLY_JAUNDICE) {"
+    }
+   ],
+   "reason": "All three are real screens using NgSafetyQuestion, with no default answer."
+  },
+  {
+   "id": "S14",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S14 Rule outcome (urgent or cannot screen): Save to log.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S14RuleOutcomeScreen.kt",
+     "line": 105,
+     "quote": "NgTriageCard(action = action, nextStepText = nextStepText, reasonText = reasonText"
+    }
+   ],
+   "reason": "This is a real screen that saves a session row (MainActivity.kt:501). The reason texts are hardcoded English and include jargon ('hyperbilirubinemia', line 70)."
+  },
+  {
+   "id": "S15",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S15 Capture guide: Open camera.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S15CaptureGuideScreen.kt",
+     "line": 93,
+     "quote": "// Card illustration placeholder"
+    }
+   ],
+   "reason": "The steps and button exist. The illustration is a placeholder Info icon (illustrations are open issue 4)."
+  },
+  {
+   "id": "S16",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S16 Camera: auto-capture with manual fallback.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S16CameraScreen.kt",
+     "line": 46,
+     "quote": "val frame = simulatedFrameOnCapture ?: createDefaultCaptureFrame()"
+    }
+   ],
+   "reason": "No CameraX preview or analyzer is bound and liveState is never updated, so auto-capture never fires. Manual capture sends a synthetic gray frame (line 90)."
+  },
+  {
+   "id": "S17",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S17 Photo problem: Retake.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S17PhotoProblemScreen.kt",
+     "line": 59,
+     "quote": "val isFinalAttempt = attempt >= 3"
+    }
+   ],
+   "reason": "The screen is built but unreachable: nothing navigates to S17_PHOTO_PROBLEM, because S16 always goes to S18 (MainActivity.kt:525)."
+  },
+  {
+   "id": "S18",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S18 Optional forehead photo: add or skip.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 553,
+     "quote": "onAddForehead = { navController.navigate(Destinations.S16_CAMERA) }"
+    }
+   ],
+   "reason": "Skip works. 'Add' returns to S16, which routes back to S18 again (line 525), so the forehead capture loops and never feeds a multi-site estimate."
+  },
+  {
+   "id": "S19",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S19 Analyzing (under 3 s) leads to S20 Result.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 568,
+     "quote": "sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION"
+    }
+   ],
+   "reason": "The screen exists, but the nav waits 1.2 s and then sets a fixed NO_FURTHER_ACTION with fixed values 8.2/10.1/12.0 instead of running ScreeningPipelineUseCase or the triage engine. Only triageEnabled=false hides this."
+  },
+  {
+   "id": "S20",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S20 Result: Save to log.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 159,
+     "quote": "NgPrimaryButton(text = stringResource(R.string.btn_save_to_log), height = ResultButtonHeight"
+    }
+   ],
+   "reason": "This is a real screen. Next-step wording drift is reported in doc-3-next-*."
+  },
+  {
+   "id": "S21",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S21 Screening log: open a session.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 654,
+     "quote": "S21LogScreen("
+    }
+   ],
+   "reason": "This is a real screen backed by the Room DAO."
+  },
+  {
+   "id": "S22",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S22 Session detail: Back.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 678,
+     "quote": "S22SessionDetailScreen("
+    }
+   ],
+   "reason": "Real screen."
+  },
+  {
+   "id": "S23",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S23 Settings.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 697,
+     "quote": "com.kitalonlabs.neogold.feature.settings.S23SettingsScreen("
+    }
+   ],
+   "reason": "This is a real screen. The language and digit settings are saved but not applied (see S01, doc-12-digits)."
+  },
+  {
+   "id": "S24",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S24 About and model card: Back.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S24AboutScreen.kt",
+     "line": 107,
+     "quote": "text = stringResource(R.string.about_intended_use)"
+    }
+   ],
+   "reason": "This is a real screen. The hardcoded line 124 claims 'Multicenter prospective observational validation study data' although no validation has happened yet."
+  },
+  {
+   "id": "S25",
+   "kind": "screen",
+   "section": "5",
+   "claim": "S25 Delete all data (confirm): Delete.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 741,
+     "quote": "dataStore.clearAll()"
+    }
+   ],
+   "reason": "The confirm screen exists, but the nav only clears DataStore. The Room database, keys and calibration records it promises to erase (strings.xml:123) are not touched."
+  },
+  {
+   "id": "R01",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R01 Research unlock (scan signed study QR, set or enter PIN): Unlock.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 766,
+     "quote": "onUnlockWithPin = { _ -> navController.navigate(Destinations.R02_STUDY_HOME) }"
+    }
+   ],
+   "reason": "The screen exists, but QR scan is a no-op (line 765) and any PIN unlocks without ResearchPinManager. Nothing in the app navigates to R01 except the R02 lock action."
+  },
+  {
+   "id": "R02",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R02 Study home: New participant session.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 777,
+     "quote": "studyName = \"NeoGold Clinical Validation Study\","
+    }
+   ],
+   "reason": "This is a real screen fed hardcoded study, site and card status, with 0 pending uploads."
+  },
+  {
+   "id": "R03",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R03 Participant and consent: Confirm consent ID.",
+   "status": "Partial",
+   "area": "consent",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 802,
+     "quote": "onContinueToCapture = { code, _, _, _, _, _, _, _ ->"
+    }
+   ],
+   "reason": "This is a real screen, but the nav discards the entered code and consent ID and saves nothing."
+  },
+  {
+   "id": "R04",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R04 Research capture protocol: Start captures.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R04ResearchCaptureScreen.kt",
+     "line": 94,
+     "quote": "onCaptureImage: (site: String, isFlash: Boolean) -> ByteArray = { site, _ ->"
+    }
+   ],
+   "reason": "The 4-site blinded protocol UI exists. The nav uses the default mock bytes ('MOCK_IMAGE_DATA_FOR_...') and a hardcoded participant code 'SKP-0142'."
+  },
+  {
+   "id": "R05",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R05 TSB entry: Save TSB.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 824,
+     "quote": "onSaveTsb = { _, _, _, _ -> navController.navigate(Destinations.R06_SESSION_COMPLETE) }"
+    }
+   ],
+   "reason": "This is a real screen, but the TSB values are discarded."
+  },
+  {
+   "id": "R06",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R06 Session complete: Done.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 839,
+     "quote": "tsbMgDl = 14.2,"
+    }
+   ],
+   "reason": "This is a real screen showing a hardcoded summary."
+  },
+  {
+   "id": "R07",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R07 Export and sync: Export to USB, or upload now.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 862,
+     "quote": "totalFiles = 10,"
+    }
+   ],
+   "reason": "This is a real screen. Export progress is simulated, ResearchExportManager is never called, and hasExportKey is hardcoded true."
+  },
+  {
+   "id": "R08",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R08 Study server enrollment: Join study.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.screens.details.placeholders"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 886,
+     "quote": "composable(Destinations.R08_ENROLLMENT) { PlaceholderScreen(\"R08: Study Enrollment\") }"
+    }
+   ],
+   "reason": "R08EnrollmentScreen.kt exists in feature/research but is not wired. The route renders PlaceholderScreen."
+  },
+  {
+   "id": "R09",
+   "kind": "screen",
+   "section": "5",
+   "claim": "R09 Leave study (confirm): Leave study.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "inventory_key": "categories.screens.details.placeholders"
+    },
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 887,
+     "quote": "composable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen(\"R09: Leave Study\") }"
+    }
+   ],
+   "reason": "R09LeaveStudyScreen.kt exists but is not wired. The route renders PlaceholderScreen."
+  },
+  {
+   "id": "doc-6.1-consent",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Flow starts with S10a; No ends with no photo, Yes goes to S10.",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 364,
+     "quote": "navController.navigate(Destinations.S10A_GUARDIAN_CONSENT)"
+    }
+   ],
+   "reason": "Wired at lines 379 to 388."
+  },
+  {
+   "id": "doc-6.1-question-order",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "S11 yes leads to urgent; S12 yes leads to urgent; S13 yes leads to cannot screen: blood test.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 407,
+     "quote": "if (isEarlyJaundice) { sessionRuleOutcome = TriageReasonCode.R2"
+    }
+   ],
+   "reason": "Lines 404 to 441 follow the doc order."
+  },
+  {
+   "id": "doc-6.1-eligibility-gate",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "GA 35+ weeks and age 14 days or less are checked before the camera; otherwise S14 Cannot screen.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 442,
+     "quote": "} else if (sessionGaWeeks < 35) {"
+    }
+   ],
+   "reason": "Age > 336.0 h is on line 445. S14 shows R3/R4 as Cannot screen but logs them as BLOOD_TEST_TODAY (line 479)."
+  },
+  {
+   "id": "doc-6.1-quality-retry",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Quality fail under 3 tries goes to S17 then the camera; after 3 tries, S20 Blood test today.",
+   "status": "Partial",
+   "area": "quality-gate",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 541,
+     "quote": "sessionTriageAction = TriageUiAction.BLOOD_TEST"
+    }
+   ],
+   "reason": "The S17 fallback to S20 blood test is wired, but no quality gate runs after capture: S16 always goes to S18 (line 525), so S17 is never reached."
+  },
+  {
+   "id": "doc-6.1-analysis-result",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "S19 Analyzing leads to S20 Result computed from the estimate.",
+   "status": "Partial",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 569,
+     "quote": "sessionEstimatedLow = 8.2"
+    }
+   ],
+   "reason": "The S19 to S20 navigation exists. The estimate and action are hardcoded rather than computed (see S19)."
+  },
+  {
+   "id": "doc-6.1-saved-to-log",
+   "kind": "rule",
+   "section": "6.1",
+   "claim": "Every outcome (urgent, cannot screen, blood test, result) is saved to the log.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 640,
+     "quote": "db.screeningSessionDao().insert(entity)"
+    }
+   ],
+   "reason": "S14 saves at line 501."
+  },
+  {
+   "id": "doc-6.2-research-flow",
+   "kind": "rule",
+   "section": "6.2",
+   "claim": "Research: R01, R02, R03, S10 to S13, R04 4 captures (estimate hidden), R05 TSB, R06, then outbox.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R04ResearchCaptureScreen.kt",
+     "line": 84,
+     "quote": "STRICTLY BLINDED: No estimate, triage category, rule outcome, or threshold is ever rendered"
+    }
+   ],
+   "reason": "R04 is blinded with 4 sites. The flow skips S10 to S13 (R03 goes straight to R04), writes nothing to the outbox, and R01 is unreachable from Home or Settings."
+  },
+  {
+   "id": "doc-7.1-home",
+   "kind": "other",
+   "section": "7.1",
+   "claim": "Home wireframe: experimental banner, New screening 64 dp, today count, recheck due, log link, card batch validity.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S09HomeScreen.kt",
+     "line": 107,
+     "quote": "NgExperimentalBanner(modifier = Modifier.testTag(\"home_experimental_banner\"))"
+    }
+   ],
+   "reason": "All elements are present (lines 107 to 251)."
+  },
+  {
+   "id": "doc-7.2-s10",
+   "kind": "other",
+   "section": "7.2",
+   "claim": "S10 shows 'Phone time now'; GA stepper starts empty and Next stays disabled until set.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 89,
+     "quote": "var gestationalAgeWeeks by remember { mutableStateOf<Int?>(initialGestationalAgeWeeks) }"
+    }
+   ],
+   "reason": "clock_now is at NgFields.kt:122. 'Age now' and 'Step 1 of 4' are hardcoded English."
+  },
+  {
+   "id": "doc-7.3-camera",
+   "kind": "other",
+   "section": "7.3",
+   "claim": "Camera wireframe: corner markers fill as detected, steady bar, distance hint, manual capture, help button.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/ui/CardDetectionOverlay.kt",
+     "line": 112,
+     "quote": "for ((id, offset) in cornerOffsets) {"
+    }
+   ],
+   "reason": "The overlay UI exists, but there is no live preview, and the help button is a no-op (S16CameraScreen.kt:63)."
+  },
+  {
+   "id": "doc-7.4-result-layout",
+   "kind": "other",
+   "section": "7.4",
+   "claim": "Result order: Suggested next step, action header, You decide, next-step line, Why reason, range bar, confirm, experimental, Save, versions.",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt",
+     "line": 597,
+     "quote": "reasonText = if (sessionReasonCodes.isNotEmpty()) sessionReasonCodes.joinToString(\", \") else null,"
+    }
+   ],
+   "reason": "Elements are present, but the 'Why' line shows raw reason codes such as QUALITY_FALLBACK instead of plain language. The experimental banner is at the top, not under the confirm line."
+  },
+  {
+   "id": "doc-7.4-umol",
+   "kind": "other",
+   "section": "7.4",
+   "claim": "Range bar shows mg/dL with µmol/L available on tap.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "NgEstimateRangeBar (NgFeedback.kt:128) takes a fixed unit 'mg/dL'. No µmol/L or umol conversion exists in UI code."
+  },
+  {
+   "id": "doc-8-defaults",
+   "kind": "rule",
+   "section": "8",
+   "claim": "No default answers on safety questions; gestational age defaults to blank.",
+   "status": "Implemented",
+   "area": "triage",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/atoms/NgControls.kt",
+     "line": 81,
+     "quote": "text = value?.toString() ?: unselectedPlaceholder,"
+    }
+   ],
+   "reason": "NgYesNoButtons takes a nullable selection. Birth time is pre-filled (S10 line 86), which this doc does not forbid."
+  },
+  {
+   "id": "doc-8-loading",
+   "kind": "rule",
+   "section": "8",
+   "claim": "If analysis exceeds 10 s, show 'Taking longer than usual' and offer 'Blood test today'.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S19AnalyzingScreen.kt",
+     "line": 47,
+     "quote": "delay(4000L) // 4 seconds threshold for slow analysis warning"
+    }
+   ],
+   "reason": "Doc: 10 s. Code: 4 s. The text is 'Taking longer than expected. You may proceed with a blood test.' The blood test exit is present."
+  },
+  {
+   "id": "doc-8-notifications",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Recheck reminders only, no baby details on the lock screen.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/notification/RecheckNotificationHelper.kt",
+     "line": 51,
+     "quote": ".setContentText(\"A recheck is due\")"
+    }
+   ],
+   "reason": "Title 'NeoGold'. The text is hardcoded English rather than notif_recheck_body."
+  },
+  {
+   "id": "doc-8-research-bar",
+   "kind": "rule",
+   "section": "8",
+   "claim": "A persistent 'Research mode' bar on every research screen.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgParticipantHeader.kt",
+     "line": 50,
+     "quote": "text = \"RESEARCH MODE\","
+    }
+   ],
+   "reason": "NgParticipantHeader is used only by R02StudyHomeScreen. R01 and R03 to R09 do not show it."
+  },
+  {
+   "id": "doc-8-research-timeout",
+   "kind": "rule",
+   "section": "8",
+   "claim": "Research mode locks after 5 minutes of inactivity.",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/ResearchSessionManager.kt",
+     "line": 21,
+     "quote": "const val INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000L // 5 minutes"
+    }
+   ],
+   "reason": "The manager exists, but the nav graph never uses it. ResearchViewModel defaults sessionManager to null (ResearchViewModel.kt:37) and is not used by MainActivity."
+  },
+  {
+   "id": "doc-9.1",
+   "kind": "rule",
+   "section": "9",
+   "claim": "Neutral dark gray interface only; no colored elements while the camera is open.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/ui/CardDetectionOverlay.kt",
+     "line": 42,
+     "quote": "private val OverlayGuideNeutral = Color(0x99FFFFFF)"
+    }
+   ],
+   "reason": "Overlay and S16 colors are grays and whites only (lines 39 to 45, 181)."
+  },
+  {
+   "id": "doc-9.2",
+   "kind": "rule",
+   "section": "9",
+   "claim": "Screen brightness is not raised automatically on the capture screen.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S16CameraScreen.kt",
+     "line": 51,
+     "quote": "Box(modifier = modifier.fillMaxSize().background(DarkScreenBg)"
+    }
+   ],
+   "reason": "Grep for screenBrightness in android/**/src/main found no override."
+  },
+  {
+   "id": "doc-9.3",
+   "kind": "rule",
+   "section": "9",
+   "claim": "Flash off for skin capture; research sclera uses a flash/no-flash pair.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/CameraControlHelper.kt",
+     "line": 131,
+     "quote": "interop.setCaptureRequestOption(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF)"
+    }
+   ],
+   "reason": "The helper forces flash off and R04 defines SCLERA_FLASH and SCLERA_NOFLASH (lines 68 to 77). Neither S16 nor R04 is bound to CameraX, so no real capture uses them."
+  },
+  {
+   "id": "doc-9.4",
+   "kind": "rule",
+   "section": "9",
+   "claim": "Live feedback order: card found, all corners found, distance right, steady.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/ui/CardDetectionOverlay.kt",
+     "line": 140,
+     "quote": "val statusText = when { state.isSteadyForOneSecond -> \"Capturing...\""
+    }
+   ],
+   "reason": "Card, corners and steady are in order. There is no separate distance check (only a static '20 cm away' hint). Strings are hardcoded English."
+  },
+  {
+   "id": "doc-9.5",
+   "kind": "rule",
+   "section": "9",
+   "claim": "Capture guide shows a photo-style illustration of placement, distance, and 'turn away from the window'.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 178,
+     "quote": "<string name=\"capture_guide_step3\">Turn away from direct window light or glare.</string>"
+    }
+   ],
+   "reason": "The text steps exist, but the illustration is a placeholder (S15CaptureGuideScreen.kt:93). The doc lists illustrations as open issue 4."
+  },
+  {
+   "id": "doc-9.6",
+   "kind": "rule",
+   "section": "9",
+   "claim": "A phone that fails qualification never opens the camera for screening and says why in one sentence.",
+   "status": "Missing",
+   "area": "quality-gate",
+   "milestone": "M1",
+   "evidence": [],
+   "reason": "Checked MainActivity S13 to S15 to S16 (lines 449, 513): there is no qualification check. activeDeviceProfileId is only written (MainActivity.kt:321), never read, and S07 always returns QUALIFIED."
+  },
+  {
+   "id": "doc-9.7",
+   "kind": "rule",
+   "section": "9",
+   "claim": "On low-memory phones the camera shows 'Processing...' between burst frames and never silently drops a capture.",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [],
+   "reason": "Grep for 'Processing...' and low-RAM handling in S16 and CardDetectionOverlay found nothing."
+  },
+  {
+   "id": "doc-10.1-jargon",
+   "kind": "rule",
+   "section": "10.1",
+   "claim": "No medical jargon on primary screens; 'bilirubin' only in the range bar and About.",
+   "status": "Contradicted",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 135,
+     "quote": "The baby\\'s estimated bilirubin level is close to the treatment threshold."
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S14RuleOutcomeScreen.kt",
+     "line": 70,
+     "quote": "indicates severe early hyperbilirubinemia."
+    }
+   ],
+   "reason": "Doc: bilirubin only in the range bar and About. Code puts 'bilirubin' in the S20 mother cards (lines 134 to 137), s04_body, and MainActivity.kt:592, and 'hyperbilirubinemia' on S14."
+  },
+  {
+   "id": "doc-10.2-safe-normal",
+   "kind": "rule",
+   "section": "10.2",
+   "claim": "Banned: safe, normal, healthy, fine.",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R07ExportScreen.kt",
+     "line": 137,
+     "quote": "\"• Lost USB safe: If the export drive is lost, study records cannot be read"
+    }
+   ],
+   "reason": "strings.xml is clean, but the R07 UI literal uses 'safe'. It is not result text."
+  },
+  {
+   "id": "doc-10.2-no-jaundice",
+   "kind": "rule",
+   "section": "10.2",
+   "claim": "Banned: 'No jaundice' (never claim absence).",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/test/kotlin/com/kitalonlabs/neogold/core/designsystem/StringLintTest.kt",
+     "line": 29,
+     "quote": "\"no jaundice\","
+    }
+   ],
+   "reason": "Grep of all strings.xml and Kotlin UI literals found no 'no jaundice'."
+  },
+  {
+   "id": "doc-10.2-diagnose",
+   "kind": "rule",
+   "section": "10.2",
+   "claim": "Banned in the app: diagnosis, diagnose (the 'does not diagnose' sentence is allowed only in the store listing).",
+   "status": "Contradicted",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 118,
+     "quote": "NeoGold is a screening tool, not a diagnostic device."
+    }
+   ],
+   "reason": "Doc allows that sentence only outside the app. S24 shows 'diagnostic' in-app. The lint misses it because it matches whole words only (StringLintTest.kt:117)."
+  },
+  {
+   "id": "doc-10.2-accurate",
+   "kind": "rule",
+   "section": "10.2",
+   "claim": "Banned: accurate, precise (overclaims).",
+   "status": "Contradicted",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 97,
+     "quote": "<string name=\"s08_accuracy\">Accuracy: %s</string>"
+    }
+   ],
+   "reason": "S08 shows the label 'Accuracy:' (a camera metric), a form of the banned 'accurate'. The whole-word lint does not catch it."
+  },
+  {
+   "id": "doc-10.2-ai",
+   "kind": "rule",
+   "section": "10.2",
+   "claim": "Banned: AI.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/test/kotlin/com/kitalonlabs/neogold/core/designsystem/StringLintTest.kt",
+     "line": 34,
+     "quote": "\"ai\","
+    }
+   ],
+   "reason": "No whole-word 'AI' appears in any strings.xml or Kotlin UI literal."
+  },
+  {
+   "id": "doc-10.2-bangla",
+   "kind": "rule",
+   "section": "10.2",
+   "claim": "Bangla banned: নিরাপদ, স্বাভাবিক, সুস্থ, ঠিক আছে, জন্ডিস নেই, রোগ নির্ণয়, নির্ভুল, সঠিক মাপ, এআই, কৃত্রিম বুদ্ধিমত্তা.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/test/kotlin/com/kitalonlabs/neogold/core/designsystem/StringLintTest.kt",
+     "line": 138,
+     "quote": "Regex(\"(?<!অ)স্বাভাবিক\")"
+    }
+   ],
+   "reason": "Grep of values-bn found none. অস্বাভাবিক comes from the doc's own danger_sleepy. 'সঠিক মাত্রা' (values-bn:135) is close to the banned সঠিক মাপ; the panel should review it."
+  },
+  {
+   "id": "doc-10.2-lint",
+   "kind": "gate",
+   "section": "10.2",
+   "claim": "Automated banned-word check covers English and Bangla UI strings.",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/test/kotlin/com/kitalonlabs/neogold/core/designsystem/StringLintTest.kt",
+     "line": 117,
+     "quote": "val regex = Regex(\"\\\\b${Regex.escape(banned)}\\\\b\", RegexOption.IGNORE_CASE)"
+    }
+   ],
+   "reason": "Only designsystem strings.xml is scanned (line 54), with whole-word matching, so 'diagnostic' and 'Accuracy' pass. Hardcoded Kotlin UI literals (for example R07 'safe') are never checked."
+  },
+  {
+   "id": "doc-10.3-suggested-decide",
+   "kind": "rule",
+   "section": "10.3",
+   "claim": "'Suggested next step' above, and 'You decide, using your clinical judgment.' below, every result action.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 116,
+     "quote": "text = stringResource(R.string.result_suggested),"
+    },
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 191,
+     "quote": "text = stringResource(R.string.result_you_decide),"
+    }
+   ],
+   "reason": "NgTriageCard is used by both S14 and S20."
+  },
+  {
+   "id": "doc-10.3-confirm-blood",
+   "kind": "rule",
+   "section": "10.3",
+   "claim": "'Always confirm with a blood test.' on every result.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 105,
+     "quote": "text = stringResource(R.string.confirm_blood),"
+    }
+   ],
+   "reason": "S14 shows it at line 113."
+  },
+  {
+   "id": "doc-10.3-experimental",
+   "kind": "rule",
+   "section": "10.3",
+   "claim": "'Experimental. Not yet validated in Bangladesh.' on Home and every result.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 78,
+     "quote": "NgExperimentalBanner(modifier = Modifier.testTag(\"experimental_banner\"))"
+    }
+   ],
+   "reason": "Also on S09HomeScreen.kt:107 and S14RuleOutcomeScreen.kt:103."
+  },
+  {
+   "id": "action_refer_urgent",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key action_refer_urgent = 'Refer urgently now'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 3,
+     "quote": "Refer urgently now"
+    }
+   ],
+   "reason": "Matches; used in NgTriageCard.kt:76."
+  },
+  {
+   "id": "action_blood_test",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key action_blood_test = 'Blood test today'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 4,
+     "quote": "Blood test today"
+    }
+   ],
+   "reason": "Matches; used in NgTriageCard.kt:84."
+  },
+  {
+   "id": "action_recheck",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key action_recheck = 'Screen again in %d hours'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 5,
+     "quote": "Screen again in %d hours"
+    }
+   ],
+   "reason": "Matches; used in NgTriageCard.kt:92."
+  },
+  {
+   "id": "action_no_further",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key action_no_further = 'No further action from this screen'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 6,
+     "quote": "No further action from this screen"
+    }
+   ],
+   "reason": "Matches; used in NgTriageCard.kt:100."
+  },
+  {
+   "id": "next_no_further",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key next_no_further = 'Continue routine care. Watch for danger signs.'",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 7,
+     "quote": "Continue routine care. Watch for danger signs."
+    }
+   ],
+   "reason": "The text matches, but the key is never used. S20 shows a different hardcoded line (MainActivity.kt:594)."
+  },
+  {
+   "id": "confirm_blood",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key confirm_blood = 'Always confirm with a blood test.'",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 8,
+     "quote": "Always confirm with a blood test."
+    }
+   ],
+   "reason": "Matches; used on S14 and S20."
+  },
+  {
+   "id": "experimental",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key experimental = 'Experimental. Not yet validated in Bangladesh.'",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 9,
+     "quote": "Experimental. Not yet validated in Bangladesh."
+    }
+   ],
+   "reason": "Matches; used in NgExperimentalBanner."
+  },
+  {
+   "id": "cannot_screen",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key cannot_screen = 'NeoGold cannot screen this baby. Use a blood test.'",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 10,
+     "quote": "NeoGold cannot screen this baby. Use a blood test."
+    }
+   ],
+   "reason": "Matches; used in NgTriageCard.kt:108."
+  },
+  {
+   "id": "cannot_screen_14d",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key cannot_screen_14d = 'Jaundice after two weeks needs a doctor's review.'",
+   "status": "Partial",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 11,
+     "quote": "Jaundice after two weeks needs a doctor\\'s review."
+    }
+   ],
+   "reason": "The text matches but the key is unused. S14 R5 uses rule_age_reason ('...for other causes.')."
+  },
+  {
+   "id": "q_early_jaundice",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key q_early_jaundice = 'Did yellow color appear in the first 24 hours of life?'",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 12,
+     "quote": "Did yellow color appear in the first 24 hours of life?"
+    }
+   ],
+   "reason": "Matches; used in S11:72."
+  },
+  {
+   "id": "q_danger_signs",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key q_danger_signs = 'Does the baby have any of these danger signs?'",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 13,
+     "quote": "Does the baby have any of these danger signs?"
+    }
+   ],
+   "reason": "Matches; used in S12:76."
+  },
+  {
+   "id": "danger_feeding",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key danger_feeding = 'Not feeding well'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 14,
+     "quote": "Not feeding well"
+    }
+   ],
+   "reason": "Matches; used in NgFields.kt:194."
+  },
+  {
+   "id": "danger_sleepy",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key danger_sleepy = 'Unusually sleepy or hard to wake'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 15,
+     "quote": "Unusually sleepy or hard to wake"
+    }
+   ],
+   "reason": "Matches; used in NgFields.kt:198."
+  },
+  {
+   "id": "danger_cry",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key danger_cry = 'High-pitched cry'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 16,
+     "quote": "High-pitched cry"
+    }
+   ],
+   "reason": "Matches; used in NgFields.kt:202."
+  },
+  {
+   "id": "danger_arching",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key danger_arching = 'Arching of the back or neck'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 17,
+     "quote": "Arching of the back or neck"
+    }
+   ],
+   "reason": "Matches; used in NgFields.kt:206."
+  },
+  {
+   "id": "q_phototherapy",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key q_phototherapy = 'Has the baby already had phototherapy (light treatment)?'",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 18,
+     "quote": "Has the baby already had phototherapy (light treatment)?"
+    }
+   ],
+   "reason": "Matches; used in S13:72."
+  },
+  {
+   "id": "birth_time",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key birth_time = 'When was the baby born?'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 19,
+     "quote": "When was the baby born?"
+    }
+   ],
+   "reason": "Matches; used in NgFields.kt:101."
+  },
+  {
+   "id": "ga_label",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key ga_label = 'Gestational age (weeks)'.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 20,
+     "quote": "Gestational age (weeks)"
+    }
+   ],
+   "reason": "Matches; used in S10:228."
+  },
+  {
+   "id": "place_card",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key place_card = 'Place the card on the baby's chest'.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 21,
+     "quote": "Place the card on the baby\\'s chest"
+    }
+   ],
+   "reason": "Matches; used in S15:116."
+  },
+  {
+   "id": "hold_still",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key hold_still = 'Hold the phone steady'.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 22,
+     "quote": "Hold the phone steady"
+    }
+   ],
+   "reason": "The text matches but the key is unused. The camera overlay hardcodes 'Hold the phone steady, 20 cm away' (CardDetectionOverlay.kt:142)."
+  },
+  {
+   "id": "glare",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key glare = 'Too much glare. Move away from the window.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 23,
+     "quote": "Too much glare. Move away from the window."
+    }
+   ],
+   "reason": "The text matches but the key is unused. S17 uses the duplicate key retake_glare with the same text."
+  },
+  {
+   "id": "card_invalid",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key card_invalid = 'This card could not be verified. It cannot be used for screening.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 24,
+     "quote": "This card could not be verified. It cannot be used for screening."
+    }
+   ],
+   "reason": "The text matches but the key is unused, because S06 never rejects a card."
+  },
+  {
+   "id": "register_label",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key register_label = 'Facility register no. (optional)'.",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 25,
+     "quote": "Facility register no. (optional)"
+    }
+   ],
+   "reason": "Matches; used in S20:142 and S14:133."
+  },
+  {
+   "id": "register_hint",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key register_hint = 'Do not enter names, phone numbers, or birth registration numbers.'",
+   "status": "Implemented",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 26,
+     "quote": "Do not enter names, phone numbers, or birth registration numbers."
+    }
+   ],
+   "reason": "Matches; used in S20:147."
+  },
+  {
+   "id": "register_rejected",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key register_rejected = 'This looks like a phone or ID number. Use the facility register number only.'",
+   "status": "Partial",
+   "area": "privacy",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt",
+     "line": 137,
+     "quote": "\"This looks like a phone or ID number. Use the facility register number only.\""
+    }
+   ],
+   "reason": "The key text matches (strings.xml:27), but S20 and S14:128 hardcode the English literal, so Bangla users never see the Bangla version."
+  },
+  {
+   "id": "phone_qualified",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key phone_qualified = 'This phone can be used for screening.'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 28,
+     "quote": "This phone can be used for screening."
+    }
+   ],
+   "reason": "Matches; used in S08:69."
+  },
+  {
+   "id": "phone_research_only",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key phone_research_only = 'This phone's camera changes colors unevenly, so it can be used for research only.'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M1",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 29,
+     "quote": "This phone\\'s camera changes colors unevenly, so it can be used for research only."
+    }
+   ],
+   "reason": "Matches; used in S08:71."
+  },
+  {
+   "id": "battery_steps_title",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key battery_steps_title = 'Keep NeoGold reminders working'.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 30,
+     "quote": "Keep NeoGold reminders working"
+    }
+   ],
+   "reason": "Matches; used in S05:210."
+  },
+  {
+   "id": "upload_now",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key upload_now = 'Upload now'.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 31,
+     "quote": "Upload now"
+    }
+   ],
+   "reason": "Matches; used in R07ExportScreen.kt:208."
+  },
+  {
+   "id": "consent_question",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key consent_question = 'Has the baby's parent or guardian agreed to this screening?'",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 32,
+     "quote": "Has the baby\\'s parent or guardian agreed to this screening?"
+    }
+   ],
+   "reason": "Matches; used in S10a:86."
+  },
+  {
+   "id": "consent_no",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key consent_no = 'No screening without consent. Use your clinical judgment or a blood test.'",
+   "status": "Implemented",
+   "area": "consent",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 33,
+     "quote": "No screening without consent. Use your clinical judgment or a blood test."
+    }
+   ],
+   "reason": "Matches; used in S10a:136."
+  },
+  {
+   "id": "result_suggested",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key result_suggested = 'Suggested next step'.",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 34,
+     "quote": "Suggested next step"
+    }
+   ],
+   "reason": "Matches; used in NgTriageCard.kt:116."
+  },
+  {
+   "id": "result_you_decide",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key result_you_decide = 'You decide, using your clinical judgment.'",
+   "status": "Implemented",
+   "area": "clinical-wording",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 35,
+     "quote": "You decide, using your clinical judgment."
+    }
+   ],
+   "reason": "Matches; used in NgTriageCard.kt:191."
+  },
+  {
+   "id": "upload_waiting",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key upload_waiting = '%d waiting to upload'.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 36,
+     "quote": "%d waiting to upload"
+    }
+   ],
+   "reason": "Matches; used in NgFeedback.kt:234 and R07:192. Not a plural resource."
+  },
+  {
+   "id": "upload_clock_wrong",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key upload_clock_wrong = 'Phone clock is wrong. Set the date and time automatically, then tap Upload now.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 37,
+     "quote": "Phone clock is wrong. Set the date and time automatically, then tap Upload now."
+    }
+   ],
+   "reason": "The text matches but no Kotlin code references the key."
+  },
+  {
+   "id": "upload_update_app",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key upload_update_app = 'Update NeoGold to keep uploading.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 38,
+     "quote": "Update NeoGold to keep uploading."
+    }
+   ],
+   "reason": "The text matches but the key is unused."
+  },
+  {
+   "id": "upload_reenroll",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key upload_reenroll = 'This phone must be enrolled again. Contact your study coordinator.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 39,
+     "quote": "This phone must be enrolled again. Contact your study coordinator."
+    }
+   ],
+   "reason": "The text matches but the key is unused."
+  },
+  {
+   "id": "upload_removed",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key upload_removed = 'This phone was removed from the study. Data not yet uploaded can still be exported by USB.'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 40,
+     "quote": "This phone was removed from the study. Data not yet uploaded can still be exported by USB."
+    }
+   ],
+   "reason": "Matches; used in R09LeaveStudyScreen.kt:122, but that screen is not wired in the nav."
+  },
+  {
+   "id": "enroll_confirm",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key enroll_confirm = 'Join %1$s, run by %2$s? Study data will be sent to %3$s.'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 41,
+     "quote": "Join %1$s, run by %2$s? Study data will be sent to %3$s."
+    }
+   ],
+   "reason": "Matches; used in R08EnrollmentScreen.kt:212, but that screen is not wired."
+  },
+  {
+   "id": "enroll_code_invalid",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key enroll_code_invalid = 'Code not recognised. Check it and try again.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 42,
+     "quote": "Code not recognised. Check it and try again."
+    }
+   ],
+   "reason": "The text matches but the key is unused."
+  },
+  {
+   "id": "enroll_code_new",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key enroll_code_new = 'Ask your coordinator for a new code.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 43,
+     "quote": "Ask your coordinator for a new code."
+    }
+   ],
+   "reason": "The text matches but the key is unused."
+  },
+  {
+   "id": "participant_code_taken",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key participant_code_taken = 'This participant code is already in use. Check the consent form.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 44,
+     "quote": "This participant code is already in use. Check the consent form."
+    }
+   ],
+   "reason": "The text matches but the key is unused."
+  },
+  {
+   "id": "pin_locked",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key pin_locked = 'Too many wrong PINs. Try again in %d minutes.'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 45,
+     "quote": "Too many wrong PINs. Try again in %d minutes."
+    }
+   ],
+   "reason": "Matches; used in R01ResearchUnlockScreen.kt:111."
+  },
+  {
+   "id": "clock_now",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key clock_now = 'Phone time now: %s'.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 46,
+     "quote": "Phone time now: %s"
+    }
+   ],
+   "reason": "Matches; used in NgFields.kt:122."
+  },
+  {
+   "id": "clock_wrong_block",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key clock_wrong_block = 'The phone's date or time looks wrong. Set the date and time automatically, then try again.'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 47,
+     "quote": "The phone\\'s date or time looks wrong. Set the date and time automatically, then try again."
+    }
+   ],
+   "reason": "Matches; used in S10:163."
+  },
+  {
+   "id": "clock_auto_off",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key clock_auto_off = 'Automatic date and time is off. Turn it on so the baby's age is calculated correctly.'",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 48,
+     "quote": "Automatic date and time is off. Turn it on so the baby\\'s age is calculated correctly."
+    }
+   ],
+   "reason": "Matches; used in S10:191. The nav never passes isAutoTimeEnabled, so the default is true."
+  },
+  {
+   "id": "study_settings_mismatch",
+   "kind": "other",
+   "section": "10.4",
+   "claim": "Key study_settings_mismatch = 'Study settings do not match. Contact your coordinator.'",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/res/values/strings.xml",
+     "line": 49,
+     "quote": "Study settings do not match. Contact your coordinator."
+    }
+   ],
+   "reason": "The text matches but the key is unused."
+  },
+  {
+   "id": "doc-11-contrast",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "4.5:1 minimum contrast for all text, using the Section 2.1 values.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Color.kt",
+     "line": 8,
+     "quote": "val LightTextPrimary = Color(0xFF1A1F24)"
+    }
+   ],
+   "reason": "Token hex values match the checked pairs. Gaps are noted in doc-2.1-light-tokens."
+  },
+  {
+   "id": "doc-11-not-color-alone",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "Color plus icon plus words plus border style for every clinical state.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgTriageCard.kt",
+     "line": 70,
+     "quote": "val (solidHeaderColor, bodyTintColor, bodyTextColor, icon, actionText, borderStroke) = when (action) {"
+    }
+   ],
+   "reason": "Icon and words are distinct, but recheck and no-further borders are identical 2 dp solid (no dash)."
+  },
+  {
+   "id": "doc-11-touch",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "48 dp minimum touch targets, 64 dp for primary actions on clinical screens.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S17PhotoProblemScreen.kt",
+     "line": 219,
+     "quote": ".height(56.dp),"
+    }
+   ],
+   "reason": "48 dp is enforced in Ng buttons, and S14/S20 use 64 dp. The S17 and S19 (line 96) primary actions are 56 dp."
+  },
+  {
+   "id": "doc-11-font-scaling",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "Font scaling up to 200% without clipping.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "Needs a device or screenshot test at 200% font scale."
+  },
+  {
+   "id": "doc-11-talkback",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "Every meaningful icon and control has a TalkBack label in both languages; result screen announces the action first.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S09HomeScreen.kt",
+     "line": 92,
+     "quote": "contentDescription = \"Settings\","
+    }
+   ],
+   "reason": "Some labels use string resources, but several are hardcoded English (S09:92, S16:77, S17:89). Triage icons have a null description. S20 puts the experimental banner before the action."
+  },
+  {
+   "id": "doc-11-motion",
+   "kind": "NFR",
+   "section": "11",
+   "claim": "Respects 'remove animations'; transitions 200 ms or less; no motion on result.",
+   "status": "Unknown",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [],
+   "reason": "No explicit animator-scale handling was found. Compose defaults may comply; settling this needs a device test."
+  },
+  {
+   "id": "doc-11-audio",
+   "kind": "NG",
+   "section": "11",
+   "claim": "Spoken result and instructions in Bangla (NG-060).",
+   "status": "Deferred",
+   "area": "other",
+   "milestone": "v1.x",
+   "evidence": [
+    {
+     "file": "docs/3_Feature_Backlog.md",
+     "line": 124,
+     "quote": "| NG-060 | E5 | Audio guidance in Bangla | Spoken result and instructions for low-literacy contexts | M | v1.1 |"
+    }
+   ],
+   "reason": "Doc 6 labels it Could-have NG-060, and the backlog targets v1.1."
+  },
+  {
+   "id": "doc-12-strings-xml",
+   "kind": "rule",
+   "section": "12",
+   "claim": "All strings in strings.xml (values/ English, values-bn/ Bangla); plurals via Android plural resources.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "inventory_key": "categories.strings.actual"
+    },
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10aGuardianConsentScreen.kt",
+     "line": 144,
+     "quote": "text = \"Return to Home\","
+    }
+   ],
+   "reason": "The English and Bangla key sets match. About 200 hardcoded UI literals remain, mostly in R01 to R09, S14, S16, NgFields and NgYesNoButtons defaults. There are no <plurals> resources (for example 'Today: %d screenings')."
+  },
+  {
+   "id": "doc-12-digits",
+   "kind": "rule",
+   "section": "12",
+   "claim": "Clinical numbers in Western digits by default; a setting allows Bangla digits.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/util/ClinicalNumberFormatter.kt",
+     "line": 24,
+     "quote": "return String.format(Locale.US, \"%.${decimals}f\", value)"
+    }
+   ],
+   "reason": "Western digits are the default. The Bangla-digits setting is saved (NeoGoldDataStore.kt:148) but no formatter reads it."
+  },
+  {
+   "id": "doc-12-dates",
+   "kind": "rule",
+   "section": "12",
+   "claim": "Dates use the Gregorian calendar with localized month names.",
+   "status": "Partial",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt",
+     "line": 106,
+     "quote": "DateTimeFormatter.ofPattern(\"d MMM yyyy   hh:mm a\", Locale.getDefault())"
+    }
+   ],
+   "reason": "Dates are Gregorian with the system locale. The in-app language choice is never applied (see S01), so months follow the system language, not the selected one."
+  },
+  {
+   "id": "doc-12-translating",
+   "kind": "NG",
+   "section": "12",
+   "claim": "A TRANSLATING.md guide explains how a fork adds a language (NG-038).",
+   "status": "Missing",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "Glob **/TRANSLATING.md found nothing."
+  },
+  {
+   "id": "doc-12-clinical-marked",
+   "kind": "rule",
+   "section": "12",
+   "claim": "Clinical strings are marked so translators know they need clinical review.",
+   "status": "Missing",
+   "area": "clinical-wording",
+   "milestone": "M2",
+   "evidence": [],
+   "reason": "strings.xml has only section comments. No per-string clinical marker or translator note exists in either values file."
+  },
+  {
+   "id": "doc-13-system",
+   "kind": "rule",
+   "section": "13",
+   "claim": "Dark mode follows the system setting using Section 2.1 tokens.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M2",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Theme.kt",
+     "line": 96,
+     "quote": "darkTheme: Boolean = isSystemInDarkTheme(),"
+    }
+   ],
+   "reason": "Switches both the color scheme and TriageColors."
+  },
+  {
+   "id": "doc-13-same-signals",
+   "kind": "rule",
+   "section": "13",
+   "claim": "Result screen uses the same icons, words, and borders in both themes; only colors shift.",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/theme/Theme.kt",
+     "line": 54,
+     "quote": "val DarkTriageColors = TriageColors("
+    }
+   ],
+   "reason": "NgTriageCard picks icons, words and borders independent of theme."
+  },
+  {
+   "id": "doc-13-camera",
+   "kind": "rule",
+   "section": "13",
+   "claim": "Camera screen looks the same in both themes (neutral dark gray).",
+   "status": "Implemented",
+   "area": "other",
+   "milestone": "M3",
+   "evidence": [
+    {
+     "file": "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S16CameraScreen.kt",
+     "line": 27,
+     "quote": "private val DarkScreenBg = Color(0xFF121416)"
+    }
+   ],
+   "reason": "S16 hardcodes colors without theme lookup."
+  }
+ ],
+ "counts": {
+  "Implemented": 74,
+  "Partial": 53,
+  "Missing": 7,
+  "Contradicted": 12,
+  "Deferred": 1,
+  "Unknown": 3
+ },
+ "notes": "Six Contradicted claims are clinical-wording. Four are the S20 next-step lines (MainActivity.kt:591-594), which differ from doc 6 Section 3 and drop the danger-sign advice. They are not visible in v1.0 because triageEnabled=false shows the cannot-screen card. The other two are 'diagnostic' in about_intended_use and bilirubin/hyperbilirubinemia jargon on S20 and S14. Other top risks: S19 hardcodes a NO_FURTHER_ACTION result with made-up estimates instead of calling the pipeline, and only triageEnabled=false hides it. S07 fabricates a QUALIFIED result and no qualification gate exists before the screening camera. S16 has no CameraX binding, so S17 and the quality-retry loop are unreachable. Research mode (the v1.0 target) cannot be reached from Home or Settings: R01 accepts any PIN, R02 to R07 run on hardcoded data, and R08/R09 are PlaceholderScreen although real composables exist. The selected language is never applied. The banned-word lint uses whole-word matching on one strings.xml only, so it misses 'diagnostic', 'Accuracy' and the R07 literal 'safe'. The TC-UI-01 test asserts only that the enum has 4 values. S14 logs R3/R4 as BLOOD_TEST_TODAY while showing Cannot screen (MainActivity.kt:479). S10 pre-fills birth time to 48 h ago, which looks like a silent default on a clinical input (CLAUDE.md rule). Bangla text was not compared beyond key presence."
+}

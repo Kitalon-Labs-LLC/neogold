@@ -96,6 +96,9 @@ Fill this in as work packages create them; keep it current.
 | Release gates | `python3 tools/verify_clinical_signoff.py ...`, `tools/check_manifest.py`, `tools/check_network_config.py`, `tools/check_16kb.sh`, `tools/check_trust_list_release.py` |
 | Audit unverified assumptions | `/ng-assumptions` (or `python3 tools/assumptions.py --report`) |
 | Run isolated spike on a claim | `/ng-spike "<claim>"` |
+| Direction check (report only) | `/ng-direction [--since <ref>]` |
+| Drift gate (CI, P24) | `python3 tools/drift_inventory.py --check` (needs `backend/requirements.lock` installed) |
+| Tests per TC | `python3 tools/trace.py docs --tests` |
 
 ---
 

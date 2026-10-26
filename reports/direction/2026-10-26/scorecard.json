@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-26",
+  "commit": "4523908",
+  "inventory_commit": "4f04aefb4bae512c227e8fad51569a403b4144f0",
+  "is_main": true,
+  "since": null,
+  "verdict": "Off course",
+  "verdict_reason": "38 Contradicted items in verdict areas (triage, clinical wording, consent, quality gate, privacy, crypto); root causes R1 to R10 in report.md Section 1",
+  "counts_by_doc": {
+    "docs/2_PRD.md": {
+      "Implemented": 36,
+      "Partial": 35,
+      "Missing": 1,
+      "Contradicted": 9,
+      "Deferred": 4,
+      "Unknown": 26
+    },
+    "docs/3_Feature_Backlog.md": {
+      "Implemented": 18,
+      "Partial": 29,
+      "Missing": 1,
+      "Contradicted": 7,
+      "Deferred": 18,
+      "Unknown": 0
+    },
+    "docs/4_System_Architecture.md": {
+      "Implemented": 45,
+      "Partial": 16,
+      "Missing": 3,
+      "Contradicted": 9,
+      "Deferred": 2,
+      "Unknown": 1
+    },
+    "docs/5_Database_Schema.md": {
+      "Implemented": 72,
+      "Partial": 25,
+      "Missing": 2,
+      "Contradicted": 4,
+      "Deferred": 2,
+      "Unknown": 1
+    },
+    "docs/6_UI_UX_Guidelines.md": {
+      "Implemented": 74,
+      "Partial": 53,
+      "Missing": 7,
+      "Contradicted": 12,
+      "Deferred": 1,
+      "Unknown": 3
+    },
+    "docs/7_API_Documentation.md": {
+      "Implemented": 89,
+      "Partial": 26,
+      "Missing": 7,
+      "Contradicted": 6,
+      "Deferred": 3,
+      "Unknown": 0
+    },
+    "docs/8_Security_Compliance_Plan.md": {
+      "Implemented": 63,
+      "Partial": 25,
+      "Missing": 5,
+      "Contradicted": 5,
+      "Deferred": 2,
+      "Unknown": 11
+    },
+    "docs/9_Test_Plan_Strategy.md": {
+      "Implemented": 15,
+      "Partial": 31,
+      "Missing": 4,
+      "Contradicted": 3,
+      "Deferred": 3,
+      "Unknown": 15
+    },
+    "docs/12_Deployment_Runbook.md": {
+      "Implemented": 40,
+      "Partial": 5,
+      "Missing": 1,
+      "Contradicted": 4,
+      "Deferred": 3,
+      "Unknown": 12
+    },
+    "docs/14_Build_Plan.md": {
+      "Implemented": 16,
+      "Partial": 17,
+      "Missing": 4,
+      "Contradicted": 5,
+      "Deferred": 1,
+      "Unknown": 4
+    }
+  },
+  "milestones": {
+    "M1": [
+      {
+        "criterion": "Pipeline runs end to end on 3 phones",
+        "status": "Not met",
+        "evidence": "app discards capture, constant result (MainActivity.kt:523-571)"
+      },
+      {
+        "criterion": "Golden-vector parity passes",
+        "status": "Partial",
+        "evidence": "golden file self-regenerates; Python parity not in CI"
+      },
+      {
+        "criterion": "Bad image set 100% rejected",
+        "status": "Met",
+        "evidence": "VisionQualityGateTest.kt:277 on 13 synthetic images"
+      },
+      {
+        "criterion": "Camera qualification measured on all six phones",
+        "status": "Unknown",
+        "evidence": "no raw captures; S07 does not measure"
+      }
+    ],
+    "M2": [
+      {
+        "criterion": "All P1 research, sync, export, security cases pass",
+        "status": "Not met",
+        "evidence": "TC-SEC P1 without tests; research UI not wired"
+      },
+      {
+        "criterion": "Zero records lost in 50 kill and 10 power-pull tests per phone",
+        "status": "Unknown",
+        "evidence": "no run logs"
+      },
+      {
+        "criterion": "Encrypted USB export",
+        "status": "Partial",
+        "evidence": "engine tested; R07 never exports"
+      },
+      {
+        "criterion": "Research build on Play closed testing",
+        "status": "Unknown",
+        "evidence": "no Play evidence"
+      }
+    ],
+    "M3": [
+      {
+        "criterion": "Study server upload working against staging",
+        "status": "Not met",
+        "evidence": "R08 placeholder; aud mismatch likely"
+      },
+      {
+        "criterion": "Screening flow built and tested with triageEnabled false",
+        "status": "Not met",
+        "evidence": "constant result"
+      },
+      {
+        "criterion": "All P1 and P2 cases pass on D1 to D4",
+        "status": "Unknown",
+        "evidence": "35 TCs without tests; no device logs"
+      },
+      {
+        "criterion": "No open S1 or S2 defects",
+        "status": "Unknown",
+        "evidence": "defect log empty vs 53 closed in v1.0.md"
+      },
+      {
+        "criterion": "Performance budgets met on D1 and D2",
+        "status": "Unknown",
+        "evidence": "reported figures simulated"
+      },
+      {
+        "criterion": "Gates S1 to S9 pass",
+        "status": "Partial",
+        "evidence": "S1, S8 without artifacts"
+      },
+      {
+        "criterion": "Closed testing usability targets and 14 days without S1",
+        "status": "Unknown",
+        "evidence": "no session records; 14 days not elapsed"
+      },
+      {
+        "criterion": "Closed research release with triageEnabled false",
+        "status": "Partial",
+        "evidence": "config correct; research mode unusable"
+      }
+    ]
+  },
+  "unplanned": {
+    "modules": 2,
+    "module_edges": 32,
+    "libraries": 20,
+    "permissions": 0,
+    "exported_components": 0,
+    "room_tables": 0,
+    "room_columns": 0,
+    "pg_tables": 0,
+    "pg_columns": 0,
+    "endpoints": 0,
+    "error_codes": 0,
+    "screens": 0,
+    "config_keys": 0,
+    "screening_network": 0,
+    "triage_gate": 1
+  },
+  "unplanned_new_since_baseline": 55,
+  "unreferenced_commits": 12,
+  "zero_test_tcs": 35,
+  "skipped_categories": [],
+  "bash_guard_active": false,
+  "action_items": 18,
+  "decided": 18,
+  "previous_report": null,
+  "decisions_by": "CTO under founder delegation, 2026-10-26",
+  "pending_removal_in_baseline": 4
+}

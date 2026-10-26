@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "commit": "51fc9e1f2fe2cdb281fe1db281c6a941f2cd0ab7",
+  "note": "Known unplanned items, so --check fails only on new ones. Change only in a PR that also updates the doc explaining the change (P24). 'decisions' maps '<category> <key>' to the owner's call: remove = still drift, tracked until the code change lands.",
+  "unplanned": {
+    "modules": [],
+    "module_edges": [
+      ":engine:camera -> :core:designsystem",
+      ":engine:camera -> :engine:triage"
+    ],
+    "libraries": [
+      ":sync:research org.bouncycastle:bcprov-jdk18on prod"
+    ],
+    "permissions": [],
+    "exported_components": [],
+    "room_tables": [],
+    "room_columns": [],
+    "pg_tables": [],
+    "pg_columns": [],
+    "endpoints": [],
+    "error_codes": [],
+    "screens": [],
+    "config_keys": [],
+    "screening_network": [],
+    "triage_gate": [
+      "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt: Kotlin parameter defaults to true"
+    ]
+  },
+  "decisions": {
+    "libraries :sync:research org.bouncycastle:bcprov-jdk18on prod": {
+      "decision": "remove",
+      "action": "A15",
+      "by": "founder (delegated to CTO), 2026-10-26",
+      "why": "unused in :sync:research (only :core:security imports Bouncy Castle, ADR-016)"
+    },
+    "module_edges :engine:camera -> :core:designsystem": {
+      "decision": "remove",
+      "action": "A16",
+      "by": "founder (delegated to CTO), 2026-10-26",
+      "why": "unused: no import from :core:designsystem in engine/camera/src/main; delete the dependency line and refresh the lockfile"
+    },
+    "module_edges :engine:camera -> :engine:triage": {
+      "decision": "remove",
+      "action": "A16",
+      "by": "founder (delegated to CTO), 2026-10-26",
+      "why": "unused: no import from :engine:triage in engine/camera/src/main; delete the dependency line and refresh the lockfile"
+    },
+    "triage_gate android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt: Kotlin parameter defaults to true": {
+      "decision": "remove",
+      "action": "A3",
+      "by": "founder (delegated to CTO), 2026-10-26",
+      "why": "remove the = true default; pass the gate from the parsed config"
+    }
+  }
+}
