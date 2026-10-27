@@ -98,6 +98,27 @@ def test_no_commit_in_this_repository_since_the_rule_carries_attribution():
     assert check.check_range("origin/dev..HEAD", cwd=REPO) == []
 
 
+def test_a_very_long_adversarial_line_is_checked_in_linear_time():
+    # The first version used nested wildcards: a 120 KB line of "generated with " took 11 seconds.
+    import time
+
+    for line in ("generated with " * 8000, "<" * 120000, "co-authored-by: " * 8000, "x" * 500000):
+        started = time.perf_counter()
+        check.is_attribution(line)
+        assert time.perf_counter() - started < 0.5, f"too slow for a {len(line)}-character line"
+
+
+def test_padding_cannot_hide_attribution():
+    assert check.find_attribution("a" * 100000 + " <someone@anthropic.com>") != []
+    assert check.find_attribution("x " * 50000 + "Generated with Claude Code") != []
+    assert check.find_attribution("Co-Authored-By: " + "a" * 100000 + " claude") != []
+
+
+def test_footer_words_must_appear_in_order():
+    # "Claude" before "generated with" is a sentence about a file, not the footer.
+    assert check.find_attribution("CLAUDE.md was generated with the template tool") == []
+
+
 HOOK = REPO / "tools" / "hooks" / "commit-msg"
 HOOK_CASES = [
     ("Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>", 1),

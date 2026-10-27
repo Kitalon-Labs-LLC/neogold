@@ -12,31 +12,31 @@ Usage:
 Exits 0 when clean, 1 when attribution is found, 2 on a usage error.
 """
 
-import re
 import subprocess
 import sys
 from pathlib import Path
 
-# One pattern per kind of attribution line. Case-insensitive, matched against single lines.
-ATTRIBUTION_LINE = re.compile(
-    r"^\s*(?:"
-    r"co-authored-by:.*(?:claude|anthropic).*"  # Co-Authored-By: Claude ... / ... anthropic ...
-    r"|.*<[^>]*@anthropic\.com>.*"             # any trailer using an anthropic.com address
-    r"|.*generated with\b.*claude.*"           # "Generated with [Claude Code](...)"
-    r")\s*$",
-    re.IGNORECASE,
-)
-# A human co-author using the Anthropic noreply address is still AI attribution, so the address alone is enough.
-NOREPLY = re.compile(r"noreply@anthropic\.com", re.IGNORECASE)
+def is_attribution(line):
+    """True when one line is AI attribution. Case-insensitive.
+
+    Plain substring tests on purpose: a regex with nested wildcards can backtrack badly, and a
+    crafted 120 KB line took 11 seconds to match, enough to stall a CI runner.
+    """
+    low = line.lower()
+    # Co-Authored-By: Claude ... / a trailer that names Anthropic (a human co-author is fine).
+    if low.lstrip().startswith("co-authored-by:") and ("claude" in low or "anthropic" in low):
+        return True
+    # Any address at the vendor's domain, human-looking or not.
+    if "@anthropic.com" in low:
+        return True
+    # "Generated with [Claude Code](...)": the footer wording, in this order.
+    start = low.find("generated with")
+    return start >= 0 and "claude" in low[start:]
 
 
 def find_attribution(message):
     """Return the stripped offending lines of a commit message (empty means clean)."""
-    return [
-        line.strip()
-        for line in message.splitlines()
-        if ATTRIBUTION_LINE.match(line) or NOREPLY.search(line)
-    ]
+    return [line.strip() for line in message.splitlines() if is_attribution(line)]
 
 
 def check_range(rev_range, cwd=None):

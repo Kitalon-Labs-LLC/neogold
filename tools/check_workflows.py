@@ -24,7 +24,7 @@ from pathlib import Path
 try:
     import yaml
 except ImportError:
-    print("ERROR: PyYAML required. Run: pip install pyyaml", file=sys.stderr)
+    print("ERROR: PyYAML required. Run: pip install --require-hashes --only-binary :all: -r backend/requirements.lock", file=sys.stderr)
     sys.exit(2)
 
 REPO = Path(__file__).resolve().parent.parent

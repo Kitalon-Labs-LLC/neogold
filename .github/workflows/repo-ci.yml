@@ -55,8 +55,10 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - name: Install PyYAML and pytest
-        run: pip install pyyaml pytest
+      - name: Install locked Python tooling (PyYAML, pytest and the backend deps the tests import)
+        # Hash-locked like every other job: this job decides whether all the guardrails pass, so a
+        # poisoned release of pytest or pyyaml must not be able to run inside it.
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
       - name: Guardrails table integrity
         run: python3 tools/check_guardrails.py
       - name: Dependency allowlist and HTTP client isolation
@@ -82,7 +84,7 @@ jobs:
           elif [ -n "$PUSH_BEFORE" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
             range="$PUSH_BEFORE..$GITHUB_SHA"
           else
-            range="$GITHUB_SHA~1..$GITHUB_SHA"   # new branch, or a force-push that dropped the old tip
+            range="origin/main..$GITHUB_SHA"   # new branch, or a force-push that dropped the old tip
           fi
           python3 tools/check_commit_attribution.py "$range"
       - name: StrictMath in pure engines
