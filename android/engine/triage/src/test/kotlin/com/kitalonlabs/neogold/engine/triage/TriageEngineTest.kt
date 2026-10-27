@@ -497,9 +497,10 @@ class TriageEngineTest {
     }
 
     @Test
-    fun test_TC_TRI_19_config_cut_off_anywhere_is_rejected() {
+    fun test_H7_config_cut_off_anywhere_is_rejected() {
         // A config that is cut off at any point must be rejected outright, never half-accepted (H7, H8).
-        // Pins the "Unexpected EOF" paths of the JSON tokenizer.
+        // Pins the "Unexpected EOF" paths of the JSON tokenizer. No numbered test case covers truncation,
+        // so this cites the hazard only: it must not count as coverage for another case.
         val configFile = File("config/triage-config.json").takeIf { it.exists() }
             ?: File("../../../config/triage-config.json").takeIf { it.exists() }
             ?: error("Could not find config/triage-config.json")

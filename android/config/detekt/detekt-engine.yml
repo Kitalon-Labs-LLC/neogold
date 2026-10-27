@@ -1,3 +1,11 @@
+# Extra rules for the four pure engines (:engine:colorscience, :estimation, :triage, :cardtrust).
+# Doc 4 Section 4.2: they use java.lang.StrictMath so arm64-v8a and armeabi-v7a give bit-identical results.
+#
+# This file bans importing the platform versions. A call such as Math.pow(x, 2.0) needs no import, so
+# tools/check_strictmath.py is the check that catches those. detekt's ForbiddenMethodCall would too, but it needs
+# type resolution (detektMain) and the plain detekt task that CI runs skips it, so it is not configured here
+# (BUG-2026-047). The trigonometric and cube-root entries go beyond the powers, roots and exponentials that doc 4
+# names: the engines already call StrictMath.cbrt, sin, cos and atan2, and the same ABI argument applies.
 style:
   ForbiddenImport:
     active: true
@@ -8,10 +16,16 @@ style:
         reason: 'Pure engines must use java.lang.StrictMath.pow for bit-identical cross-platform results (Doc 4 Section 4.2).'
       - value: 'kotlin.math.sqrt'
         reason: 'Pure engines must use java.lang.StrictMath.sqrt for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.cbrt'
+        reason: 'Pure engines must use java.lang.StrictMath.cbrt for bit-identical cross-platform results (Doc 4 Section 4.2).'
       - value: 'kotlin.math.exp'
         reason: 'Pure engines must use java.lang.StrictMath.exp for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.expm1'
+        reason: 'Pure engines must use java.lang.StrictMath.expm1 for bit-identical cross-platform results (Doc 4 Section 4.2).'
       - value: 'kotlin.math.ln'
         reason: 'Pure engines must use java.lang.StrictMath.log for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.ln1p'
+        reason: 'Pure engines must use java.lang.StrictMath.log1p for bit-identical cross-platform results (Doc 4 Section 4.2).'
       - value: 'kotlin.math.log'
         reason: 'Pure engines must use java.lang.StrictMath.log for bit-identical cross-platform results (Doc 4 Section 4.2).'
       - value: 'kotlin.math.log10'
@@ -20,30 +34,23 @@ style:
         reason: 'Pure engines must use java.lang.StrictMath for bit-identical cross-platform results (Doc 4 Section 4.2).'
       - value: 'kotlin.math.hypot'
         reason: 'Pure engines must use java.lang.StrictMath.hypot for bit-identical cross-platform results (Doc 4 Section 4.2).'
-  ForbiddenMethodCall:
-    active: true
-    methods:
-      - value: 'java.lang.Math.pow'
-        reason: 'Use StrictMath.pow'
-      - value: 'java.lang.Math.sqrt'
-        reason: 'Use StrictMath.sqrt'
-      - value: 'java.lang.Math.exp'
-        reason: 'Use StrictMath.exp'
-      - value: 'java.lang.Math.log'
-        reason: 'Use StrictMath.log'
-      - value: 'java.lang.Math.log10'
-        reason: 'Use StrictMath.log10'
-      - value: 'kotlin.math.pow'
-        reason: 'Use StrictMath.pow'
-      - value: 'kotlin.math.sqrt'
-        reason: 'Use StrictMath.sqrt'
-      - value: 'kotlin.math.exp'
-        reason: 'Use StrictMath.exp'
-      - value: 'kotlin.math.ln'
-        reason: 'Use StrictMath.log'
-      - value: 'kotlin.math.log'
-        reason: 'Use StrictMath.log'
-      - value: 'kotlin.math.log10'
-        reason: 'Use StrictMath.log10'
-      - value: 'kotlin.math.hypot'
-        reason: 'Use StrictMath.hypot'
+      - value: 'kotlin.math.sin'
+        reason: 'Pure engines must use java.lang.StrictMath.sin for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.cos'
+        reason: 'Pure engines must use java.lang.StrictMath.cos for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.tan'
+        reason: 'Pure engines must use java.lang.StrictMath.tan for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.asin'
+        reason: 'Pure engines must use java.lang.StrictMath.asin for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.acos'
+        reason: 'Pure engines must use java.lang.StrictMath.acos for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.atan'
+        reason: 'Pure engines must use java.lang.StrictMath.atan for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.atan2'
+        reason: 'Pure engines must use java.lang.StrictMath.atan2 for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.sinh'
+        reason: 'Pure engines must use java.lang.StrictMath.sinh for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.cosh'
+        reason: 'Pure engines must use java.lang.StrictMath.cosh for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'kotlin.math.tanh'
+        reason: 'Pure engines must use java.lang.StrictMath.tanh for bit-identical cross-platform results (Doc 4 Section 4.2).'

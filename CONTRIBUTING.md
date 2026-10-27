@@ -68,7 +68,7 @@ Every pull request must fulfill:
 
 ## 5. Static Analysis (detekt)
 
-`./gradlew detekt` runs on every Android module in CI, and one finding fails the build. The rules and thresholds are in `android/config/detekt/detekt.yml`; the four pure engines add `detekt-engine.yml` (the StrictMath rules).
+`./gradlew detekt` runs on every Android module in CI, and one finding fails the build. The rules and thresholds are in `android/config/detekt/detekt.yml`; the four pure engines add `detekt-engine.yml`, which bans importing `java.lang.Math` and the `kotlin.math` functions that `StrictMath` replaces. A direct call such as `Math.pow(x, 2.0)` needs no import, so only `tools/check_strictmath.py` catches it (BUG-2026-047).
 
 - **Fix, do not baseline.** There is no baseline file. Unused code, swallowed exceptions, locale-dependent formatting and similar findings are fixed.
 - **Suppress with a reason.** Use `@Suppress("Rule") // why` on the smallest scope. A temporary suppression names the package that removes it. Numbers that are a published standard, a byte layout or the clinical rule stay literal, with a file-level `@Suppress("MagicNumber")` that names the source.

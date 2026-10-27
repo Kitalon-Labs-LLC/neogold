@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber") // pre-filled birth time default, removed in E1 (A9, FR-02)
+@file:Suppress("MagicNumber") // pre-filled birth time default, removed in E1 (A9, FR-02, BUG-2026-044)
 
 package com.kitalonlabs.neogold.feature.screening.ui
 

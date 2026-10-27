@@ -236,5 +236,8 @@ object VisionQualityGate {
 
 private const val PERCENT_TO_BYTE_SCALE = 2.55
 
-/** Residual reported when no gray patch could be sampled, so the residual check can never pass. */
+/**
+ * Residual reported when fitting the correction throws, so HIGH_RESIDUAL always fires. With fewer than three
+ * matched reference patches no residual is computed at all and the check does not fire (BUG-2026-048).
+ */
 private const val NO_RESIDUAL_DELTA_E = 999.0

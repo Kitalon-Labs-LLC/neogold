@@ -143,9 +143,10 @@ class CardTrustEngineTest {
     }
 
     /**
-     * The trust list decides which batches verify (TC-CARD-03, TC-CARD-06), so a copy that is cut off at
-     * any point must be rejected outright, never half-accepted. Pins the "Unexpected EOF" paths of the
-     * JSON tokenizer (fail closed, doc 8 Section 5).
+     * The trust list decides which card batches verify (issuer and revocation checks), so a copy that is cut
+     * off at any point must be rejected outright, never half-accepted. Pins the "Unexpected EOF" paths of the
+     * JSON tokenizer (fail closed, doc 8 Section 5). No numbered test case covers truncation, so this cites
+     * none: it must not count as coverage for another case.
      */
     @Test
     fun trustListCutOffAnywhereIsRejected() {
