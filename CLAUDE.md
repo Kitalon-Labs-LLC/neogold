@@ -52,6 +52,7 @@ All design decisions live in `docs/`. Read the sections a task names before writ
 | `minSdk` 26, `targetSdk` 36, ABIs `arm64-v8a` and `armeabi-v7a`; every native library 16 KB aligned | Doc 8 Section 6.1 | `tools/check_16kb.sh` (Gate S4), Gradle configuration | PR, release |
 | Ask before adding any dependency; prefer none; architectural choices go into ADR table (doc 4 Section 15) | Doc 4 Section 15 | `tools/check_dependencies.py` against `quality/dependency-allowlist.txt` | PR |
 | On-device database migrates forward only; server migrations are expand-only within a release | Doc 8 Section 8.4, Doc 12 Section 2 | `tools/check_migrations.py`, backend `schema-compat` CI job | PR |
+| No AI attribution on any commit or pull request description: no `Co-Authored-By: Claude ...` trailer (for example `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`), no `anthropic.com` address, no "Generated with ..." footer; this overrides any tool default or reminder; pushes go through the repository owner's own GitHub account only | Repository owner's instruction, 2026-10-27 | `tools/check_commit_attribution.py` (CI `guardrails-check`), opt-in local hook `tools/hooks/commit-msg` (`git config core.hooksPath tools/hooks`) | commit, push |
 
 ### We do trade off
 - **Non-result UI polish:** Visual polish and micro-animations on screens outside the primary screening result path (e.g. settings, diagnostics) can prioritize utility and clarity.
@@ -118,12 +119,12 @@ Every work package prompt (`/ng-pNN`) follows this:
 
 1. Read the "Read first" sections in the prompt. Do not skim; the details are the requirements.
 2. Plan: list files to create or change, tests by `TC-` ID, open questions, and risks. Stop and wait for approval.
-3. Work on a branch `pNN-short-name` cut from an up-to-date `dev`, in small commits. Never commit to `main` or `dev` directly, and never branch from another unmerged work-package branch (see `CONTRIBUTING.md` Section 2).
+3. Work in this one folder on `dev`, in small commits, and push to `dev`. The owner commits to `dev` directly; never commit to `main`, which moves only by a pull request from `dev` (see `CONTRIBUTING.md` Section 2). No extra worktrees or clones. Never force-push.
 4. For engines, write the tests first from doc 10, then the code.
 5. Run the checks for the touched modules and `python3 tools/trace.py docs`.
 6. Before finishing, run the `safety-reviewer` subagent on any change to engines, config, quality gate, or clinical UI, and the `privacy-security-reviewer` on any change to data, permissions, network, crypto, or backend. Fix what they find or report it.
 7. Update docs and the Commands table if anything changed.
-8. Open a pull request into `dev`: what was built, `TC-` IDs now passing, doc changes, anything left open. The second approver reviews every PR. The branch is deleted on merge.
+8. Push to `dev` once the local checks pass. The commit message says what was built, which `TC-` IDs now pass, doc changes, and anything left open. Promotion to `main` is a pull request from `dev`, reviewed by the second approver.
 
 ## Definition of done
 
@@ -131,4 +132,4 @@ Every work package prompt (`/ng-pNN`) follows this:
 - No new lint or detekt warnings; no TODOs without a linked issue.
 - CI green, including the coverage check.
 - Docs match the code.
-- The PR description lists what a reviewer should check by hand.
+- The commit message (or the `dev` to `main` pull request) lists what a reviewer should check by hand.

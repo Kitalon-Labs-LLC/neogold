@@ -18,16 +18,18 @@ NeoGold software is licensed under the [MIT License](LICENSE). However, per **Se
 | Branch | Purpose | Lifetime |
 |---|---|---|
 | `main` | Stable, reviewed code. Every commit on `main` has passed CI and two-person review. Release tags `vX.Y.Z` are cut from here (or from `release/X.Y`). | Permanent |
-| `dev` | Integration branch. All day-to-day work lands here first. | Permanent |
-| `pNN-short-name` | One work package (e.g., `p16-sync-client`). Branched from `dev`, merged back into `dev` by pull request. | Deleted on merge |
-| `fix/short-name`, `docs/short-name`, `chore/short-name` | Small changes outside a work package. Branched from `dev`, merged into `dev`. | Deleted on merge |
+| `dev` | Integration branch. The repository owner commits and pushes here directly; CI runs on every push. All other contributors land work here by pull request. | Permanent |
+| `pNN-short-name` | One work package (e.g., `p16-sync-client`) from an outside contributor. Branched from `dev`, merged back into `dev` by pull request. The owner works on `dev` and does not need one. | Deleted on merge |
+| `fix/short-name`, `docs/short-name`, `chore/short-name` | Small changes outside a work package, from an outside contributor. Branched from `dev`, merged into `dev`. | Deleted on merge |
 | `release/X.Y` | Cut from `main` at code freeze (doc 12 Section 2). Fixes land on `dev` first and are cherry-picked. | Kept for the life of the release |
 | `hotfix/X.Y.Z-description` | Branched from `release/X.Y`; merged into the release branch and back into `dev`. | Deleted on merge |
 
 Rules:
 
-- **Never commit directly to `main` or `dev`.** Everything arrives by pull request.
-- **Feature branches target `dev`**, not `main`. Do not stack a new work package on an unmerged one; merge the previous package into `dev` first.
+- **Never commit directly to `main`.** It moves only by a pull request from `dev`. The repository owner commits to `dev` directly (decided 2026-10-27); every other contributor opens a pull request into `dev`.
+- **Never force-push** `dev` or `main`.
+- **No AI attribution on any commit.** No `Co-Authored-By` trailer naming an AI tool, no vendor address, no "Generated with" footer. `tools/check_commit_attribution.py` enforces it in CI; `git config core.hooksPath tools/hooks` also checks it before each local commit.
+- **Contributor branches target `dev`**, not `main`. Do not stack a new work package on an unmerged one; merge the previous package into `dev` first.
 - **`dev` is promoted to `main`** by a pull request from `dev` to `main` once `dev` is green and the milestone is reviewed.
 - **Branches are short-lived.** The repository deletes head branches automatically on merge. A branch with no open pull request should not exist on the remote.
 
@@ -39,7 +41,7 @@ Every task or work package must follow these steps:
 
 1. **Read First:** Read all referenced sections in `docs/` and `CLAUDE.md`. Do not skim; details are regulatory and clinical requirements.
 2. **Plan & Align:** List files to create/change, tests by `TC-` ID, open questions, and hazards/risks. Stop and get approval before implementation.
-3. **Branch & Small Commits:** Create the branch `pNN-short-name` from an up-to-date `dev` and make incremental commits.
+3. **Small Commits:** Make incremental commits. The owner commits on `dev`; an outside contributor creates the branch `pNN-short-name` from an up-to-date `dev`.
 4. **Test-First for Pure Engines:** For engine modules (`colorscience`, `estimation`, `triage`, `cardtrust`), write unit tests cited by `TC-` ID from `docs/10_Test_Cases.md` before writing the engine code.
 5. **Run Local Checks:** Run the relevant test suites and verify traceability:
    ```bash
@@ -47,7 +49,7 @@ Every task or work package must follow these steps:
    ```
 6. **Mandatory Reviewers:** Run the `safety-reviewer` subagent on any change touching clinical logic, triage, configs, or quality gates, and `privacy-security-reviewer` on data layer, permissions, network, or crypto.
 7. **Documentation Updates:** Update docs, schemas, and `CLAUDE.md` command tables if anything changed.
-8. **Pull Request:** Open a PR against `dev` for review. Two-person review is required before merging. The branch is deleted once merged.
+8. **Land it:** The owner pushes to `dev` once the local checks pass. An outside contributor opens a PR against `dev`; two-person review is required before merging, and the branch is deleted once merged. Promotion from `dev` to `main` is always a PR with two-person review.
 
 ---
 
@@ -59,4 +61,5 @@ Every pull request must fulfill:
 - [ ] No patient data (no real newborn data, photos, names, or identifiers) anywhere in tests, fixtures, or code.
 - [ ] Documentation updated in the same PR to match any behavioral changes.
 - [ ] CI checks pass green.
-- [ ] PR description details manual verification steps for the second approver.
+- [ ] PR description (or the commit message, for the owner) details manual verification steps for the second approver.
+- [ ] No AI attribution in any commit message.
