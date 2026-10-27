@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // lockout schedule: 5, 10 then 15 minutes
+
 package com.kitalonlabs.neogold.core.data.pin
 
 import com.kitalonlabs.neogold.core.data.local.dao.AuditEventDao
@@ -140,8 +142,7 @@ class ResearchPinManager(
      */
     suspend fun setPin(
         studyId: String,
-        pin: String,
-        now: Long = System.currentTimeMillis()
+        pin: String
     ): Result<ResearchStudyEntity> {
         val validation = PinPolicyValidator.validate(pin)
         if (validation is PinValidationResult.Invalid) {

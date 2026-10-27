@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // overlay guide proportions are layout constants
+
 package com.kitalonlabs.neogold.engine.camera.ui
 
 import androidx.compose.animation.core.animateFloatAsState

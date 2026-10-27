@@ -30,6 +30,7 @@ import okio.BufferedSink
 import okio.source
 import java.io.InputStream
 
+@Suppress("TooManyFunctions") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
 class ResearchApiClient(
     private val okHttpClient: OkHttpClient,
     val clockManager: ClockManager = ClockManager(),
@@ -203,6 +204,7 @@ class ResearchApiClient(
     }
 
     // 8. PUT /sessions/{session_id}/captures/{capture_id}/image
+    @Suppress("LongParameterList") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
     suspend fun putCaptureImage(
         baseUrl: String,
         deviceId: String,
@@ -302,6 +304,7 @@ class ResearchApiClient(
         return bodyStr
     }
 
+    @Suppress("LongParameterList") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
     private fun executeAuthenticatedCall(
         baseUrl: String,
         deviceId: String,
@@ -383,6 +386,7 @@ class ResearchApiClient(
         return bodyStr
     }
 
+    @Suppress("LongParameterList") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
     private fun executeAuthenticatedImageCall(
         baseUrl: String,
         deviceId: String,
@@ -486,8 +490,10 @@ class ResearchApiClient(
                 code = if (statusCode >= 500) ErrorCode.SERVER_ERROR else "HTTP_$statusCode",
                 retryable = statusCode >= 500,
                 request_id = "unknown",
-                detail = bodyStr.take(200)
+                detail = bodyStr.take(MAX_ERROR_DETAIL_CHARS)
             )
         }
     }
 }
+
+private const val MAX_ERROR_DETAIL_CHARS = 200

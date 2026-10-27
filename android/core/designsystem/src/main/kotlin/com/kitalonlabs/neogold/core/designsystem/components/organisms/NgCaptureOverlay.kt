@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // overlay guide proportions are layout constants
+
 package com.kitalonlabs.neogold.core.designsystem.components.organisms
 
 import androidx.compose.foundation.background

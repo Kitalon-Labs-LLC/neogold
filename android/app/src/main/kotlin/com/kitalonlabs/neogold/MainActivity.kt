@@ -1,3 +1,8 @@
+@file:Suppress(
+    "MaxLineLength",
+    "MagicNumber"
+) // hardcoded UI text (F1) and placeholder session values, both replaced by the wiring in B1 and E1
+
 package com.kitalonlabs.neogold
 
 import android.content.Intent
@@ -632,7 +637,11 @@ fun NeoGoldNavHost(
                             } else {
                                 null
                             },
-                            estimateMgDl = if (sessionEstimatedLow != null && sessionEstimatedHigh != null) (sessionEstimatedLow!! + sessionEstimatedHigh!!) / 2.0 else null,
+                            estimateMgDl = if (sessionEstimatedLow != null && sessionEstimatedHigh != null) {
+                                (sessionEstimatedLow!! + sessionEstimatedHigh!!) / 2.0
+                            } else {
+                                null
+                            },
                             estimateLowMgDl = sessionEstimatedLow,
                             estimateHighMgDl = sessionEstimatedHigh,
                             thresholdMgDl = sessionThreshold,

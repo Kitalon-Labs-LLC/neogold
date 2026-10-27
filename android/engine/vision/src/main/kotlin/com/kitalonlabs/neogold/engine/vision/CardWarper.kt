@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // matrix element indices, bit shifts and pixel arithmetic
+
 package com.kitalonlabs.neogold.engine.vision
 
 /**
@@ -49,7 +51,7 @@ class CardWarper(
                 val x0 = srcX.toInt()
                 val y0 = srcY.toInt()
 
-                if (x0 >= 0 && x0 < frameW - 1 && y0 >= 0 && y0 < frameH - 1) {
+                if (x0 in 0 until frameW - 1 && y0 in 0 until frameH - 1) {
                     val fx = srcX - x0
                     val fy = srcY - y0
                     val fx1 = 1.0 - fx
@@ -92,7 +94,7 @@ class CardWarper(
                     val b = (bTop * fy1 + bBot * fy).toInt().coerceIn(0, 255)
 
                     reusableBuffer[outIdx] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
-                } else if (x0 >= 0 && x0 < frameW && y0 >= 0 && y0 < frameH) {
+                } else if (x0 in 0 until frameW && y0 in 0 until frameH) {
                     // Border nearest neighbor
                     reusableBuffer[outIdx] = framePixels[y0 * frameW + x0]
                 } else {

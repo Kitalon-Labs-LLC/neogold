@@ -81,7 +81,7 @@ class VisionEngine(
         // 3. Estimate homography & tilt angle
         val tiltAngleDeg = Homography.estimateTiltAngleDegrees(srcCenters)
 
-        val H_canon_to_frame = try {
+        val canonToFrame = try {
             Homography.findHomography(dstCenters, srcCenters)
         } catch (_: Exception) {
             val failedDetection = CardDetectionResult(
@@ -99,13 +99,13 @@ class VisionEngine(
 
         val detectionResult = CardDetectionResult(
             markers = markerMap,
-            homographyMatrix = H_canon_to_frame.m,
+            homographyMatrix = canonToFrame.m,
             cardAngleDegrees = tiltAngleDeg
         )
 
         // 4. Warp frame to canonical 1200x760 px image
-        // H_canon_to_frame maps canonical (u, v) -> frame (x, y) which is directly used for inverse warping
-        val canonicalImage = warper.warpToCanonical(frame, H_canon_to_frame)
+        // canonToFrame maps canonical (u, v) -> frame (x, y) which is directly used for inverse warping
+        val canonicalImage = warper.warpToCanonical(frame, canonToFrame)
 
         // 5. Evaluate Quality Gate
         return VisionQualityGate.evaluate(

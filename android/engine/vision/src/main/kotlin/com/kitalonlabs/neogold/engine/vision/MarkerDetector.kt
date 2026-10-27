@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // quad corner indices and marker grid sizes; replaced behind MarkerDetector in A3
+
 package com.kitalonlabs.neogold.engine.vision
 
 /**
@@ -124,6 +126,10 @@ class FastMarkerDetector : MarkerDetector {
         return null
     }
 
+    @Suppress(
+        "NestedBlockDepth",
+        "ReturnCount"
+    ) // image-processing loops; the detector is replaced behind MarkerDetector in A3
     private fun decodeGrid(
         frame: ImageFrame,
         corners: List<Point2D>,
@@ -138,7 +144,7 @@ class FastMarkerDetector : MarkerDetector {
             Point2D(1.0, 1.0),
             Point2D(0.0, 1.0)
         )
-        val H = try {
+        val homography = try {
             Homography.findHomography(unitSquare, corners)
         } catch (_: Exception) {
             return null
@@ -153,7 +159,7 @@ class FastMarkerDetector : MarkerDetector {
             for (c in 0 until gridSize) {
                 val u = (c + 0.5) / gridSize
                 val v = (r + 0.5) / gridSize
-                val pt = H.transform(Point2D(u, v))
+                val pt = homography.transform(Point2D(u, v))
                 val px = pt.x.toInt().coerceIn(0, frame.width - 1)
                 val py = pt.y.toInt().coerceIn(0, frame.height - 1)
                 val lum = frame.getLuminance(px, py)
@@ -213,6 +219,11 @@ class FastMarkerDetector : MarkerDetector {
      * Extracts potential quadrilateral corners from frame.
      * Uses thresholding and polygon contour tracking.
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LongMethod",
+        "NestedBlockDepth"
+    ) // image-processing loops; the detector is replaced behind MarkerDetector in A3
     fun findCandidateQuads(frame: ImageFrame): List<List<Point2D>> {
         val w = frame.width
         val h = frame.height

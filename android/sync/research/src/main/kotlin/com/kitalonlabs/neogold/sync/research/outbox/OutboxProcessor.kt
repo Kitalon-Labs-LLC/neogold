@@ -36,6 +36,7 @@ sealed class OutboxResult {
     data class Error(val message: String, val cause: Throwable? = null) : OutboxResult()
 }
 
+@Suppress("LongParameterList") // upload state machine; reworked with the sync wiring in C4
 class OutboxProcessor(
     private val apiClient: ResearchApiClient,
     private val outboxDao: OutboxDao,
@@ -55,6 +56,10 @@ class OutboxProcessor(
     }
 ) {
 
+    @Suppress(
+        "ReturnCount",
+        "TooGenericExceptionCaught"
+    ) // network and server failures are retried with backoff (TC-SYNC-03); upload state machine; reworked with the sync wiring in C4
     suspend fun process(): OutboxResult {
         val study = studyDao.getActiveStudy() ?: return OutboxResult.Error("No active research study found")
         val baseUrl = study.serverUrl ?: return OutboxResult.Error("No server URL configured for study")
@@ -129,6 +134,7 @@ class OutboxProcessor(
         return OutboxResult.Success(processedCount)
     }
 
+    @Suppress("TooGenericExceptionCaught") // network and server failures are retried with backoff (TC-SYNC-03)
     private suspend fun processItem(
         item: OutboxEntity,
         study: ResearchStudyEntity,
@@ -260,8 +266,8 @@ class OutboxProcessor(
             val fileSizeBytes = if (hasImage) {
                 try {
                     val file = encryptedFileStore.getEncryptedFile(c.imageFile!!)
-                    if (file.exists()) file.length() else 1000000L
-                } catch (_: Exception) { 1000000L }
+                    if (file.exists()) file.length() else DEFAULT_IMAGE_SIZE_BYTES
+                } catch (_: Exception) { DEFAULT_IMAGE_SIZE_BYTES }
             } else {
                 null
             }
@@ -350,7 +356,7 @@ class OutboxProcessor(
 
         // Decrypt and stream directly without writing plain image to disk (TC-SYNC-20)
         val file = encryptedFileStore.getEncryptedFile(imageFile)
-        val sizeBytes = if (file.exists()) file.length() else 1000000L
+        val sizeBytes = if (file.exists()) file.length() else DEFAULT_IMAGE_SIZE_BYTES
 
         apiClient.putCaptureImage(
             baseUrl = baseUrl,
@@ -380,7 +386,7 @@ class OutboxProcessor(
         val minutesFromCapture: Int? = if (tsbSessionId != null) {
             val session = sessionDao.getSessionById(tsbSessionId)
             if (session != null) {
-                ((tsb.drawTime - session.createdAt) / 60000).toInt()
+                ((tsb.drawTime - session.createdAt) / MILLIS_PER_MINUTE).toInt()
             } else {
                 null
             }
@@ -414,6 +420,7 @@ class OutboxProcessor(
         )
     }
 
+    @Suppress("ReturnCount") // upload state machine; reworked with the sync wiring in C4
     private suspend fun handleApiError(item: OutboxEntity, error: ApiException) {
         val now = System.currentTimeMillis()
         val code = error.errorCode
@@ -452,14 +459,15 @@ class OutboxProcessor(
         }
 
         // 4. Rate limited / 5xx / Maintenance: retryable with backoff
-        if (error.statusCode in 500..599 || code == ErrorCode.RATE_LIMITED || code == ErrorCode.MAINTENANCE || code == ErrorCode.STORAGE_FULL) {
+        val isTransient = code == ErrorCode.RATE_LIMITED || code == ErrorCode.MAINTENANCE || code == ErrorCode.STORAGE_FULL
+        if (error.statusCode in SERVER_ERROR_STATUS_CODES || isTransient) {
             outboxDao.recordAttempt(item.id, code, now)
             outboxDao.updateState(item.id, "PENDING", now)
             return
         }
 
         // 5. Unknown error code: follow retryable flag, fallback to HTTP class (TC-SYNC-08)
-        val isRetryable = error.problem.retryable ?: (error.statusCode >= 500)
+        val isRetryable = error.problem.retryable ?: (error.statusCode >= SERVER_ERROR_STATUS_CODES.first)
         if (isRetryable) {
             outboxDao.recordAttempt(item.id, code, now)
             outboxDao.updateState(item.id, "PENDING", now)
@@ -567,3 +575,7 @@ class OutboxProcessor(
         }
     }
 }
+
+private const val DEFAULT_IMAGE_SIZE_BYTES = 1_000_000L
+private const val MILLIS_PER_MINUTE = 60_000L
+private val SERVER_ERROR_STATUS_CODES = 500..599

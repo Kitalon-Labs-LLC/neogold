@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // pre-filled age default, removed in E1 (A9, FR-02)
+
 package com.kitalonlabs.neogold.feature.research.ui
 
 import androidx.compose.foundation.background

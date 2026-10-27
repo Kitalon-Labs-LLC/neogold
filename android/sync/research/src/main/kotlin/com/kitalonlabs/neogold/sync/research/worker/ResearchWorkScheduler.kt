@@ -45,6 +45,7 @@ object ResearchWorkScheduler {
      * - If a worker is currently RUNNING, does not spawn a second runner; active run continues.
      * - If waiting (ENQUEUED or BLOCKED) or idle, replaces it with an expedited work request.
      */
+    @Suppress("TooGenericExceptionCaught") // a failed status read must not crash; treat as no work
     fun triggerUploadNow(context: Context) {
         val workManager = WorkManager.getInstance(context)
         val workInfos = try {

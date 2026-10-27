@@ -75,7 +75,6 @@ fun S01LanguageScreen(
 
             // Bangla selection option
             LanguageOptionCard(
-                languageCode = "bn",
                 label = stringResource(R.string.lang_bangla),
                 nativeLabel = "বাংলা",
                 isSelected = selectedLang == "bn",
@@ -90,7 +89,6 @@ fun S01LanguageScreen(
 
             // English selection option
             LanguageOptionCard(
-                languageCode = "en",
                 label = stringResource(R.string.lang_english),
                 nativeLabel = "English",
                 isSelected = selectedLang == "en",
@@ -120,7 +118,6 @@ fun S01LanguageScreen(
 
 @Composable
 private fun LanguageOptionCard(
-    languageCode: String,
     label: String,
     nativeLabel: String,
     isSelected: Boolean,

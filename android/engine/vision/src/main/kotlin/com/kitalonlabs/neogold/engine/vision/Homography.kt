@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // 3x3 matrix element indices and numeric tolerances
+
 package com.kitalonlabs.neogold.engine.vision
 
 /**
@@ -170,19 +172,6 @@ class Homography(val m: DoubleArray) {
             val botLen = p3.distanceTo(p2)
             val leftLen = p0.distanceTo(p3)
             val rightLen = p1.distanceTo(p2)
-
-            // Ratio of opposite edges (< 1.0 under perspective tilt)
-            val ratioHorizontal = if (StrictMath.max(topLen, botLen) > 0.0) {
-                StrictMath.min(topLen, botLen) / StrictMath.max(topLen, botLen)
-            } else {
-                1.0
-            }
-
-            val ratioVertical = if (StrictMath.max(leftLen, rightLen) > 0.0) {
-                StrictMath.min(leftLen, rightLen) / StrictMath.max(leftLen, rightLen)
-            } else {
-                1.0
-            }
 
             // Foreshortening aspect ratio check against nominal marker centers aspect ratio 980 / 540
             val nominalAspect = (CardGeometry.MARKER_CENTERS.getValue(1).x - CardGeometry.MARKER_CENTERS.getValue(0).x) /

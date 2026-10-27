@@ -111,6 +111,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-034 | Recheck notification is posted without checking the notification permission | 2026-10-27 | CI | commit a0b6da2 | n/a | LOG | S3 | No | - | P2 | Fixed | Unassigned | TC-LOG-09 | |
 | BUG-2026-035 | ScreeningPipelineBenchmarkTest asserts phone time budgets on a shared build machine | 2026-10-27 | Test | commit a0b6da2 | n/a | PERF | S3 | No | - | P3 | New | Unassigned | TC-PERF-01 | |
 | BUG-2026-036 | Trivy gate S2 fails: Bouncy Castle 1.78.1 (CRITICAL) and protobuf-java 3.19.3 (HIGH) ship in the app | 2026-10-27 | CI | commit 8c13d2a | n/a | SEC | S2 | No | - | P2 | In progress | Unassigned | TC-SEC-05 | |
+| BUG-2026-037 | TC-CAP-01 builds a LiveCardAnalyzer and never calls it, so the test asserts on objects it constructed itself | 2026-10-27 | Review | commit a0b6da2 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-01 | |
 
 ### 4.1 Entries
 
@@ -712,6 +713,22 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fixed in part. Bouncy Castle was upgraded to 1.86 (jar and pom checksums cross-checked against the sha256 and sha1 Maven Central publishes; the 43 `:core:security` tests, including Argon2id, still pass). What remains is time-boxed in `.trivyignore.yaml`, each entry scoped to one package version, with a reason and an expiry of 31 January 2027: Bouncy Castle 1.80.2 inside Android's lint tool (not shipped; clears with an Android Gradle Plugin upgrade) and `protobuf-java` 3.19.3, which ships because the project uses the Tink JVM jar `tink` 1.7.0 instead of `tink-android`. Moving to `tink-android` or a newer Tink removes it; that touches keyset storage and the HPKE export, so it belongs to work package B1 with its own tests. Status becomes Fixed when that lands and the ignore entries are deleted. The gate stays active for everything else.
 
+#### BUG-2026-037: TC-CAP-01 builds a LiveCardAnalyzer and never calls it, so the test asserts on objects it constructed itself
+
+- Area: CAP | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-CAP-01 | Fix version:
+
+**Steps**
+1. Read `tcCap01_liveCardDetectionAndAutoCaptureGating` in `android/engine/camera/src/test/kotlin/com/kitalonlabs/neogold/engine/camera/CameraCaptureTest.kt`.
+
+**Expected** The test feeds frames to `LiveCardAnalyzer` and checks that auto-capture fires only when all four markers are found and the card has been steady.
+
+**Actual** The analyzer is created and never used. The assertions are on `LiveCardState` values the test builds by hand, so they pass whatever the analyzer does.
+
+**Evidence** Found by detekt `UnusedPrivateProperty` when the rule was switched on (A17). Same class of weakness as the tautological tests in the audit (TC-TRI-26, TC-UI-14, TC-UI-01).
+
+**Notes** The unused variable carries a `@Suppress` that points at this entry, so the gap stays visible. The fix is a real analyzer test with synthetic frames (the 25 vision tests already render synthetic cards), planned with the camera host in C1. It strengthens the test, so it is allowed under the test-protection hook.
+
 ---
 
 ## 5. Closed Defects
@@ -731,10 +748,10 @@ Updated with each test summary report (doc 9 Section 15).
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
 | S2 | 18 | 0 | 0 |
-| S3 | 3 | 0 | 0 |
+| S3 | 4 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
-As of 26 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
+As of 27 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
 
 ---
 

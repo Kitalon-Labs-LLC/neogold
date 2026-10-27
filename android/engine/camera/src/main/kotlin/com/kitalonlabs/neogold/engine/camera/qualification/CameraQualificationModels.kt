@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // default threshold table (doc 4 Section 5.7)
+
 package com.kitalonlabs.neogold.engine.camera.qualification
 
 import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel

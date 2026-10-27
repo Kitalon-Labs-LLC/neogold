@@ -55,6 +55,7 @@ data class BatteryGuidance(
 
 object DeviceBatteryGuidance {
 
+    @Suppress("LongMethod") // table of per-device guidance
     fun getGuidance(
         manufacturer: String = Build.MANUFACTURER,
         brand: String = Build.BRAND

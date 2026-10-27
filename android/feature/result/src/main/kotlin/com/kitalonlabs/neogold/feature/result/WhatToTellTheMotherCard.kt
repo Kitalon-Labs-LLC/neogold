@@ -87,7 +87,7 @@ fun WhatToTellTheMotherCard(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .size(24.dp)
-                        .rotate(if (expanded) 180f else 0f)
+                        .rotate(if (expanded) EXPANDED_ARROW_ROTATION_DEGREES else 0f)
                 )
             }
 
@@ -105,3 +105,5 @@ fun WhatToTellTheMotherCard(
         }
     }
 }
+
+private const val EXPANDED_ARROW_ROTATION_DEGREES = 180f

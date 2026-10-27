@@ -20,7 +20,9 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class MigrationHarnessTest {
 
-    private val TEST_DB = "migration-test.db"
+    private companion object {
+        const val TEST_DB = "migration-test.db"
+    }
 
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(

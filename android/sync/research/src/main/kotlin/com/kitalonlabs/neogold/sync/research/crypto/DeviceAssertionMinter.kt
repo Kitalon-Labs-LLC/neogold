@@ -8,6 +8,7 @@ object DeviceAssertionMinter {
         Base64Url.encode(Base64Url.sha256(ByteArray(0)))
     }
 
+    @Suppress("LongParameterList") // JWT claim list; reworked with the audience fix in B2
     fun mintToken(
         deviceId: String,
         keyAlias: String,
@@ -20,7 +21,7 @@ object DeviceAssertionMinter {
         keyManager: DeviceKeyManager
     ): String {
         val iat = clockManager.currentServerAdjustedEpochSeconds()
-        val exp = iat + 300
+        val exp = iat + ASSERTION_TTL_SECONDS
         val jti = UUID.randomUUID().toString()
 
         val bsh = when {
@@ -35,7 +36,8 @@ object DeviceAssertionMinter {
 
         // Compact JSON serialization for JOSE header and claims
         val headerJson = "{\"alg\":\"ES256\",\"typ\":\"ng-device+jwt\",\"kid\":\"$deviceId\"}"
-        val claimsJson = "{\"iss\":\"$deviceId\",\"aud\":\"$aud\",\"iat\":$iat,\"exp\":$exp,\"jti\":\"$jti\",\"htm\":\"${httpMethod.uppercase()}\",\"htu\":\"$htu\",\"bsh\":\"$bsh\"}"
+        val claimsJson = "{\"iss\":\"$deviceId\",\"aud\":\"$aud\",\"iat\":$iat,\"exp\":$exp,\"jti\":\"$jti\"," +
+            "\"htm\":\"${httpMethod.uppercase()}\",\"htu\":\"$htu\",\"bsh\":\"$bsh\"}"
 
         val headerB64 = Base64Url.encode(headerJson.toByteArray(Charsets.UTF_8))
         val claimsB64 = Base64Url.encode(claimsJson.toByteArray(Charsets.UTF_8))
@@ -47,3 +49,5 @@ object DeviceAssertionMinter {
         return "$signingInput.$sigB64"
     }
 }
+
+private const val ASSERTION_TTL_SECONDS = 300

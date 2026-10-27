@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // pre-filled birth time default, removed in E1 (A9, FR-02)
+
 package com.kitalonlabs.neogold.feature.screening.ui
 
 import androidx.compose.foundation.layout.Arrangement

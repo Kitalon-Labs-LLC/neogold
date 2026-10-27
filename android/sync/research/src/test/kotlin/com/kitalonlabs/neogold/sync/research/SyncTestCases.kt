@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // JSON fixtures stay on one line so a diff shows the whole payload
+
 package com.kitalonlabs.neogold.sync.research
 
 import android.content.Context
@@ -687,7 +689,7 @@ class SyncTestCases {
             )
         )
 
-        for (i in 1..3) {
+        repeat(3) {
             server.enqueue(
                 MockResponse().setResponseCode(
                     200

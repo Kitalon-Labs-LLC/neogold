@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // default threshold table (doc 4 Section 5.2), canonical card size and luma weights
+
 package com.kitalonlabs.neogold.engine.vision
 
 import com.kitalonlabs.neogold.engine.colorscience.ColorConversions

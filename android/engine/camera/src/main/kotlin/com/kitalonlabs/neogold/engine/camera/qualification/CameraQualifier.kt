@@ -67,6 +67,11 @@ class CameraQualifier(
      * @param appVersion Version string of NeoGold.
      * @param currentTimeMs Timestamp of qualification.
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LongMethod",
+        "NestedBlockDepth"
+    ) // one qualification pass (doc 4 Section 5.7); split when the camera package is reworked in C1
     fun qualifyCamera(
         photos: List<ImageFrame>,
         batchReference: Map<String, Lab> = CardGeometry.PATCHES.mapValues { it.value.nominalLab },
@@ -156,12 +161,12 @@ class CameraQualifier(
                         sumAccDeltaE += ciede2000(patchLab, refLab)
                         accCount++
                     }
-                    if (accCount > 0) sumAccDeltaE / accCount else 99.0
+                    if (accCount > 0) sumAccDeltaE / accCount else NO_EVIDENCE_DELTA_E
                 }
                 accuracyDeltas.add(meanAcc)
             } else {
-                uniformityDeltas.add(99.0)
-                accuracyDeltas.add(99.0)
+                uniformityDeltas.add(NO_EVIDENCE_DELTA_E)
+                accuracyDeltas.add(NO_EVIDENCE_DELTA_E)
             }
             patchSets.add(photoPatches)
         }
@@ -184,13 +189,13 @@ class CameraQualifier(
                 }
             }
         }
-        val repeatabilityDe = if (repCount > 0) sumRepDeltaE / repCount else 99.0
+        val repeatabilityDe = if (repCount > 0) sumRepDeltaE / repCount else NO_EVIDENCE_DELTA_E
 
         // 3. Overall Uniformity (max or mean across the 3 photos)
-        val uniformityDe = if (uniformityDeltas.isNotEmpty()) uniformityDeltas.maxOrNull() ?: 99.0 else 99.0
+        val uniformityDe = if (uniformityDeltas.isNotEmpty()) uniformityDeltas.maxOrNull() ?: NO_EVIDENCE_DELTA_E else NO_EVIDENCE_DELTA_E
 
         // 4. Overall Accuracy (mean across 3 photos)
-        val accuracyDe = if (accuracyDeltas.isNotEmpty()) accuracyDeltas.average() else 99.0
+        val accuracyDe = if (accuracyDeltas.isNotEmpty()) accuracyDeltas.average() else NO_EVIDENCE_DELTA_E
 
         // 5. Evaluate thresholds
         val repPassed = repeatabilityDe < thresholds.maxRepeatabilityDeltaE
@@ -213,7 +218,8 @@ class CameraQualifier(
             )
         }
 
-        val status = if (repPassed && uniPassed && accPassed && failureReasons.isEmpty()) {
+        val allChecksPassed = repPassed && uniPassed && accPassed
+        val status = if (allChecksPassed && failureReasons.isEmpty()) {
             QualificationStatus.QUALIFIED
         } else {
             QualificationStatus.RESEARCH_ONLY
@@ -269,3 +275,6 @@ class CameraQualifier(
         )
     }
 }
+
+/** Delta E reported when a check had no evidence at all, so it can never pass. */
+private const val NO_EVIDENCE_DELTA_E = 99.0

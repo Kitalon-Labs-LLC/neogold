@@ -46,7 +46,7 @@ class BurstCaptureController(
         val frames = mutableListOf<ImageFrame>()
         val metadataList = mutableListOf<CaptureMetadata>()
 
-        for (i in 0 until burstFrameCount) {
+        repeat(burstFrameCount) {
             val (frame, metadata) = captureSingleFrame(imageCapture, executor)
             frames.add(frame)
             metadataList.add(metadata)
@@ -72,6 +72,7 @@ class BurstCaptureController(
         imageCapture.takePicture(
             executor,
             object : ImageCapture.OnImageCapturedCallback() {
+                @Suppress("TooGenericExceptionCaught") // pass any capture failure to the awaiting caller
                 override fun onCaptureSuccess(image: ImageProxy) {
                     try {
                         val buffer: ByteBuffer = image.planes[0].buffer
@@ -90,7 +91,7 @@ class BurstCaptureController(
                                 acceptedControls = acceptedControls
                             )
                         } else {
-                            createFallbackMetadata(image)
+                            createFallbackMetadata()
                         }
 
                         deferred.complete(Pair(frame, metadata))
@@ -132,7 +133,7 @@ class BurstCaptureController(
         }
     }
 
-    private fun createFallbackMetadata(image: ImageProxy): CaptureMetadata {
+    private fun createFallbackMetadata(): CaptureMetadata {
         val hwLevel = characteristics?.let { CameraControlHelper.getHardwareLevel(it) }
             ?: CameraHardwareLevel.UNKNOWN
         val aeLock = characteristics?.let { CameraControlHelper.isAeLockSupported(it) } ?: false

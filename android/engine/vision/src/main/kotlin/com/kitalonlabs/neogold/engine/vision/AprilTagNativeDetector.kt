@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber", "UnusedPrivateProperty") // dead code, removed in A3 (ADR-018)
+
 package com.kitalonlabs.neogold.engine.vision
 
 /**

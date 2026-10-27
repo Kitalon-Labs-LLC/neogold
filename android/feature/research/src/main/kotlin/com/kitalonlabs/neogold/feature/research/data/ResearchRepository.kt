@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
 import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
+import com.kitalonlabs.neogold.core.data.local.entity.MAX_TSB_MG_DL
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchParticipantEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
@@ -168,6 +169,7 @@ class ResearchRepository(
     /**
      * Enrolls or retrieves a participant with format validation (FR-26, TC-RSH-08, TC-RSH-09).
      */
+    @Suppress("ReturnCount") // one database transaction per call; reworked with the research session in C2
     suspend fun registerParticipant(
         studyId: String,
         participantCode: String,
@@ -238,8 +240,14 @@ class ResearchRepository(
     }
 
     /**
-     * Completes and saves a blinded research session atomically (FR-27, FR-29, NFR-09, TC-RSH-10, TC-RSH-13, TC-RSH-14, TC-RSH-15, TC-RSH-16).
+     * Completes and saves a blinded research session atomically
+     * (FR-27, FR-29, NFR-09, TC-RSH-10, TC-RSH-13, TC-RSH-14, TC-RSH-15, TC-RSH-16).
      */
+    @Suppress(
+        "LongMethod",
+        "LongParameterList",
+        "TooGenericExceptionCaught"
+    ) // one transaction per call, any failure returned as Result.failure; reworked in C2
     suspend fun saveBlindedResearchSession(
         participant: ResearchParticipantEntity,
         ageHours: Double,
@@ -445,6 +453,7 @@ class ResearchRepository(
      * Records a TSB measurement by participant code (FR-28, NG-031, TC-RSH-11).
      * Can be entered later without a session ID.
      */
+    @Suppress("ReturnCount") // one database transaction per call; reworked with the research session in C2
     suspend fun recordTsb(
         participantCode: String,
         tsbMgDl: Double,
@@ -460,8 +469,10 @@ class ResearchRepository(
         val participant = database.researchParticipantDao().getParticipantByCode(study.id, cleanCode)
             ?: return Result.failure(IllegalArgumentException("Participant $cleanCode not found"))
 
-        if (tsbMgDl <= 0.0 || tsbMgDl > 40.0) {
-            return Result.failure(IllegalArgumentException("TSB ($tsbMgDl mg/dL) must be between 0.0 and 40.0"))
+        if (tsbMgDl <= 0.0 || tsbMgDl > MAX_TSB_MG_DL) {
+            return Result.failure(
+                IllegalArgumentException("TSB ($tsbMgDl mg/dL) must be between 0.0 and $MAX_TSB_MG_DL")
+            )
         }
         if (method !in setOf("LAB", "POINT_OF_CARE", "OTHER")) {
             return Result.failure(IllegalArgumentException("Invalid TSB method: $method"))

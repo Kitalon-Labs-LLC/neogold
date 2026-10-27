@@ -65,6 +65,10 @@ object VisionQualityGate {
      * @param thresholds Config-driven quality thresholds.
      * @param batchReference Optional batch measured spectrophotometer Lab targets (default: nominal).
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LongMethod"
+    ) // one ordered rule list (doc 4 Section 5.2), each check is a branch
     fun evaluate(
         detectionResult: CardDetectionResult,
         canonicalCard: CanonicalCardImage?,
@@ -156,7 +160,7 @@ object VisionQualityGate {
         val deltaG2 = StrictMath.abs(g2 - g2d)
         val deltaG4 = StrictMath.abs(g4 - g4d)
         // Normalized delta in Delta L* units (~2.55 lum units per L*)
-        val maxLightDeltaL = StrictMath.max(deltaG2, deltaG4) / 2.55
+        val maxLightDeltaL = StrictMath.max(deltaG2, deltaG4) / PERCENT_TO_BYTE_SCALE
         if (maxLightDeltaL > thresholds.maxLightUniformityDelta) {
             failureReasons.add(QualityReasonCode.UNEVEN_LIGHT)
         }
@@ -193,7 +197,7 @@ object VisionQualityGate {
                 meanResidualDeltaE = residual.meanDeltaE
             }
         } catch (_: Exception) {
-            meanResidualDeltaE = 999.0
+            meanResidualDeltaE = NO_RESIDUAL_DELTA_E
         }
 
         if (meanResidualDeltaE > thresholds.maxCorrectionResidualDeltaE) {
@@ -229,3 +233,8 @@ object VisionQualityGate {
         )
     }
 }
+
+private const val PERCENT_TO_BYTE_SCALE = 2.55
+
+/** Residual reported when no gray patch could be sampled, so the residual check can never pass. */
+private const val NO_RESIDUAL_DELTA_E = 999.0

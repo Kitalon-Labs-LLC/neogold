@@ -135,7 +135,11 @@ fun S14RuleOutcomeScreen(
                     supportingText = {
                         Text(
                             text = registerError ?: stringResource(R.string.register_hint),
-                            color = if (registerError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (registerError != null) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     },
                     singleLine = true,

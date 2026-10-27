@@ -44,6 +44,9 @@ class CameraCaptureTest {
         var lastState: LiveCardState = LiveCardState.IDLE
 
         // Create analyzer with 100 ms steady threshold for fast unit testing
+        @Suppress(
+            "UnusedPrivateProperty"
+        ) // BUG-2026-037: this test never drives the analyzer, so it proves nothing about gating
         val analyzer = LiveCardAnalyzer(
             steadyRequiredDurationMs = 100L,
             onStateChanged = { lastState = it },
@@ -56,9 +59,15 @@ class CameraCaptureTest {
 
         // 2. State with 3 markers -> auto-capture does not fire
         val threeMarkers = mapOf(
-            0 to DetectedMarker(0, listOf(Point2D(0.0, 0.0), Point2D(10.0, 0.0), Point2D(10.0, 10.0), Point2D(0.0, 10.0)), Point2D(5.0, 5.0)),
-            1 to DetectedMarker(1, listOf(Point2D(100.0, 0.0), Point2D(110.0, 0.0), Point2D(110.0, 10.0), Point2D(100.0, 10.0)), Point2D(105.0, 5.0)),
-            2 to DetectedMarker(2, listOf(Point2D(100.0, 100.0), Point2D(110.0, 100.0), Point2D(110.0, 110.0), Point2D(100.0, 110.0)), Point2D(105.0, 105.0))
+            0 to DetectedMarker(
+                0, listOf(Point2D(0.0, 0.0), Point2D(10.0, 0.0), Point2D(10.0, 10.0), Point2D(0.0, 10.0)), Point2D(5.0, 5.0)
+            ),
+            1 to DetectedMarker(
+                1, listOf(Point2D(100.0, 0.0), Point2D(110.0, 0.0), Point2D(110.0, 10.0), Point2D(100.0, 10.0)), Point2D(105.0, 5.0)
+            ),
+            2 to DetectedMarker(
+                2, listOf(Point2D(100.0, 100.0), Point2D(110.0, 100.0), Point2D(110.0, 110.0), Point2D(100.0, 110.0)), Point2D(105.0, 105.0)
+            )
         )
         val partialState = LiveCardState(
             detectedMarkerCount = 3,
@@ -72,7 +81,8 @@ class CameraCaptureTest {
         assertThat(partialState.readyForCapture).isFalse()
 
         // 3. State with all 4 markers and steady -> ready for capture
-        val fourMarkers = threeMarkers + (3 to DetectedMarker(3, listOf(Point2D(0.0, 100.0), Point2D(10.0, 100.0), Point2D(10.0, 110.0), Point2D(0.0, 110.0)), Point2D(5.0, 105.0)))
+        val fourthCorners = listOf(Point2D(0.0, 100.0), Point2D(10.0, 100.0), Point2D(10.0, 110.0), Point2D(0.0, 110.0))
+        val fourMarkers = threeMarkers + (3 to DetectedMarker(3, fourthCorners, Point2D(5.0, 105.0)))
         val completeState = LiveCardState(
             detectedMarkerCount = 4,
             detectedMarkers = fourMarkers,

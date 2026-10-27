@@ -123,7 +123,8 @@ class VisionQualityGateTest {
         val blurredFrame = renderer.renderFrame(SyntheticRenderConfig(blurRadius = 8))
         val result = engine.processFrame(blurredFrame)
         println(
-            "blurredFrame variance=${result.metrics.blurLaplacianVariance}, markers=${result.metrics.markersDetected}, failures=${result.failureReasons}"
+            "blurredFrame variance=${result.metrics.blurLaplacianVariance}, markers=${result.metrics.markersDetected}, " +
+                "failures=${result.failureReasons}"
         )
         assertThat(result.passed).isFalse()
         assertThat(result.failureReasons).contains(QualityReasonCode.BLUR)

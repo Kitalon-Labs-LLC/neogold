@@ -98,6 +98,7 @@ open class ResearchUploadWorker(
         )
     }
 
+    @Suppress("TooGenericExceptionCaught") // a worker must never crash the process; retry instead
     override suspend fun doWork(): Result {
         val outboxProcessor = createOutboxProcessor()
 

@@ -1,3 +1,12 @@
+@file:Suppress(
+    "MagicNumber",
+    "CyclomaticComplexMethod",
+    "LongMethod",
+    "NestedBlockDepth",
+    "ReturnCount",
+    "LoopWithTooManyJumpStatements"
+) // byte-level JPEG/EXIF parser: marker codes and offsets are the format itself (ITU T.81, CIPA DC-008)
+
 package com.kitalonlabs.neogold.engine.camera.research
 
 import java.io.ByteArrayOutputStream
@@ -27,8 +36,6 @@ import java.nio.ByteOrder
  * - Embedded thumbnails
  */
 object ResearchJpegSanitizer {
-
-    private const val MARKER_PREFIX = 0xFF.toByte()
 
     // Standalone markers without length
     private const val MARKER_SOI = 0xD8
@@ -279,7 +286,7 @@ object ResearchJpegSanitizer {
             )
         }
 
-        val type = buffer.short.toInt() and 0xFFFF
+        buffer.short // field type, not inspected
         val count = buffer.int
         val valShort = buffer.short.toInt() and 0xFFFF
         buffer.short // padding
@@ -323,11 +330,12 @@ object ResearchJpegSanitizer {
                     if (ifd0 in 8 until (len - 8)) {
                         buf.position(ifd0)
                         val count = buf.short.toInt() and 0xFFFF
-                        for (i in 0 until count) {
-                            if (buf.remaining() < 12) break
+                        var entry = 0
+                        while (entry < count && buf.remaining() >= 12) {
+                            entry++
                             val tag = buf.short.toInt() and 0xFFFF
-                            val type = buf.short.toInt() and 0xFFFF
-                            val cnt = buf.int
+                            buf.short // field type, not inspected
+                            buf.int // value count, not inspected
                             if (tag == 0x0112) {
                                 return buf.short.toInt() and 0xFFFF
                             } else {

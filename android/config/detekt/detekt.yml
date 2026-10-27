@@ -13,25 +13,54 @@ naming:
     # validates with extra = "forbid"; renaming them in Kotlin would only add a mapping layer.
     excludes: ['**/sync/research/api/models/**']
 
+# Structural metrics (size, branching, nesting, parameters) are style heuristics, not defect detectors.
+# The thresholds below sit where the code is today so that they stop new growth; the few functions
+# above them carry a @Suppress with the package that rewrites them. Lower these as packages land.
 complexity:
   LongMethod:
+    threshold: 120
     # A declarative UI function is long by construction; its logic lives in ViewModels and engines.
     ignoreAnnotated: ['Composable']
     excludes: ['**/test/**', '**/androidTest/**']
   NestedBlockDepth:
+    threshold: 5
     excludes: ['**/test/**', '**/androidTest/**']
+  TooManyFunctions:
+    thresholdInFiles: 15
+    thresholdInClasses: 15
+    thresholdInInterfaces: 15
+    thresholdInObjects: 15
+    thresholdInEnums: 15
+    ignoreOverridden: true
   LargeClass:
     excludes: ['**/test/**', '**/androidTest/**']
   LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
     # A screen takes its state and its callbacks as parameters (state hoisting); a long list is the API.
     ignoreAnnotated: ['Composable']
     ignoreDefaultParameters: true
   CyclomaticComplexMethod:
+    threshold: 25
     ignoreAnnotated: ['Composable']
     ignoreSimpleWhenEntries: true
 
+exceptions:
+  # Tests simulate a process kill by throwing, and assert on failure paths; production code stays covered.
+  TooGenericExceptionThrown:
+    excludes: ['**/test/**', '**/androidTest/**']
+  SwallowedException:
+    excludes: ['**/test/**', '**/androidTest/**']
+
 style:
+  MaxLineLength:
+    # 120 is too tight for Compose modifier chains and test names; one limit for main and test code.
+    maxLineLength: 140
+  ThrowsCount:
+    max: 3
+    excludeGuardClauses: true
   ReturnCount:
+    max: 3
     # Early returns that validate input are clearer than nesting.
     excludeGuardClauses: true
   MagicNumber:
@@ -40,6 +69,8 @@ style:
     ignorePropertyDeclaration: true
     ignoreEnums: true
     ignoreAnnotation: true
+    # Small counts, byte and word sizes, percent and time units that read the same everywhere.
+    ignoreNumbers: ['-1', '0', '1', '2', '3', '4', '8', '16', '24', '32', '60', '64', '100', '128', '255', '256', '1000', '1024', '3600', '8192', '0.5', '4.0', '255.0', '0xFF']
     # Vector path data (coordinates) and nothing else.
     excludes:
       - '**/test/**'

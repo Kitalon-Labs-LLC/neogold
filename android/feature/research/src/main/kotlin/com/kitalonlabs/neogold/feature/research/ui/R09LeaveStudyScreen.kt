@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // hardcoded UI text moves to string resources in the localization package (F1)
+
 package com.kitalonlabs.neogold.feature.research.ui
 
 import androidx.compose.foundation.background

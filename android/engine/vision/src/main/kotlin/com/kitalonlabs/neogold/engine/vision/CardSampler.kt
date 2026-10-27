@@ -47,7 +47,7 @@ object CardSampler {
      * Samples all 23 patches on the canonical card.
      */
     fun samplePatches(card: CanonicalCardImage): Map<String, SampledPatch> {
-        val result = HashMap<String, SampledPatch>(23)
+        val result = HashMap<String, SampledPatch>(PATCH_COUNT)
 
         for ((id, patchDef) in CardGeometry.PATCHES) {
             val (pixels, satFraction) = extractRegionPixels(card, patchDef.innerSampleRect)
@@ -118,3 +118,5 @@ object CardSampler {
         )
     }
 }
+
+private const val PATCH_COUNT = 23

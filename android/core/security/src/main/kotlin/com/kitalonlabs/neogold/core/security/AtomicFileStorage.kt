@@ -24,6 +24,7 @@ object AtomicFileStorage {
      * closes the stream, and atomically replaces [targetFile].
      * Cleans up the temp file on any error.
      */
+    @Suppress("TooGenericExceptionCaught") // clean up the temp file on any failure, then rethrow
     fun writeStream(targetFile: File, writeAction: (FileOutputStream) -> Unit) {
         val parent = targetFile.parentFile ?: throw IOException("Target file has no parent directory: $targetFile")
         if (!parent.exists() && !parent.mkdirs() && !parent.exists()) {
@@ -37,7 +38,7 @@ object AtomicFileStorage {
                 fos.flush()
                 try {
                     fos.fd.sync()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // fsync might not be supported on some virtual filesystems; warn or propagate
                 }
             }

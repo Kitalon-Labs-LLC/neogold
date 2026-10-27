@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // test-support card: every number is a pixel or millimetre dimension of the printed card
+
 package com.kitalonlabs.neogold.engine.vision
 
 import com.kitalonlabs.neogold.engine.colorscience.Lab
@@ -108,7 +110,7 @@ class SyntheticCardRenderer {
         )
 
         // Homography from projected frame coordinates to canonical coordinates
-        val H_frame_to_canon = Homography.findHomography(projectedCorners, canonicalCorners)
+        val frameToCanon = Homography.findHomography(projectedCorners, canonicalCorners)
 
         // 3. Render frame pixels using inverse homography
         val bgLum = (220 * config.exposureMultiplier).toInt().coerceIn(10, 255)
@@ -116,7 +118,7 @@ class SyntheticCardRenderer {
 
         for (fy in 0 until fh) {
             for (fx in 0 until fw) {
-                val canonPt = H_frame_to_canon.transform(Point2D(fx.toDouble(), fy.toDouble()))
+                val canonPt = frameToCanon.transform(Point2D(fx.toDouble(), fy.toDouble()))
                 val cx = canonPt.x.toInt()
                 val cy = canonPt.y.toInt()
 
@@ -135,6 +137,10 @@ class SyntheticCardRenderer {
         return ImageFrame(fw, fh, frameData)
     }
 
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LoopWithTooManyJumpStatements"
+    ) // test-support renderer, mirrors the printed card layout
     private fun renderCanonicalCard(config: SyntheticRenderConfig): IntArray {
         val cw = CardGeometry.CANONICAL_WIDTH
         val ch = CardGeometry.CANONICAL_HEIGHT

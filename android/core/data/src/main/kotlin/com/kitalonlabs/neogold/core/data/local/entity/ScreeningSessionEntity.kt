@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // range checks mirror the SQL CHECK constraints in doc 5
+
 package com.kitalonlabs.neogold.core.data.local.entity
 
 import androidx.room.ColumnInfo

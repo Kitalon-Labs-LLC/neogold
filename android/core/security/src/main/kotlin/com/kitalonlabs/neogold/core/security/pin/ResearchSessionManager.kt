@@ -112,6 +112,7 @@ class ResearchSessionManager(
     /**
      * Unregisters the screen off receiver.
      */
+    @Suppress("TooGenericExceptionCaught") // unregistering a stale receiver must not crash
     fun unregisterScreenOffReceiver(context: Context) {
         screenReceiver?.let {
             try {

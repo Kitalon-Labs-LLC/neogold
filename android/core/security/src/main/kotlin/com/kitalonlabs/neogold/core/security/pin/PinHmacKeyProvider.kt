@@ -33,12 +33,13 @@ class KeystorePinHmacKeyProvider(
         getOrCreateKey()
     }
 
+    @Suppress("TooGenericExceptionCaught") // test environments lack the platform provider, so fall back
     private fun getOrCreateKey(): SecretKey {
         return try {
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
             if (keyStore.containsAlias(keyAlias)) {
                 keyStore.getKey(keyAlias, null) as? SecretKey
-                    ?: throw IllegalStateException("Key for alias $keyAlias is not a SecretKey")
+                    ?: error("Key for alias $keyAlias is not a SecretKey")
             } else {
                 val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
                 val spec = KeyGenParameterSpec.Builder(

@@ -31,14 +31,6 @@ import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgEstimate
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.core.designsystem.theme.LocalTriageColors
 
-enum class TriageUiAction {
-    REFER_URGENT,
-    BLOOD_TEST,
-    RECHECK,
-    NO_FURTHER_ACTION,
-    CANNOT_SCREEN
-}
-
 /**
  * NgTriageCard (doc 6 Section 3, Section 4.3).
  * Redundant 4-signal system:
@@ -64,7 +56,7 @@ fun NgTriageCard(
 ) {
     val triageColors = LocalTriageColors.current
 
-    val (solidHeaderColor, bodyTintColor, bodyTextColor, icon, actionText, borderStroke) = when (action) {
+    val style = when (action) {
         TriageUiAction.REFER_URGENT -> TriageCardStyle(
             solidHeaderColor = triageColors.urgentSolid,
             bodyTintColor = triageColors.urgentTint,
@@ -106,6 +98,13 @@ fun NgTriageCard(
             borderStroke = BorderStroke(2.dp, triageColors.noActionSolid)
         )
     }
+
+    val solidHeaderColor = style.solidHeaderColor
+    val bodyTintColor = style.bodyTintColor
+    val bodyTextColor = style.bodyTextColor
+    val icon = style.icon
+    val actionText = style.actionText
+    val borderStroke = style.borderStroke
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Suggested next step label (PRD D11, TC-UI-14)

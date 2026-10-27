@@ -44,7 +44,7 @@ fun S19AnalyzingScreen(
     var isTakingLong by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(4000L) // 4 seconds threshold for slow analysis warning
+        delay(SLOW_ANALYSIS_WARNING_MS)
         isTakingLong = true
     }
 
@@ -110,3 +110,6 @@ fun S19AnalyzingScreen(
         }
     }
 }
+
+/** After this long the screen explains that analysis is slower than usual. */
+private const val SLOW_ANALYSIS_WARNING_MS = 4_000L

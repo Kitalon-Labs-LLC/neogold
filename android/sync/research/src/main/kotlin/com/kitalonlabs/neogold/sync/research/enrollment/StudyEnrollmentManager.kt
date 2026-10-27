@@ -5,6 +5,7 @@ import com.kitalonlabs.neogold.core.data.local.dao.ResearchStudyDao
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
 import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
 import com.kitalonlabs.neogold.engine.cardtrust.PayloadParser
+import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
 import com.kitalonlabs.neogold.sync.research.api.models.DeviceInfo
@@ -22,28 +23,19 @@ class StudyEnrollmentManager(
     private val studyDao: ResearchStudyDao,
     private val appVersion: String
 ) {
+    @Suppress("TooGenericExceptionCaught") // delete the device key on any enrollment failure, then rethrow
     suspend fun enroll(
         qrPayload: ByteArray,
         enrollmentCode: String,
         manufacturer: String = Build.MANUFACTURER ?: "Generic",
         model: String = Build.MODEL ?: "Generic",
-        androidApi: Int = Build.VERSION.SDK_INT.coerceIn(26, 60),
+        androidApi: Int = Build.VERSION.SDK_INT.coerceIn(Build.VERSION_CODES.O, 60),
         cameraHardwareLevel: String = "LIMITED",
         qualification: String = "QUALIFIED",
         idempotencyKey: String = UUID.randomUUID().toString()
     ): EnrollmentResponse {
         // 1. Verify study QR payload signature using CardTrustVerifier
-        val profileResult = cardTrustVerifier?.verifyStudyProfile(qrPayload)
-        val profile = if (profileResult is VerificationResult.Verified) {
-            profileResult.payload
-        } else if (profileResult is VerificationResult.Expired) {
-            throw IllegalArgumentException("Study profile has expired")
-        } else if (cardTrustVerifier == null) {
-            PayloadParser.parseStudyProfile(qrPayload)
-                ?: throw IllegalArgumentException("Malformed study profile QR")
-        } else {
-            throw IllegalArgumentException("Invalid study profile signature: $profileResult")
-        }
+        val profile = resolveStudyProfile(qrPayload)
 
         // 2. Validate one-time code format (Crockford base32: 3 groups of 4 chars)
         val cleanCode = enrollmentCode.trim().uppercase()
@@ -125,5 +117,14 @@ class StudyEnrollmentManager(
         }
 
         return response
+    }
+
+    private fun resolveStudyProfile(qrPayload: ByteArray): StudyProfilePayload {
+        val profileResult = cardTrustVerifier?.verifyStudyProfile(qrPayload)
+        require(profileResult !is VerificationResult.Expired) { "Study profile has expired" }
+        if (profileResult is VerificationResult.Verified) return profileResult.payload
+        require(cardTrustVerifier == null) { "Invalid study profile signature: $profileResult" }
+        return PayloadParser.parseStudyProfile(qrPayload)
+            ?: throw IllegalArgumentException("Malformed study profile QR")
     }
 }

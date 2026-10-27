@@ -36,7 +36,8 @@ interface ScreeningSessionDao {
     suspend fun deleteAbandonedSessions(cutoffTimeMs: Long): Int
 
     @Query(
-        "UPDATE screening_session SET register_number = NULL, register_number_erased_at = :erasureTimeMs WHERE mode = 'SCREENING' AND register_number IS NOT NULL AND created_at < :cutoffTimeMs"
+        "UPDATE screening_session SET register_number = NULL, register_number_erased_at = :erasureTimeMs " +
+            "WHERE mode = 'SCREENING' AND register_number IS NOT NULL AND created_at < :cutoffTimeMs"
     )
     suspend fun eraseRegisterNumbersOlderThan(cutoffTimeMs: Long, erasureTimeMs: Long): Int
 

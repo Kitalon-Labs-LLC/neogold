@@ -93,6 +93,7 @@ class ScreeningStateMachine(
         return ScreeningState.RuleCheck(inputs)
     }
 
+    @Suppress("ReturnCount") // reworked with the screening wiring in E1
     private fun handleEvaluateRules(triageEngine: TriageEngine, versions: VersionsRecord): ScreeningState {
         val current = _state.value
         val inputs = when (current) {
@@ -205,6 +206,7 @@ class ScreeningStateMachine(
         }
     }
 
+    @Suppress("ReturnCount") // reworked with the screening wiring in E1
     private fun handleFrameCaptured(event: ScreeningEvent.FrameCaptured): ScreeningState {
         val current = _state.value
         val (inputs, cardBatch, attempt) = when (current) {

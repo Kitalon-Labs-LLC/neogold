@@ -134,7 +134,7 @@ class ResearchPinSecurityTest {
         )
 
         // 1. Enter 4 wrong PINs
-        for (i in 1..4) {
+        repeat(4) {
             val res = pinManager.verifyPin(studyId, "999888", now)
             assertThat(res).isInstanceOf(PinCheckResult.WrongPin::class.java)
             now += 1000L
@@ -167,7 +167,7 @@ class ResearchPinSecurityTest {
         now += 61_000L
 
         // Continue to 10 wrong attempts (5 more)
-        for (i in 6..9) {
+        repeat(4) {
             val res = pinManager.verifyPin(studyId, "999888", now)
             assertThat(res).isInstanceOf(PinCheckResult.WrongPin::class.java)
             now += 1000L
@@ -181,7 +181,7 @@ class ResearchPinSecurityTest {
         now += (15 * 60_000L) + 1000L
 
         // Continue to 15 wrong attempts (5 more)
-        for (i in 11..14) {
+        repeat(4) {
             pinManager.verifyPin(studyId, "999888", now)
             now += 1000L
         }

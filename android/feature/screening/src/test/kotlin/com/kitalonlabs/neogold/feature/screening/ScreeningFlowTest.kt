@@ -337,7 +337,7 @@ class ScreeningFlowTest {
             override suspend fun insert(session: ScreeningSessionEntity) {
                 insertCalled = true
             }
-            override suspend fun update(session: ScreeningSessionEntity) {}
+            override suspend fun update(session: ScreeningSessionEntity) { /* not needed by this flow */ }
             override suspend fun getSessionById(id: String) = null
             override suspend fun getSessionsByMode(mode: String) = emptyList<ScreeningSessionEntity>()
             override suspend fun getSessionsForParticipant(participantId: String) = emptyList<ScreeningSessionEntity>()
@@ -347,7 +347,7 @@ class ScreeningFlowTest {
             override suspend fun eraseRegisterNumbersOlderThan(cutoffTimeMs: Long, erasureTimeMs: Long) = 0
             override suspend fun deleteSessionsOlderThan(mode: String, cutoffTimeMs: Long) = 0
             override suspend fun deleteSession(id: String) = 0
-            override suspend fun deleteAll() {}
+            override suspend fun deleteAll() { /* not needed by this flow */ }
         }
 
         val keepScreeningLog = false

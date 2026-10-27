@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // hardcoded UI text moves to string resources in the localization package (F1)
+
 package com.kitalonlabs.neogold.feature.research.ui
 
 import androidx.compose.foundation.background
@@ -42,13 +44,6 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButto
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.data.ResearchCaptureInput
-
-data class ProtocolStep(
-    val siteCode: String,
-    val siteDisplayName: String,
-    val guidance: String,
-    val isFlash: Boolean
-)
 
 val RESEARCH_PROTOCOL_STEPS = listOf(
     ProtocolStep(
@@ -191,7 +186,11 @@ fun R04ResearchCaptureScreen(
                                 text = "${index + 1}",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isCurrent) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
                             )
                         }
                     }

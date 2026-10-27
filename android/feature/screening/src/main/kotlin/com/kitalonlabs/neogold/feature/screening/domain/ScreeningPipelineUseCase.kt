@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.feature.screening.domain
 
+import com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker
 import com.kitalonlabs.neogold.engine.camera.model.CaptureMetadata
 import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
 import com.kitalonlabs.neogold.engine.colorscience.ColorConversions
@@ -44,7 +45,7 @@ sealed class PipelineExecutionResult {
  */
 class ScreeningPipelineUseCase(
     private val visionEngine: VisionEngine = VisionEngine(),
-    private val integrityChecker: com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker = com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker {
+    private val integrityChecker: IntegrityChecker = IntegrityChecker {
         true
     }
 ) {
@@ -81,6 +82,7 @@ class ScreeningPipelineUseCase(
     /**
      * Executes the full pipeline on a captured image frame.
      */
+    @Suppress("TooGenericExceptionCaught") // the pipeline reports any failure as PipelineExecutionResult.Error
     fun execute(
         frame: ImageFrame,
         cardBatch: CardBatchPayload,
@@ -115,7 +117,7 @@ class ScreeningPipelineUseCase(
             val qualityResult: QualityGateResult = traceSection("Screening_DecodeWarpSample") {
                 visionEngine.processFrame(frame, batchRefMap)
             }
-            val visionDurationMs = (System.nanoTime() - startVision) / 1_000_000
+            val visionDurationMs = (System.nanoTime() - startVision) / NANOS_PER_MILLI
             timings["decode_warp_sample_ms"] = visionDurationMs
 
             // Quality Gate check: if failed, return QualityFailed
@@ -128,9 +130,9 @@ class ScreeningPipelineUseCase(
                 val startAnalysis = System.nanoTime()
 
                 val sampledPatches = qualityResult.sampledPatches
-                    ?: throw IllegalStateException("Quality gate passed but sampled patches are null")
+                    ?: error("Quality gate passed but sampled patches are null")
                 val rawSkinRgb = qualityResult.windowRgb
-                    ?: throw IllegalStateException("Quality gate passed but window RGB is null")
+                    ?: error("Quality gate passed but window RGB is null")
 
                 // 1. Monotonic gray-ramp linearization
                 val observedGrays = CardGeometry.GRAY_RAMP_PATCH_IDS.map { patchId ->
@@ -179,9 +181,9 @@ class ScreeningPipelineUseCase(
                 )
                 val triageResult = triageEngine.evaluate(triageInputs)
 
-                val analysisDurationMs = (System.nanoTime() - startAnalysis) / 1_000_000
+                val analysisDurationMs = (System.nanoTime() - startAnalysis) / NANOS_PER_MILLI
                 timings["quality_and_analysis_ms"] = analysisDurationMs
-                timings["total_capture_to_result_ms"] = (System.nanoTime() - startOverall) / 1_000_000
+                timings["total_capture_to_result_ms"] = (System.nanoTime() - startOverall) / NANOS_PER_MILLI
 
                 val ccmMatrixList = listOf(
                     listOf(ccm.matrix[0, 0], ccm.matrix[0, 1], ccm.matrix[0, 2]),
@@ -213,3 +215,5 @@ class ScreeningPipelineUseCase(
         }
     }
 }
+
+private const val NANOS_PER_MILLI = 1_000_000L

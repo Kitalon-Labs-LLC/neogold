@@ -95,7 +95,7 @@ class ResearchViewModel(
                     val lockUntil = study.lockedUntil
                     if (lockUntil != null && lockUntil > now) {
                         _isLockedOut.value = true
-                        _lockoutMinutes.value = (((lockUntil - now) / 60_000L) + 1).toInt()
+                        _lockoutMinutes.value = (((lockUntil - now) / MILLIS_PER_MINUTE) + 1).toInt()
                     } else {
                         _isLockedOut.value = false
                         _lockoutMinutes.value = 0
@@ -171,6 +171,7 @@ class ResearchViewModel(
         }
     }
 
+    @Suppress("LongParameterList") // reworked with the research session in C2
     fun registerParticipantAndInputs(
         participantCode: String,
         consentFormId: String,
@@ -296,3 +297,5 @@ class ResearchViewModel(
         _errorMessage.value = null
     }
 }
+
+private const val MILLIS_PER_MINUTE = 60_000L

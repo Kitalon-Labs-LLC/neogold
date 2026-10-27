@@ -41,8 +41,11 @@ data class TsbMeasurementEntity(
     val enteredAt: Long
 ) {
     init {
-        require(tsbMgDl > 0.0 && tsbMgDl <= 40.0) {
-            "CHECK constraint failed: tsb_mg_dl ($tsbMgDl) must be > 0.0 and <= 40.0"
+        require(tsbMgDl > 0.0 && tsbMgDl <= MAX_TSB_MG_DL) {
+            "CHECK constraint failed: tsb_mg_dl ($tsbMgDl) must be > 0.0 and <= $MAX_TSB_MG_DL"
         }
     }
 }
+
+/** Upper bound accepted for a measured serum bilirubin entry (doc 5 CHECK constraint on tsb_mg_dl). */
+const val MAX_TSB_MG_DL = 40.0

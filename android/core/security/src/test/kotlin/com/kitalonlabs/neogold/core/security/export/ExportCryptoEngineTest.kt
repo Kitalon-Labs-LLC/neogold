@@ -60,9 +60,6 @@ class ExportCryptoEngineTest {
 
     @Test
     fun testTamperedCiphertextFails() {
-        val privKey = X25519.generatePrivateKey()
-        val pubKey = X25519.publicFromPrivate(privKey)
-
         val dataKeysetHandle = ExportCryptoEngine.generateDataKeysetHandle()
         val aead = ExportCryptoEngine.getStreamingAead(dataKeysetHandle)
 

@@ -37,7 +37,7 @@ class RetentionWorker(
 
             retentionManager.runAllRetentionJobs()
             Result.success()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Result.retry()
         }
     }

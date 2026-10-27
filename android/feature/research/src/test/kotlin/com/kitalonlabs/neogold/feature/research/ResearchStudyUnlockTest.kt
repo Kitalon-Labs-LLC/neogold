@@ -183,6 +183,6 @@ class ResearchStudyUnlockTest {
             File("../../../$relative")
         )
         return candidates.firstOrNull { it.exists() }
-            ?: throw IllegalStateException("Could not find file '$relative'. Checked: $candidates")
+            ?: error("Could not find file '$relative'. Checked: $candidates")
     }
 }

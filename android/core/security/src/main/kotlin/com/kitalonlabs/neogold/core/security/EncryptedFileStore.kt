@@ -53,6 +53,7 @@ class DefaultEncryptedFileStore(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught") // clean up the temp file on any failure, then rethrow
     override fun writeEncryptedFile(
         fileName: String,
         associatedData: ByteArray,

@@ -50,6 +50,7 @@ class DefaultFileKeysetProvider(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught") // any key store failure is key loss: fail closed with a typed exception
     private fun loadOrGenerateKeyset(): StreamingAead {
         StreamingAeadConfig.register()
 

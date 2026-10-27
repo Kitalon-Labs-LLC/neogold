@@ -144,10 +144,9 @@ fun NgEstimateRangeBar(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Range bar graphic: max scale at threshold + 5.0
-        val maxScale = (threshold + 5.0).coerceAtLeast(estimatedHigh + 2.0)
+        val maxScale = (threshold + SCALE_MARGIN_MG_DL).coerceAtLeast(estimatedHigh + 2.0)
         val lowFraction = (estimatedLow / maxScale).toFloat().coerceIn(0f, 1f)
         val highFraction = (estimatedHigh / maxScale).toFloat().coerceIn(0f, 1f)
-        val thresholdFraction = (threshold / maxScale).toFloat().coerceIn(0f, 1f)
 
         Box(
             modifier = Modifier
@@ -233,3 +232,5 @@ fun NgSyncStatusChip(
         )
     }
 }
+
+private const val SCALE_MARGIN_MG_DL = 5.0

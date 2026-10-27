@@ -25,7 +25,6 @@ import com.kitalonlabs.neogold.engine.vision.ImageFrame
 
 // Neutral dark gray interface per doc 6 Section 9.1
 private val DarkScreenBg = Color(0xFF121416)
-private val DarkOverlayChrome = Color(0xFF1E2124)
 
 /**
  * S16 Camera Screen for live card detection and capture.
@@ -85,8 +84,11 @@ fun S16CameraScreen(
  * Creates a minimal default [ImageFrame] for simulation/fallback in testing and preview.
  */
 private fun createDefaultCaptureFrame(): ImageFrame {
-    val width = 1280
-    val height = 720
+    val width = ANALYSIS_WIDTH_PX
+    val height = ANALYSIS_HEIGHT_PX
     val data = IntArray(width * height) { 0xFF808080.toInt() }
     return ImageFrame(width, height, data)
 }
+
+private const val ANALYSIS_WIDTH_PX = 1280
+private const val ANALYSIS_HEIGHT_PX = 720

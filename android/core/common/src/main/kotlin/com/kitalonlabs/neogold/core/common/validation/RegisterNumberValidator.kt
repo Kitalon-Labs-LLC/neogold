@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // the accepted register number lengths are the validation rule
+
 package com.kitalonlabs.neogold.core.common.validation
 
 /**
@@ -27,6 +29,7 @@ object RegisterNumberValidator {
     /**
      * Validates a candidate facility register number.
      */
+    @Suppress("ReturnCount") // validation is a chain of early returns, one per rule
     fun validate(input: String?): Result {
         if (input.isNullOrBlank()) {
             return Result.Valid

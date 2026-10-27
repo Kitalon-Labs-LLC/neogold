@@ -50,7 +50,7 @@ class ReconciliationManager(
             requeueSessionAndImages(sessionId, status.missing_images)
             return false
         } catch (e: ApiException) {
-            if (e.statusCode == 404) {
+            if (e.statusCode == HTTP_NOT_FOUND) {
                 // Server does not have the session: re-queue manifest and all its images
                 requeueSessionAndImages(sessionId, null)
                 return false
@@ -111,6 +111,7 @@ class ReconciliationManager(
      * Triggered when data_generation increases from GET /device (doc 7 Section 5.4, TC-SYNC-14).
      * Re-sends every held item (card batches, participants, manifests, images, TSBs).
      */
+    @Suppress("NestedBlockDepth") // reworked with the sync wiring in C4
     suspend fun recheckAndResendAllHeldItems(studyId: String, newGeneration: Long) {
         val now = System.currentTimeMillis()
 
@@ -234,3 +235,5 @@ class ReconciliationManager(
         }
     }
 }
+
+private const val HTTP_NOT_FOUND = 404

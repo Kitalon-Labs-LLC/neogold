@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // gestational age stepper bounds; the first-tap value is revisited in E1
+
 package com.kitalonlabs.neogold.core.designsystem.components.atoms
 
 import androidx.compose.foundation.background
@@ -35,7 +37,6 @@ fun NgNumberStepper(
     range: IntRange = 22..44,
     unselectedPlaceholder: String = "--"
 ) {
-    val currentVal = value ?: 38
     val canDecrement = value != null && value > range.first
     val canIncrement = value != null && value < range.last
 

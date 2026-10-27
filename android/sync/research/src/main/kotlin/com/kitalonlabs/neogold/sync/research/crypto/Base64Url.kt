@@ -2,6 +2,7 @@ package com.kitalonlabs.neogold.sync.research.crypto
 
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.Locale
 
 object Base64Url {
     fun encode(bytes: ByteArray): String {
@@ -44,7 +45,7 @@ object Base64Url {
     fun bytesToHex(bytes: ByteArray): String {
         val sb = StringBuilder(bytes.size * 2)
         for (b in bytes) {
-            sb.append(String.format("%02x", b.toInt() and 0xFF))
+            sb.append(String.format(Locale.ROOT, "%02x", b.toInt() and 0xFF))
         }
         return sb.toString()
     }

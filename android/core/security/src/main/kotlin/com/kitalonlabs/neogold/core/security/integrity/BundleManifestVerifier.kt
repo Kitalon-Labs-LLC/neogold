@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets
 import java.security.GeneralSecurityException
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.Locale
 
 /**
  * Verifies the integrity of clinical bundle assets (model.json, triage-config.json, trust-list.json)
@@ -60,7 +61,7 @@ class BundleManifestVerifier(
             val digest = md.digest()
             val sb = StringBuilder(digest.size * 2)
             for (b in digest) {
-                sb.append(String.format("%02x", b.toInt() and 0xFF))
+                sb.append(String.format(Locale.ROOT, "%02x", b.toInt() and 0xFF))
             }
             return sb.toString()
         }
@@ -93,6 +94,10 @@ class BundleManifestVerifier(
     /**
      * Verifies assets loaded via arbitrary stream provider (for pure tests or custom loaders).
      */
+    @Suppress(
+        "ReturnCount",
+        "TooGenericExceptionCaught"
+    ) // any failure means the bundle is not verified, one result per failure; reworked in B1
     fun verify(assetProvider: (String) -> InputStream?): IntegrityResult {
         // Step 1: Read bundle manifest
         val manifestStream = assetProvider(MANIFEST_FILE_NAME)

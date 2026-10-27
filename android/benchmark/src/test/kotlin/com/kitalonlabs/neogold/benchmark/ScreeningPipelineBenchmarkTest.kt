@@ -111,13 +111,13 @@ class ScreeningPipelineBenchmarkTest {
         val detector = DefaultMarkerDetector()
 
         // Warm up (3 iterations)
-        for (i in 0 until 3) {
+        repeat(3) {
             detector.detectMarkers(previewFrame)
         }
 
         // 30 runs
         val latencies = mutableListOf<Long>()
-        for (i in 0 until 30) {
+        repeat(30) {
             val t0 = System.nanoTime()
             val markers = detector.detectMarkers(previewFrame)
             val dtMs = (System.nanoTime() - t0) / 1_000_000
@@ -146,7 +146,7 @@ class ScreeningPipelineBenchmarkTest {
         )
 
         // Warm up (3 runs)
-        for (i in 0 until 3) {
+        repeat(3) {
             pipelineUseCase.execute(
                 frame = fullResFrame,
                 cardBatch = testCardBatch,
@@ -163,7 +163,7 @@ class ScreeningPipelineBenchmarkTest {
         val analysisLatencies = mutableListOf<Long>()
         val totalLatencies = mutableListOf<Long>()
 
-        for (i in 0 until 30) {
+        repeat(30) {
             val res = pipelineUseCase.execute(
                 frame = fullResFrame,
                 cardBatch = testCardBatch,
@@ -208,6 +208,7 @@ class ScreeningPipelineBenchmarkTest {
     @Test
     fun testPeakMemoryFootprint_under120MB() {
         val runtime = Runtime.getRuntime()
+        @Suppress("ExplicitGarbageCollectionCall") // settle the heap before reading the baseline
         System.gc()
         Thread.sleep(100)
 

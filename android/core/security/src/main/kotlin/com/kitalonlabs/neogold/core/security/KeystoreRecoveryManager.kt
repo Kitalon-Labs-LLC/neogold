@@ -32,6 +32,7 @@ class DefaultKeystoreRecoveryManager(
     private val databaseName: String = "neogold.db"
 ) : KeystoreRecoveryManager {
 
+    @Suppress("TooGenericExceptionCaught") // any failure while probing the key store counts as loss
     override fun checkKeystoreHealth(): KeystoreHealthStatus {
         try {
             if (databaseKeyProvider.hasWrappedKey()) {

@@ -86,7 +86,7 @@ object DeviceChecker {
         } else {
             (Runtime.getRuntime().maxMemory() / (1024 * 1024)).toInt().coerceAtLeast(1024)
         }
-        val isLowRam = actManager?.isLowRamDevice ?: (ramMb < 2500)
+        val isLowRam = actManager?.isLowRamDevice ?: (ramMb < LOW_RAM_THRESHOLD_MB)
 
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
         val (backCameraId, characteristics) = findBackCamera(cameraManager)
@@ -149,3 +149,5 @@ object DeviceChecker {
         }
     }
 }
+
+private const val LOW_RAM_THRESHOLD_MB = 2500

@@ -64,6 +64,7 @@ class ResearchExportManager(
     private val encryptedFileStore: EncryptedFileStore
 ) {
 
+    @Suppress("TooGenericExceptionCaught") // report any export failure through Result and progress, never crash
     suspend fun exportToUri(
         contentResolver: ContentResolver,
         destinationUri: Uri,
@@ -82,6 +83,10 @@ class ResearchExportManager(
         }
     }
 
+    @Suppress(
+        "LongMethod",
+        "TooGenericExceptionCaught"
+    ) // report any export failure through Result and progress, never crash; reworked with the export wiring in C3
     suspend fun exportToStream(
         outputStream: OutputStream,
         stagingDir: File = File(context.cacheDir, "export_staging"),
@@ -95,7 +100,9 @@ class ResearchExportManager(
                 ?: return@withContext Result.failure(IllegalStateException("No active research study enrolled on this device"))
 
             val exportPublicKey = study.exportPublicKey
-                ?: return@withContext Result.failure(IllegalStateException("Active study '${study.studyCode}' has no export public key configured in its profile"))
+                ?: return@withContext Result.failure(
+                    IllegalStateException("Active study '${study.studyCode}' has no export public key configured in its profile")
+                )
 
             // 2. Fetch all research records
             val participants = database.researchParticipantDao().getParticipantsForStudy(study.id)
@@ -122,7 +129,7 @@ class ResearchExportManager(
             val checkpointFile = File(studyStaging, "checkpoint.json")
 
             // 3. Load or generate data keyset session
-            val (exportSession, completedFilesMap) = loadOrCreateCheckpoint(checkpointFile, studyStaging)
+            val (exportSession, completedFilesMap) = loadOrCreateCheckpoint(checkpointFile)
 
             var completedCount = completedFilesMap.size
             var totalBytesProcessed = 0L
@@ -306,7 +313,8 @@ class ResearchExportManager(
                     id = UUID.randomUUID().toString(),
                     eventType = "EXPORT_CREATED",
                     occurredAt = System.currentTimeMillis(),
-                    details = "Exported study ${study.studyCode}: ${summary.totalParticipants} participants, ${summary.totalSessions} sessions, ${summary.totalImages} images (${summary.totalZipBytes} bytes)"
+                    details = "Exported study ${study.studyCode}: ${summary.totalParticipants} participants, " +
+                        "${summary.totalSessions} sessions, ${summary.totalImages} images (${summary.totalZipBytes} bytes)"
                 )
             )
 
@@ -339,7 +347,7 @@ class ResearchExportManager(
         return actualSha.equals(expectedSha, ignoreCase = true)
     }
 
-    private fun loadOrCreateCheckpoint(checkpointFile: File, stagingDir: File): Pair<ExportSession, MutableMap<String, String>> {
+    private fun loadOrCreateCheckpoint(checkpointFile: File): Pair<ExportSession, MutableMap<String, String>> {
         if (checkpointFile.exists()) {
             try {
                 val jsonStr = checkpointFile.readText(StandardCharsets.UTF_8)
@@ -389,7 +397,8 @@ class ResearchExportManager(
     ): String {
         val sb = StringBuilder()
         sb.append(
-            "session_id,participant_code,status,created_at,age_hours,gestational_age_weeks,rule_outcome,triage_action,estimate_mg_dl,estimate_low_mg_dl,estimate_high_mg_dl,device_model,card_batch_id\n"
+            "session_id,participant_code,status,created_at,age_hours,gestational_age_weeks,rule_outcome,triage_action," +
+                "estimate_mg_dl,estimate_low_mg_dl,estimate_high_mg_dl,device_model,card_batch_id\n"
         )
 
         for (s in sessions) {
@@ -418,7 +427,8 @@ class ResearchExportManager(
     private fun generateCapturesCsv(captures: List<CaptureEntity>): String {
         val sb = StringBuilder()
         sb.append(
-            "capture_id,session_id,attempt_number,site,captured_at,quality_status,window_l,window_a,window_b,correction_residual_de,image_file,image_sha256\n"
+            "capture_id,session_id,attempt_number,site,captured_at,quality_status,window_l,window_a,window_b," +
+                "correction_residual_de,image_file,image_sha256\n"
         )
 
         for (c in captures) {
@@ -485,7 +495,7 @@ class ResearchExportManager(
     }
 
     private fun escapeCsv(value: String): String {
-        return if (value.contains(',') || value.contains('"') || value.contains('\n') || value.contains('\r')) {
+        return if (value.indexOfAny(charArrayOf(',', '"', '\n', '\r')) >= 0) {
             "\"${value.replace("\"", "\"\"")}\""
         } else {
             value

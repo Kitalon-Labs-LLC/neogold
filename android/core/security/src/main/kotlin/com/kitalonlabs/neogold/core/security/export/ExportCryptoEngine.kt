@@ -109,6 +109,10 @@ object ExportCryptoEngine {
     /**
      * Unwraps the data keyset using Tink HPKE with the offline 32-byte raw X25519 private key.
      */
+    @Suppress(
+        "ThrowsCount",
+        "TooGenericExceptionCaught"
+    ) // any decode or crypto failure maps to a typed decryption error; every failure maps to a typed DecryptionException
     fun unwrapDataKey(wrappedDataKeyB64: String, exportPrivateKeyBytes: ByteArray): KeysetHandle {
         require(exportPrivateKeyBytes.size == 32) {
             "Export private key must be exactly 32 bytes (X25519), got ${exportPrivateKeyBytes.size}"
@@ -210,6 +214,7 @@ object ExportCryptoEngine {
      * Decrypts an [InputStream] to an [OutputStream] using Tink Streaming AEAD.
      * Throws [TamperedCiphertextException] on integrity or authentication tag failure.
      */
+    @Suppress("TooGenericExceptionCaught") // any decode or crypto failure maps to a typed decryption error
     fun decryptStream(
         streamingAead: StreamingAead,
         inputStream: InputStream,

@@ -95,6 +95,7 @@ class AppLockManager(
      * Authenticates the user using BiometricPrompt on API 30+,
      * falling back to KeyguardManager confirm-credential on API 28 and 29.
      */
+    @Suppress("TooGenericExceptionCaught") // device credential APIs differ by vendor: fall back or report, never crash
     fun authenticate(
         activity: FragmentActivity,
         title: String = "NeoGold App Lock",
@@ -106,7 +107,7 @@ class AppLockManager(
 
         // On API 28 and 29, or when BiometricPrompt cannot offer device credentials directly,
         // use KeyguardManager confirm-credential fallback (doc 8 Section 6.3).
-        if (Build.VERSION.SDK_INT in 26..29) {
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.O..Build.VERSION_CODES.Q) {
             launchKeyguardConfirmCredential(activity, title, subtitle, km, onSuccess, onError)
             return
         }
@@ -146,12 +147,13 @@ class AppLockManager(
                 .build()
 
             biometricPrompt.authenticate(promptInfo)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Fallback to KeyguardManager confirm credential
             launchKeyguardConfirmCredential(activity, title, subtitle, km, onSuccess, onError)
         }
     }
 
+    @Suppress("TooGenericExceptionCaught") // device credential APIs differ by vendor: fall back or report, never crash
     private fun launchKeyguardConfirmCredential(
         activity: Activity,
         title: String,

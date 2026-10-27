@@ -42,7 +42,9 @@ interface OutboxDao {
     suspend fun recordAttempt(id: String, error: String?, updatedAt: Long): Int
 
     @Query(
-        "UPDATE outbox SET dependency_requeues = dependency_requeues + 1, state = CASE WHEN dependency_requeues + 1 >= 3 THEN 'FAILED_PERMANENT' ELSE 'PENDING' END, updated_at = :updatedAt WHERE id = :id"
+        "UPDATE outbox SET dependency_requeues = dependency_requeues + 1, " +
+            "state = CASE WHEN dependency_requeues + 1 >= 3 THEN 'FAILED_PERMANENT' ELSE 'PENDING' END, " +
+            "updated_at = :updatedAt WHERE id = :id"
     )
     suspend fun recordDependencyRequeue(id: String, updatedAt: Long): Int
 

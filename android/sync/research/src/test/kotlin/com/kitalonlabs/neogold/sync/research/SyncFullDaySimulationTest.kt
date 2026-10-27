@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength") // JSON fixtures stay on one line so a diff shows the whole payload
+
 package com.kitalonlabs.neogold.sync.research
 
 import android.content.Context
@@ -86,6 +88,7 @@ class SyncFullDaySimulationTest {
 
         server = MockWebServer()
         server.dispatcher = object : Dispatcher() {
+            @Suppress("ReturnCount") // request router for the simulated server
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path ?: ""
                 val method = request.method ?: ""
@@ -364,7 +367,7 @@ class SyncFullDaySimulationTest {
         // 20 Sessions (4 per participant), each with 6 images (total 120 images)
         var sessionIndex = 0
         for (pId in participantIds) {
-            for (s in 1..4) {
+            repeat(4) {
                 sessionIndex++
                 val sId = "sess-$sessionIndex"
                 insertResearchSession(
