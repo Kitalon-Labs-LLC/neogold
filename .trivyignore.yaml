@@ -1,0 +1,47 @@
+# Gate S2 (Trivy dependency scan) exceptions. Read before adding an entry.
+#
+# Every entry is scoped to ONE package version (purls), carries a written reason, and EXPIRES:
+# after expired_at Trivy stops honouring it and the gate fails again, which forces a review.
+# Never ignore a CVE id without a purl, and never extend an expiry without re-reading the reason.
+# Changes to this file need the second approver (.github/CODEOWNERS).
+#
+# Added 2026-10-27 (BUG-2026-036) after the first real android-ci run. The shipped Bouncy Castle
+# was upgraded to a fixed version in the same change; what is left is below.
+
+vulnerabilities:
+  # Bouncy Castle 1.80.2 is bundled inside Android's own lint tool (the androidLintTool
+  # configuration of the Android Gradle Plugin). It is build tooling: it is in no APK and no
+  # runtime classpath. It cannot be changed here; it goes away when AGP is upgraded.
+  - id: CVE-2026-8763
+    purls:
+      - "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2"
+    statement: "Build-time only: Bouncy Castle inside the Android lint tool, not shipped. Clears with an AGP upgrade."
+    expired_at: 2027-01-31
+  - id: CVE-2026-13506
+    purls:
+      - "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2"
+    statement: "Build-time only: Bouncy Castle inside the Android lint tool, not shipped. Clears with an AGP upgrade."
+    expired_at: 2027-01-31
+
+  # protobuf-java 3.19.3 ships because the project uses the Tink JVM jar (com.google.crypto.tink:tink
+  # 1.7.0) instead of tink-android. A review of every Tink call site in :core:security on 2026-10-27
+  # found no protobuf parsing of untrusted input: FileKeysetProvider reads only a keyset this app
+  # generated and stored (wrapped by a Keystore key), and ExportCryptoEngine builds HPKE messages
+  # in code from the study's export key (taken from the signed study profile). CVE-2022-3509 and
+  # CVE-2022-3510 concern the protobuf text-format parser, which is not used; CVE-2024-7254 needs
+  # attacker-supplied protobuf bytes. Fix: move to tink-android or a newer Tink (work package B1).
+  - id: CVE-2022-3509
+    purls:
+      - "pkg:maven/com.google.protobuf/protobuf-java@3.19.3"
+    statement: "Text-format parser not used; no untrusted protobuf is parsed. Fix by upgrading Tink (B1)."
+    expired_at: 2027-01-31
+  - id: CVE-2022-3510
+    purls:
+      - "pkg:maven/com.google.protobuf/protobuf-java@3.19.3"
+    statement: "Text-format parser not used; no untrusted protobuf is parsed. Fix by upgrading Tink (B1)."
+    expired_at: 2027-01-31
+  - id: CVE-2024-7254
+    purls:
+      - "pkg:maven/com.google.protobuf/protobuf-java@3.19.3"
+    statement: "Needs attacker-supplied protobuf bytes; Tink parses only keysets this app stored. Fix by upgrading Tink (B1)."
+    expired_at: 2027-01-31

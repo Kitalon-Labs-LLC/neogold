@@ -26,5 +26,6 @@
 # The secrets-scan config and the gate scripts: a commit must not be able to edit its own gate
 # without the second approver seeing it (added after the A1 privacy review).
 /.gitleaks.toml                         @sowad @second-approver
+/.trivyignore.yaml                      @sowad @second-approver
 /tools/check_*.py                       @sowad @second-approver
 /tools/hooks/                           @sowad @second-approver

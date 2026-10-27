@@ -70,3 +70,5 @@ jobs:
           scan-ref: android
           severity: CRITICAL,HIGH
           exit-code: "1"
+          # Scoped, reasoned, expiring exceptions only (see the header of the file).
+          trivyignores: .trivyignore.yaml
