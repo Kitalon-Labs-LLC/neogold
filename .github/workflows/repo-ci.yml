@@ -98,5 +98,7 @@ jobs:
           DATABASE_URL: "sqlite:///:memory:"
         run: pytest -q backend/tests/test_models_extra_forbid.py --no-migrate
       - name: Run tooling and Claude Code hook tests
-        run: pytest -q tools/tests/ .claude/hooks/tests/
+        # `python -m pytest`, not `pytest`: the tests do `from tools.check_x import ...`, which needs
+        # the repository root on sys.path. Only `python -m` adds the current directory.
+        run: python -m pytest -q tools/tests/ .claude/hooks/tests/
 
