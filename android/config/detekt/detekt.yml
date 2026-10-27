@@ -1,0 +1,52 @@
+# NeoGold detekt rules for every module, layered on detekt's defaults (buildUponDefaultConfig = true).
+# The four pure engines add config/detekt/detekt-engine.yml on top (StrictMath rules, doc 4 Section 4.2).
+#
+# Only change this file to scope a rule where its premise does not hold, and say why in a comment.
+# A baseline file is not allowed (P01: only for generated code, and there is none).
+
+naming:
+  FunctionNaming:
+    # Compose UI functions are PascalCase by the Compose API guidelines.
+    ignoreAnnotated: ['Composable']
+  ConstructorParameterNaming:
+    # Wire models mirror the JSON field names of docs/api/openapi.yaml (snake_case), which the server
+    # validates with extra = "forbid"; renaming them in Kotlin would only add a mapping layer.
+    excludes: ['**/sync/research/api/models/**']
+
+complexity:
+  LongMethod:
+    # A declarative UI function is long by construction; its logic lives in ViewModels and engines.
+    ignoreAnnotated: ['Composable']
+    excludes: ['**/test/**', '**/androidTest/**']
+  NestedBlockDepth:
+    excludes: ['**/test/**', '**/androidTest/**']
+  LargeClass:
+    excludes: ['**/test/**', '**/androidTest/**']
+  LongParameterList:
+    # A screen takes its state and its callbacks as parameters (state hoisting); a long list is the API.
+    ignoreAnnotated: ['Composable']
+    ignoreDefaultParameters: true
+  CyclomaticComplexMethod:
+    ignoreAnnotated: ['Composable']
+    ignoreSimpleWhenEntries: true
+
+style:
+  ReturnCount:
+    # Early returns that validate input are clearer than nesting.
+    excludeGuardClauses: true
+  MagicNumber:
+    # A literal in a property initializer, an enum entry or an annotation is the definition of a
+    # named value, so it is not "magic".
+    ignorePropertyDeclaration: true
+    ignoreEnums: true
+    ignoreAnnotation: true
+    # Vector path data (coordinates) and nothing else.
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+      - '**/NgIcons.kt'
+
+formatting:
+  # Duplicates style>MaxLineLength (same limit, same lines); one rule is enough.
+  MaximumLineLength:
+    active: false

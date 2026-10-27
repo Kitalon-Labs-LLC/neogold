@@ -28,6 +28,7 @@ class NeoGoldAndroidApplicationPlugin : Plugin<Project> {
             if (!pluginManager.hasPlugin("org.jetbrains.kotlin.android") && extensions.findByName("kotlin") == null) {
                 pluginManager.apply("org.jetbrains.kotlin.android")
             }
+            pluginManager.apply(NeoGoldDetektPlugin::class.java)
 
             val buildNumber = providers.gradleProperty("buildNumber").map(String::toInt).getOrElse(1)
             val effectiveVersionName = providers.gradleProperty("versionName").getOrElse(
