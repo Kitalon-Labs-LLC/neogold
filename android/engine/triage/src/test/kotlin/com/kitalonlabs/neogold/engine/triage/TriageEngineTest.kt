@@ -1,6 +1,7 @@
 package com.kitalonlabs.neogold.engine.triage
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -493,6 +494,22 @@ class TriageEngineTest {
             failed = true
         }
         assertThat(failed).isTrue()
+    }
+
+    @Test
+    fun test_TC_TRI_19_config_cut_off_anywhere_is_rejected() {
+        // A config that is cut off at any point must be rejected outright, never half-accepted (H7, H8).
+        // Pins the "Unexpected EOF" paths of the JSON tokenizer.
+        val configFile = File("config/triage-config.json").takeIf { it.exists() }
+            ?: File("../../../config/triage-config.json").takeIf { it.exists() }
+            ?: error("Could not find config/triage-config.json")
+        val json = configFile.readText().trimEnd()
+
+        for (cut in 0 until json.length) {
+            assertThrows(IllegalArgumentException::class.java) { TriageConfigParser.parse(json.substring(0, cut)) }
+        }
+        val eof = assertThrows(IllegalArgumentException::class.java) { TriageConfigParser.parse("") }
+        assertThat(eof).hasMessageThat().isEqualTo("Unexpected EOF")
     }
 
     @Test

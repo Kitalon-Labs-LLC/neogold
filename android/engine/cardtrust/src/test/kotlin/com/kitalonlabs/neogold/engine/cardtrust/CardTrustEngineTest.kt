@@ -1,6 +1,7 @@
 package com.kitalonlabs.neogold.engine.cardtrust
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -139,6 +140,25 @@ class CardTrustEngineTest {
         val result = verifier.verifyCardBatch(payloadBytes, evalDate)
 
         assertThat(result).isEqualTo(VerificationResult.Revoked)
+    }
+
+    /**
+     * The trust list decides which batches verify (TC-CARD-03, TC-CARD-06), so a copy that is cut off at
+     * any point must be rejected outright, never half-accepted. Pins the "Unexpected EOF" paths of the
+     * JSON tokenizer (fail closed, doc 8 Section 5).
+     */
+    @Test
+    fun trustListCutOffAnywhereIsRejected() {
+        val json = findRepoFile("config/trust-list.json").readText(Charsets.UTF_8).trimEnd()
+
+        for (cut in 0 until json.length) {
+            assertThrows(IllegalArgumentException::class.java) { TrustListParser.parse(json.substring(0, cut)) }
+        }
+        for (input in listOf(" ", "{", "[", "{\"a\"", "{\"a\":")) {
+            assertThrows(IllegalArgumentException::class.java) { TrustListParser.parse(input) }
+        }
+        val eof = assertThrows(IllegalArgumentException::class.java) { TrustListParser.parse("") }
+        assertThat(eof).hasMessageThat().isEqualTo("Unexpected EOF")
     }
 
     // =========================================================================
