@@ -18,7 +18,9 @@ from check_guardrails import parse_claude_table, verify_enforcement_row
 def test_real_claude_table_passes():
     claude_md = REPO_ROOT / "CLAUDE.md"
     rows = parse_claude_table(claude_md)
-    assert len(rows) == 20
+    # The count catches a rule being deleted without anyone noticing. 21 since the no-AI-attribution
+    # row was added on 2026-10-27; change it only together with an intentional edit to the table.
+    assert len(rows) == 21
 
     for row in rows:
         errors = verify_enforcement_row(REPO_ROOT, row)
