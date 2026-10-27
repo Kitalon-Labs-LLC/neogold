@@ -1,0 +1,63 @@
+# NeoGold Quality Tiers (Slop Budget)
+# Defines path matching rules for Tier 0 through Tier 3.
+# Strictest tier applies when a PR touches multiple tiers.
+
+tiers:
+  0:
+    name: "clinical"
+    description: "Clinical safety and estimation path: triage, estimation, color science, card trust, vision quality gate, config, clinical strings, and result screen"
+    paths:
+      - "android/engine/triage/**"
+      - "android/engine/estimation/**"
+      - "android/engine/colorscience/**"
+      - "android/engine/cardtrust/**"
+      - "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/QualityGate*.kt"
+      - "android/feature/result/**"
+      - "config/**"
+      - "android/app/src/main/assets/model.json"
+      - "android/core/designsystem/src/main/res/values/strings.xml"
+      - "android/core/designsystem/src/main/res/values-bn/strings.xml"
+      - "CLINICAL_SIGNOFF.md"
+  1:
+    name: "data_and_trust"
+    description: "Security, local data, sync, export, backend auth, idempotency, admin CLI, and deployment"
+    paths:
+      - "android/core/security/**"
+      - "android/core/data/**"
+      - "android/sync/research/**"
+      - "tools/neogold-decrypt/**"
+      - "backend/app/auth/**"
+      - "backend/app/middleware/**"
+      - "backend/app/idempotency/**"
+      - "backend/app/cli/**"
+      - "backend/deploy/**"
+      - "backend/alembic/**"
+  2:
+    name: "app"
+    description: "Application feature modules, core UI/design system, remaining backend API endpoints, and card design"
+    paths:
+      - "android/app/**"
+      - "android/feature/**"
+      - "android/core/**"
+      - "android/engine/**"
+      - "backend/**"
+      - "card/**"
+  3:
+    name: "tooling"
+    description: "Developer tooling, training notebooks, benchmarks, test harnesses, and documentation"
+    paths:
+      - "tools/**"
+      - "training/**"
+      - "reports/**"
+      - "testdata/**"
+      - "docs/**"
+      - ".claude/**"
+      - ".github/**"
+      - "quality/**"
+      - "*.md"
+      - "*.txt"
+      - "*.yml"
+      - "*.yaml"
+      - "Makefile"
+      - "LICENSE"
+      - ".gitignore"

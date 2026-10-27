@@ -100,7 +100,7 @@ tasks.register("bundleRelease") {
 tasks.register("check") {
     description = "Runs all verification checks"
     group = "verification"
-    dependsOn("testReleaseUnitTest", "lintRelease", "verifyStrings")
+    dependsOn("testReleaseUnitTest", "lintRelease", "verifyStrings", "verifyStrictMath")
 }
 
 fun resolvePythonCommand(): List<String> {
@@ -148,6 +148,14 @@ tasks.register<Exec>("verifyStrings") {
     workingDir = rootDir.parentFile
     val pythonCmd = resolvePythonCommand()
     commandLine(pythonCmd + listOf("tools/check_strings.py"))
+}
+
+tasks.register<Exec>("verifyStrictMath") {
+    description = "StrictMath verification in pure engines (Doc 4 Section 4.2)"
+    group = "verification"
+    workingDir = rootDir.parentFile
+    val pythonCmd = resolvePythonCommand()
+    commandLine(pythonCmd + listOf("tools/check_strictmath.py"))
 }
 
 tasks.register<Exec>("signAssetManifest") {

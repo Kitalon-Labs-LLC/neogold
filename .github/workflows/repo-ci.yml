@@ -61,3 +61,38 @@ jobs:
         run: python -m pytest -q tools/tests/test_drift_inventory.py tools/tests/test_doc_auditor_guard.py
       - name: Drift check against the baseline
         run: python3 tools/drift_inventory.py --check
+  guardrails-check:
+    # P25: Guardrails as code - mechanical enforcement of non-negotiable rules
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML and pytest
+        run: pip install pyyaml pytest
+      - name: Guardrails table integrity
+        run: python3 tools/check_guardrails.py
+      - name: Dependency allowlist and HTTP client isolation
+        run: python3 tools/check_dependencies.py
+      - name: GitHub Actions pinned by commit SHA
+        run: python3 tools/check_actions_pinned.py
+      - name: StrictMath in pure engines
+        run: python3 tools/check_strictmath.py
+      - name: No skipped tests and TC baseline check
+        run: python3 tools/check_no_skipped_tests.py
+      - name: Forward-only migrations check
+        run: python3 tools/check_migrations.py --base origin/main
+      - name: Pydantic models extra-forbid check
+        env:
+          DATABASE_URL: sqlite:///:memory:
+        run: pytest -q backend/tests/test_models_extra_forbid.py --no-migrate
+      - name: Run tooling and Claude Code hook tests
+        run: pytest -q tools/tests/ .claude/hooks/tests/
+

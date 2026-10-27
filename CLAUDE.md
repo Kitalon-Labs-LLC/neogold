@@ -28,35 +28,38 @@ All design decisions live in `docs/`. Read the sections a task names before writ
 
 ---
 
-## Non-negotiable rules
+## Must not trade off
 
-### Clinical safety
-- Never change clinical values: thresholds, rules, gestational bands, or clinical wording in `config/triage-config.json` or clinical strings. Only the clinical lead changes them, with a signed `CLINICAL_SIGNOFF.md` (PRD 9b). Tests use `testdata/triage/config.synthetic.json`.
-- Triage compares integer tenths of mg/dL, rounding toward more care: threshold down, estimate and upper bound up, lower bound down. One reason code, the first rule that matched (doc 4 Section 6.2).
-- Pure engines use `StrictMath` for powers, roots, and exponentials so both ABIs give bit-identical results.
-- Never weaken, skip, quarantine, or delete a test to get CI green. A failing `TC-TRI`, `TC-EST`, or `TC-CARD` test blocks all other work.
-- No silent defaults on clinical inputs (gestational age, safety questions, consent).
-- UI strings never use the banned words in doc 6 Section 10.2, in English or Bangla. Every result is labeled as a suggested next step.
+| Rule | Why | Enforced by | Runs at |
+|---|---|---|---|
+| Never change clinical values: thresholds, rules, gestational bands, or clinical wording in `config/triage-config.json` or clinical strings without signed `CLINICAL_SIGNOFF.md` (PRD 9b) | PRD D11, 9b | Hook `protect_clinical.py`, gate `tools/verify_clinical_signoff.py` (Gate G1) | edit time, PR, release |
+| Triage compares integer tenths of mg/dL, rounding toward more care: threshold down, estimate and upper bound up, lower bound down; one reason code (first matching rule) | Doc 4 Section 6.2 | `android:engine:triage:test`, `triageDifferentialTest` (TC-TRI-24) | PR |
+| Pure engines use `StrictMath` for powers, roots, and exponentials so both ABIs give bit-identical results; no `java.lang.Math` or `kotlin.math` power/root/exp calls | Doc 4 Section 4.2 | `tools/check_strictmath.py`, detekt `ForbiddenImport` / `ForbiddenMethodCall` | PR |
+| Never weaken, skip, quarantine, or delete a test to get CI green; failing `TC-TRI`, `TC-EST`, or `TC-CARD` blocks all other work | Doc 9 Section 7 | Hook `protect_tests.py`, `tools/check_no_skipped_tests.py` against `quality/tc-baseline.json` | edit time, PR |
+| No silent defaults on clinical inputs (gestational age, safety questions, consent) | PRD FR-01, FR-02 | UI and unit tests (`TC-CAP-04`, `TC-CAP-16`, `TC-UI-05`, `TC-UI-13`) | PR |
+| UI strings never use banned words in doc 6 Section 10.2 in English or Bangla; every result is labeled as a suggested next step | Doc 6 Section 10.2, 10.3 | `tools/check_strings.py` (TC-UI-04), Gradle `verifyStrings` | PR |
+| No names, birth dates, phone numbers, national IDs, locations, or free-text fields; age stored in hours | Doc 8 Section 3, PRD FR-23 | `tools/check_manifest.py`, unit & schema tests (`TC-PRIV-03`, `TC-API-21`) | PR, release |
+| Screening images are never written to disk | Doc 8 Section 2, 6.1 | Instrumented & memory tests (`TC-PRIV-01`, `TC-PRIV-02`) | PR |
+| The screening path makes no network calls; only `:sync:research` may depend on the HTTP client | Doc 4 Driver 2, Doc 8 Section 6.1 | Gradle dependency rule in `android/build.gradle.kts`, `tools/check_dependencies.py` | PR |
+| No analytics or third-party crash SDKs; no new Android permission or exported component without updating allow-lists | Doc 8 Section 6.1, 10 | `tools/check_manifest.py` (Gate S5), `tools/check_dependencies.py` | PR, release |
+| Never log personal values; crash reports drop exception messages | Doc 8 Section 6.6 | Log scrubbing tests (`TC-PRIV-04`, `TC-PRIV-05`) | PR |
+| Real newborn data never enters the repository, tests, logs, screenshots, or issues; use synthetic or bench data | Doc 9 Section 6 | Maintainer & Privacy Reviewer (Sowad Al-Mughni) | PR |
+| No secrets in the repository; keys, keystores, and passwords come from CI secrets or offline machines only | Doc 8 Section 4, T12 | `gitleaks` (Gate S9), hook `bash_guard.py` | edit time, PR |
+| GitHub Actions are pinned to full commit SHAs; scanner jobs get no secrets | Doc 8 Section 10, Doc 12 Section 3 | `tools/check_actions_pinned.py` | PR |
+| Server request bodies reject unknown fields (`extra = "forbid"`); server follows verification order in doc 7 Section 4.3 | Doc 7 Section 4.3, Doc 8 Section 8.3 | `backend/tests/test_models_extra_forbid.py`, authentication order tests | PR |
+| Engines (`:engine:colorscience`, `:engine:estimation`, `:engine:triage`, `:engine:cardtrust`) are pure Kotlin with no Android dependency and are tested on the JVM | Doc 4 Section 4.2 | Gradle dependency rule in `android/build.gradle.kts`, JVM tests | PR |
+| Budgets: download under 25 MB, peak memory under 120 MB, capture to result p95 under 10 s on reference phones | Doc 4 Section 5.6, Doc 9 Section 11 | `tools/check_bundle_size.py`, benchmark scripts (`TC-PERF-07`) | PR, release |
+| `minSdk` 26, `targetSdk` 36, ABIs `arm64-v8a` and `armeabi-v7a`; every native library 16 KB aligned | Doc 8 Section 6.1 | `tools/check_16kb.sh` (Gate S4), Gradle configuration | PR, release |
+| Ask before adding any dependency; prefer none; architectural choices go into ADR table (doc 4 Section 15) | Doc 4 Section 15 | `tools/check_dependencies.py` against `quality/dependency-allowlist.txt` | PR |
+| On-device database migrates forward only; server migrations are expand-only within a release | Doc 8 Section 8.4, Doc 12 Section 2 | `tools/check_migrations.py`, backend `schema-compat` CI job | PR |
 
-### Privacy
-- No names, birth dates, phone numbers, national IDs, locations, or free-text fields. Age is stored in hours.
-- Screening images are never written to disk.
-- The screening path makes no network calls. Only `:sync:research` may depend on the HTTP client; a Gradle check enforces this.
-- No analytics or third-party crash SDKs. No new Android permission or exported component without updating the allow-lists in `tools/check_manifest.py` and doc 8 Section 6.1 in the same PR.
-- Never log personal values. Crash reports drop exception messages.
-- Real newborn data never enters the repository, tests, logs, screenshots, or issues. Use synthetic or bench data.
+### We do trade off
+- **Non-result UI polish:** Visual polish and micro-animations on screens outside the primary screening result path (e.g. settings, diagnostics) can prioritize utility and clarity.
+- **Tooling code style:** Code in `tools/` and scripts prioritizes strict determinism, speed, and standard library portability over internal architectural abstraction.
+- **Speed of non-core features:** Long-running operations outside the emergency clinical path (batch uploads, encrypted exports, audit reports) trade execution speed for low memory footprint on 2 GB devices.
+- **Could items:** Backlog items labeled "Could" (e.g. optional export filters, advanced diagnostic logging exports) may be deferred to maintain test coverage and security rigor on core MVP items.
 
-### Security
-- No secrets in the repository. Signing keys, keystores, and passwords come from CI secrets or offline machines only.
-- GitHub Actions are pinned to full commit SHAs. Scanner jobs get no secrets.
-- Server request bodies reject unknown fields (`extra = "forbid"`); the server follows the verification order in doc 7 Section 4.3 exactly.
-
-### Engineering
-- Engines (`:engine:colorscience`, `:engine:estimation`, `:engine:triage`, `:engine:cardtrust`) are pure Kotlin with no Android dependency and are tested on the JVM.
-- Budgets: download under 25 MB, peak memory under 120 MB, capture to result p95 under 10 s on the reference phones (doc 4 Section 5.6).
-- `minSdk` 26, `targetSdk` 36, ABIs `arm64-v8a` and `armeabi-v7a`. Every native library 16 KB aligned.
-- Ask before adding any dependency. Prefer none. Architectural choices go into the ADR table (doc 4 Section 15).
-- The on-device database migrates forward only. Server migrations are expand-only within a release.
+---
 
 ---
 
@@ -99,6 +102,13 @@ Fill this in as work packages create them; keep it current.
 | Direction check (report only) | `/ng-direction [--since <ref>]` |
 | Drift gate (CI, P24) | `python3 tools/drift_inventory.py --check` (needs `backend/requirements.lock` installed) |
 | Tests per TC | `python3 tools/trace.py docs --tests` |
+| Guardrail table integrity (P25) | `python3 tools/check_guardrails.py` |
+| Quality tier gate (P25) | `python3 tools/quality_gate.py [--base <ref>]` |
+| Dependency & HTTP client isolation (P25) | `python3 tools/check_dependencies.py` |
+| StrictMath verification (P25) | `python3 tools/check_strictmath.py` |
+| No skipped tests & TC baseline (P25) | `python3 tools/check_no_skipped_tests.py` |
+| Forward-only migrations check (P25) | `python3 tools/check_migrations.py` |
+| Actions pinned by SHA (P25) | `python3 tools/check_actions_pinned.py` |
 
 ---
 
