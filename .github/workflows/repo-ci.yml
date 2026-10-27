@@ -20,29 +20,6 @@ jobs:
         run: python3 tools/check_licenses.py
       - name: ShellCheck on tools/*.sh
         run: shellcheck tools/*.sh
-  tooling-checks:
-    # BUG-2026-014 (TC-OPS-01): a workflow file with invalid YAML starts no job at all, so it
-    # fails silently. This job also covers android-release.yml, which no other workflow runs on.
-    # BUG-2026-029 (TC-A11Y-01): the Kotlin hardcoded-string ratchet and its tests.
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version: "3.12"
-      - name: Install locked Python tooling (PyYAML)
-        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
-      - name: Workflow files parse and pin every action to a commit SHA
-        run: python3 tools/check_workflows.py
-      - name: String lint, including the hardcoded-literal ratchet
-        run: python3 tools/check_strings.py
-      - name: Tooling tests (workflow checker, string ratchet)
-        run: python -m pytest -q tools/tests/test_check_workflows.py tools/tests/test_check_strings_literals.py
   drift-check:
     # P24: fail on any dependency, permission, endpoint, table, column, screen, or config
     # key that no doc anchors and that is not in reports/direction/baseline.json.
@@ -86,6 +63,28 @@ jobs:
         run: python3 tools/check_dependencies.py
       - name: GitHub Actions pinned by commit SHA
         run: python3 tools/check_actions_pinned.py
+      - name: Workflow files are valid YAML with runnable steps (BUG-2026-014, TC-OPS-01)
+        # An invalid workflow file starts no job at all, so it fails silently. Also covers
+        # android-release.yml, which no other workflow runs on.
+        run: python3 tools/check_workflows.py
+      - name: String lint and hardcoded-literal ratchet (BUG-2026-029, TC-A11Y-01)
+        run: python3 tools/check_strings.py
+      - name: No AI attribution in the commits of this change
+        # Repository rule (CLAUDE.md, Must not trade off). Checks only the commits that arrive
+        # with this push or pull request, never old history.
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -n "$PR_BASE" ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [ -n "$PUSH_BEFORE" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+            range="$PUSH_BEFORE..$GITHUB_SHA"
+          else
+            range="$GITHUB_SHA~1..$GITHUB_SHA"   # new branch, or a force-push that dropped the old tip
+          fi
+          python3 tools/check_commit_attribution.py "$range"
       - name: StrictMath in pure engines
         run: python3 tools/check_strictmath.py
       - name: No skipped tests and TC baseline check
@@ -94,7 +93,7 @@ jobs:
         run: python3 tools/check_migrations.py --base origin/main
       - name: Pydantic models extra-forbid check
         env:
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: "sqlite:///:memory:"
         run: pytest -q backend/tests/test_models_extra_forbid.py --no-migrate
       - name: Run tooling and Claude Code hook tests
         run: pytest -q tools/tests/ .claude/hooks/tests/
