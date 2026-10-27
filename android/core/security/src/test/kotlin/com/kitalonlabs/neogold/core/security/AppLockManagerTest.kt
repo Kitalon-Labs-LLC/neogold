@@ -1,13 +1,11 @@
 package com.kitalonlabs.neogold.core.security
 
-import android.app.KeyguardManager
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.core.security.applock.AppLockManager
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 @RunWith(RobolectricTestRunner::class)
 class AppLockManagerTest {

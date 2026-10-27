@@ -52,7 +52,6 @@ import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.core.designsystem.theme.PrimaryButtonHeight
 import com.kitalonlabs.neogold.feature.screening.clock.ClockIntegrityValidator
 import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
@@ -110,9 +109,9 @@ fun S10BirthTimeGaScreen(
 
     // Next is enabled ONLY when gestational age is set, clock is valid, and birth is not future
     val isNextEnabled = gestationalAgeWeeks != null &&
-            !isClockBeforeBuild &&
-            !isClockDriftExceeded &&
-            !isBirthInFuture
+        !isClockBeforeBuild &&
+        !isClockDriftExceeded &&
+        !isBirthInFuture
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -295,7 +294,10 @@ fun S10BirthTimeGaScreen(
 
         // Time Picker Dialog
         if (showTimePicker) {
-            val localTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(birthTimeEpochMs), ZoneId.systemDefault()).toLocalTime()
+            val localTime = LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(birthTimeEpochMs),
+                ZoneId.systemDefault()
+            ).toLocalTime()
             val timePickerState = rememberTimePickerState(
                 initialHour = localTime.hour,
                 initialMinute = localTime.minute,

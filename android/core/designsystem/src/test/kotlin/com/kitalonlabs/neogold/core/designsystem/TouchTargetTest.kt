@@ -1,6 +1,5 @@
 package com.kitalonlabs.neogold.core.designsystem
 
-import androidx.compose.ui.unit.dp
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.core.designsystem.theme.MinTouchTarget
 import com.kitalonlabs.neogold.core.designsystem.theme.PrimaryButtonHeight

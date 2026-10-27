@@ -62,7 +62,9 @@ class ResearchJpegSanitizerTest {
         val postValidation = ResearchJpegSanitizer.validateAllowList(sanitized)
         assertThat(postValidation.isValid).isTrue()
         assertThat(postValidation.detectedOrientation).isEqualTo(6)
-        assertThat(postValidation.markersPresent.distinct()).containsExactly("SOI", "APP0", "APP1", "DQT", "SOF0", "DHT", "SOS", "EOI")
+        assertThat(
+            postValidation.markersPresent.distinct()
+        ).containsExactly("SOI", "APP0", "APP1", "DQT", "SOF0", "DHT", "SOS", "EOI")
 
         // Decodable by standard BitmapFactory
         val decoded = BitmapFactory.decodeByteArray(sanitized, 0, sanitized.size)

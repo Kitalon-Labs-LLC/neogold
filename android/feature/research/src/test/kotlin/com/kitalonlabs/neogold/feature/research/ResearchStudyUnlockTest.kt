@@ -49,7 +49,11 @@ class ResearchStudyUnlockTest {
             .build()
 
         val fakeMasterKey = FakeMasterKeyProvider()
-        val fileKeysetProvider = DefaultFileKeysetProvider(context, fakeMasterKey, File(context.filesDir, "test_file_keys"))
+        val fileKeysetProvider = DefaultFileKeysetProvider(
+            context,
+            fakeMasterKey,
+            File(context.filesDir, "test_file_keys")
+        )
         encryptedFileStore = DefaultEncryptedFileStore(context, fileKeysetProvider, File(context.filesDir, "test_images"))
 
         val tlFile = findRepoFile("card/spec/testvectors/test_trust_list.json")

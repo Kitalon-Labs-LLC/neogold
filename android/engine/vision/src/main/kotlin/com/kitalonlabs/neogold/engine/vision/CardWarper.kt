@@ -27,9 +27,15 @@ class CardWarper(
         val framePixels = frame.data
 
         val h = invHomography.m
-        val h00 = h[0]; val h01 = h[1]; val h02 = h[2]
-        val h10 = h[3]; val h11 = h[4]; val h12 = h[5]
-        val h20 = h[6]; val h21 = h[7]; val h22 = h[8]
+        val h00 = h[0]
+        val h01 = h[1]
+        val h02 = h[2]
+        val h10 = h[3]
+        val h11 = h[4]
+        val h12 = h[5]
+        val h20 = h[6]
+        val h21 = h[7]
+        val h22 = h[8]
 
         var outIdx = 0
         for (v in 0 until targetH) {
@@ -60,10 +66,18 @@ class CardWarper(
                     val p11 = framePixels[idx11]
 
                     // Bilinear interpolation for each channel
-                    val r00 = (p00 shr 16) and 0xFF; val g00 = (p00 shr 8) and 0xFF; val b00 = p00 and 0xFF
-                    val r01 = (p01 shr 16) and 0xFF; val g01 = (p01 shr 8) and 0xFF; val b01 = p01 and 0xFF
-                    val r10 = (p10 shr 16) and 0xFF; val g10 = (p10 shr 8) and 0xFF; val b10 = p10 and 0xFF
-                    val r11 = (p11 shr 16) and 0xFF; val g11 = (p11 shr 8) and 0xFF; val b11 = p11 and 0xFF
+                    val r00 = (p00 shr 16) and 0xFF
+                    val g00 = (p00 shr 8) and 0xFF
+                    val b00 = p00 and 0xFF
+                    val r01 = (p01 shr 16) and 0xFF
+                    val g01 = (p01 shr 8) and 0xFF
+                    val b01 = p01 and 0xFF
+                    val r10 = (p10 shr 16) and 0xFF
+                    val g10 = (p10 shr 8) and 0xFF
+                    val b10 = p10 and 0xFF
+                    val r11 = (p11 shr 16) and 0xFF
+                    val g11 = (p11 shr 8) and 0xFF
+                    val b11 = p11 and 0xFF
 
                     val rTop = r00 * fx1 + r01 * fx
                     val rBot = r10 * fx1 + r11 * fx

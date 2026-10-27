@@ -19,7 +19,6 @@ import com.kitalonlabs.neogold.sync.research.crypto.Base64Url
 import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
 import com.kitalonlabs.neogold.sync.research.crypto.DeviceAssertionMinter
 import com.kitalonlabs.neogold.sync.research.crypto.DeviceKeyManager
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -29,7 +28,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.BufferedSink
 import okio.source
-import java.io.IOException
 import java.io.InputStream
 
 class ResearchApiClient(
@@ -64,7 +62,10 @@ class ResearchApiClient(
         enrollmentRequest: EnrollmentRequest
     ): EnrollmentResponse {
         val url = normalizeUrl(baseUrl, "/enrollments")
-        val bodyBytes = json.encodeToString(EnrollmentRequest.serializer(), enrollmentRequest).toByteArray(Charsets.UTF_8)
+        val bodyBytes = json.encodeToString(
+            EnrollmentRequest.serializer(),
+            enrollmentRequest
+        ).toByteArray(Charsets.UTF_8)
         val request = Request.Builder()
             .url(url)
             .post(bodyBytes.toRequestBody(jsonMediaType))

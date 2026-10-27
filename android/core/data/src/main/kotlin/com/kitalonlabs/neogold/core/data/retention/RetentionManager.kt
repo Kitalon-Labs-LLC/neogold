@@ -18,7 +18,8 @@ class RetentionManager(
     private val database: NeoGoldDatabase,
     private val dataStore: NeoGoldDataStore,
     private val encryptedFileStore: EncryptedFileStore,
-    private val serverConfirmationHook: ResearchRetentionServerConfirmationHook = NoOpResearchRetentionServerConfirmationHook(),
+    private val serverConfirmationHook: ResearchRetentionServerConfirmationHook =
+        NoOpResearchRetentionServerConfirmationHook(),
     private val currentTimeProvider: () -> Long = { System.currentTimeMillis() }
 ) {
 

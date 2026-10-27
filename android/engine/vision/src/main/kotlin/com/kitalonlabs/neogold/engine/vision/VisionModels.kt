@@ -103,7 +103,9 @@ class ImageFrame(
 ) {
     init {
         require(width > 0 && height > 0) { "Dimensions must be positive ($width x $height)" }
-        require(data.size >= width * height) { "Data size (${data.size}) must match at least width*height (${width * height})" }
+        require(
+            data.size >= width * height
+        ) { "Data size (${data.size}) must match at least width*height (${width * height})" }
     }
 
     fun getPixel(x: Int, y: Int): Int {

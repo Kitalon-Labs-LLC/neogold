@@ -54,7 +54,15 @@ class ResearchStorageEncryptionTest {
             .allowMainThreadQueries()
             .build()
 
-        val dummyTrustList = TrustList(1, 1, java.time.LocalDate.of(2026, 10, 1), java.time.LocalDate.of(2028, 10, 1), emptyList(), emptyList(), emptyList())
+        val dummyTrustList = TrustList(
+            1,
+            1,
+            java.time.LocalDate.of(2026, 10, 1),
+            java.time.LocalDate.of(2028, 10, 1),
+            emptyList(),
+            emptyList(),
+            emptyList()
+        )
         val pinHasher = Argon2PinHasher(FakePinHmacKeyProvider())
         val pinManager = ResearchPinManager(database.researchStudyDao(), database.auditEventDao(), pinHasher)
 
@@ -154,7 +162,9 @@ class ResearchStorageEncryptionTest {
         val rawDiskBytes = rawDiskFile.readBytes()
 
         // 1. Asserts raw bytes are NOT plaintext JPEG (magic bytes are encrypted / scrambled)
-        assertThat(rawDiskBytes[0] == 0xFF.toByte() && rawDiskBytes[1] == 0xD8.toByte() && rawDiskBytes[2] == 0xFF.toByte())
+        assertThat(
+            rawDiskBytes[0] == 0xFF.toByte() && rawDiskBytes[1] == 0xD8.toByte() && rawDiskBytes[2] == 0xFF.toByte()
+        )
             .isFalse()
         assertThat(rawDiskBytes).isNotEqualTo(plaintextJpegBytes)
 

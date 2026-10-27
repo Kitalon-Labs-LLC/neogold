@@ -53,9 +53,19 @@ class BlindedCaptureAccessibilityTest {
 
         val fakeMasterKey = FakeMasterKeyProvider()
         val fileKeysetProvider = DefaultFileKeysetProvider(context, fakeMasterKey, File(context.filesDir, "file_keys"))
-        val encryptedFileStore = DefaultEncryptedFileStore(context, fileKeysetProvider, File(context.filesDir, "test_images"))
+        val encryptedFileStore =
+            DefaultEncryptedFileStore(context, fileKeysetProvider, File(context.filesDir, "test_images"))
 
-        val dummyTrustList = TrustList(1, 1, java.time.LocalDate.of(2026, 10, 1), java.time.LocalDate.of(2028, 10, 1), emptyList(), emptyList(), emptyList())
+        val dummyTrustList =
+            TrustList(
+                1,
+                1,
+                java.time.LocalDate.of(2026, 10, 1),
+                java.time.LocalDate.of(2028, 10, 1),
+                emptyList(),
+                emptyList(),
+                emptyList()
+            )
         val pinHasher = Argon2PinHasher(FakePinHmacKeyProvider())
         val pinManager = ResearchPinManager(database.researchStudyDao(), database.auditEventDao(), pinHasher)
 
@@ -154,7 +164,8 @@ class BlindedCaptureAccessibilityTest {
         assertThat(sessionEntity.triageAction).isNull()
 
         // 2. Verify Timber logcat never logged estimate or triage results
-        val forbiddenTerms = listOf("estimate", "bilirubin estimate", "triage", "urgent referral", "phototherapy threshold")
+        val forbiddenTerms =
+            listOf("estimate", "bilirubin estimate", "triage", "urgent referral", "phototherapy threshold")
         for (log in logMessages) {
             for (term in forbiddenTerms) {
                 assertThat(log).doesNotContain(term)

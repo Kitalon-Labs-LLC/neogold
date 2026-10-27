@@ -129,7 +129,7 @@ class ScreeningPipelineBenchmarkTest {
         val p50 = latencies[15]
         val p95 = latencies[28]
 
-        println("Marker Detection (640x480): p50 = ${p50} ms, p95 = ${p95} ms (budget < 80 ms)")
+        println("Marker Detection (640x480): p50 = $p50 ms, p95 = $p95 ms (budget < 80 ms)")
         assertThat(p50).isLessThan(80L)
         assertThat(p95).isLessThan(80L)
     }
@@ -195,9 +195,9 @@ class ScreeningPipelineBenchmarkTest {
         val totalP50 = totalLatencies[15]
         val totalP95 = totalLatencies[28]
 
-        println("Warp & Sample: p50 = ${warpP50} ms, p95 = ${warpP95} ms (budget < 700 ms)")
-        println("Quality & Analysis: p50 = ${analysisP50} ms, p95 = ${analysisP95} ms (budget < 200 ms)")
-        println("Capture to Result: p50 = ${totalP50} ms, p95 = ${totalP95} ms (target < 4000 ms, limit < 10000 ms)")
+        println("Warp & Sample: p50 = $warpP50 ms, p95 = $warpP95 ms (budget < 700 ms)")
+        println("Quality & Analysis: p50 = $analysisP50 ms, p95 = $analysisP95 ms (budget < 200 ms)")
+        println("Capture to Result: p50 = $totalP50 ms, p95 = $totalP95 ms (target < 4000 ms, limit < 10000 ms)")
 
         assertThat(warpP95).isLessThan(700L)
         assertThat(analysisP95).isLessThan(200L)

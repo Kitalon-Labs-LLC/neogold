@@ -19,7 +19,6 @@ import com.kitalonlabs.neogold.sync.research.api.models.SessionManifest
 import com.kitalonlabs.neogold.sync.research.api.models.SessionStatus
 import com.kitalonlabs.neogold.sync.research.api.models.TsbReceipt
 import com.kitalonlabs.neogold.sync.research.api.models.TsbUpload
-import com.kitalonlabs.neogold.sync.research.api.models.UploadPolicy
 import kotlinx.serialization.json.Json
 import org.junit.Test
 

@@ -24,11 +24,8 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.nio.charset.StandardCharsets
-import java.util.UUID
 
 @RunWith(RobolectricTestRunner::class)
 class ResearchExportManagerTest {
@@ -274,7 +271,9 @@ class ResearchExportManagerTest {
         assertThat(decryptedTsb).contains("TSB-1,SKP-0142,SESS-1,16.2")
 
         val decryptedImage = File(decryptedOutDir, "images/CAP-1.jpg").readBytes()
-        assertThat(decryptedImage).isEqualTo(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 0x01, 0x02, 0x03))
+        assertThat(
+            decryptedImage
+        ).isEqualTo(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 0x01, 0x02, 0x03))
 
         // Check audit event logged in DB
         val auditEvents = database.auditEventDao().getEventsSince(0)

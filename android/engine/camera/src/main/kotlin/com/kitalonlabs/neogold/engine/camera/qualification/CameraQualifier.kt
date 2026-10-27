@@ -109,7 +109,9 @@ class CameraQualifier(
                 val model = try {
                     if (observedLinearRgbList.size >= 3) {
                         ColorCorrectionFitter.fit(observedLinearRgbList, targetXyzList, useRootPolynomial = false)
-                    } else null
+                    } else {
+                        null
+                    }
                 } catch (_: Exception) {
                     null
                 }
@@ -140,7 +142,11 @@ class CameraQualifier(
 
                 // Compute accuracy for this photo vs batch reference
                 val meanAcc = if (model != null && referenceLabs.isNotEmpty()) {
-                    val residual = QualityResidualCalculator.computeResidual(model, observedLinearRgbList, referenceLabs)
+                    val residual = QualityResidualCalculator.computeResidual(
+                        model,
+                        observedLinearRgbList,
+                        referenceLabs
+                    )
                     residual.meanDeltaE
                 } else {
                     var sumAccDeltaE = 0.0
@@ -192,13 +198,19 @@ class CameraQualifier(
         val accPassed = accuracyDe < thresholds.maxAccuracyDeltaE
 
         if (!repPassed) {
-            failureReasons.add("Repeatability Delta E ($repeatabilityDe) exceeds threshold ${thresholds.maxRepeatabilityDeltaE}")
+            failureReasons.add(
+                "Repeatability Delta E ($repeatabilityDe) exceeds threshold ${thresholds.maxRepeatabilityDeltaE}"
+            )
         }
         if (!uniPassed) {
-            failureReasons.add("Duplicate patch uniformity Delta E ($uniformityDe) exceeds threshold ${thresholds.maxUniformityDeltaE}")
+            failureReasons.add(
+                "Duplicate patch uniformity Delta E ($uniformityDe) exceeds threshold ${thresholds.maxUniformityDeltaE}"
+            )
         }
         if (!accPassed) {
-            failureReasons.add("Calibration accuracy Delta E ($accuracyDe) exceeds threshold ${thresholds.maxAccuracyDeltaE}")
+            failureReasons.add(
+                "Calibration accuracy Delta E ($accuracyDe) exceeds threshold ${thresholds.maxAccuracyDeltaE}"
+            )
         }
 
         val status = if (repPassed && uniPassed && accPassed && failureReasons.isEmpty()) {

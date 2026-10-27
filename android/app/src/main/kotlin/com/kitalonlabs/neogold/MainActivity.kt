@@ -111,7 +111,9 @@ class MainActivity : FragmentActivity() {
                         },
                         title = { Text("Share Crash Report?") },
                         text = {
-                            Text("NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report.")
+                            Text(
+                                "NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report."
+                            )
                         },
                         confirmButton = {
                             Button(
@@ -225,7 +227,9 @@ fun NeoGoldNavHost(
     triageEnabled: Boolean = false
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-    var lastQualificationResult by remember { mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null) }
+    var lastQualificationResult by remember {
+        mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null)
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val db = remember(database) {
         database ?: run {
@@ -604,7 +608,9 @@ fun NeoGoldNavHost(
                     coroutineScope.launch {
                         val recheckDueTime = if (sessionTriageAction == TriageUiAction.RECHECK) {
                             System.currentTimeMillis() + sessionRecheckHours * 3600 * 1000L
-                        } else null
+                        } else {
+                            null
+                        }
                         val entity = ScreeningSessionEntity(
                             id = java.util.UUID.randomUUID().toString(),
                             mode = "SCREENING",
@@ -619,7 +625,13 @@ fun NeoGoldNavHost(
                             flagPriorPhototherapy = 0,
                             ruleOutcome = null,
                             triageAction = sessionTriageAction.name,
-                            reasonCodes = if (sessionReasonCodes.isNotEmpty()) "[\"${sessionReasonCodes.joinToString("\",\"")}\"]" else null,
+                            reasonCodes = if (sessionReasonCodes.isNotEmpty()) {
+                                "[\"${sessionReasonCodes.joinToString(
+                                    "\",\""
+                                )}\"]"
+                            } else {
+                                null
+                            },
                             estimateMgDl = if (sessionEstimatedLow != null && sessionEstimatedHigh != null) (sessionEstimatedLow!! + sessionEstimatedHigh!!) / 2.0 else null,
                             estimateLowMgDl = sessionEstimatedLow,
                             estimateHighMgDl = sessionEstimatedHigh,
@@ -847,7 +859,11 @@ fun NeoGoldNavHost(
         }
 
         composable(Destinations.R07_EXPORT_SYNC) {
-            var exportProgress by remember { mutableStateOf<com.kitalonlabs.neogold.feature.research.export.ExportProgress?>(null) }
+            var exportProgress by remember {
+                mutableStateOf<com.kitalonlabs.neogold.feature.research.export.ExportProgress?>(
+                    null
+                )
+            }
             var isExporting by remember { mutableStateOf(false) }
             var exportCompleted by remember { mutableStateOf(false) }
 

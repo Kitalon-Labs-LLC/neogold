@@ -97,7 +97,9 @@ object DeviceChecker {
         val supportsAwbLock = characteristics?.let { CameraControlHelper.isAwbLockSupported(it) } ?: false
 
         val capabilitiesList = characteristics?.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES) ?: intArrayOf()
-        val supportsManual = capabilitiesList.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)
+        val supportsManual = capabilitiesList.contains(
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR
+        )
         val supportsRaw = capabilitiesList.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)
 
         val capabilities = DeviceCapabilities(

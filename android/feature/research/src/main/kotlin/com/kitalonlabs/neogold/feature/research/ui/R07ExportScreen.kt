@@ -17,8 +17,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.ui.res.stringResource
-import com.kitalonlabs.neogold.core.designsystem.R
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,14 +27,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.export.ExportProgress
-import com.kitalonlabs.neogold.feature.research.export.ExportStage
 
 /**
  * R07: Research Export Screen (doc 6 Section 5, doc 8 Section 5.2, FR-30, NG-036).
@@ -140,7 +139,10 @@ fun R07ExportScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Warning,
                             contentDescription = "Missing key",
@@ -257,7 +259,9 @@ fun R07ExportScreen(
 
                     val progressFraction = if (exportProgress.totalFiles > 0) {
                         exportProgress.completedFiles.toFloat() / exportProgress.totalFiles.toFloat()
-                    } else 0f
+                    } else {
+                        0f
+                    }
 
                     LinearProgressIndicator(
                         progress = { progressFraction.coerceIn(0f, 1f) },
@@ -282,7 +286,9 @@ fun R07ExportScreen(
         if (exportCompleted) {
             Card(
                 shape = RoundedCornerShape(CardCornerRadius),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("export_completed_card")

@@ -76,7 +76,10 @@ class FileKeysetProviderTest {
         val provider2 = DefaultFileKeysetProvider(context, masterKeyProvider, keyDir)
         val streamingAead2 = provider2.getStreamingAead()
 
-        val decStream = streamingAead2.newDecryptingStream(ByteArrayInputStream(cipherOutputStream.toByteArray()), ByteArray(0))
+        val decStream = streamingAead2.newDecryptingStream(
+            ByteArrayInputStream(cipherOutputStream.toByteArray()),
+            ByteArray(0)
+        )
         val decrypted = decStream.readBytes()
         decStream.close()
 

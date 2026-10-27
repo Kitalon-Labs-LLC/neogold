@@ -1,7 +1,6 @@
 package com.kitalonlabs.neogold.core.designsystem
 
 import androidx.compose.ui.graphics.Color
-import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.kitalonlabs.neogold.core.designsystem.theme.*
 import org.junit.Test
@@ -38,26 +37,51 @@ class ContrastTokensTest {
         // Urgent: White on Solid (6.5:1), Text on Tint (8.0:1)
         assertContrastExceeds(Color.White, TriageUrgentSolid, 4.5, "White on TriageUrgentSolid")
         assertContrastExceeds(TriageUrgentTextLight, TriageUrgentTintLight, 4.5, "Urgent text on tint light")
-        assertContrastExceeds(TriageUrgentTextLight, TriageUrgentTintLight, 7.5, "Urgent text on tint light target 8.0:1")
+        assertContrastExceeds(
+            TriageUrgentTextLight,
+            TriageUrgentTintLight,
+            7.5,
+            "Urgent text on tint light target 8.0:1"
+        )
 
         // Blood test: White on Solid (6.3:1), Text on Tint (8.3:1)
         assertContrastExceeds(Color.White, TriageBloodTestSolid, 4.5, "White on TriageBloodTestSolid")
         assertContrastExceeds(TriageBloodTestTextLight, TriageBloodTestTintLight, 4.5, "Blood test text on tint light")
-        assertContrastExceeds(TriageBloodTestTextLight, TriageBloodTestTintLight, 7.5, "Blood test text on tint light target 8.3:1")
+        assertContrastExceeds(
+            TriageBloodTestTextLight,
+            TriageBloodTestTintLight,
+            7.5,
+            "Blood test text on tint light target 8.3:1"
+        )
 
         // Recheck: White on Solid (7.3:1), Text on Tint (8.6:1)
         assertContrastExceeds(Color.White, TriageRecheckSolid, 4.5, "White on TriageRecheckSolid")
         assertContrastExceeds(TriageRecheckTextLight, TriageRecheckTintLight, 4.5, "Recheck text on tint light")
-        assertContrastExceeds(TriageRecheckTextLight, TriageRecheckTintLight, 8.0, "Recheck text on tint light target 8.6:1")
+        assertContrastExceeds(
+            TriageRecheckTextLight,
+            TriageRecheckTintLight,
+            8.0,
+            "Recheck text on tint light target 8.6:1"
+        )
 
         // No further action: White on Solid (7.6:1), Text on Tint (9.5:1)
         assertContrastExceeds(Color.White, TriageNoActionSolid, 4.5, "White on TriageNoActionSolid")
         assertContrastExceeds(TriageNoActionTextLight, TriageNoActionTintLight, 4.5, "No action text on tint light")
-        assertContrastExceeds(TriageNoActionTextLight, TriageNoActionTintLight, 8.5, "No action text on tint light target 9.5:1")
+        assertContrastExceeds(
+            TriageNoActionTextLight,
+            TriageNoActionTintLight,
+            8.5,
+            "No action text on tint light target 9.5:1"
+        )
 
         // Experimental label: Text on Tint (9.2:1)
         assertContrastExceeds(ExperimentalLabelText, ExperimentalLabelTint, 4.5, "Experimental text on tint")
-        assertContrastExceeds(ExperimentalLabelText, ExperimentalLabelTint, 8.5, "Experimental text on tint target 9.2:1")
+        assertContrastExceeds(
+            ExperimentalLabelText,
+            ExperimentalLabelTint,
+            8.5,
+            "Experimental text on tint target 9.2:1"
+        )
     }
 
     @Test
@@ -79,13 +103,28 @@ class ContrastTokensTest {
         assertContrastExceeds(TriageUrgentTextDark, TriageUrgentTintDark, 9.0, "Urgent dark text on tint target 9.7:1")
 
         assertContrastExceeds(TriageBloodTestTextDark, TriageBloodTestTintDark, 4.5, "Blood test dark text on tint")
-        assertContrastExceeds(TriageBloodTestTextDark, TriageBloodTestTintDark, 8.5, "Blood test dark text on tint target 9.0:1")
+        assertContrastExceeds(
+            TriageBloodTestTextDark,
+            TriageBloodTestTintDark,
+            8.5,
+            "Blood test dark text on tint target 9.0:1"
+        )
 
         assertContrastExceeds(TriageRecheckTextDark, TriageRecheckTintDark, 4.5, "Recheck dark text on tint")
-        assertContrastExceeds(TriageRecheckTextDark, TriageRecheckTintDark, 9.0, "Recheck dark text on tint target 9.6:1")
+        assertContrastExceeds(
+            TriageRecheckTextDark,
+            TriageRecheckTintDark,
+            9.0,
+            "Recheck dark text on tint target 9.6:1"
+        )
 
         assertContrastExceeds(TriageNoActionTextDark, TriageNoActionTintDark, 4.5, "No action dark text on tint")
-        assertContrastExceeds(TriageNoActionTextDark, TriageNoActionTintDark, 9.5, "No action dark text on tint target 10.4:1")
+        assertContrastExceeds(
+            TriageNoActionTextDark,
+            TriageNoActionTintDark,
+            9.5,
+            "No action dark text on tint target 10.4:1"
+        )
     }
 
     @Test

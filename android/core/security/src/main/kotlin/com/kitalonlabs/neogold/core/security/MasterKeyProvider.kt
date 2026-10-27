@@ -7,7 +7,6 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.security.keystore.StrongBoxUnavailableException
-import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -157,7 +156,10 @@ class AndroidMasterKeyProvider(
         } catch (e: UnrecoverableKeyException) {
             throw KeystoreLossException("Master key '$alias' unrecoverable during decryption", e)
         } catch (e: GeneralSecurityException) {
-            throw KeystoreLossException("Failed to unwrap data with master key '$alias': authentication failed or key lost", e)
+            throw KeystoreLossException(
+                "Failed to unwrap data with master key '$alias': authentication failed or key lost",
+                e
+            )
         } catch (e: Exception) {
             throw KeystoreLossException("Unexpected error unwrapping data with master key '$alias'", e)
         }

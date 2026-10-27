@@ -65,8 +65,11 @@ fun NgSafetyNoticePager(
                         .size(if (isSelected) 10.dp else 8.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                            }
                         )
                 )
             }

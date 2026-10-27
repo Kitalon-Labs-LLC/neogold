@@ -112,7 +112,9 @@ class ResearchRepository(
                     SecurityException("PIN locked out for ${check.remainingMinutes} minutes")
                 )
                 is PinCheckResult.WrongPin -> Result.failure(
-                    SecurityException("Incorrect PIN. ${check.attemptsUntilNextLockout} attempts remaining before lockout.")
+                    SecurityException(
+                        "Incorrect PIN. ${check.attemptsUntilNextLockout} attempts remaining before lockout."
+                    )
                 )
             }
         } else {
@@ -177,12 +179,16 @@ class ResearchRepository(
 
         if (!ResearchFormats.isValidParticipantCode(cleanCode)) {
             return Result.failure(
-                IllegalArgumentException("Invalid participant code format: '$cleanCode'. Must match ^[A-Z]{2,5}-[0-9]{3,6}$")
+                IllegalArgumentException(
+                    "Invalid participant code format: '$cleanCode'. Must match ^[A-Z]{2,5}-[0-9]{3,6}$"
+                )
             )
         }
         if (!ResearchFormats.isValidConsentFormId(cleanConsent)) {
             return Result.failure(
-                IllegalArgumentException("Invalid consent form ID format: '$cleanConsent'. Must match ^[A-Z]{2,5}-[A-Z0-9-]{2,26}$")
+                IllegalArgumentException(
+                    "Invalid consent form ID format: '$cleanConsent'. Must match ^[A-Z]{2,5}-[A-Z0-9-]{2,26}$"
+                )
             )
         }
 
@@ -190,7 +196,9 @@ class ResearchRepository(
         if (existing != null) {
             if (existing.consentFormId != cleanConsent) {
                 return Result.failure(
-                    IllegalStateException("Participant code $cleanCode is already registered with a different consent form ID")
+                    IllegalStateException(
+                        "Participant code $cleanCode is already registered with a different consent form ID"
+                    )
                 )
             }
             return Result.success(existing)
@@ -315,7 +323,7 @@ class ResearchRepository(
                 for (cap in captures) {
                     val captureId = UUID.randomUUID().toString()
                     val imageSha256 = computeSha256(cap.imageBytes)
-                    val filename = "cap_${captureId}.enc"
+                    val filename = "cap_$captureId.enc"
 
                     // Encrypt image with Tink streaming AEAD via EncryptedFileStore
                     encryptedFileStore.writeEncryptedFile(filename) { outputStream ->

@@ -18,7 +18,6 @@ import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.FakeMasterKeyProvider
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
 import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
-import com.kitalonlabs.neogold.sync.research.crypto.DeviceAssertionMinter
 import com.kitalonlabs.neogold.sync.research.crypto.SoftwareDeviceKeyManager
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyEnrollmentManager
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyRevocationManager
@@ -259,12 +258,42 @@ class SyncTestCases {
      */
     @Test
     fun tcSync01_uploadOrder() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"batch_id":"BATCH-01","status":"ACCEPTED","received_at":"2026-10-10T08:16:00Z"}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"participant_id":"p-100","participant_code":"SKP-0100","canonical_participant_id":"p-100","status":"ACCEPTED"}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"session_id":"s-200","status":"RECEIVING","received_images":0,"total_images":1,"missing_images":["c-300"]}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"capture_id":"c-300","status":"ACCEPTED","bytes_received":100,"sha256":"dummy"}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"measurement_id":"m-400","status":"ACCEPTED","received_at":"2026-10-10T08:18:00Z"}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody("""{"batch_id":"BATCH-01","status":"ACCEPTED","received_at":"2026-10-10T08:16:00Z"}""")
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody(
+                """{"participant_id":"p-100","participant_code":"SKP-0100","canonical_participant_id":"p-100","status":"ACCEPTED"}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody(
+                """{"session_id":"s-200","status":"RECEIVING","received_images":0,"total_images":1,"missing_images":["c-300"]}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody("""{"capture_id":"c-300","status":"ACCEPTED","bytes_received":100,"sha256":"dummy"}""")
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody("""{"measurement_id":"m-400","status":"ACCEPTED","received_at":"2026-10-10T08:18:00Z"}""")
+        )
 
         val now = System.currentTimeMillis()
         database.cardBatchDao().insert(
@@ -405,7 +434,13 @@ class SyncTestCases {
      */
     @Test
     fun tcSync02_pausedStudyStopsEarly() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"PAUSED","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"PAUSED","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
 
         val now = System.currentTimeMillis()
         database.outboxDao().insertOrUpdate(
@@ -435,8 +470,18 @@ class SyncTestCases {
      */
     @Test
     fun tcSync03_timeoutRetryKeepsKey() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(504).setBody("""{"status":504,"code":"GATEWAY_TIMEOUT","title":"Timeout","retryable":true}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                504
+            ).setBody("""{"status":504,"code":"GATEWAY_TIMEOUT","title":"Timeout","retryable":true}""")
+        )
 
         val now = System.currentTimeMillis()
         database.cardBatchDao().insert(
@@ -461,8 +506,18 @@ class SyncTestCases {
         val req1 = server.takeRequest()
         assertThat(req1.getHeader("Idempotency-Key")).isEqualTo("idemp-same-key")
 
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"batch_id":"B-01","status":"ACCEPTED","received_at":"2026-10-10T08:16:00Z"}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody("""{"batch_id":"B-01","status":"ACCEPTED","received_at":"2026-10-10T08:16:00Z"}""")
+        )
 
         outboxProcessor.process()
 
@@ -476,11 +531,23 @@ class SyncTestCases {
      */
     @Test
     fun tcSync04_requestInProgress() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(409).setBody("""{"status":409,"code":"REQUEST_IN_PROGRESS","title":"In Progress","retryable":true}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                409
+            ).setBody("""{"status":409,"code":"REQUEST_IN_PROGRESS","title":"In Progress","retryable":true}""")
+        )
 
         val now = System.currentTimeMillis()
-        database.cardBatchDao().insert(CardBatchEntity("B-01", "K-01", 1, "[]", now, now + 86400000L, 1, ByteArray(10), "PENDING", now))
+        database.cardBatchDao().insert(
+            CardBatchEntity("B-01", "K-01", 1, "[]", now, now + 86400000L, 1, ByteArray(10), "PENDING", now)
+        )
         database.outboxDao().insertOrUpdate(
             OutboxEntity(
                 id = "o-b",
@@ -511,24 +578,70 @@ class SyncTestCases {
             ResearchParticipantEntity("p-unk", studyId, "SKP-9999", "C-9999", now, now)
         )
         insertResearchSession(id = "s-dep", participantId = "p-unk", createdAt = now)
-        database.outboxDao().insertOrUpdate(OutboxEntity("o-p", "PARTICIPANT", "p-unk", "idemp-p", 0, 0, "", "ACKED", 0, null, now, now))
-        database.outboxDao().insertOrUpdate(OutboxEntity("o-s", "SESSION_MANIFEST", "s-dep", "idemp-s", 0, 0, "", "PENDING", 0, null, now, now))
+        database.outboxDao().insertOrUpdate(
+            OutboxEntity("o-p", "PARTICIPANT", "p-unk", "idemp-p", 0, 0, "", "ACKED", 0, null, now, now)
+        )
+        database.outboxDao().insertOrUpdate(
+            OutboxEntity("o-s", "SESSION_MANIFEST", "s-dep", "idemp-s", 0, 0, "", "PENDING", 0, null, now, now)
+        )
 
         // Attempt 1: Session fails with PARTICIPANT_UNKNOWN -> dependency re-queued
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"status":422,"code":"PARTICIPANT_UNKNOWN","title":"Participant Unknown","retryable":false}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                422
+            ).setBody("""{"status":422,"code":"PARTICIPANT_UNKNOWN","title":"Participant Unknown","retryable":false}""")
+        )
         outboxProcessor.process()
 
         // Attempt 2: Participant re-uploaded (201), then Session fails again (422)
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"participant_id":"p-unk","canonical_participant_id":"p-unk","site_code":"DHK-01","created_on":"2026-10-10"}"""))
-        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"status":422,"code":"PARTICIPANT_UNKNOWN","title":"Participant Unknown","retryable":false}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody(
+                """{"participant_id":"p-unk","canonical_participant_id":"p-unk","site_code":"DHK-01","created_on":"2026-10-10"}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                422
+            ).setBody("""{"status":422,"code":"PARTICIPANT_UNKNOWN","title":"Participant Unknown","retryable":false}""")
+        )
         outboxProcessor.process()
 
         // Attempt 3: Participant re-uploaded (201), Session fails 3rd time -> FAILED_PERMANENT
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"participant_id":"p-unk","canonical_participant_id":"p-unk","site_code":"DHK-01","created_on":"2026-10-10"}"""))
-        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"status":422,"code":"PARTICIPANT_UNKNOWN","title":"Participant Unknown","retryable":false}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody(
+                """{"participant_id":"p-unk","canonical_participant_id":"p-unk","site_code":"DHK-01","created_on":"2026-10-10"}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                422
+            ).setBody("""{"status":422,"code":"PARTICIPANT_UNKNOWN","title":"Participant Unknown","retryable":false}""")
+        )
         outboxProcessor.process()
 
         val sessionItem = database.outboxDao().getItemById("o-s")
@@ -575,8 +688,18 @@ class SyncTestCases {
         )
 
         for (i in 1..3) {
-            server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-            server.enqueue(MockResponse().setResponseCode(422).setBody("""{"status":422,"code":"HASH_MISMATCH","title":"Hash Mismatch","retryable":true}"""))
+            server.enqueue(
+                MockResponse().setResponseCode(
+                    200
+                ).setBody(
+                    """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+                )
+            )
+            server.enqueue(
+                MockResponse().setResponseCode(
+                    422
+                ).setBody("""{"status":422,"code":"HASH_MISMATCH","title":"Hash Mismatch","retryable":true}""")
+            )
             outboxProcessor.process()
         }
 
@@ -598,13 +721,35 @@ class SyncTestCases {
             ResearchParticipantEntity("p-01", studyId, "SKP-0001", "C-01", now, now)
         )
         insertResearchSession(id = "s-unv", participantId = "p-01", cardBatchId = "B-BAD", createdAt = now)
-        database.outboxDao().insertOrUpdate(OutboxEntity("o-bb", "CARD_BATCH", "B-BAD", "idemp-bb", 0, 0, "", "PENDING", 0, null, now, now))
-        database.outboxDao().insertOrUpdate(OutboxEntity("o-pp", "PARTICIPANT", "p-01", "idemp-pp", 0, 0, "", "ACKED", 0, null, now, now))
-        database.outboxDao().insertOrUpdate(OutboxEntity("o-ss", "SESSION_MANIFEST", "s-unv", "idemp-ss", 0, 0, "", "PENDING", 0, null, now, now))
+        database.outboxDao().insertOrUpdate(
+            OutboxEntity("o-bb", "CARD_BATCH", "B-BAD", "idemp-bb", 0, 0, "", "PENDING", 0, null, now, now)
+        )
+        database.outboxDao().insertOrUpdate(
+            OutboxEntity("o-pp", "PARTICIPANT", "p-01", "idemp-pp", 0, 0, "", "ACKED", 0, null, now, now)
+        )
+        database.outboxDao().insertOrUpdate(
+            OutboxEntity("o-ss", "SESSION_MANIFEST", "s-unv", "idemp-ss", 0, 0, "", "PENDING", 0, null, now, now)
+        )
 
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"status":422,"code":"CARD_BATCH_INVALID","title":"Card Batch Invalid","retryable":false}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"session_id":"s-unv","status":"COMPLETE","received_images":0,"total_images":0,"missing_images":[]}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                422
+            ).setBody("""{"status":422,"code":"CARD_BATCH_INVALID","title":"Card Batch Invalid","retryable":false}""")
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody(
+                """{"session_id":"s-unv","status":"COMPLETE","received_images":0,"total_images":0,"missing_images":[]}"""
+            )
+        )
 
         outboxProcessor.process()
 
@@ -625,18 +770,42 @@ class SyncTestCases {
     @Test
     fun tcSync08_unknownErrorCode() = runBlocking {
         val now = System.currentTimeMillis()
-        database.cardBatchDao().insert(CardBatchEntity("B-08", "K-01", 1, "[]", now, now + 86400000L, 1, ByteArray(10), "PENDING", now))
-        database.outboxDao().insertOrUpdate(OutboxEntity("o-u", "CARD_BATCH", "B-08", "idemp-u", 0, 0, "", "PENDING", 0, null, now, now))
+        database.cardBatchDao().insert(
+            CardBatchEntity("B-08", "K-01", 1, "[]", now, now + 86400000L, 1, ByteArray(10), "PENDING", now)
+        )
+        database.outboxDao().insertOrUpdate(
+            OutboxEntity("o-u", "CARD_BATCH", "B-08", "idemp-u", 0, 0, "", "PENDING", 0, null, now, now)
+        )
 
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(499).setBody("""{"status":499,"code":"FUTURE_CUSTOM_ERROR","title":"Future Error","retryable":true}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                499
+            ).setBody("""{"status":499,"code":"FUTURE_CUSTOM_ERROR","title":"Future Error","retryable":true}""")
+        )
 
         outboxProcessor.process()
         var item = database.outboxDao().getItemById("o-u")
         assertThat(item?.state).isEqualTo("PENDING")
 
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(499).setBody("""{"status":499,"code":"FUTURE_CUSTOM_FATAL","title":"Fatal Future Error","retryable":false}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                499
+            ).setBody("""{"status":499,"code":"FUTURE_CUSTOM_FATAL","title":"Fatal Future Error","retryable":false}""")
+        )
 
         outboxProcessor.process()
         item = database.outboxDao().getItemById("o-u")
@@ -722,7 +891,11 @@ class SyncTestCases {
         insertResearchSession(id = "s-rec", participantId = "p-rec", createdAt = now)
 
         // Case 1: Server returns 404 -> not deletable, re-queues session
-        server.enqueue(MockResponse().setResponseCode(404).setBody("""{"status":404,"code":"SESSION_UNKNOWN","title":"Session Unknown"}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                404
+            ).setBody("""{"status":404,"code":"SESSION_UNKNOWN","title":"Session Unknown"}""")
+        )
 
         val hook = ResearchRetentionConfirmationHook(reconciliationManager, database.researchStudyDao())
         val canDelete1 = hook.isServerConfirmed("s-rec")
@@ -732,7 +905,13 @@ class SyncTestCases {
         assertThat(item1?.state).isEqualTo("PENDING")
 
         // Case 2: Server returns COMPLETE -> deletable
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"session_id":"s-rec","status":"COMPLETE","received_images":0,"total_images":0,"missing_images":[]}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"session_id":"s-rec","status":"COMPLETE","received_images":0,"total_images":0,"missing_images":[]}"""
+            )
+        )
         val canDelete2 = hook.isServerConfirmed("s-rec")
         assertThat(canDelete2).isTrue()
     }
@@ -750,10 +929,22 @@ class SyncTestCases {
             OutboxEntity("o-held", "CARD_BATCH", "B-01", "idemp-held", 0, 0, "", "ACKED", 0, null, now, now)
         )
 
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":5,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"batch_id":"B-01","status":"ACCEPTED","received_at":"2026-10-10T08:16:00Z"}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":5,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody("""{"batch_id":"B-01","status":"ACCEPTED","received_at":"2026-10-10T08:16:00Z"}""")
+        )
 
-        database.cardBatchDao().insert(CardBatchEntity("B-01", "K-01", 1, "[]", now, now + 86400000L, 1, ByteArray(10), "ACCEPTED", now))
+        database.cardBatchDao().insert(
+            CardBatchEntity("B-01", "K-01", 1, "[]", now, now + 86400000L, 1, ByteArray(10), "ACCEPTED", now)
+        )
 
         outboxProcessor.process()
 
@@ -780,7 +971,11 @@ class SyncTestCases {
             OutboxEntity("o-keep", "CARD_BATCH", "B-01", "idemp-k", 0, 0, "", "PENDING", 0, null, now, now)
         )
 
-        server.enqueue(MockResponse().setResponseCode(403).setBody("""{"status":403,"code":"DEVICE_REVOKED","title":"Device Revoked","retryable":false}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                403
+            ).setBody("""{"status":403,"code":"DEVICE_REVOKED","title":"Device Revoked","retryable":false}""")
+        )
 
         val result = outboxProcessor.process()
         assertThat(result).isEqualTo(OutboxResult.Revoked)
@@ -799,8 +994,20 @@ class SyncTestCases {
      */
     @Test
     fun tcSync17_phoneClockFast() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"status":401,"code":"CLOCK_SKEW","title":"Clock Skew","retryable":true,"server_time":"2026-10-10T08:00:00Z"}"""))
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                401
+            ).setBody(
+                """{"status":401,"code":"CLOCK_SKEW","title":"Clock Skew","retryable":true,"server_time":"2026-10-10T08:00:00Z"}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
 
         val status = apiClient.getDevice(
             baseUrl = server.url("/v1").toString(),
@@ -836,8 +1043,20 @@ class SyncTestCases {
             OutboxEntity("o-p19", "PARTICIPANT", "p-second-phone", "idemp-p19", 0, 0, "", "PENDING", 0, null, now, now)
         )
 
-        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""))
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"participant_id":"p-second-phone","participant_code":"SKP-0142","canonical_participant_id":"p-first-phone","status":"ACCEPTED"}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                200
+            ).setBody(
+                """{"device_id":"$deviceId","study_status":"ACTIVE","revoked":false,"data_generation":1,"min_app_version":"1.0.0","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"DAY_PLUS_OFFSETS","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody(
+                """{"participant_id":"p-second-phone","participant_code":"SKP-0142","canonical_participant_id":"p-first-phone","status":"ACCEPTED"}"""
+            )
+        )
 
         outboxProcessor.process()
 
@@ -876,7 +1095,13 @@ class SyncTestCases {
             appVersion = appVersion
         )
 
-        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"device_id":"d-mismatch","study_code":"SKP-2026","site_code":"DHK-01","enrolled_at":"2026-10-10T08:15:30Z","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"FULL","time_zone":"Asia/Dhaka"}}"""))
+        server.enqueue(
+            MockResponse().setResponseCode(
+                201
+            ).setBody(
+                """{"device_id":"d-mismatch","study_code":"SKP-2026","site_code":"DHK-01","enrolled_at":"2026-10-10T08:15:30Z","upload_policy":{"wifi_only":true,"batch_size_images":12,"max_retry_interval_seconds":3600,"timestamp_precision":"FULL","time_zone":"Asia/Dhaka"}}"""
+            )
+        )
 
         val qrBytes = createMockStudyQrBytes(
             studyCode = "SKP-2026",

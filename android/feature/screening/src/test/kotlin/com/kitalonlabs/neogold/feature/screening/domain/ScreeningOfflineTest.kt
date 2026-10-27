@@ -13,8 +13,6 @@ import com.kitalonlabs.neogold.engine.vision.SyntheticRenderConfig
 import com.kitalonlabs.neogold.engine.vision.SyntheticWindowContent
 import org.junit.Test
 import java.io.File
-import java.net.SocketImpl
-import java.net.SocketImplFactory
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
 

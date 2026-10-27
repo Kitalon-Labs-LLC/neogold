@@ -1,7 +1,6 @@
 package com.kitalonlabs.neogold.feature.screening.domain
 
 import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
-import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
 import com.kitalonlabs.neogold.engine.triage.TriageResult
 import com.kitalonlabs.neogold.engine.vision.QualityGateResult
 import com.kitalonlabs.neogold.engine.vision.QualityReasonCode

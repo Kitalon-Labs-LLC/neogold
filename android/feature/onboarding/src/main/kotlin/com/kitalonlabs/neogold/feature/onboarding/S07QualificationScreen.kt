@@ -32,8 +32,8 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcon
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgStepIndicator
-import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
+import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
 import com.kitalonlabs.neogold.engine.camera.qualification.DeviceProfile
 import com.kitalonlabs.neogold.engine.camera.qualification.DeviceProfileStatus
@@ -132,8 +132,11 @@ fun S07QualificationScreen(
                             .size(16.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isTaken) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outline
+                                if (isTaken) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outline
+                                }
                             )
                     )
                 }

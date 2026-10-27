@@ -170,7 +170,10 @@ object ExportCryptoEngine {
         val cleartextBytes = try {
             decryptor.decrypt(ciphertext, CONTEXT_INFO)
         } catch (e: GeneralSecurityException) {
-            throw DecryptionException("Failed to unwrap export data key: wrong private key or corrupted export header", e)
+            throw DecryptionException(
+                "Failed to unwrap export data key: wrong private key or corrupted export header",
+                e
+            )
         }
 
         return try {
@@ -223,7 +226,10 @@ object ExportCryptoEngine {
                 outputStream.flush()
             }
         } catch (e: GeneralSecurityException) {
-            throw TamperedCiphertextException("Authentication failed while decrypting ciphertext stream: data has been tampered with or corrupted", e)
+            throw TamperedCiphertextException(
+                "Authentication failed while decrypting ciphertext stream: data has been tampered with or corrupted",
+                e
+            )
         } catch (e: Exception) {
             throw TamperedCiphertextException("Error while reading decrypting stream: ${e.message}", e)
         }

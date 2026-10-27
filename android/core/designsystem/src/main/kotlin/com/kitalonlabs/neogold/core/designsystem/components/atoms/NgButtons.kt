@@ -77,7 +77,10 @@ fun NgSecondaryButton(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(ButtonCornerRadius),
-        border = BorderStroke(1.dp, if (enabled) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+        border = BorderStroke(
+            1.dp,
+            if (enabled) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+        ),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = MaterialTheme.colorScheme.primary
         ),
@@ -112,7 +115,13 @@ fun NgTextButton(
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            color = if (enabled) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(
+                    alpha = 0.38f
+                )
+            }
         )
     }
 }

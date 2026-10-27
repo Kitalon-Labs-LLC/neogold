@@ -103,7 +103,9 @@ fun R09LeaveStudyScreen(
         // Warning Info Card
         Card(
             shape = RoundedCornerShape(CardCornerRadius),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("leave_warning_card")
@@ -181,7 +183,9 @@ fun R09LeaveStudyScreen(
                 )
             },
             text = {
-                Text("Are you sure you want to leave $studyName? Cloud sync will be disconnected. Un-uploaded data can still be exported via USB.")
+                Text(
+                    "Are you sure you want to leave $studyName? Cloud sync will be disconnected. Un-uploaded data can still be exported via USB."
+                )
             },
             confirmButton = {
                 TextButton(

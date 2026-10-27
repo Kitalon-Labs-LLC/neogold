@@ -21,7 +21,9 @@ interface OutboxDao {
     @Query("SELECT * FROM outbox WHERE entity_type = :entityType AND entity_id = :entityId")
     suspend fun getItemByEntity(entityType: String, entityId: String): OutboxEntity?
 
-    @Query("SELECT * FROM outbox WHERE entity_id = :sessionId OR entity_id IN (SELECT id FROM capture WHERE session_id = :sessionId)")
+    @Query(
+        "SELECT * FROM outbox WHERE entity_id = :sessionId OR entity_id IN (SELECT id FROM capture WHERE session_id = :sessionId)"
+    )
     suspend fun getItemsForSession(sessionId: String): List<OutboxEntity>
 
     @Query("SELECT * FROM outbox WHERE state = 'PENDING' ORDER BY updated_at ASC")
@@ -39,7 +41,9 @@ interface OutboxDao {
     @Query("UPDATE outbox SET attempts = attempts + 1, last_error = :error, updated_at = :updatedAt WHERE id = :id")
     suspend fun recordAttempt(id: String, error: String?, updatedAt: Long): Int
 
-    @Query("UPDATE outbox SET dependency_requeues = dependency_requeues + 1, state = CASE WHEN dependency_requeues + 1 >= 3 THEN 'FAILED_PERMANENT' ELSE 'PENDING' END, updated_at = :updatedAt WHERE id = :id")
+    @Query(
+        "UPDATE outbox SET dependency_requeues = dependency_requeues + 1, state = CASE WHEN dependency_requeues + 1 >= 3 THEN 'FAILED_PERMANENT' ELSE 'PENDING' END, updated_at = :updatedAt WHERE id = :id"
+    )
     suspend fun recordDependencyRequeue(id: String, updatedAt: Long): Int
 
     @Query("DELETE FROM outbox WHERE id = :id")

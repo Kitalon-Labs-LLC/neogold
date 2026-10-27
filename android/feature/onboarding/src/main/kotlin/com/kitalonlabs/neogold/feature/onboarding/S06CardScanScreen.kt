@@ -31,7 +31,6 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcon
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
 
 /**

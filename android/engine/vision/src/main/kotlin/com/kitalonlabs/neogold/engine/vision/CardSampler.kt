@@ -1,6 +1,5 @@
 package com.kitalonlabs.neogold.engine.vision
 
-import com.kitalonlabs.neogold.engine.colorscience.ColorConversions
 import com.kitalonlabs.neogold.engine.colorscience.Lab
 import com.kitalonlabs.neogold.engine.colorscience.RectPx
 import com.kitalonlabs.neogold.engine.colorscience.RegionSampling
@@ -103,10 +102,10 @@ object CardSampler {
 
         // Skin plausibility evaluation
         val isPlausible = (meanLab.l in thresholds.minSkinL..thresholds.maxSkinL) &&
-                          (meanLab.a in thresholds.minSkinA..thresholds.maxSkinA) &&
-                          (meanLab.b in thresholds.minSkinB..thresholds.maxSkinB) &&
-                          (lumVariance <= thresholds.maxSkinVariance) &&
-                          (maxGradient <= thresholds.maxSkinEdgeGradient)
+            (meanLab.a in thresholds.minSkinA..thresholds.maxSkinA) &&
+            (meanLab.b in thresholds.minSkinB..thresholds.maxSkinB) &&
+            (lumVariance <= thresholds.maxSkinVariance) &&
+            (maxGradient <= thresholds.maxSkinEdgeGradient)
 
         return SkinWindowSample(
             innerRect = innerRect,

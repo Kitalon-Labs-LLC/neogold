@@ -44,7 +44,9 @@ sealed class PipelineExecutionResult {
  */
 class ScreeningPipelineUseCase(
     private val visionEngine: VisionEngine = VisionEngine(),
-    private val integrityChecker: com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker = com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker { true }
+    private val integrityChecker: com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker = com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker {
+        true
+    }
 ) {
 
     companion object {

@@ -19,16 +19,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedOutputStream
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 import java.time.Instant
-import java.util.Base64
 import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -392,7 +388,9 @@ class ResearchExportManager(
         participantMap: Map<String, ResearchParticipantEntity>
     ): String {
         val sb = StringBuilder()
-        sb.append("session_id,participant_code,status,created_at,age_hours,gestational_age_weeks,rule_outcome,triage_action,estimate_mg_dl,estimate_low_mg_dl,estimate_high_mg_dl,device_model,card_batch_id\n")
+        sb.append(
+            "session_id,participant_code,status,created_at,age_hours,gestational_age_weeks,rule_outcome,triage_action,estimate_mg_dl,estimate_low_mg_dl,estimate_high_mg_dl,device_model,card_batch_id\n"
+        )
 
         for (s in sessions) {
             val pCode = s.participantId?.let { participantMap[it]?.participantCode } ?: ""
@@ -419,7 +417,9 @@ class ResearchExportManager(
 
     private fun generateCapturesCsv(captures: List<CaptureEntity>): String {
         val sb = StringBuilder()
-        sb.append("capture_id,session_id,attempt_number,site,captured_at,quality_status,window_l,window_a,window_b,correction_residual_de,image_file,image_sha256\n")
+        sb.append(
+            "capture_id,session_id,attempt_number,site,captured_at,quality_status,window_l,window_a,window_b,correction_residual_de,image_file,image_sha256\n"
+        )
 
         for (c in captures) {
             val imgFileRel = c.imageFile?.let { "images/${c.id}.jpg" } ?: ""

@@ -1,13 +1,13 @@
 package com.kitalonlabs.neogold.core.data.purge
 
 import android.content.Context
+import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
 import com.kitalonlabs.neogold.core.security.DatabaseKeyProvider
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.FileKeysetProvider
-import androidx.sqlite.db.SupportSQLiteOpenHelper
 import java.io.File
 import java.util.UUID
 

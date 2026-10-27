@@ -1,15 +1,11 @@
 package com.kitalonlabs.neogold.core.data.security
 
 import android.content.Context
-import android.database.sqlite.SQLiteException
-import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import com.google.common.truth.Truth.assertThat
-import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.security.DatabaseKeyProvider
 import com.kitalonlabs.neogold.core.security.DefaultDatabaseKeyProvider
 import com.kitalonlabs.neogold.core.security.FakeMasterKeyProvider
 import org.junit.After
-import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

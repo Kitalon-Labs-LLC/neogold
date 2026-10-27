@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
-import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimeField
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 

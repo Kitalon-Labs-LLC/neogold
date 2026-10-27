@@ -68,14 +68,14 @@ class VisionEngine(
             markerMap.getValue(0).center, // TL
             markerMap.getValue(1).center, // TR
             markerMap.getValue(2).center, // BR
-            markerMap.getValue(3).center  // BL
+            markerMap.getValue(3).center // BL
         )
 
         val dstCenters = listOf(
             CardGeometry.MARKER_CENTERS.getValue(0), // (110, 110)
             CardGeometry.MARKER_CENTERS.getValue(1), // (1090, 110)
             CardGeometry.MARKER_CENTERS.getValue(2), // (1090, 650)
-            CardGeometry.MARKER_CENTERS.getValue(3)  // (110, 650)
+            CardGeometry.MARKER_CENTERS.getValue(3) // (110, 650)
         )
 
         // 3. Estimate homography & tilt angle

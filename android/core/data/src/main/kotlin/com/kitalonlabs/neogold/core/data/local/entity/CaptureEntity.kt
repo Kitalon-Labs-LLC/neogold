@@ -52,7 +52,9 @@ data class CaptureEntity(
     val imageSha256: String? // Plaintext SHA-256 hash, research mode only
 ) {
     init {
-        require(attemptNumber in 1..3) { "CHECK constraint failed: attempt_number ($attemptNumber) must be between 1 and 3" }
+        require(
+            attemptNumber in 1..3
+        ) { "CHECK constraint failed: attempt_number ($attemptNumber) must be between 1 and 3" }
         require(imageFile == null || imageSha256 != null) {
             "CHECK constraint failed: image_file ($imageFile) requires image_sha256 to not be null"
         }

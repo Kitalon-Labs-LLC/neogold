@@ -1,7 +1,5 @@
 package com.kitalonlabs.neogold.engine.vision
 
-import com.kitalonlabs.neogold.engine.colorscience.RectPx
-
 /**
  * Marker detection interface.
  */
@@ -256,17 +254,21 @@ class FastMarkerDetector : MarkerDetector {
                 val idx = y * mw + x
                 if (darkMask[idx] && !visited[idx]) {
                     var blobCount = 0
-                    var minX = x; var maxX = x
-                    var minY = y; var maxY = y
+                    var minX = x
+                    var maxX = x
+                    var minY = y
+                    var maxY = y
 
                     // Breadth-first search
                     val queue = IntArray(mw * mh)
-                    var qHead = 0; var qTail = 0
+                    var qHead = 0
+                    var qTail = 0
                     queue[qTail++] = idx
                     visited[idx] = true
                     val boundaryX = mutableListOf<Int>()
                     val boundaryY = mutableListOf<Int>()
-                    var sumX = 0L; var sumY = 0L
+                    var sumX = 0L
+                    var sumY = 0L
 
                     while (qHead < qTail) {
                         val curr = queue[qHead++]
@@ -286,27 +288,43 @@ class FastMarkerDetector : MarkerDetector {
                         // Neighbors
                         val n1 = (cy - 1) * mw + cx
                         if (cy > 0) {
-                            if (darkMask[n1] && !visited[n1]) { visited[n1] = true; queue[qTail++] = n1 }
-                            else if (!darkMask[n1]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n1] && !visited[n1]) {
+                                visited[n1] = true
+                                queue[qTail++] = n1
+                            } else if (!darkMask[n1]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         val n2 = (cy + 1) * mw + cx
                         if (cy < mh - 1) {
-                            if (darkMask[n2] && !visited[n2]) { visited[n2] = true; queue[qTail++] = n2 }
-                            else if (!darkMask[n2]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n2] && !visited[n2]) {
+                                visited[n2] = true
+                                queue[qTail++] = n2
+                            } else if (!darkMask[n2]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         val n3 = cy * mw + (cx - 1)
                         if (cx > 0) {
-                            if (darkMask[n3] && !visited[n3]) { visited[n3] = true; queue[qTail++] = n3 }
-                            else if (!darkMask[n3]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n3] && !visited[n3]) {
+                                visited[n3] = true
+                                queue[qTail++] = n3
+                            } else if (!darkMask[n3]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         val n4 = cy * mw + (cx + 1)
                         if (cx < mw - 1) {
-                            if (darkMask[n4] && !visited[n4]) { visited[n4] = true; queue[qTail++] = n4 }
-                            else if (!darkMask[n4]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n4] && !visited[n4]) {
+                                visited[n4] = true
+                                queue[qTail++] = n4
+                            } else if (!darkMask[n4]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         if (isBoundary) {
                             boundaryX.add(cx)
@@ -327,12 +345,14 @@ class FastMarkerDetector : MarkerDetector {
                             val px2 = ((maxX + 1) * step).toDouble()
                             val py2 = ((maxY + 1) * step).toDouble()
 
-                            quads.add(listOf(
-                                Point2D(px1, py1),
-                                Point2D(px2, py1),
-                                Point2D(px2, py2),
-                                Point2D(px1, py2)
-                            ))
+                            quads.add(
+                                listOf(
+                                    Point2D(px1, py1),
+                                    Point2D(px2, py1),
+                                    Point2D(px2, py2),
+                                    Point2D(px1, py2)
+                                )
+                            )
 
                             // 2. Rotated 4-corner quad from extremal boundary points
                             if (boundaryX.size >= 8) {
@@ -394,12 +414,14 @@ class FastMarkerDetector : MarkerDetector {
                                 if (maxCross > 0.0 && minCross < 0.0) {
                                     val s = step.toDouble()
                                     val half = s * 0.5
-                                    quads.add(listOf(
-                                        Point2D(p0x * s + half, p0y * s + half),
-                                        Point2D(boundaryX[p1Idx] * s + half, boundaryY[p1Idx] * s + half),
-                                        Point2D(p2x * s + half, p2y * s + half),
-                                        Point2D(boundaryX[p3Idx] * s + half, boundaryY[p3Idx] * s + half)
-                                    ))
+                                    quads.add(
+                                        listOf(
+                                            Point2D(p0x * s + half, p0y * s + half),
+                                            Point2D(boundaryX[p1Idx] * s + half, boundaryY[p1Idx] * s + half),
+                                            Point2D(p2x * s + half, p2y * s + half),
+                                            Point2D(boundaryX[p3Idx] * s + half, boundaryY[p3Idx] * s + half)
+                                        )
+                                    )
                                 }
                             }
                         }

@@ -3,7 +3,6 @@ package com.kitalonlabs.neogold.engine.camera
 import android.graphics.ImageFormat
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.kitalonlabs.neogold.engine.vision.CardGeometry
 import com.kitalonlabs.neogold.engine.vision.DefaultMarkerDetector
 import com.kitalonlabs.neogold.engine.vision.DetectedMarker
 import com.kitalonlabs.neogold.engine.vision.Homography

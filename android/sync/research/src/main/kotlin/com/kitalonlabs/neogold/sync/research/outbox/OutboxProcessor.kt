@@ -7,10 +7,8 @@ import com.kitalonlabs.neogold.core.data.local.dao.ResearchParticipantDao
 import com.kitalonlabs.neogold.core.data.local.dao.ResearchStudyDao
 import com.kitalonlabs.neogold.core.data.local.dao.ScreeningSessionDao
 import com.kitalonlabs.neogold.core.data.local.dao.TsbMeasurementDao
-import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
-import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.sync.research.api.ApiException
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
@@ -24,7 +22,6 @@ import com.kitalonlabs.neogold.sync.research.api.models.TsbUpload
 import com.kitalonlabs.neogold.sync.research.crypto.Base64Url
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyRevocationManager
 import kotlinx.serialization.json.Json
-import java.io.InputStream
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -52,7 +49,10 @@ class OutboxProcessor(
     private val revocationManager: StudyRevocationManager,
     private val reconciliationManager: ReconciliationManager,
     private val appVersion: String,
-    private val json: Json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    private val json: Json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+    }
 ) {
 
     suspend fun process(): OutboxResult {
@@ -250,7 +250,9 @@ class OutboxProcessor(
         val captureDate = formatCalendarDate(session.createdAt, study.timeZone)
         val capturedAt = if (study.timestampPrecision == "FULL") {
             formatIsoDateTime(session.createdAt)
-        } else null
+        } else {
+            null
+        }
 
         val captures = captureDao.getCapturesForSession(session.id)
         val captureManifests = captures.map { c ->
@@ -260,7 +262,9 @@ class OutboxProcessor(
                     val file = encryptedFileStore.getEncryptedFile(c.imageFile!!)
                     if (file.exists()) file.length() else 1000000L
                 } catch (_: Exception) { 1000000L }
-            } else null
+            } else {
+                null
+            }
 
             val failReasons = c.qualityFailReasons?.let { reasonsJson ->
                 try {
@@ -377,12 +381,18 @@ class OutboxProcessor(
             val session = sessionDao.getSessionById(tsbSessionId)
             if (session != null) {
                 ((tsb.drawTime - session.createdAt) / 60000).toInt()
-            } else null
-        } else null
+            } else {
+                null
+            }
+        } else {
+            null
+        }
 
         val drawTime = if (study.timestampPrecision == "FULL") {
             formatIsoDateTime(tsb.drawTime)
-        } else null
+        } else {
+            null
+        }
 
         val upload = TsbUpload(
             participant_id = tsb.participantId,

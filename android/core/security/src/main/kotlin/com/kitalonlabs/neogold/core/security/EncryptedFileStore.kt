@@ -59,7 +59,7 @@ class DefaultEncryptedFileStore(
         writeAction: (OutputStream) -> Unit
     ): String {
         val targetFile = File(baseDirectory, fileName)
-        val tempFile = File(baseDirectory, "${fileName}.${UUID.randomUUID()}.tmp")
+        val tempFile = File(baseDirectory, "$fileName.${UUID.randomUUID()}.tmp")
 
         val digest = MessageDigest.getInstance("SHA-256")
 

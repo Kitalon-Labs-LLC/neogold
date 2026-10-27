@@ -17,7 +17,6 @@ import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
 import com.kitalonlabs.neogold.sync.research.crypto.AndroidDeviceKeyManager
 import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
-import com.kitalonlabs.neogold.sync.research.crypto.DeviceAssertionMinter
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyRevocationManager
 import com.kitalonlabs.neogold.sync.research.outbox.OutboxProcessor
 import com.kitalonlabs.neogold.sync.research.outbox.OutboxResult

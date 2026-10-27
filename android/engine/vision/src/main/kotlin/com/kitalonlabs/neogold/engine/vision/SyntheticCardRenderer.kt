@@ -1,6 +1,5 @@
 package com.kitalonlabs.neogold.engine.vision
 
-import com.kitalonlabs.neogold.engine.colorscience.ColorConversions
 import com.kitalonlabs.neogold.engine.colorscience.Lab
 import com.kitalonlabs.neogold.engine.colorscience.RectPx
 import com.kitalonlabs.neogold.engine.colorscience.Rgb
@@ -59,9 +58,9 @@ class SyntheticCardRenderer {
 
         val corners3D = arrayOf(
             doubleArrayOf(-cw / 2.0, -ch / 2.0, 0.0),
-            doubleArrayOf( cw / 2.0, -ch / 2.0, 0.0),
-            doubleArrayOf( cw / 2.0,  ch / 2.0, 0.0),
-            doubleArrayOf(-cw / 2.0,  ch / 2.0, 0.0)
+            doubleArrayOf(cw / 2.0, -ch / 2.0, 0.0),
+            doubleArrayOf(cw / 2.0, ch / 2.0, 0.0),
+            doubleArrayOf(-cw / 2.0, ch / 2.0, 0.0)
         )
 
         // Apply scale
@@ -198,7 +197,11 @@ class SyntheticCardRenderer {
         for ((id, patchDef) in CardGeometry.PATCHES) {
             val lab = if (config.duplicateMismatchDeltaE > 0.0 && id in listOf("G2D", "G4D", "K5D", "K8D")) {
                 // Apply deliberate color shift on duplicate patch to trigger NONUNIFORM_PATCHES
-                Lab(patchDef.nominalLab.l + config.duplicateMismatchDeltaE, patchDef.nominalLab.a, patchDef.nominalLab.b)
+                Lab(
+                    patchDef.nominalLab.l + config.duplicateMismatchDeltaE,
+                    patchDef.nominalLab.a,
+                    patchDef.nominalLab.b
+                )
             } else {
                 patchDef.nominalLab
             }
@@ -268,7 +271,9 @@ class SyntheticCardRenderer {
         // 1. Horizontal blur
         val horizontal = IntArray(w * h)
         for (y in 0 until h) {
-            var sumR = 0; var sumG = 0; var sumB = 0
+            var sumR = 0
+            var sumG = 0
+            var sumB = 0
             for (i in -radius..radius) {
                 val px = temp[y * w + i.coerceIn(0, w - 1)]
                 sumR += (px shr 16) and 0xFF
@@ -288,7 +293,9 @@ class SyntheticCardRenderer {
 
         // 2. Vertical blur
         for (x in 0 until w) {
-            var sumR = 0; var sumG = 0; var sumB = 0
+            var sumR = 0
+            var sumG = 0
+            var sumB = 0
             for (i in -radius..radius) {
                 val px = horizontal[i.coerceIn(0, h - 1) * w + x]
                 sumR += (px shr 16) and 0xFF

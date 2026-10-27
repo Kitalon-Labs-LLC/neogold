@@ -10,7 +10,6 @@ import com.google.crypto.tink.streamingaead.AesGcmHkdfStreamingKeyManager
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.security.GeneralSecurityException
 
 interface FileKeysetProvider {
     fun getStreamingAead(): StreamingAead

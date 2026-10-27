@@ -60,7 +60,7 @@ class ClockIntegrityValidatorTest {
     fun testBirthTimeInFutureRefused() {
         val now = 1791700000000L
         val futureBirth = now + 3600000L // 1 hour into future
-        val pastBirth = now - 3600000L   // 1 hour in past
+        val pastBirth = now - 3600000L // 1 hour in past
 
         assertThat(ClockIntegrityValidator.isBirthTimeInFuture(futureBirth, now)).isTrue()
         assertThat(ClockIntegrityValidator.isBirthTimeInFuture(pastBirth, now)).isFalse()

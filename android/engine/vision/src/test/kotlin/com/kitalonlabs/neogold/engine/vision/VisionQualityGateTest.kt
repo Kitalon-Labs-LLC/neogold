@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.kitalonlabs.neogold.engine.colorscience.Lab
 import com.kitalonlabs.neogold.engine.colorscience.ciede2000
-import org.json.JSONObject
 import org.junit.Test
 import java.io.File
 
@@ -66,7 +65,9 @@ class VisionQualityGateTest {
     fun tcCap03_cardAngle_benchPlaceholder() {
         val benchDir = File(TestImageUtils.findRepoRoot(), "testdata/bench/jig_angles")
         if (!benchDir.exists() || benchDir.listFiles().isNullOrEmpty()) {
-            println("[PENDING_BENCH_DATA] TC-CAP-03: Laboratory angle jig captures (10, 20, 30 deg) pending bench collection.")
+            println(
+                "[PENDING_BENCH_DATA] TC-CAP-03: Laboratory angle jig captures (10, 20, 30 deg) pending bench collection."
+            )
             return
         }
         // Bench evaluation when real jig captures are available
@@ -77,13 +78,17 @@ class VisionQualityGateTest {
         // 10 deg tilt: accepted
         val frame10 = renderer.renderFrame(SyntheticRenderConfig(tiltDegrees = 10.0))
         val res10 = engine.processFrame(frame10)
-        println("res10 angle=${res10.metrics.cardAngleDegrees}, markers=${res10.metrics.markersDetected}, failures=${res10.failureReasons}")
+        println(
+            "res10 angle=${res10.metrics.cardAngleDegrees}, markers=${res10.metrics.markersDetected}, failures=${res10.failureReasons}"
+        )
         assertThat(res10.failureReasons).doesNotContain(QualityReasonCode.CARD_ANGLE)
 
         // 25 deg tilt: rejected CARD_ANGLE (exceeds 20.0 deg threshold)
         val frame25 = renderer.renderFrame(SyntheticRenderConfig(tiltDegrees = 25.0))
         val res25 = engine.processFrame(frame25)
-        println("res25 angle=${res25.metrics.cardAngleDegrees}, markers=${res25.metrics.markersDetected}, failures=${res25.failureReasons}")
+        println(
+            "res25 angle=${res25.metrics.cardAngleDegrees}, markers=${res25.metrics.markersDetected}, failures=${res25.failureReasons}"
+        )
         assertThat(res25.failureReasons).contains(QualityReasonCode.CARD_ANGLE)
     }
 
@@ -94,7 +99,9 @@ class VisionQualityGateTest {
     fun tcCap04_duplicatePatches_benchPlaceholder() {
         val benchDir = File(TestImageUtils.findRepoRoot(), "testdata/bench/spot_light")
         if (!benchDir.exists() || benchDir.listFiles().isNullOrEmpty()) {
-            println("[PENDING_BENCH_DATA] TC-CAP-04: Spot light on one corner / forced HDR captures pending bench collection.")
+            println(
+                "[PENDING_BENCH_DATA] TC-CAP-04: Spot light on one corner / forced HDR captures pending bench collection."
+            )
             return
         }
     }
@@ -115,7 +122,9 @@ class VisionQualityGateTest {
     fun tcCap05_blur_returnsBlurReason() {
         val blurredFrame = renderer.renderFrame(SyntheticRenderConfig(blurRadius = 8))
         val result = engine.processFrame(blurredFrame)
-        println("blurredFrame variance=${result.metrics.blurLaplacianVariance}, markers=${result.metrics.markersDetected}, failures=${result.failureReasons}")
+        println(
+            "blurredFrame variance=${result.metrics.blurLaplacianVariance}, markers=${result.metrics.markersDetected}, failures=${result.failureReasons}"
+        )
         assertThat(result.passed).isFalse()
         assertThat(result.failureReasons).contains(QualityReasonCode.BLUR)
         assertThat(result.metrics.blurLaplacianVariance).isLessThan(thresholds.minBlurLaplacianVariance)
@@ -161,7 +170,9 @@ class VisionQualityGateTest {
     fun tcCap08_mixedLight_benchPlaceholder() {
         val benchDir = File(TestImageUtils.findRepoRoot(), "testdata/bench/mixed_light")
         if (!benchDir.exists() || benchDir.listFiles().isNullOrEmpty()) {
-            println("[PENDING_BENCH_DATA] TC-CAP-08: Mixed window daylight / tube light captures pending bench collection.")
+            println(
+                "[PENDING_BENCH_DATA] TC-CAP-08: Mixed window daylight / tube light captures pending bench collection."
+            )
             return
         }
     }
@@ -230,7 +241,9 @@ class VisionQualityGateTest {
 
     @Test
     fun tcCap10_windowNotSkin_highContrastEdge() {
-        val frame = renderer.renderFrame(SyntheticRenderConfig(windowContent = SyntheticWindowContent.HIGH_CONTRAST_EDGE))
+        val frame = renderer.renderFrame(
+            SyntheticRenderConfig(windowContent = SyntheticWindowContent.HIGH_CONTRAST_EDGE)
+        )
         val result = engine.processFrame(frame)
         assertThat(result.passed).isFalse()
         assertThat(result.failureReasons).contains(QualityReasonCode.WINDOW_NOT_SKIN)
@@ -345,7 +358,9 @@ class VisionQualityGateTest {
                 val sampled = sampledPatches[id]
                 assertThat(sampled).isNotNull()
                 val deltaE = ciede2000(sampled!!.lab, def.nominalLab)
-                assertWithMessage("Patch $id at scale=${cfg.scale}, rot=${cfg.rotationDegrees} Delta E ($deltaE) must be <= 0.5")
+                assertWithMessage(
+                    "Patch $id at scale=${cfg.scale}, rot=${cfg.rotationDegrees} Delta E ($deltaE) must be <= 0.5"
+                )
                     .that(deltaE).isAtMost(0.5)
             }
         }
@@ -358,7 +373,9 @@ class VisionQualityGateTest {
     fun tcCard07_homePrintedCounterfeit_benchPlaceholder() {
         val benchDir = File(TestImageUtils.findRepoRoot(), "testdata/bench/home_printed_cards")
         if (!benchDir.exists() || benchDir.listFiles().isNullOrEmpty()) {
-            println("[PENDING_BENCH_DATA] TC-CARD-07: Genuine QR attached to home-printed counterfeit card captures pending bench collection.")
+            println(
+                "[PENDING_BENCH_DATA] TC-CARD-07: Genuine QR attached to home-printed counterfeit card captures pending bench collection."
+            )
             return
         }
     }

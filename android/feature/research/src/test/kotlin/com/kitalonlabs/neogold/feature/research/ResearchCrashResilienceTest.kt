@@ -55,7 +55,15 @@ class ResearchCrashResilienceTest {
             .allowMainThreadQueries()
             .build()
 
-        val dummyTrustList = TrustList(1, 1, java.time.LocalDate.of(2026, 10, 1), java.time.LocalDate.of(2028, 10, 1), emptyList(), emptyList(), emptyList())
+        val dummyTrustList = TrustList(
+            1,
+            1,
+            java.time.LocalDate.of(2026, 10, 1),
+            java.time.LocalDate.of(2028, 10, 1),
+            emptyList(),
+            emptyList(),
+            emptyList()
+        )
         val pinHasher = Argon2PinHasher(FakePinHmacKeyProvider())
         val pinManager = ResearchPinManager(database.researchStudyDao(), database.auditEventDao(), pinHasher)
 
@@ -186,7 +194,7 @@ class ResearchCrashResilienceTest {
                             qualityFailReasons = null,
                             correctionResidualDe = null,
                             features = null,
-                            imageFile = "cap_test_${i}.enc",
+                            imageFile = "cap_test_$i.enc",
                             imageSha256 = "sha256_mock"
                         )
                         database.captureDao().insert(capEntity)

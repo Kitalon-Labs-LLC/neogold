@@ -180,8 +180,16 @@ object VisionQualityGate {
             }
 
             if (observedLinearRgbList.size >= 3) {
-                val correctionModel = ColorCorrectionFitter.fit(observedLinearRgbList, targetXyzList, useRootPolynomial = false)
-                val residual = QualityResidualCalculator.computeResidual(correctionModel, observedLinearRgbList, referenceLabs)
+                val correctionModel = ColorCorrectionFitter.fit(
+                    observedLinearRgbList,
+                    targetXyzList,
+                    useRootPolynomial = false
+                )
+                val residual = QualityResidualCalculator.computeResidual(
+                    correctionModel,
+                    observedLinearRgbList,
+                    referenceLabs
+                )
                 meanResidualDeltaE = residual.meanDeltaE
             }
         } catch (_: Exception) {

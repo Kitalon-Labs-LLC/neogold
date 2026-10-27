@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.kitalonlabs.neogold.core.data.local.dao.AuditEventDao
-import com.kitalonlabs.neogold.core.data.local.dao.CardBatchDao
 import com.kitalonlabs.neogold.core.data.local.dao.CaptureDao
+import com.kitalonlabs.neogold.core.data.local.dao.CardBatchDao
 import com.kitalonlabs.neogold.core.data.local.dao.DeviceProfileDao
 import com.kitalonlabs.neogold.core.data.local.dao.OutboxDao
 import com.kitalonlabs.neogold.core.data.local.dao.ResearchParticipantDao
@@ -16,8 +16,8 @@ import com.kitalonlabs.neogold.core.data.local.dao.ResearchStudyDao
 import com.kitalonlabs.neogold.core.data.local.dao.ScreeningSessionDao
 import com.kitalonlabs.neogold.core.data.local.dao.TsbMeasurementDao
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
-import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
+import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.local.entity.DeviceProfileEntity
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchParticipantEntity

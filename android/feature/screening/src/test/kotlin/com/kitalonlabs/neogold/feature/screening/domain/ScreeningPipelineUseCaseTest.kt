@@ -4,7 +4,6 @@ import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
 import com.kitalonlabs.neogold.engine.cardtrust.PatchReference
 import com.kitalonlabs.neogold.engine.estimation.EstimationEngine
-import com.kitalonlabs.neogold.engine.triage.TriageAction
 import com.kitalonlabs.neogold.engine.triage.TriageConfigParser
 import com.kitalonlabs.neogold.engine.triage.TriageEngine
 import com.kitalonlabs.neogold.engine.triage.TriageResult
@@ -132,7 +131,9 @@ class ScreeningPipelineUseCaseTest {
         assertThat(intermediate.ccmMatrix[0]).hasSize(3)
 
         // Verify features extracted
-        assertThat(intermediate.extractedFeatures.keys).containsAtLeast("l_star", "a_star", "b_star", "b_over_l", "a_over_b")
+        assertThat(
+            intermediate.extractedFeatures.keys
+        ).containsAtLeast("l_star", "a_star", "b_star", "b_over_l", "a_over_b")
 
         // Verify estimation output
         assertThat(intermediate.estimationOutput.estimate).isGreaterThan(0.0)

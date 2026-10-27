@@ -57,14 +57,18 @@ class SecureScreenHelperTest {
         val normalEvent = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
         assertThat(SecureScreenHelper.isTouchEventObscured(normalEvent)).isFalse()
 
-        val properties = arrayOf(MotionEvent.PointerProperties().apply {
-            id = 0
-            toolType = MotionEvent.TOOL_TYPE_FINGER
-        })
-        val coords = arrayOf(MotionEvent.PointerCoords().apply {
-            x = 0f
-            y = 0f
-        })
+        val properties = arrayOf(
+            MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_FINGER
+            }
+        )
+        val coords = arrayOf(
+            MotionEvent.PointerCoords().apply {
+                x = 0f
+                y = 0f
+            }
+        )
 
         val obscuredEvent = MotionEvent.obtain(
             0L, 0L, MotionEvent.ACTION_DOWN, 1, properties, coords,

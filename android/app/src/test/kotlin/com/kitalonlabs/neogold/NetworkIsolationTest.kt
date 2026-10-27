@@ -1,6 +1,5 @@
 package com.kitalonlabs.neogold
 
-import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.io.File
 
@@ -50,7 +49,9 @@ class NetworkIsolationTest {
             if (buildFile.exists()) {
                 val content = buildFile.readText().lowercase()
                 for (token in forbiddenTokens) {
-                    com.google.common.truth.Truth.assertWithMessage("Module $modulePath build file must not depend on $token")
+                    com.google.common.truth.Truth.assertWithMessage(
+                        "Module $modulePath build file must not depend on $token"
+                    )
                         .that(content.contains(token))
                         .isFalse()
                 }

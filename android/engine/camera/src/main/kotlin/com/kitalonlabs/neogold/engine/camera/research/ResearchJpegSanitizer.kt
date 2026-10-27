@@ -151,7 +151,11 @@ object ResearchJpegSanitizer {
                     // Check if it's XMP
                     val headerStr = String(app1Data, 0, minOf(30, app1Data.size), Charsets.US_ASCII)
                     if (headerStr.startsWith("http://ns.adobe.com")) {
-                        return ValidationResult(false, "IMAGE_METADATA_NOT_ALLOWED", "XMP metadata packet detected in APP1")
+                        return ValidationResult(
+                            false,
+                            "IMAGE_METADATA_NOT_ALLOWED",
+                            "XMP metadata packet detected in APP1"
+                        )
                     }
 
                     // Check Exif contents: must ONLY contain orientation tag in IFD0

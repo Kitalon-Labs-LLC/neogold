@@ -3,7 +3,6 @@ package com.kitalonlabs.neogold.engine.camera
 import android.annotation.SuppressLint
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CaptureResult
-import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy

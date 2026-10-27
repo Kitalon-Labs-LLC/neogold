@@ -5,8 +5,8 @@ import androidx.room.withTransaction
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
-import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
+import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchParticipantEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
@@ -273,7 +273,9 @@ class CrashDuringWriteTest {
         }
 
         // Verify counts
-        assertThat(completedSessionsCount).isEqualTo(10) // iterations where iteration % 5 == 4 (e.g. 4, 9, 14, 19, 24, 29, 34, 39, 44, 49)
+        assertThat(
+            completedSessionsCount
+        ).isEqualTo(10) // iterations where iteration % 5 == 4 (e.g. 4, 9, 14, 19, 24, 29, 34, 39, 44, 49)
         assertThat(abortedSessionsCount).isEqualTo(40)
 
         // Verify total screening sessions in database matches exactly the completed count

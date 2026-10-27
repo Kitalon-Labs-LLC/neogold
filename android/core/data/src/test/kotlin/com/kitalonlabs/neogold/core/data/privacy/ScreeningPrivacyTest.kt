@@ -112,7 +112,9 @@ class ScreeningPrivacyTest {
         assertThat(filesOnDisk).isEmpty()
 
         // List all files in app filesDir
-        val allAppFiles = context.filesDir.walkTopDown().filter { it.isFile && (it.extension == "jpg" || it.extension == "enc" || it.extension == "tmp") }.toList()
+        val allAppFiles = context.filesDir.walkTopDown().filter {
+            it.isFile && (it.extension == "jpg" || it.extension == "enc" || it.extension == "tmp")
+        }.toList()
         assertThat(allAppFiles).isEmpty()
     }
 }

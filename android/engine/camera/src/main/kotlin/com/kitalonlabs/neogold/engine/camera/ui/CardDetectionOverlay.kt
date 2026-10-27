@@ -27,8 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -106,7 +104,7 @@ fun CardDetectionOverlay(
                 0 to Offset(guideLeft + 24.dp.toPx(), guideTop + 24.dp.toPx()), // TL
                 1 to Offset(guideLeft + guideW - 24.dp.toPx(), guideTop + 24.dp.toPx()), // TR
                 2 to Offset(guideLeft + guideW - 24.dp.toPx(), guideTop + guideH - 24.dp.toPx()), // BR
-                3 to Offset(guideLeft + 24.dp.toPx(), guideTop + guideH - 24.dp.toPx())  // BL
+                3 to Offset(guideLeft + 24.dp.toPx(), guideTop + guideH - 24.dp.toPx()) // BL
             )
 
             for ((id, offset) in cornerOffsets) {

@@ -244,7 +244,9 @@ fun S22SessionDetailScreen(
                         val est = "%.1f mg/dL".format(session.estimateMgDl)
                         val range = if (session.estimateLowMgDl != null && session.estimateHighMgDl != null) {
                             " (%.1f – %.1f)".format(session.estimateLowMgDl, session.estimateHighMgDl)
-                        } else ""
+                        } else {
+                            ""
+                        }
                         DetailRow(label = "Estimated Bilirubin", value = "$est$range")
                     }
 

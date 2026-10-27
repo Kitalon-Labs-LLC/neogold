@@ -11,7 +11,6 @@ import org.robolectric.RobolectricTestRunner
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.InputStream
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
@@ -220,4 +219,3 @@ class BundleManifestVerifierTest {
         assertThat(mismatch.filename).isEqualTo("triage-config.json")
     }
 }
-

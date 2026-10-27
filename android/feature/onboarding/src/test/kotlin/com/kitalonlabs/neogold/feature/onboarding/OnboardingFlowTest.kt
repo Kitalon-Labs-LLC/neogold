@@ -1,13 +1,11 @@
 package com.kitalonlabs.neogold.feature.onboarding
 
 import com.google.common.truth.Truth.assertThat
-import com.kitalonlabs.neogold.engine.camera.device.BatteryGuidance
 import com.kitalonlabs.neogold.engine.camera.device.DeviceCapabilities
 import com.kitalonlabs.neogold.engine.camera.device.DeviceChecker
 import com.kitalonlabs.neogold.engine.camera.device.DeviceCompatibilityReport
 import com.kitalonlabs.neogold.engine.camera.device.DeviceSupportStatus
 import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
-import com.kitalonlabs.neogold.engine.camera.qualification.CameraQualifier
 import com.kitalonlabs.neogold.engine.camera.qualification.DeviceProfile
 import com.kitalonlabs.neogold.engine.camera.qualification.DeviceProfileStatus
 import com.kitalonlabs.neogold.engine.camera.qualification.QualificationAuditEvent
@@ -140,7 +138,11 @@ class OnboardingFlowTest {
 
         val report = DeviceCompatibilityReport(
             capabilities = unlistedCapabilities,
-            supportStatus = if (DeviceChecker.isTestedDevice(unlistedCapabilities.manufacturer, unlistedCapabilities.deviceModel)) {
+            supportStatus = if (DeviceChecker.isTestedDevice(
+                    unlistedCapabilities.manufacturer,
+                    unlistedCapabilities.deviceModel
+                )
+            ) {
                 DeviceSupportStatus.TESTED
             } else {
                 DeviceSupportStatus.UNTESTED

@@ -1,7 +1,5 @@
 package com.kitalonlabs.neogold.core.security.export
 
-import com.google.crypto.tink.KeyTemplates
-import com.google.crypto.tink.KeysetHandle
 import com.google.crypto.tink.subtle.X25519
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
