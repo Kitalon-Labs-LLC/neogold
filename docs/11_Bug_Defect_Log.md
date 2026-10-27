@@ -88,11 +88,11 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-011 | PIN verifier key falls back to a hardcoded key on any Keystore error | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-06 | |
 | BUG-2026-012 | Research unlock accepts any PIN | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-05 | |
 | BUG-2026-013 | Research sessions are never saved or queued | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-14 | |
-| BUG-2026-014 | android-ci and android-release workflows are invalid YAML; Android CI has never passed | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S1 | No | - | P1 | New | Unassigned | TC-OPS-01 | |
+| BUG-2026-014 | android-ci and android-release workflows are invalid YAML; Android CI has never passed | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S1 | No | - | P1 | Fixed | Unassigned | TC-OPS-01 | |
 | BUG-2026-015 | Test summary reports state results the repository cannot support | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S1 | No | - | P1 | In progress | Unassigned | n/a (doc 9 Section 15) | |
-| BUG-2026-016 | Gradle wrapper and two gate scripts lack the executable bit | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-SEC-04 | |
-| BUG-2026-017 | `:core:data` unit tests cannot run from a clean checkout (stale lock) | 2026-10-26 | Test | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-LOG-11 | |
-| BUG-2026-018 | Secrets scan reports two findings in history; not triaged | 2026-10-26 | Review | commit 91c1125 | n/a | SEC | S2 | No | - | P2 | New | Unassigned | TC-SEC-06 | |
+| BUG-2026-016 | Gradle wrapper and two gate scripts lack the executable bit | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-SEC-04 | |
+| BUG-2026-017 | `:core:data` unit tests cannot run from a clean checkout (stale lock) | 2026-10-26 | Test | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-LOG-11 | |
+| BUG-2026-018 | Secrets scan reports two findings in history; not triaged | 2026-10-26 | Review | commit 91c1125 | n/a | SEC | S2 | No | - | P2 | Fixed | Unassigned | TC-SEC-06 | |
 | BUG-2026-019 | `triageEnabled` is a hardcoded default, not read from the signed config | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S2 | No | - | P2 | New | Unassigned | TC-TRI-26 | |
 | BUG-2026-020 | Hard rules are decided in navigation code, not by the triage engine | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S2 | No | - | P2 | New | Unassigned | TC-TRI-06 | |
 | BUG-2026-021 | Saved sessions record a different action from the one shown | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | New | Unassigned | TC-LOG-12 | |
@@ -107,6 +107,9 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-030 | Hazard log is missing | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | none (add to doc 10) | |
 | BUG-2026-031 | Release notes file for v1.0.0 is missing | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-OPS-02 | |
 | BUG-2026-032 | BurstCaptureController reads capture metadata through CameraX internal APIs | 2026-10-26 | CI | commit f1e01e6 | n/a | CAP | S2 | No | - | P2 | In progress | Unassigned | TC-CAP-01 | |
+| BUG-2026-033 | Foreground service type is declared only in :app, so :sync:research and :app lint fail | 2026-10-27 | CI | commit a0b6da2 | n/a | SYNC | S3 | No | - | P2 | Fixed | Unassigned | TC-SYNC-10 | |
+| BUG-2026-034 | Recheck notification is posted without checking the notification permission | 2026-10-27 | CI | commit a0b6da2 | n/a | LOG | S3 | No | - | P2 | Fixed | Unassigned | TC-LOG-09 | |
+| BUG-2026-035 | ScreeningPipelineBenchmarkTest asserts phone time budgets on a shared build machine | 2026-10-27 | Test | commit a0b6da2 | n/a | PERF | S3 | No | - | P3 | New | Unassigned | TC-PERF-01 | |
 
 ### 4.1 Entries
 
@@ -327,7 +330,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-014: The android-ci and android-release workflows are invalid YAML, and Android CI has never passed
 
 - Area: OPS | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-OPS-01, TC-SEC-01, TC-SEC-04 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-OPS-01, TC-SEC-01, TC-SEC-04 | Fix version:
 
 **Steps**
 1. Parse `.github/workflows/android-ci.yml` and `android-release.yml` with any YAML parser.
@@ -340,6 +343,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** GitHub Actions run 40272881285 ("This run likely failed because of a workflow file issue"); a YAML parse of each file.
 
 **Notes** The runs before that commit failed too (BUG-2026-016, BUG-2026-018). The engine tests that CLAUDE.md says block all other work have never been checked in CI. This is the first item in fix package R6.
+
+**Fix** `android-ci.yml` and `android-release.yml` quote the step names. P25 then repeated the mistake in `repo-ci.yml` (`DATABASE_URL: sqlite:///:memory:`), also fixed. `tools/check_workflows.py`, run in `repo-ci`, now fails on invalid YAML or a step with neither `run` nor `uses`. The Android workflows also lacked the Python tooling that `signAssetManifest` needs (now installed from the hash-locked requirements) and never ran `verifyStrings`. Becomes Verified when android-ci is green on `dev`.
 
 #### BUG-2026-015: Test summary reports state results the repository cannot support
 
@@ -365,7 +370,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-016: The Gradle wrapper and two gate scripts are committed without the executable bit
 
 - Area: OPS | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-SEC-04, TC-OPS-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-04, TC-OPS-01 | Fix version:
 
 **Steps**
 1. Run `git ls-files -s android/gradlew tools/check_16kb.sh card/tools/neogold-sign/neogold-sign`.
@@ -378,10 +383,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** P01's PR #8 was merged with this failure. Fix package R6 (`git update-index --chmod=+x`).
 
+**Fix** Executable bit set on `android/gradlew`, `tools/check_16kb.sh` and `card/tools/neogold-sign/neogold-sign`. The committed files are LF, so the bit was the only problem.
+
 #### BUG-2026-017: `:core:data` unit tests cannot run from a clean checkout (stale dependency lock)
 
 - Area: OPS | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-LOG-04, TC-LOG-05, TC-LOG-11, TC-SEC-07, TC-SEC-08, TC-REL-08 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-LOG-04, TC-LOG-05, TC-LOG-11, TC-SEC-07, TC-SEC-08, TC-REL-08 | Fix version:
 
 **Steps**
 1. On a fresh clone with JDK 21, run `cd android && ./gradlew testReleaseUnitTest` (the CLAUDE.md command).
@@ -394,10 +401,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R6.
 
+**Fix** The configuration was added to the `kotlin-stdlib-common:2.2.10` lock line by hand: `debugUnitTestRuntimeClasspath`, and later `releaseRuntimeClasspath`, which a strict clean-cache run also demanded. **Maintainers:** Gradle's lock writer never writes that line for those two configurations although its validator requires it, and `--write-locks` removes it again. After regenerating locks, restore it, then run `./gradlew :core:data:test lintRelease` without `--write-locks`. Gradle also persists lock state only when the whole build succeeds, so fix every other failure first.
+
 #### BUG-2026-018: The secrets scan (gate S9) reports two findings in git history; not triaged
 
 - Area: SEC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-SEC-06 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-06 | Fix version:
 
 **Steps**
 1. Run `gitleaks git --redact -v .` on the repository.
@@ -409,6 +418,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** android-ci run 39396331186.
 
 **Notes** If either finding is a real credential, raise this to S1 and rotate the credential. BUG-2026-008 explains why the committed K3 test key matters.
+
+**Fix** Triaged by running gitleaks v8.30.1 on the full history. Three findings, none a credential: a constant's name in this log, and the internal Docker address `172.30.0.10` in a compose comment and its runbook copy. The guess above about test-key files was wrong. `.gitleaks.toml` allowlists only those two exact strings in those three files, and an invented secret in the same file is still reported. No rotation is needed for those three. This closure does **not** cover the committed K3 test signing key (BUG-2026-008): the default rule needs a keyword in the variable name, `DEFAULT_TEST_K3_PRIVATE_HEX` has none, so gate S9 cannot see that key. BUG-2026-008 removes it; until then S9 being green says nothing about it.
 
 #### BUG-2026-019: `triageEnabled` is a hardcoded default, not read from the signed config
 
@@ -635,6 +646,55 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Nothing calls `BurstCaptureController`, not the app and not any test, so there is no runtime effect today. That also means its metadata path has never been exercised. A narrow `@SuppressLint("RestrictedApi")` makes the violation visible and lets lint pass until the camera host (work package C1) replaces it with a `Camera2Interop` session callback installed when the `ImageCapture` is built, correlated to frames by sensor timestamp. The suppression and this entry are removed then. Status becomes Fixed in that change.
 
+#### BUG-2026-033: Foreground service type is declared only in :app, so :sync:research and :app lint fail
+
+- Area: SYNC | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-SYNC-10 | Fix version:
+
+**Steps**
+1. Run `./gradlew :sync:research:lintRelease :app:lintRelease` on a clean checkout.
+
+**Expected** Lint passes (it is part of the android-ci line, doc 12 Section 3).
+
+**Actual** `:sync:research` reports `SpecifyForegroundServiceType` ("Missing dataSync foregroundServiceType in the AndroidManifest.xml", `ResearchUploadWorker.kt:166`). `:app` reports `MissingClass` for `androidx.work.impl.foreground.SystemForegroundService` (`AndroidManifest.xml` line 25), because `androidx.work` is not on `:app`'s compile classpath.
+
+**Evidence** `android/sync/research/src/main/AndroidManifest.xml` had the permissions but not the service; `android/app/src/main/AndroidManifest.xml` declared the service. The first real android-ci run needs a clean Gradle cache to show it.
+
+**Notes** There is no runtime defect. The worker already passes `FOREGROUND_SERVICE_TYPE_DATA_SYNC` on API 29 and later, and the merged manifest carried the `dataSync` type. An earlier note in the remediation plan called this an Android 14 crash; that was wrong, and is corrected here. The declaration now lives in `:sync:research`'s manifest, next to the code that starts the worker (`tools:node="merge"`), and is removed from `:app`. The merged manifest is unchanged.
+
+#### BUG-2026-034: Recheck notification is posted without checking the notification permission
+
+- Area: LOG | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-LOG-09 | Fix version:
+
+**Steps**
+1. Run `./gradlew :feature:screening:lintRelease`.
+2. Or deny `POST_NOTIFICATIONS` on an API 33 device and let a recheck fall due.
+
+**Expected** When notifications are blocked nothing is posted and the Home due list still shows the recheck (FR-36, NG-048).
+
+**Actual** Lint reports `MissingPermission` at `RecheckNotificationHelper.kt:69`. The code relied on catching `SecurityException`, so it called `notify` regardless of the permission.
+
+**Evidence** `android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/notification/RecheckNotificationHelper.kt`. TC-LOG-09 had no test at all.
+
+**Notes** `showRecheckNotification` now checks `POST_NOTIFICATIONS` on API 33 and later, and the user's notification setting before that, and posts nothing when blocked. Five Robolectric tests were added for TC-LOG-09 (no baby details in the text, nothing posted when denied, one posted when granted, one posted on API 32 where no runtime permission exists, nothing posted on API 32 when the user switched notifications off); the denied case failed before the change, and the API 32 switched-off case fails if that branch is removed. Reshaping the check was not enough for lint: it decides whether a module holds a permission from that module's own manifest, so `:feature:screening` now declares `POST_NOTIFICATIONS` in its own manifest. It is the same permission `:app` already declares and `tools/check_manifest.py` allow-lists, so the merged manifest is unchanged. The notification is still not scheduled or posted by anything in the app (NG-048); that belongs to the screening wiring package.
+
+#### BUG-2026-035: ScreeningPipelineBenchmarkTest asserts phone time budgets on a shared build machine
+
+- Area: PERF | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-PERF-01 | Fix version:
+
+**Steps**
+1. Run `./gradlew --rerun-tasks testReleaseUnitTest` with a cold cache, so many modules build and test in parallel.
+
+**Expected** Unit tests pass deterministically.
+
+**Actual** `testCaptureToResultBenchmark_30Runs_withinBudgets` failed once: warp-and-sample p95 "expected to be less than 700, but was 866". Run alone on a quiet machine, twice, the same test measures p95 of 109 and 113 ms.
+
+**Evidence** `android/benchmark/src/test/kotlin/com/kitalonlabs/neogold/benchmark/ScreeningPipelineBenchmarkTest.kt:202`; the two isolated reruns of 27 October 2026.
+
+**Notes** The test applies a phone time budget to the host JVM on synthetic frames. It proves nothing about phones, and it can fail on a busy CI runner. The threshold is not loosened (CLAUDE.md: never weaken a test). The Macrobenchmark package (E2) replaces this test and `tools/benchmark_capture_to_result.py` with measurements on real phones.
+
 ---
 
 ## 5. Closed Defects
@@ -654,7 +714,7 @@ Updated with each test summary report (doc 9 Section 15).
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
 | S2 | 17 | 0 | 0 |
-| S3 | 0 | 0 | 0 |
+| S3 | 3 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
 As of 26 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
