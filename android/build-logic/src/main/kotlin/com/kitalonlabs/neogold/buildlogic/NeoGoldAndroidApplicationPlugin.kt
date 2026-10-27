@@ -47,9 +47,12 @@ class NeoGoldAndroidApplicationPlugin : Plugin<Project> {
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 }
 
+                // AGP 9 refuses to build an App Bundle while ABI splits are on (issuetracker 402800800), and Play
+                // makes the ABI splits from the bundle itself, so the per-ABI APKs exist for APK builds only.
+                val buildsBundle = gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
                 splits {
                     abi {
-                        isEnable = true
+                        isEnable = !buildsBundle
                         reset()
                         include("arm64-v8a", "armeabi-v7a")
                         isUniversalApk = true

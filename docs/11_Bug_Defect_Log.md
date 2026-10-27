@@ -126,6 +126,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-049 | ScreeningOfflineTest asserts a network-call count that nothing increments | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S3 | No | - | P3 | New | Unassigned | TC-EST-04 | |
 | BUG-2026-050 | The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-UI-01, TC-A11Y-05 | |
 | BUG-2026-051 | The session detail screen formats clinical numbers with the default locale | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-A11Y-03 | |
+| BUG-2026-052 | The release bundle cannot be built, because ABI splits are on and the Android Gradle plugin 9 refuses `bundleRelease` | 2026-10-27 | Review | commit ea82b0a | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-OPS-01, TC-OPS-02 | |
 
 ### 4.1 Entries
 
@@ -992,6 +993,24 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix in package F1 (localization), with the other number and string work: use `ClinicalNumberFormatter` and add a test that renders S22 under a Bangla locale.
 
+#### BUG-2026-052: The release bundle cannot be built, because ABI splits are on and the Android Gradle plugin 9 refuses `bundleRelease`
+
+- Area: OPS | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-OPS-01, TC-OPS-02 | Fix version:
+
+**Steps**
+1. Run `./gradlew :app:bundleRelease` in `android/`.
+
+**Expected** A release App Bundle, which the release workflow signs, checks against gates S4 and S5 and uploads (doc 12 Section 4; TC-OPS-01, TC-OPS-02).
+
+**Actual** `:app:buildReleasePreBundle` fails with "Multiple shrunk-resources files found ... Please disable building multiple APKs when building an Android app bundle" (Android Gradle plugin issue 402800800). `NeoGoldAndroidApplicationPlugin` turns on `splits.abi` for every build, and plugin 9.4.1 does not allow that together with a bundle. `android-release.yml` runs `bundleRelease`, so the release workflow could not have produced a bundle, and gates S4 and S5 on the bundle could not have run.
+
+**Evidence** `NeoGoldAndroidApplicationPlugin.kt` (the `splits` block); `.github/workflows/android-release.yml` (the `bundleRelease` step); a local run on 27 October 2026. Found while measuring the app size for package A3.
+
+**Notes** `android-ci.yml` builds `assembleRelease` with the splits and checks the arm64 APK for 16 KB alignment, so that path works and needs them. Play makes the ABI splits from the bundle itself.
+
+**Fix** The splits are turned off when the Gradle command names a bundle task and stay on for APK builds. `./gradlew :app:bundleRelease` now builds (3 min 48 s on the developer machine), and `bundletool` 1.18.3 reports the per-ABI download and install sizes. A command that names both an assemble and a bundle task gets no splits. Becomes Verified when the release workflow builds a bundle on a runner.
+
 ---
 
 ## 5. Closed Defects
@@ -1010,7 +1029,7 @@ Updated with each test summary report (doc 9 Section 15).
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
-| S2 | 22 | 0 | 0 |
+| S2 | 23 | 0 | 0 |
 | S3 | 14 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
