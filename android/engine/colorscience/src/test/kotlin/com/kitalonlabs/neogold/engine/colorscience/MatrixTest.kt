@@ -47,7 +47,8 @@ class MatrixTest {
         // -2x + y + 2z = -3
         // Solution: x = 2, y = 3, z = -1
         val a = Matrix(
-            3, 3,
+            3,
+            3,
             doubleArrayOf(
                 2.0, 1.0, -1.0,
                 -3.0, -1.0, 2.0,
@@ -68,7 +69,8 @@ class MatrixTest {
         // Line fitting y = m*x + c
         // Points: (1, 2), (2, 3.9), (3, 6.1), (4, 8.0) -> slope ~2.0, intercept ~0.0
         val a = Matrix(
-            4, 2,
+            4,
+            2,
             doubleArrayOf(
                 1.0,
                 1.0,
@@ -105,7 +107,8 @@ class MatrixTest {
     fun testIllConditionedCollinearColumnsThrows() {
         // Column 2 is exactly 2 * Column 1
         val a = Matrix(
-            4, 3,
+            4,
+            3,
             doubleArrayOf(
                 1.0, 2.0, 5.0,
                 2.0, 4.0, 3.0,
@@ -123,7 +126,8 @@ class MatrixTest {
     fun testIllConditionedNearSingularInputThrows() {
         // Collinear with 1e-15 perturbation
         val a = Matrix(
-            3, 3,
+            3,
+            3,
             doubleArrayOf(
                 1.0, 2.0, 3.0,
                 2.0, 4.0, 6.0,
@@ -140,7 +144,8 @@ class MatrixTest {
     fun testMultipleRightHandSidesLeastSquares() {
         // A (5 x 3), B (5 x 3) - fitting CCM mapping
         val a = Matrix(
-            5, 3,
+            5,
+            3,
             doubleArrayOf(
                 0.1, 0.2, 0.3,
                 0.4, 0.5, 0.6,
@@ -151,7 +156,8 @@ class MatrixTest {
         )
         // Known ground truth M (3 x 3)
         val m = Matrix(
-            3, 3,
+            3,
+            3,
             doubleArrayOf(
                 1.2, 0.1, 0.0,
                 0.0, 1.1, 0.2,

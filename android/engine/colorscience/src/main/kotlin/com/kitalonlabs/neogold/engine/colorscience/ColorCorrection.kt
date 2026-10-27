@@ -60,11 +60,11 @@ class RootPolynomialCorrectionModel(
         val gb = StrictMath.sqrt(g * b)
         val br = StrictMath.sqrt(b * r)
 
-        val f0 = r;
-        val f1 = g;
+        val f0 = r
+        val f1 = g
         val f2 = b
-        val f3 = rg;
-        val f4 = gb;
+        val f3 = rg
+        val f4 = gb
         val f5 = br
 
         val x = f0 * matrix[0, 0] + f1 * matrix[1, 0] + f2 * matrix[2, 0] +
