@@ -113,7 +113,9 @@ class EstimationGoldenVectorsTest {
         val sb = StringBuilder()
         sb.append("{\n")
         sb.append("  \"version\": \"1.0.0\",\n")
-        sb.append("  \"description\": \"Golden estimation vectors for on-device ridge regression and 90% split-conformal intervals\",\n")
+        sb.append(
+            "  \"description\": \"Golden estimation vectors for on-device ridge regression and 90% split-conformal intervals\",\n"
+        )
         sb.append("  \"model_version\": \"${engine.model.modelVersion}\",\n")
         sb.append("  \"feature_list\": [\"l_star\", \"a_star\", \"b_star\", \"b_over_l\", \"a_over_b\"],\n")
         sb.append("  \"vectors\": [\n")
@@ -137,29 +139,41 @@ class EstimationGoldenVectorsTest {
             sb.append("        \"a_over_b\": ${fmt(features["a_over_b"]!!)}\n")
             sb.append("      },\n")
             sb.append("      \"sternum\": {\n")
-            sb.append("        \"standardized_features\": [${sternum.standardizedFeatures.joinToString(", ") { fmt(it) }}],\n")
+            sb.append(
+                "        \"standardized_features\": [${sternum.standardizedFeatures.joinToString(", ") { fmt(it) }}],\n"
+            )
             sb.append("        \"estimate\": ${fmt(sternum.estimate)},\n")
             sb.append("        \"residual_quantile_90\": ${fmt(sternum.residualQuantile90)},\n")
             sb.append("        \"lower_bound\": ${fmt(sternum.lowerBound)},\n")
             sb.append("        \"upper_bound\": ${fmt(sternum.upperBound)},\n")
             val sTenths = sternum.toIntegerTenths()
-            sb.append("        \"integer_tenths\": {\"estimate\": ${sTenths.estimateTenths}, \"lower\": ${sTenths.lowerTenths}, \"upper\": ${sTenths.upperTenths}}\n")
+            sb.append(
+                "        \"integer_tenths\": {\"estimate\": ${sTenths.estimateTenths}, \"lower\": ${sTenths.lowerTenths}, \"upper\": ${sTenths.upperTenths}}\n"
+            )
             sb.append("      },\n")
             sb.append("      \"forehead\": {\n")
-            sb.append("        \"standardized_features\": [${forehead.standardizedFeatures.joinToString(", ") { fmt(it) }}],\n")
+            sb.append(
+                "        \"standardized_features\": [${forehead.standardizedFeatures.joinToString(
+                    ", "
+                ) { fmt(it) }}],\n"
+            )
             sb.append("        \"estimate\": ${fmt(forehead.estimate)},\n")
             sb.append("        \"residual_quantile_90\": ${fmt(forehead.residualQuantile90)},\n")
             sb.append("        \"lower_bound\": ${fmt(forehead.lowerBound)},\n")
             sb.append("        \"upper_bound\": ${fmt(forehead.upperBound)},\n")
             val fTenths = forehead.toIntegerTenths()
-            sb.append("        \"integer_tenths\": {\"estimate\": ${fTenths.estimateTenths}, \"lower\": ${fTenths.lowerTenths}, \"upper\": ${fTenths.upperTenths}}\n")
+            sb.append(
+                "        \"integer_tenths\": {\"estimate\": ${fTenths.estimateTenths}, \"lower\": ${fTenths.lowerTenths}, \"upper\": ${fTenths.upperTenths}}\n"
+            )
             sb.append("      },\n")
             sb.append("      \"combined_multisite\": {\n")
             sb.append("        \"estimate\": ${fmt(combined.estimate)},\n")
             sb.append("        \"lower_bound\": ${fmt(combined.lowerBound)},\n")
             sb.append("        \"upper_bound\": ${fmt(combined.upperBound)},\n")
             val cTenths = combined.integerTenths
-            sb.append("        \"integer_tenths\": {\"estimate\": ${cTenths.estimateTenths}, \"lower\": ${cTenths.lowerTenths}, \"upper\": ${cTenths.upperTenths}}\n")
+            sb.append(
+                "        \"integer_tenths\": {\"estimate\": ${cTenths.estimateTenths}, \"lower\": ${cTenths.lowerTenths}, \"upper\": ${cTenths.upperTenths}}\n"
+            )
             sb.append("      }\n")
             sb.append(if (idx == cases.size - 1) "    }\n" else "    },\n")
         }

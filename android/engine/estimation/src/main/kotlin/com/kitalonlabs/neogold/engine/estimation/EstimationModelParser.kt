@@ -550,15 +550,23 @@ object EstimationModelParser {
         private class Tokenizer(val text: String) {
             var pos = 0
             fun isEof(): Boolean = pos >= text.length
-            fun peek(): Char = if (isEof()) throw EstimationException.InvalidModelException(
-                reason = EstimationException.InvalidModelException.Reason.SYNTAX_ERROR,
-                message = "Unexpected EOF"
-            ) else text[pos]
+            fun peek(): Char = if (isEof()) {
+                throw EstimationException.InvalidModelException(
+                    reason = EstimationException.InvalidModelException.Reason.SYNTAX_ERROR,
+                    message = "Unexpected EOF"
+                )
+            } else {
+                text[pos]
+            }
 
-            fun next(): Char = if (isEof()) throw EstimationException.InvalidModelException(
-                reason = EstimationException.InvalidModelException.Reason.SYNTAX_ERROR,
-                message = "Unexpected EOF"
-            ) else text[pos++]
+            fun next(): Char = if (isEof()) {
+                throw EstimationException.InvalidModelException(
+                    reason = EstimationException.InvalidModelException.Reason.SYNTAX_ERROR,
+                    message = "Unexpected EOF"
+                )
+            } else {
+                text[pos++]
+            }
 
             fun consume(expected: Char) {
                 val ch = next()

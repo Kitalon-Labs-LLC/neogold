@@ -85,15 +85,18 @@ class ColorConversionsRoundTripTest {
 
                     assertWithMessage(
                         "Full sRGB -> XYZ -> Lab -> XYZ -> sRGB round trip failed for %s. Recovered: %s",
-                        initialRgb, recoveredRgb
+                        initialRgb,
+                        recoveredRgb
                     ).that(diffR).isAtMost(1e-9)
                     assertWithMessage(
                         "Full sRGB -> XYZ -> Lab -> XYZ -> sRGB round trip failed for %s. Recovered: %s",
-                        initialRgb, recoveredRgb
+                        initialRgb,
+                        recoveredRgb
                     ).that(diffG).isAtMost(1e-9)
                     assertWithMessage(
                         "Full sRGB -> XYZ -> Lab -> XYZ -> sRGB round trip failed for %s. Recovered: %s",
-                        initialRgb, recoveredRgb
+                        initialRgb,
+                        recoveredRgb
                     ).that(diffB).isAtMost(1e-9)
                 }
             }

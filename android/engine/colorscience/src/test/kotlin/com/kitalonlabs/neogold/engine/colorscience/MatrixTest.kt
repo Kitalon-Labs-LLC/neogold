@@ -46,11 +46,14 @@ class MatrixTest {
         // -3x - y + 2z = -11
         // -2x + y + 2z = -3
         // Solution: x = 2, y = 3, z = -1
-        val a = Matrix(3, 3, doubleArrayOf(
-            2.0, 1.0, -1.0,
-            -3.0, -1.0, 2.0,
-            -2.0, 1.0, 2.0
-        ))
+        val a = Matrix(
+            3, 3,
+            doubleArrayOf(
+                2.0, 1.0, -1.0,
+                -3.0, -1.0, 2.0,
+                -2.0, 1.0, 2.0
+            )
+        )
         val b = Matrix(3, 1, doubleArrayOf(8.0, -11.0, -3.0))
         val x = a.solveLeastSquares(b)
         assertThat(x.rows).isEqualTo(3)
@@ -64,12 +67,19 @@ class MatrixTest {
     fun testLeastSquaresOverdeterminedSystem() {
         // Line fitting y = m*x + c
         // Points: (1, 2), (2, 3.9), (3, 6.1), (4, 8.0) -> slope ~2.0, intercept ~0.0
-        val a = Matrix(4, 2, doubleArrayOf(
-            1.0, 1.0,
-            2.0, 1.0,
-            3.0, 1.0,
-            4.0, 1.0
-        ))
+        val a = Matrix(
+            4, 2,
+            doubleArrayOf(
+                1.0,
+                1.0,
+                2.0,
+                1.0,
+                3.0,
+                1.0,
+                4.0,
+                1.0
+            )
+        )
         val b = Matrix(4, 1, doubleArrayOf(2.0, 3.9, 6.1, 8.0))
         val x = a.solveLeastSquares(b)
         // Analytical:
@@ -94,12 +104,15 @@ class MatrixTest {
     @Test
     fun testIllConditionedCollinearColumnsThrows() {
         // Column 2 is exactly 2 * Column 1
-        val a = Matrix(4, 3, doubleArrayOf(
-            1.0, 2.0, 5.0,
-            2.0, 4.0, 3.0,
-            3.0, 6.0, 2.0,
-            4.0, 8.0, 7.0
-        ))
+        val a = Matrix(
+            4, 3,
+            doubleArrayOf(
+                1.0, 2.0, 5.0,
+                2.0, 4.0, 3.0,
+                3.0, 6.0, 2.0,
+                4.0, 8.0, 7.0
+            )
+        )
         val b = Matrix(4, 1, doubleArrayOf(1.0, 1.0, 1.0, 1.0))
         assertThrows(IllConditionedMatrixException::class.java) {
             a.solveLeastSquares(b)
@@ -109,11 +122,14 @@ class MatrixTest {
     @Test
     fun testIllConditionedNearSingularInputThrows() {
         // Collinear with 1e-15 perturbation
-        val a = Matrix(3, 3, doubleArrayOf(
-            1.0, 2.0, 3.0,
-            2.0, 4.0, 6.0,
-            3.0, 6.0, 9.000000000000001
-        ))
+        val a = Matrix(
+            3, 3,
+            doubleArrayOf(
+                1.0, 2.0, 3.0,
+                2.0, 4.0, 6.0,
+                3.0, 6.0, 9.000000000000001
+            )
+        )
         val b = Matrix(3, 1, doubleArrayOf(1.0, 2.0, 3.0))
         assertThrows(IllConditionedMatrixException::class.java) {
             a.solveLeastSquares(b)
@@ -123,19 +139,25 @@ class MatrixTest {
     @Test
     fun testMultipleRightHandSidesLeastSquares() {
         // A (5 x 3), B (5 x 3) - fitting CCM mapping
-        val a = Matrix(5, 3, doubleArrayOf(
-            0.1, 0.2, 0.3,
-            0.4, 0.5, 0.6,
-            0.7, 0.2, 0.1,
-            0.2, 0.8, 0.4,
-            0.9, 0.9, 0.9
-        ))
+        val a = Matrix(
+            5, 3,
+            doubleArrayOf(
+                0.1, 0.2, 0.3,
+                0.4, 0.5, 0.6,
+                0.7, 0.2, 0.1,
+                0.2, 0.8, 0.4,
+                0.9, 0.9, 0.9
+            )
+        )
         // Known ground truth M (3 x 3)
-        val m = Matrix(3, 3, doubleArrayOf(
-            1.2, 0.1, 0.0,
-            0.0, 1.1, 0.2,
-            0.1, 0.0, 0.9
-        ))
+        val m = Matrix(
+            3, 3,
+            doubleArrayOf(
+                1.2, 0.1, 0.0,
+                0.0, 1.1, 0.2,
+                0.1, 0.0, 0.9
+            )
+        )
         val b = a * m
         val recoveredM = a.solveLeastSquares(b)
         assertThat(recoveredM.rows).isEqualTo(3)

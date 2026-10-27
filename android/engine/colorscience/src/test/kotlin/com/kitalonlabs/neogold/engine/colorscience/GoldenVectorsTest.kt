@@ -95,7 +95,9 @@ class GoldenVectorsTest {
         val sb = StringBuilder()
         sb.append("{\n")
         sb.append("  \"version\": \"1.0.0\",\n")
-        sb.append("  \"description\": \"Golden color conversion vectors across sRGB, Linear RGB, XYZ (D65), CIELAB, and CIELCh\",\n")
+        sb.append(
+            "  \"description\": \"Golden color conversion vectors across sRGB, Linear RGB, XYZ (D65), CIELAB, and CIELCh\",\n"
+        )
         sb.append("  \"illuminant\": \"D65\",\n")
         sb.append("  \"vectors\": [\n")
 
@@ -133,7 +135,7 @@ class GoldenVectorsTest {
             Rgb(0.44, 0.45, 0.43), // G4
             Rgb(0.33, 0.34, 0.32), // G5
             Rgb(0.24, 0.25, 0.23), // G6
-            Rgb(0.16, 0.17, 0.15)  // G7
+            Rgb(0.16, 0.17, 0.15) // G7
         )
 
         val linearizer = PerChannelLinearizer.fit(observedGrays, grayReflectances)
@@ -181,11 +183,19 @@ class GoldenVectorsTest {
         val referenceXyzs = patchLabs.map { labToXyz(it.second) }
 
         // Fit 3x3 CCM
-        val ccm = ColorCorrectionFitter.fit(linearizedPatches, referenceXyzs, useRootPolynomial = false) as Linear3x3CorrectionModel
+        val ccm = ColorCorrectionFitter.fit(
+            linearizedPatches,
+            referenceXyzs,
+            useRootPolynomial = false
+        ) as Linear3x3CorrectionModel
         val residual = QualityResidualCalculator.computeResidual(ccm, linearizedPatches, patchLabs.map { it.second })
 
         // Fit 2nd-order root-polynomial CCM
-        val rootPoly = ColorCorrectionFitter.fit(linearizedPatches, referenceXyzs, useRootPolynomial = true) as RootPolynomialCorrectionModel
+        val rootPoly = ColorCorrectionFitter.fit(
+            linearizedPatches,
+            referenceXyzs,
+            useRootPolynomial = true
+        ) as RootPolynomialCorrectionModel
 
         // Skin window simulation (newborn sternum with medium jaundice: Lab ~ (62.0, 11.0, 26.0))
         val trueSkinLab = Lab(62.0, 11.0, 26.0)
@@ -206,7 +216,9 @@ class GoldenVectorsTest {
         val sb = StringBuilder()
         sb.append("{\n")
         sb.append("  \"version\": \"1.0.0\",\n")
-        sb.append("  \"description\": \"Golden calibration and color correction vectors for Card v1 with skin window\",\n")
+        sb.append(
+            "  \"description\": \"Golden calibration and color correction vectors for Card v1 with skin window\",\n"
+        )
         sb.append("  \"card_layout_version\": 1,\n")
         sb.append("  \"illuminant\": \"D65\",\n")
         sb.append("  \"correction_3x3_matrix\": [\n")
@@ -217,7 +229,9 @@ class GoldenVectorsTest {
         sb.append("  ],\n")
         sb.append("  \"root_polynomial_matrix\": [\n")
         for (r in 0 until 6) {
-            sb.append("    [${fmt(rootPoly.matrix[r, 0])}, ${fmt(rootPoly.matrix[r, 1])}, ${fmt(rootPoly.matrix[r, 2])}]")
+            sb.append(
+                "    [${fmt(rootPoly.matrix[r, 0])}, ${fmt(rootPoly.matrix[r, 1])}, ${fmt(rootPoly.matrix[r, 2])}]"
+            )
             sb.append(if (r == 5) "\n" else ",\n")
         }
         sb.append("  ],\n")
@@ -247,10 +261,24 @@ class GoldenVectorsTest {
         }
         sb.append("  ],\n")
         sb.append("  \"skin_window\": {\n")
-        sb.append("    \"raw_observed_rgb\": [${fmt(rawSkinObserved.r)}, ${fmt(rawSkinObserved.g)}, ${fmt(rawSkinObserved.b)}],\n")
-        sb.append("    \"linearized_rgb\": [${fmt(linearizedSkin.r)}, ${fmt(linearizedSkin.g)}, ${fmt(linearizedSkin.b)}],\n")
-        sb.append("    \"corrected_xyz\": [${fmt(correctedSkinXyz.x)}, ${fmt(correctedSkinXyz.y)}, ${fmt(correctedSkinXyz.z)}],\n")
-        sb.append("    \"corrected_lab\": [${fmt(correctedSkinLab.l)}, ${fmt(correctedSkinLab.a)}, ${fmt(correctedSkinLab.b)}],\n")
+        sb.append(
+            "    \"raw_observed_rgb\": [${fmt(
+                rawSkinObserved.r
+            )}, ${fmt(rawSkinObserved.g)}, ${fmt(rawSkinObserved.b)}],\n"
+        )
+        sb.append(
+            "    \"linearized_rgb\": [${fmt(linearizedSkin.r)}, ${fmt(linearizedSkin.g)}, ${fmt(linearizedSkin.b)}],\n"
+        )
+        sb.append(
+            "    \"corrected_xyz\": [${fmt(
+                correctedSkinXyz.x
+            )}, ${fmt(correctedSkinXyz.y)}, ${fmt(correctedSkinXyz.z)}],\n"
+        )
+        sb.append(
+            "    \"corrected_lab\": [${fmt(
+                correctedSkinLab.l
+            )}, ${fmt(correctedSkinLab.a)}, ${fmt(correctedSkinLab.b)}],\n"
+        )
         sb.append("    \"features\": {\n")
         sb.append("      \"l_star\": ${fmt(correctedSkinLab.l)},\n")
         sb.append("      \"a_star\": ${fmt(correctedSkinLab.a)},\n")

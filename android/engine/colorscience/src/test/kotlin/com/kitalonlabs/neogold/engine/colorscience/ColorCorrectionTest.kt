@@ -40,9 +40,15 @@ class ColorCorrectionTest {
 
         // Camera distortion: well-conditioned 3x3 mixing matrix M
         // Close to identity with moderate cross-talk
-        val m00 = 1.05; val m01 = 0.08; val m02 = 0.03
-        val m10 = 0.05; val m11 = 0.98; val m12 = 0.06
-        val m20 = 0.02; val m21 = 0.04; val m22 = 1.02
+        val m00 = 1.05;
+        val m01 = 0.08;
+        val m02 = 0.03
+        val m10 = 0.05;
+        val m11 = 0.98;
+        val m12 = 0.06
+        val m20 = 0.02;
+        val m21 = 0.04;
+        val m22 = 1.02
 
         // Distorted camera observed RGBs (pre-linearization) with gamma = 2.1
         val gamma = 2.1

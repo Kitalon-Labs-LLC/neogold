@@ -120,7 +120,9 @@ object TriageConfigParser {
                     ?: throw IllegalArgumentException("Band '$key' point $idx threshold must be a number")
                 require(age in 0.0..336.0) { "Band '$key' age $age out of range [0, 336]" }
                 require(thresh >= 0.0) { "Band '$key' threshold $thresh must be non-negative" }
-                require(age > prevAge) { "Band '$key' points must be in strictly ascending age order ($age <= $prevAge)" }
+                require(
+                    age > prevAge
+                ) { "Band '$key' points must be in strictly ascending age order ($age <= $prevAge)" }
 
                 if (prevThreshold >= 0.0 && thresh < prevThreshold) {
                     isMonotonic = false

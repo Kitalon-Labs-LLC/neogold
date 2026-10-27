@@ -469,7 +469,13 @@ class TriageEngineTest {
             clock = { LocalDate.of(2026, 10, 17) }
         )
         val result = publicEngine.evaluate(
-            TriageInputs(gestationalAgeWeeks = 40, ageHours = 48.0, estimate = 12.0, lowerBound = 10.0, upperBound = 14.0)
+            TriageInputs(
+                gestationalAgeWeeks = 40,
+                ageHours = 48.0,
+                estimate = 12.0,
+                lowerBound = 10.0,
+                upperBound = 14.0
+            )
         )
         assertThat(result).isInstanceOf(TriageResult.Unavailable::class.java)
         val unavail = result as TriageResult.Unavailable
@@ -498,7 +504,13 @@ class TriageEngineTest {
             clock = { LocalDate.of(2028, 1, 1) } // syntheticConfig validUntil is 2027-12-31
         )
         val result = expiredEngine.evaluate(
-            TriageInputs(gestationalAgeWeeks = 40, ageHours = 48.0, estimate = 12.0, lowerBound = 10.0, upperBound = 14.0)
+            TriageInputs(
+                gestationalAgeWeeks = 40,
+                ageHours = 48.0,
+                estimate = 12.0,
+                lowerBound = 10.0,
+                upperBound = 14.0
+            )
         )
         assertThat(result).isInstanceOf(TriageResult.Unavailable::class.java)
         val unavail = result as TriageResult.Unavailable

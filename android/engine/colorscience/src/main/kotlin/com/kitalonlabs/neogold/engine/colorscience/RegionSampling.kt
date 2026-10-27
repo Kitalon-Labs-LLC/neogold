@@ -85,7 +85,9 @@ object RegionSampling {
         val n = pixels.size
         val dropCount = StrictMath.floor(n * trimFraction).toInt()
         if (dropCount == 0 || n <= 2 * dropCount) {
-            var sumR = 0.0; var sumG = 0.0; var sumB = 0.0
+            var sumR = 0.0
+            var sumG = 0.0
+            var sumB = 0.0
             for (p in pixels) {
                 sumR += p.r
                 sumG += p.g
@@ -99,7 +101,9 @@ object RegionSampling {
 
         val start = dropCount
         val end = n - dropCount
-        var sumR = 0.0; var sumG = 0.0; var sumB = 0.0
+        var sumR = 0.0
+        var sumG = 0.0
+        var sumB = 0.0
         val count = end - start
         for (i in start until end) {
             val p = sorted[i]
