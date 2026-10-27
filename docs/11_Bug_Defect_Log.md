@@ -106,6 +106,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-029 | About 150 hardcoded English UI strings; string lint does not check Kotlin | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | A11Y | S2 | No | - | P2 | New | Unassigned | TC-A11Y-01 | |
 | BUG-2026-030 | Hazard log is missing | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | none (add to doc 10) | |
 | BUG-2026-031 | Release notes file for v1.0.0 is missing | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-OPS-02 | |
+| BUG-2026-032 | BurstCaptureController reads capture metadata through CameraX internal APIs | 2026-10-26 | CI | commit f1e01e6 | n/a | CAP | S2 | No | - | P2 | In progress | Unassigned | TC-CAP-01 | |
 
 ### 4.1 Entries
 
@@ -618,6 +619,22 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The text already exists in doc 13 Section 6. Fix package R6.
 
+#### BUG-2026-032: BurstCaptureController reads capture metadata through CameraX internal APIs
+
+- Area: CAP | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: In progress | Owner: Unassigned | Test case: TC-CAP-01 | Fix version:
+
+**Steps**
+1. Run `./gradlew :engine:camera:lintRelease` on a clean checkout.
+
+**Expected** Lint passes (it is part of the android-ci line, doc 12 Section 3).
+
+**Actual** Six `RestrictedApi` errors: `CameraCaptureResultImageInfo` and `Camera2CameraCaptureResult` are CameraX internals that may change or disappear in any CameraX release. The reflection fallback below them reaches for the same classes.
+
+**Evidence** `android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/BurstCaptureController.kt`, `extractCaptureResult`. The first real android-ci run needs a clean Gradle cache to show it, which is why it surfaced only on 26 October 2026.
+
+**Notes** Nothing calls `BurstCaptureController`, not the app and not any test, so there is no runtime effect today. That also means its metadata path has never been exercised. A narrow `@SuppressLint("RestrictedApi")` makes the violation visible and lets lint pass until the camera host (work package C1) replaces it with a `Camera2Interop` session callback installed when the `ImageCapture` is built, correlated to frames by sensor timestamp. The suppression and this entry are removed then. Status becomes Fixed in that change.
+
 ---
 
 ## 5. Closed Defects
@@ -636,7 +653,7 @@ Updated with each test summary report (doc 9 Section 15).
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
-| S2 | 16 | 0 | 0 |
+| S2 | 17 | 0 | 0 |
 | S3 | 0 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 

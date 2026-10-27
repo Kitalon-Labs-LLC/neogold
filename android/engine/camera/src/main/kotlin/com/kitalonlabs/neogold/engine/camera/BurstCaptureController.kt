@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.engine.camera
 
+import android.annotation.SuppressLint
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CaptureResult
 import androidx.camera.camera2.interop.Camera2Interop
@@ -110,6 +111,10 @@ class BurstCaptureController(
         return deferred.await()
     }
 
+    // BUG-2026-032: reads CameraX internal types, which lint reports as RestrictedApi. Nothing calls
+    // this class yet. The camera host (work package C1) replaces it with a Camera2Interop session
+    // callback installed when the ImageCapture is built, and this suppression goes with it.
+    @SuppressLint("RestrictedApi")
     private fun extractCaptureResult(image: ImageProxy): CaptureResult? {
         val info = image.imageInfo
         if (info is androidx.camera.core.internal.CameraCaptureResultImageInfo) {
