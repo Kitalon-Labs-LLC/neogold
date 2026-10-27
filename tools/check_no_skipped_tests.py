@@ -43,6 +43,18 @@ TIER0_AND_1_GLOBS = [
 ]
 
 
+def find_skips_in_content(content: str) -> list[tuple[int, str]]:
+    violations = []
+    for line_idx, line in enumerate(content.splitlines(), 1):
+        trimmed = line.strip()
+        if trimmed.startswith("//") or trimmed.startswith("#") or trimmed.startswith("*") or trimmed.startswith("/*"):
+            continue
+        for regex, name in SKIP_MARKERS:
+            if regex.search(line):
+                violations.append((line_idx, name))
+    return violations
+
+
 def check_skipped_markers(repo_root: Path) -> list[str]:
     violations = []
     seen = set()
@@ -58,14 +70,10 @@ def check_skipped_markers(repo_root: Path) -> list[str]:
                 continue
 
             rel_path = file_path.relative_to(repo_root).as_posix()
-            for line_idx, line in enumerate(content.splitlines(), 1):
-                trimmed = line.strip()
-                if trimmed.startswith("//") or trimmed.startswith("#") or trimmed.startswith("*"):
-                    continue
-                for regex, name in SKIP_MARKERS:
-                    if regex.search(line):
-                        violations.append(f"{rel_path}:{line_idx}: Found skip marker '{name}'")
+            for line_idx, name in find_skips_in_content(content):
+                violations.append(f"{rel_path}:{line_idx}: Found skip marker '{name}'")
     return violations
+
 
 
 def check_tc_baseline(repo_root: Path) -> list[str]:
