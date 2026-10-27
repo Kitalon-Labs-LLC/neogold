@@ -110,6 +110,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-033 | Foreground service type is declared only in :app, so :sync:research and :app lint fail | 2026-10-27 | CI | commit a0b6da2 | n/a | SYNC | S3 | No | - | P2 | Fixed | Unassigned | TC-SYNC-10 | |
 | BUG-2026-034 | Recheck notification is posted without checking the notification permission | 2026-10-27 | CI | commit a0b6da2 | n/a | LOG | S3 | No | - | P2 | Fixed | Unassigned | TC-LOG-09 | |
 | BUG-2026-035 | ScreeningPipelineBenchmarkTest asserts phone time budgets on a shared build machine | 2026-10-27 | Test | commit a0b6da2 | n/a | PERF | S3 | No | - | P3 | New | Unassigned | TC-PERF-01 | |
+| BUG-2026-036 | Trivy gate S2 fails: Bouncy Castle 1.78.1 (CRITICAL) and protobuf-java 3.19.3 (HIGH) ship in the app | 2026-10-27 | CI | commit 8c13d2a | n/a | SEC | S2 | No | - | P2 | In progress | Unassigned | TC-SEC-05 | |
 
 ### 4.1 Entries
 
@@ -695,6 +696,22 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The test applies a phone time budget to the host JVM on synthetic frames. It proves nothing about phones, and it can fail on a busy CI runner. The threshold is not loosened (CLAUDE.md: never weaken a test). The Macrobenchmark package (E2) replaces this test and `tools/benchmark_capture_to_result.py` with measurements on real phones.
 
+#### BUG-2026-036: Trivy gate S2 fails: Bouncy Castle 1.78.1 (CRITICAL) and protobuf-java 3.19.3 (HIGH) ship in the app
+
+- Area: SEC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: In progress | Owner: Unassigned | Test case: TC-SEC-05 | Fix version:
+
+**Steps**
+1. Run the `scan` job of `android-ci.yml`, or `trivy fs --severity CRITICAL,HIGH android`.
+
+**Expected** No CRITICAL or HIGH finding in what ships (gate S2, doc 8 Section 10).
+
+**Actual** The first full android-ci run on 27 October 2026 reported three libraries. `bcprov-jdk18on` 1.78.1 is on every release runtime classpath (it hashes the research PIN with Argon2id, ADR-016): CVE-2025-14813 (CRITICAL, in the GOST cipher mode, which NeoGold does not use), CVE-2026-8763 (CRITICAL), CVE-2026-13506 (HIGH). `protobuf-java` 3.19.3 is also on the release classpath: CVE-2022-3509, CVE-2022-3510, CVE-2024-7254 (HIGH). `bcprov-jdk18on` 1.80.2 appears only in the `androidLintTool` configuration.
+
+**Evidence** The `scan` job log of android-ci run 40474881430; the lockfiles list the configurations each version is in. A review of the Tink call sites in `:core:security` (`FileKeysetProvider`, `ExportCryptoEngine`) found no protobuf parsing of untrusted input.
+
+**Notes** Fixed in part. Bouncy Castle was upgraded to 1.86 (jar and pom checksums cross-checked against the sha256 and sha1 Maven Central publishes; the 43 `:core:security` tests, including Argon2id, still pass). What remains is time-boxed in `.trivyignore.yaml`, each entry scoped to one package version, with a reason and an expiry of 31 January 2027: Bouncy Castle 1.80.2 inside Android's lint tool (not shipped; clears with an Android Gradle Plugin upgrade) and `protobuf-java` 3.19.3, which ships because the project uses the Tink JVM jar `tink` 1.7.0 instead of `tink-android`. Moving to `tink-android` or a newer Tink removes it; that touches keyset storage and the HPKE export, so it belongs to work package B1 with its own tests. Status becomes Fixed when that lands and the ignore entries are deleted. The gate stays active for everything else.
+
 ---
 
 ## 5. Closed Defects
@@ -713,7 +730,7 @@ Updated with each test summary report (doc 9 Section 15).
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
-| S2 | 17 | 0 | 0 |
+| S2 | 18 | 0 | 0 |
 | S3 | 3 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
