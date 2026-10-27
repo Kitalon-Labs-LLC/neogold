@@ -33,7 +33,7 @@ class KeystorePinHmacKeyProvider(
         getOrCreateKey()
     }
 
-    @Suppress("TooGenericExceptionCaught") // BUG-2026-011 (S1): any key store error falls back to a published key; fail closed in B1
+    @Suppress("TooGenericExceptionCaught") // BUG-2026-011 (S1): falls back to a published key on any error; fix in B1
     private fun getOrCreateKey(): SecretKey {
         return try {
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
