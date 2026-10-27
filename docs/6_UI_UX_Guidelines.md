@@ -385,7 +385,7 @@ All numbers in the wireframes are illustrative, not clinical values. The range b
 | Confirmation | Only for destructive actions (delete all, abandon a research session). Never for saving |
 | Errors | Say what happened and what to do, in one sentence each. No error codes on screen; codes go to the local log |
 | Loading | Analysis shows a simple progress indicator; if it exceeds 10 s, show "Taking longer than usual" and offer "Blood test today" as the safe exit |
-| Notifications | Recheck reminders only, with no baby details on the lock screen ("A NeoGold recheck is due") |
+| Notifications | Recheck reminders only, with no baby details on the lock screen. Title "NeoGold", text "A recheck is due" (same as TC-LOG-09 and doc 8 Section 6; Android already labels the notification with the app, so the text does not repeat the name). Decided 2026-10-27 to settle the earlier wording "A NeoGold recheck is due"; no clinical content either way |
 | Research visibility | A persistent "Research mode" bar on every research screen so screening and research are never confused |
 | Session timeout | Research mode locks after 5 minutes of inactivity |
 
