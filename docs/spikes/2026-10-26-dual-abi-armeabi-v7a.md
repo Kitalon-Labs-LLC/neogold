@@ -5,7 +5,7 @@
 | Date | 2026-10-26 |
 | Author | NeoGold Agent Quality Team |
 | Work package / Context | P23 (Agent quality loop, Spike and assumption check) |
-| Verdict | **Confirmed** |
+| Verdict | **Not confirmed** (downgraded 27 October 2026; see Section 8) |
 
 ---
 
@@ -65,3 +65,11 @@
 ## 7. Affected Doc Lines
 - `docs/4_System_Architecture.md:150`:
   Update `[Likely]` to `[Certain, verified in docs/spikes/2026-10-26-dual-abi-armeabi-v7a.md]`.
+  (Reverted, see Section 8.)
+
+## 8. Correction (27 October 2026)
+
+The package A3 review found that this spike does not support `Confirmed`.
+
+- Both pass conditions are about the repository, not about phones: the Gradle splits list both ABIs, and the engines give the same result on the JVM (`EstimationMultiAbiDeterminismTest`, a JVM test; the two-ABI harness for TC-EST-07 is package E2). Nothing here shows what phones in the field run. The Android Go chipset names in Section 5 have no source. The claim in doc 4 is `[Likely]` again.
+- Section 4 shows `splits { abi { isEnable = true ... } }` for every build. Since BUG-2026-052 the splits are turned off when a bundle is built, because Android Gradle plugin 9 refuses to build a bundle with them on. Play makes the ABI splits from the bundle.
