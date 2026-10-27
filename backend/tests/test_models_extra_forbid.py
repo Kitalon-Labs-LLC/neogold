@@ -7,8 +7,9 @@ A coding mistake that adds or accepts unknown fields is rejected rather than sto
 """
 
 import inspect
-from pydantic import BaseModel
+
 import pytest
+from pydantic import BaseModel
 
 from app.models import api as api_models
 
@@ -34,7 +35,8 @@ def test_pydantic_model_forbids_extra_fields(name, model_cls):
 def test_request_model_rejects_unknown_payload_fields():
     """Verify runtime behavior: passing an extra field to EnrollmentRequest raises a ValidationError."""
     from pydantic import ValidationError
-    from app.models.api import Jwk, DeviceInfo, EnrollmentRequest
+
+    from app.models.api import EnrollmentRequest
 
     valid_jwk = {"kty": "EC", "crv": "P-256", "x": "a" * 43, "y": "b" * 43}
     valid_device = {
