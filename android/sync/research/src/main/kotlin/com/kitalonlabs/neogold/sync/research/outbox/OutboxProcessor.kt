@@ -59,7 +59,7 @@ class OutboxProcessor(
     @Suppress(
         "ReturnCount",
         "TooGenericExceptionCaught"
-    ) // network and server failures are retried with backoff (TC-SYNC-03); upload state machine; reworked with the sync wiring in C4
+    ) // network and server failures are retried with backoff (TC-SYNC-03); reworked in C4
     suspend fun process(): OutboxResult {
         val study = studyDao.getActiveStudy() ?: return OutboxResult.Error("No active research study found")
         val baseUrl = study.serverUrl ?: return OutboxResult.Error("No server URL configured for study")

@@ -33,7 +33,7 @@ class KeystorePinHmacKeyProvider(
         getOrCreateKey()
     }
 
-    @Suppress("TooGenericExceptionCaught") // test environments lack the platform provider, so fall back
+    @Suppress("TooGenericExceptionCaught") // BUG-2026-011 (S1): any key store error falls back to a published key; fail closed in B1
     private fun getOrCreateKey(): SecretKey {
         return try {
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -51,7 +51,7 @@ class KeystorePinHmacKeyProvider(
             }
         } catch (e: Exception) {
             Timber.w(e, "AndroidKeyStore not available for HMAC, falling back to software provider")
-            // Fallback for Robolectric or test environments without AndroidKeyStore
+            // Meant for Robolectric, but it also runs on a device when the key store fails (BUG-2026-011, fixed in B1)
             FakePinHmacKeyProvider.STATIC_KEY
         }
     }

@@ -112,7 +112,7 @@ object ExportCryptoEngine {
     @Suppress(
         "ThrowsCount",
         "TooGenericExceptionCaught"
-    ) // any decode or crypto failure maps to a typed decryption error; every failure maps to a typed DecryptionException
+    ) // any decode or crypto failure maps to a typed DecryptionException
     fun unwrapDataKey(wrappedDataKeyB64: String, exportPrivateKeyBytes: ByteArray): KeysetHandle {
         require(exportPrivateKeyBytes.size == 32) {
             "Export private key must be exactly 32 bytes (X25519), got ${exportPrivateKeyBytes.size}"
