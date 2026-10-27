@@ -20,6 +20,7 @@ class TriageEngine(
      * @param inputs Clinical screening inputs and bilirubin estimation interval.
      * @return [TriageResult.Action] or [TriageResult.Unavailable].
      */
+    @Suppress("LongMethod", "ReturnCount") // ordered rules, the first match returns (doc 4 Section 6)
     fun evaluate(inputs: TriageInputs): TriageResult {
         // Step 1: Config availability check
         if (!config.triageEnabled) {

@@ -1,3 +1,7 @@
+@file:Suppress(
+    "MagicNumber"
+) // scope and rule-count checks mirror config/triage-config.json (PRD 9b); they stay literal so a search finds them
+
 package com.kitalonlabs.neogold.engine.triage
 
 import java.time.LocalDate
@@ -16,6 +20,11 @@ object TriageConfigParser {
      * @return Validated [TriageConfig].
      * @throws IllegalArgumentException on syntax or semantic validation errors.
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LongMethod",
+        "ThrowsCount"
+    ) // one check per config field; a bad config must be rejected (PRD 9b)
     fun parse(jsonString: String): TriageConfig {
         val root = JsonParser.parse(jsonString) as? Map<*, *>
             ?: throw IllegalArgumentException("Triage config root must be a JSON object")
@@ -86,7 +95,7 @@ object TriageConfigParser {
             val action = try {
                 TriageAction.valueOf(actionStr)
             } catch (e: IllegalArgumentException) {
-                throw IllegalArgumentException("Rule $id invalid action '$actionStr'")
+                throw IllegalArgumentException("Rule $id invalid action '$actionStr'", e)
             }
             HardRuleConfig(id, whenCond, action)
         }
@@ -338,8 +347,14 @@ object TriageConfigParser {
         private class Tokenizer(val text: String) {
             var pos = 0
             fun isEof(): Boolean = pos >= text.length
-            fun peek(): Char = if (isEof()) throw IllegalArgumentException("Unexpected EOF") else text[pos]
-            fun next(): Char = if (isEof()) throw IllegalArgumentException("Unexpected EOF") else text[pos++]
+            fun peek(): Char {
+                require(!isEof()) { "Unexpected EOF" }
+                return text[pos]
+            }
+            fun next(): Char {
+                require(!isEof()) { "Unexpected EOF" }
+                return text[pos++]
+            }
             fun consume(expected: Char) {
                 val ch = next()
                 require(ch == expected) { "Expected '$expected' but found '$ch' at $pos" }

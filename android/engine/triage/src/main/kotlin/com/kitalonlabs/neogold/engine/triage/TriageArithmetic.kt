@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // decimal scale of the exact interpolation (doc 4 Section 6.2)
+
 package com.kitalonlabs.neogold.engine.triage
 
 import java.math.BigDecimal
@@ -75,8 +77,8 @@ object TriageArithmetic {
         val firstAge = BigDecimal(table.first().first.toString())
         val lastAge = BigDecimal(table.last().first.toString())
 
-        if (ageDec < firstAge || ageDec > lastAge) {
-            throw IllegalArgumentException("Age $ageHours h outside threshold table range [$firstAge, $lastAge]")
+        require(ageDec >= firstAge && ageDec <= lastAge) {
+            "Age $ageHours h outside threshold table range [$firstAge, $lastAge]"
         }
 
         for (i in 0 until table.size - 1) {

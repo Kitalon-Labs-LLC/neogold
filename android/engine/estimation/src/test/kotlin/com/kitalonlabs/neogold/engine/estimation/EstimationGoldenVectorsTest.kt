@@ -148,7 +148,8 @@ class EstimationGoldenVectorsTest {
             sb.append("        \"upper_bound\": ${fmt(sternum.upperBound)},\n")
             val sTenths = sternum.toIntegerTenths()
             sb.append(
-                "        \"integer_tenths\": {\"estimate\": ${sTenths.estimateTenths}, \"lower\": ${sTenths.lowerTenths}, \"upper\": ${sTenths.upperTenths}}\n"
+                "        \"integer_tenths\": {\"estimate\": ${sTenths.estimateTenths}, \"lower\": ${sTenths.lowerTenths}, " +
+                    "\"upper\": ${sTenths.upperTenths}}\n"
             )
             sb.append("      },\n")
             sb.append("      \"forehead\": {\n")
@@ -163,7 +164,8 @@ class EstimationGoldenVectorsTest {
             sb.append("        \"upper_bound\": ${fmt(forehead.upperBound)},\n")
             val fTenths = forehead.toIntegerTenths()
             sb.append(
-                "        \"integer_tenths\": {\"estimate\": ${fTenths.estimateTenths}, \"lower\": ${fTenths.lowerTenths}, \"upper\": ${fTenths.upperTenths}}\n"
+                "        \"integer_tenths\": {\"estimate\": ${fTenths.estimateTenths}, \"lower\": ${fTenths.lowerTenths}, " +
+                    "\"upper\": ${fTenths.upperTenths}}\n"
             )
             sb.append("      },\n")
             sb.append("      \"combined_multisite\": {\n")
@@ -172,7 +174,8 @@ class EstimationGoldenVectorsTest {
             sb.append("        \"upper_bound\": ${fmt(combined.upperBound)},\n")
             val cTenths = combined.integerTenths
             sb.append(
-                "        \"integer_tenths\": {\"estimate\": ${cTenths.estimateTenths}, \"lower\": ${cTenths.lowerTenths}, \"upper\": ${cTenths.upperTenths}}\n"
+                "        \"integer_tenths\": {\"estimate\": ${cTenths.estimateTenths}, \"lower\": ${cTenths.lowerTenths}, " +
+                    "\"upper\": ${cTenths.upperTenths}}\n"
             )
             sb.append("      }\n")
             sb.append(if (idx == cases.size - 1) "    }\n" else "    },\n")

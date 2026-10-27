@@ -4,20 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.engine.colorscience.Lab
 import org.junit.Assert.assertThrows
 import org.junit.Test
-import java.io.File
 
 class FeatureExtractorTest {
-
-    private val goldenPatchCorrectionFile: File
-        get() {
-            var dir = File(".").canonicalFile
-            while (dir.parentFile != null) {
-                val candidate = File(dir, "testdata/golden/colorscience/golden_patch_correction.json")
-                if (candidate.isFile) return candidate
-                dir = dir.parentFile
-            }
-            return File("../../../testdata/golden/colorscience/golden_patch_correction.json").canonicalFile
-        }
 
     @Test
     fun testFeatureExtractionFromNominalLab() {

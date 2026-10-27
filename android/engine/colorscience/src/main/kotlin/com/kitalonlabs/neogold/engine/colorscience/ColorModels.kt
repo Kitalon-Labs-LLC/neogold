@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // relative luminance weights, the Y row of the linear sRGB to XYZ matrix
+
 package com.kitalonlabs.neogold.engine.colorscience
 
 /**

@@ -30,7 +30,9 @@ object RegionSampling {
      * E.g. innerFraction = 0.60 for calibration patches, 0.70 for the punched skin window.
      */
     fun computeInnerRegion(rect: RectPx, innerFraction: Double): RectPx {
-        require(innerFraction in 0.01..1.0) { "Inner fraction must be in (0.0, 1.0] (got $innerFraction)" }
+        require(
+            innerFraction in MIN_INNER_FRACTION..1.0
+        ) { "Inner fraction must be in (0.0, 1.0] (got $innerFraction)" }
         val innerW = StrictMath.round(rect.w * innerFraction).toInt()
         val innerH = StrictMath.round(rect.h * innerFraction).toInt()
         val marginX = (rect.w - innerW) / 2
@@ -49,7 +51,7 @@ object RegionSampling {
      */
     fun trimmedMean(values: DoubleArray, trimFraction: Double = DEFAULT_TRIM_FRACTION): Double {
         require(values.isNotEmpty()) { "Values array must not be empty" }
-        require(trimFraction in 0.0..0.49) { "Trim fraction must be in [0.0, 0.49] (got $trimFraction)" }
+        require(trimFraction in 0.0..MAX_TRIM_FRACTION) { "Trim fraction must be in [0.0, 0.49] (got $trimFraction)" }
 
         val n = values.size
         val dropCount = StrictMath.floor(n * trimFraction).toInt()
@@ -80,7 +82,7 @@ object RegionSampling {
      */
     fun trimmedMeanRgb(pixels: List<Rgb>, trimFraction: Double = DEFAULT_TRIM_FRACTION): Rgb {
         require(pixels.isNotEmpty()) { "Pixels list must not be empty" }
-        require(trimFraction in 0.0..0.49) { "Trim fraction must be in [0.0, 0.49] (got $trimFraction)" }
+        require(trimFraction in 0.0..MAX_TRIM_FRACTION) { "Trim fraction must be in [0.0, 0.49] (got $trimFraction)" }
 
         val n = pixels.size
         val dropCount = StrictMath.floor(n * trimFraction).toInt()
@@ -163,3 +165,6 @@ object RegionSampling {
         return trimmedMeanRgb(pixels, DEFAULT_TRIM_FRACTION)
     }
 }
+
+private const val MIN_INNER_FRACTION = 0.01
+private const val MAX_TRIM_FRACTION = 0.49

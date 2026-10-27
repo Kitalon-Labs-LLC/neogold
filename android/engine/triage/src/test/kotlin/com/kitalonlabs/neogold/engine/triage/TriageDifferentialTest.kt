@@ -7,6 +7,7 @@ import java.util.Random
 
 class TriageDifferentialTest {
 
+    @Suppress("ConstructorParameterNaming") // the names are the JSON keys of the differential vectors
     data class TestCase(
         val name: String,
         val danger: Boolean = false,
@@ -37,7 +38,7 @@ class TriageDifferentialTest {
                 // try next
             }
         }
-        throw IllegalStateException("No suitable Python executable found for differential test")
+        error("No suitable Python executable found for differential test")
     }
 
     private fun findFile(relative: String): File {
@@ -48,7 +49,7 @@ class TriageDifferentialTest {
             File("../../../$relative")
         )
         return candidates.firstOrNull { it.exists() }
-            ?: throw IllegalStateException("Could not find file '$relative'")
+            ?: error("Could not find file '$relative'")
     }
 
     @Test
@@ -192,7 +193,8 @@ class TriageDifferentialTest {
                 disagreements++
                 if (disagreements <= 10) {
                     discrepancyLog.appendLine(
-                        "Disagreement on case $i (${tc.name}): inputs(ga=${tc.ga}, age=${tc.age_h}, E=${tc.E}, L=${tc.L}, U=${tc.U}) -> Kotlin=($actualAction, $actualReason) vs Python=($expectedAction, $expectedReason)"
+                        "Disagreement on case $i (${tc.name}): inputs(ga=${tc.ga}, age=${tc.age_h}, E=${tc.E}, L=${tc.L}, U=${tc.U}) " +
+                            "-> Kotlin=($actualAction, $actualReason) vs Python=($expectedAction, $expectedReason)"
                     )
                 }
             }

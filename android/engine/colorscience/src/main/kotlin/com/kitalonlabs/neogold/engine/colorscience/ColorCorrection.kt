@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // 6-term root-polynomial feature vector, 3 output channels (doc 4 Section 5.4)
+
 package com.kitalonlabs.neogold.engine.colorscience
 
 /**

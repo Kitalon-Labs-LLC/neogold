@@ -5,6 +5,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.time.LocalDate
+import java.util.Locale
 import java.util.Random
 
 /**
@@ -520,7 +521,7 @@ class CardTrustEngineTest {
     private fun bytesToHex(bytes: ByteArray): String {
         val sb = StringBuilder(bytes.size * 2)
         for (b in bytes) {
-            sb.append(String.format("%02x", b.toInt() and 0xFF))
+            sb.append(String.format(Locale.ROOT, "%02x", b.toInt() and 0xFF))
         }
         return sb.toString()
     }
@@ -533,6 +534,6 @@ class CardTrustEngineTest {
             File("../../../$relative")
         )
         return candidates.firstOrNull { it.exists() }
-            ?: throw IllegalStateException("Could not find required file '$relative'. Checked: $candidates")
+            ?: error("Could not find required file '$relative'. Checked: $candidates")
     }
 }

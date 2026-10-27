@@ -27,7 +27,7 @@ class ColorCorrectionTest {
         val trueRefXyzs = mutableListOf<Xyz>()
         val trueRefLabs = mutableListOf<Lab>()
 
-        for (i in 0 until total) {
+        repeat(total) {
             val r = 0.05 + 0.90 * rng.nextDouble()
             val g = 0.05 + 0.90 * rng.nextDouble()
             val b = 0.05 + 0.90 * rng.nextDouble()
@@ -109,7 +109,7 @@ class ColorCorrectionTest {
         val patchesXyz = mutableListOf<Xyz>()
         val patchesLab = mutableListOf<Lab>()
 
-        for (i in 0 until 20) {
+        repeat(20) {
             val r = 0.1 + 0.8 * rng.nextDouble()
             val g = 0.1 + 0.8 * rng.nextDouble()
             val b = 0.1 + 0.8 * rng.nextDouble()

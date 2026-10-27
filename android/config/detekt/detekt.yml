@@ -12,6 +12,9 @@ naming:
     # Wire models mirror the JSON field names of docs/api/openapi.yaml (snake_case), which the server
     # validates with extra = "forbid"; renaming them in Kotlin would only add a mapping layer.
     excludes: ['**/sync/research/api/models/**']
+  VariableNaming:
+    # Engine tests name a variable after the vector it checks (res336_1, action14_9); that is the clearer name.
+    excludes: ['**/test/**', '**/androidTest/**']
 
 # Structural metrics (size, branching, nesting, parameters) are style heuristics, not defect detectors.
 # The thresholds below sit where the code is today so that they stop new growth; the few functions

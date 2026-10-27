@@ -29,15 +29,15 @@ class RegionSamplingTest {
     fun testTrimmedMeanRgbDiscardsDarkestAndBrightestPixels() {
         val pixels = mutableListOf<Rgb>()
         // 80 normal skin-like pixels (0.6, 0.4, 0.3)
-        for (i in 0 until 80) {
+        repeat(80) {
             pixels.add(Rgb(0.60, 0.40, 0.30))
         }
         // 10 bright specular highlight pixels (1.0, 1.0, 1.0)
-        for (i in 0 until 10) {
+        repeat(10) {
             pixels.add(Rgb(1.0, 1.0, 1.0))
         }
         // 10 dark shadow/bleed pixels (0.05, 0.05, 0.05)
-        for (i in 0 until 10) {
+        repeat(10) {
             pixels.add(Rgb(0.05, 0.05, 0.05))
         }
 

@@ -16,6 +16,12 @@ object EstimationModelParser {
      * @return Validated [EstimationModel].
      * @throws EstimationException.InvalidModelException on syntax or semantic validation failure.
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LongMethod",
+        "ThrowsCount",
+        "TooGenericExceptionCaught"
+    ) // one typed error per malformed field; any parse failure fails closed
     fun parse(json: String): EstimationModel {
         val root = try {
             SimpleJsonParser.parse(json) as? Map<*, *>
@@ -137,7 +143,7 @@ object EstimationModelParser {
             if (siteKey !is String) continue
             val site = try {
                 BodySite.fromString(siteKey)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw EstimationException.InvalidModelException(
                     reason = EstimationException.InvalidModelException.Reason.SCHEMA_VIOLATION,
                     message = "Unknown site key in sites: '$siteKey'"
@@ -219,7 +225,7 @@ object EstimationModelParser {
             if (wKey !is String) continue
             val site = try {
                 BodySite.fromString(wKey)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw EstimationException.InvalidModelException(
                     reason = EstimationException.InvalidModelException.Reason.SCHEMA_VIOLATION,
                     message = "Unknown site key in multiSiteWeights: '$wKey'"

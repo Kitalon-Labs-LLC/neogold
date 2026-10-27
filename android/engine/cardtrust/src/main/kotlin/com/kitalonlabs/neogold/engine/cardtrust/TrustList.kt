@@ -51,6 +51,7 @@ data class TrustList(
  */
 object TrustListParser {
 
+    @Suppress("ThrowsCount") // one error per malformed field
     fun parse(jsonString: String): TrustList {
         val root = JsonParser.parse(jsonString) as? Map<*, *>
             ?: throw IllegalArgumentException("Trust list root must be a JSON object")
@@ -170,7 +171,7 @@ object TrustListParser {
 
         private fun parseValue(tokenizer: Tokenizer): Any? {
             tokenizer.skipWhitespace()
-            if (tokenizer.isEof()) throw IllegalArgumentException("Unexpected EOF")
+            require(!tokenizer.isEof()) { "Unexpected EOF" }
             return when (val ch = tokenizer.peek()) {
                 '{' -> parseObject(tokenizer)
                 '[' -> parseArray(tokenizer)
@@ -293,8 +294,14 @@ object TrustListParser {
         private class Tokenizer(val text: String) {
             var pos = 0
             fun isEof(): Boolean = pos >= text.length
-            fun peek(): Char = if (isEof()) throw IllegalArgumentException("Unexpected EOF") else text[pos]
-            fun next(): Char = if (isEof()) throw IllegalArgumentException("Unexpected EOF") else text[pos++]
+            fun peek(): Char {
+                require(!isEof()) { "Unexpected EOF" }
+                return text[pos]
+            }
+            fun next(): Char {
+                require(!isEof()) { "Unexpected EOF" }
+                return text[pos++]
+            }
             fun consume(expected: Char) {
                 val ch = next()
                 require(ch == expected) { "Expected '$expected' but found '$ch' at $pos" }

@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // CIEDE2000 constants (CIE 142-2001; Sharma, Wu and Dalal 2005)
+
 package com.kitalonlabs.neogold.engine.colorscience
 
 /**
