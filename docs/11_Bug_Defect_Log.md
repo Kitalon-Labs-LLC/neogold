@@ -115,9 +115,17 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-038 | The export checkpoint keeps the data keyset in clear next to the staged ciphertext, and a failed export leaves both behind | 2026-10-27 | Review | commit 93a2f9f | n/a | EXP | S2 | No | - | P2 | New | Unassigned | TC-EXP-01 | |
 | BUG-2026-039 | ResearchJpegSanitizer is never called outside tests, and extractOrientation reads the wrong bytes | 2026-10-27 | Review | commit 93a2f9f | n/a | PRIV | S2 | No | - | P2 | New | Unassigned | TC-API-20 | |
 | BUG-2026-040 | StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message | 2026-10-27 | Review | commit 93a2f9f | n/a | SYNC | S3 | No | - | P2 | New | Unassigned | TC-API-07 | |
-| BUG-2026-041 | TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it | 2026-10-27 | Review | commit 93a2f9f | n/a | TRI | S3 | No | - | P3 | New | Unassigned | TC-CAP-04 | |
+| BUG-2026-041 | TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it | 2026-10-27 | Review | commit 93a2f9f | n/a | TRI | S3 | No | - | P3 | Fixed | Unassigned | TC-CAP-04 | |
 | BUG-2026-042 | The trust list parser accepts a missing or malformed revocation list and duplicate key ids | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P2 | New | Unassigned | TC-CARD-06 | |
 | BUG-2026-043 | The three bundled-asset JSON parsers have no nesting-depth or size limit | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-SEC-03 | |
+| BUG-2026-044 | S10 and R03 pre-fill the baby's age with 48 hours | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
+| BUG-2026-045 | The colour and estimation golden-vector tests rewrite their own expected files | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S2 | No | - | P2 | New | Unassigned | TC-EST-01, TC-EST-07 | |
+| BUG-2026-046 | The tier map does not cover the vision quality gate, its defaults, or the detekt config | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P2 | New | Unassigned | n/a (tools/quality_gate.py) | |
+| BUG-2026-047 | The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P3 | New | Unassigned | TC-EST-07 | |
+| BUG-2026-048 | The quality gate's residual check passes when fewer than three reference patches match | 2026-10-27 | Review | commit 3c60999 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-09 | |
+| BUG-2026-049 | ScreeningOfflineTest asserts a network-call count that nothing increments | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S3 | No | - | P3 | New | Unassigned | TC-EST-04 | |
+| BUG-2026-050 | The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-UI-01, TC-A11Y-05 | |
+| BUG-2026-051 | The session detail screen formats clinical numbers with the default locale | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-A11Y-03 | |
 
 ### 4.1 Entries
 
@@ -138,7 +146,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Evidence** `MainActivity.kt:566-575`. `ScreeningPipelineUseCase`, `ScreeningStateMachine`, and `TriageEngine` have no callers in the app.
 
-**Notes** Hidden in the v1.0 build only because screening is switched off by a hardcoded flag. Any build that enables triage shows a made-up, lowest-care result for every baby. Fix package R1.
+**Notes** Hidden in the v1.0 build only because screening is switched off by a hardcoded flag. Any build that enables triage shows a made-up, lowest-care result for every baby. Fix package R1. The 1.0.0 release build also contains none of the engine code: R8 removes `TriageEngine`, `EstimationEngine`, `CardTrustVerifier` and the colour-science classes as unused (`usage.txt` of a local release build, checked 27 October 2026), so the engine tests in CI say nothing about the shipped APK until package E1 wires them.
 
 #### BUG-2026-002: S16 never opens the camera; capture returns a synthetic frame
 
@@ -329,11 +337,11 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Expected** The participant, consent form ID, captures, and TSB value are written in a transaction and queued in the outbox (FR-26 to FR-29, NFR-09).
 
-**Actual** The screens discard what is entered. R02 and R06 show fixed values (study "DHK-01", participant "SKP-0142", TSB 14.2 mg/dL). Nothing reaches Room or the outbox, and `ResearchViewModel` is never created.
+**Actual** The screens discard what is entered. R02 and R06 show fixed values (study "DHK-01", participant "SKP-0142", TSB 14.2 mg/dL). Nothing reaches Room or the outbox, and `ResearchViewModel` is never created. R03 starts with a birth time of 48 hours ago and an age of 48.0 hours (BUG-2026-044), its birth-time Edit button does nothing, and `MainActivity` discards the age, gestational age and safety answers it collects.
 
-**Evidence** `MainActivity.kt:775-847`.
+**Evidence** `MainActivity.kt:775-847`; `R03ParticipantConsentScreen.kt:66-67,193` in `:feature:research`.
 
-**Notes** A nurse who completes a session believes it was recorded. Fix package R3.
+**Notes** A nurse who completes a session believes it was recorded. Fix package R3. Proposed release check (package C2): fail the build when `SKP-0142` or `14.2` is left in a `src/main` source file, so a placeholder screen cannot reach a store build.
 
 #### BUG-2026-014: The android-ci and android-release workflows are invalid YAML, and Android CI has never passed
 
@@ -451,7 +459,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Evidence** `MainActivity.kt:225`.
 
-**Notes** It fails safe today, since no results are shown, but the gate is a code constant rather than the signed config. Fix package R1.
+**Notes** It fails safe today, since no results are shown, but the gate is a code constant rather than the signed config. Fix package R1. Nothing ties the UI flag to the config: Gate G1 (`tools/verify_clinical_signoff.py`) reads `config/triage-config.json` only, so passing it says nothing about the UI, and `S20ResultScreen` defaults to `true` (line 59). Until packages B1 and E1 read the flag from the verified config, a source check that the `NeoGoldNavHost` default stays `false` would close the gap. Found by the safety-reviewer on 27 October 2026.
 
 #### BUG-2026-020: Hard rules are decided in navigation code, not by the triage engine
 
@@ -516,7 +524,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Evidence** `MainActivity.kt` lines 240 and 353.
 
-**Notes** S10 itself requires a value (TC-UI-11), so the default is latent. Any path that skipped S10 would screen at 38 weeks (H3). Fix package R1.
+**Notes** S10 itself requires a value (TC-UI-11), so the default is latent. Any path that skipped S10 would screen at 38 weeks (H3). Fix package R1. The stepper also anchors at 38: the first tap on either its minus or plus button sets 38 weeks (`NgControls.kt:52,88`), the band with the highest thresholds.
 
 #### BUG-2026-024: Research mode has no entry point
 
@@ -801,7 +809,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-041: TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it
 
 - Area: TRI | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
-- Status: New | Owner: Unassigned | Test case: TC-CAP-04 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-CAP-04 | Fix version:
 
 **Steps**
 1. Read `TriageCli.main`: a batch item without `ga`, `age_h` or `danger` is evaluated with 40 weeks, 48 hours and no danger signs.
@@ -809,11 +817,13 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Expected** No default for gestational age, age or a safety question (PRD FR-01, FR-02, CLAUDE.md).
 
-**Actual** The command-line entry point fills missing clinical inputs with defaults. Nothing in the repository references it (the differential test runs the engine in-process), so it cannot affect a screening. It is in the engine's main source set, so it is compiled into debug builds; release builds are minified and probably drop it (an APK was not inspected).
+**Actual** The command-line entry point fills missing clinical inputs with defaults. Nothing in the repository references it (the differential test runs the engine in-process), so it cannot affect a screening. It was in the engine's main source set, so it was compiled into debug builds; the release build's R8 report (`usage.txt`) lists it as removed, so it did not reach a release APK.
 
 **Evidence** `android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageCli.kt`. Found while preparing the detekt pass on the engines (A2).
 
-**Notes** Decision in A2 with the safety-reviewer: delete the dead file, or make every field required.
+**Notes** Decision (A2, with the safety-reviewer, 27 October 2026): delete. Every default was fail-open (40 weeks, 48 hours, no danger signs), nothing called the file (the differential test runs the engine in-process), and keeping it would leave an unreviewed entry point in a Tier 0 module. Making the fields required was rejected for the same reason.
+
+**Fix** Commit `0fb0bba` removed `TriageCli.kt`. Its message says the class "shipped in the APK"; that holds for debug builds only. `TriageConfigParser` now has no production caller at all; the verified asset loader in package B1 will be the first.
 
 #### BUG-2026-042: The trust list parser accepts a missing or malformed revocation list and duplicate key ids
 
@@ -848,6 +858,136 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Not reachable today: the files are bundled, hashed under K3 and not parsed at runtime. It matters once the asset loader (B1) parses them, and more if over-the-air updates ship (NG-062). Fix in B1: a depth counter of about 32 in each `parseValue` and a size cap before parsing, with a test for each parser.
 
+#### BUG-2026-044: S10 and R03 pre-fill the baby's age with 48 hours
+
+- Area: UI | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: New | Owner: Unassigned | Test case: TC-UI-11 | Fix version:
+
+**Steps**
+1. Open S10 (screening) or R03 (research) and read the birth time before touching it.
+
+**Expected** No silent default on a clinical input: the birth time stays empty until the health worker sets it (FR-02, doc 6 Section 8, CLAUDE.md; action A9 of the direction report).
+
+**Actual** S10 starts at the phone time minus 48 hours, and Next enables once a gestational age is chosen and the clock checks pass, so the default is accepted without a touch. R03 starts with the same birth time and an age of 48.0 hours, its birth-time Edit button does nothing (`onEditClicked = { }`), and `MainActivity` drops every value R03 collects (BUG-2026-013).
+
+**Evidence** `S10BirthTimeGaScreen.kt:85-87,113` in `:feature:screening`; `R03ParticipantConsentScreen.kt:66-67,193` in `:feature:research`. Found by the safety-reviewer on 27 October 2026. The file-level suppressions A2 added to both files say the defaults go in E1 and C2.
+
+**Notes** Neither flow is reachable today (screening is hidden, research has no entry point, BUG-2026-024), so nothing records a wrong age yet. In screening, an unnoticed 48 hours puts a younger baby under the wrong threshold row (H2, H3). In research, every row would carry the same age, which would corrupt the validation data the study exists to collect. Fix: S10 in package E1 and R03 in package C2, with no pre-fill, Next disabled until a birth time is set, and a working picker in R03. The gestational-age stepper has a related anchor (BUG-2026-023).
+
+#### BUG-2026-045: The colour and estimation golden-vector tests rewrite their own expected files
+
+- Area: EST | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: New | Owner: Unassigned | Test case: TC-EST-01, TC-EST-07 | Fix version:
+
+**Steps**
+1. Change a constant in `Ciede2000.kt` or `ColorConversions.kt`.
+2. Run `./gradlew verifyGoldenVectors`.
+
+**Expected** The check fails until a person regenerates and reviews the golden vectors (TC-EST-01, TC-EST-07; hazard H7).
+
+**Actual** `GoldenVectorsTest.testGenerateAndVerifyGoldenVectors` and `EstimationGoldenVectorsTest` write `testdata/golden/colorscience/*.json` and `testdata/golden/estimation/golden_estimation.json` from the engine's current output, write the SHA-256 manifest from those files, and then check the manifest they just wrote. A changed value cannot fail them, and no CI step runs `git diff --exit-code` on `testdata/golden/`. Each local run also leaves modified tracked files behind.
+
+**Evidence** `GoldenVectorsTest.kt:26-47` in `:engine:colorscience`; `EstimationGoldenVectorsTest.kt:58-76` in `:engine:estimation`; `.github/workflows/android-ci.yml` (no diff step). Found by the safety-reviewer on 27 October 2026. The A2 claim that the engine edits changed no value rests on a by-hand comparison of the regenerated files with `HEAD`, which is the comparison the test should make.
+
+**Notes** The triage differential test reads fixed vectors and writes nothing, so TC-TRI-24 is not affected. Fix in package D1: compare against the committed files, regenerate only on an explicit request (a system property), and add the diff check to CI. Never change a vector in the same commit as an engine edit.
+
+#### BUG-2026-046: The tier map does not cover the vision quality gate, its defaults, or the detekt config
+
+- Area: OPS | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
+- Status: New | Owner: Unassigned | Test case: n/a (`tools/quality_gate.py`) | Fix version:
+
+**Steps**
+1. Run `python3 tools/quality_gate.py --base <ref>` on a change to `VisionQualityGate.kt`.
+
+**Expected** A change to the quality gate (blur, glare, exposure, light uniformity, residual and skin checks) is Tier 0: the mutation check and a safety-reviewer section are required (`quality/tiers.yaml` describes Tier 0 as including the vision quality gate).
+
+**Actual** The Tier 0 pattern is `android/engine/vision/.../QualityGate*.kt`, which matches no file, because the class is `VisionQualityGate.kt`. That file, the defaults in `VisionModels.kt`, the skin check in `CardSampler.kt` and `ScreeningPipelineUseCase.kt` all fall under Tier 2 patterns, and `android/config/detekt/*.yml` (where the StrictMath import ban lives) under Tier 3.
+
+**Evidence** `quality/tiers.yaml` (Tier 0 `paths`); `tools/quality_gate.py` (`match_path_to_tier`, which uses `fnmatch`). Found by the safety-reviewer on 27 October 2026.
+
+**Notes** The A2 change set touched `VisionQualityGate.kt` and `VisionModels.kt` without the Tier 0 requirements; the safety-reviewer covered them by hand. A later change that loosened a default in `VisionModels.kt` (for example the maximum blur) would let blurry or colour-distorted photos through with no Tier 0 check (H1, H5, H6). Fix: add `*QualityGate*.kt`, `VisionModels.kt`, `CardSampler.kt`, `ScreeningPipelineUseCase.kt` and `android/config/detekt/**` to Tier 0. `quality/` is a P25 guardrail path, so the owner confirms the edit.
+
+#### BUG-2026-047: The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs
+
+- Area: OPS | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-EST-07 | Fix version:
+
+**Steps**
+1. In a pure engine, add `Math.cbrt(x)`, `Math.pow(x, 2.0)` or `import kotlin.math.sin`.
+2. Run `python3 tools/check_strictmath.py` and `./gradlew detekt`.
+
+**Expected** Any platform math call whose result may differ between arm64-v8a and armeabi-v7a fails the build (doc 4 Section 4.2, TC-EST-07).
+
+**Actual** `tools/check_strictmath.py` bans only pow, sqrt, exp, log, log10 and hypot calls, and the pow, sqrt, exp, ln, log, log10, log2 and hypot imports. `Math.cbrt`, `Math.sin`, `Math.cos`, `Math.atan2` and their `kotlin.math` imports pass, yet the engines call all four through `StrictMath` (`ColorConversions.kt`, `Ciede2000.kt`). In detekt, `ForbiddenImport` sees only explicit imports, and `ForbiddenMethodCall` needs type resolution, which the plain `detekt` task lacks. On 27 October 2026 a probe file with `Math.pow` and `Math.cbrt` calls produced no finding.
+
+**Evidence** `tools/check_strictmath.py` (the two pattern lists); `android/config/detekt/detekt-engine.yml`. Found by the safety-reviewer and confirmed with the probe.
+
+**Notes** Current engine code is compliant, and a one-ulp difference rarely moves an integer tenth, so the risk is low. A2 widened the detekt import ban to cbrt and the trigonometric functions, removed the inert rule, and corrected `CLAUDE.md` and `CONTRIBUTING.md`. Still open: widen the lists in `tools/check_strictmath.py` (a P25 guardrail file, so the owner confirms the edit) and decide whether doc 4 should name the trigonometric functions. Running detekt with type resolution on the engines (`detektMain`) is a candidate for package F4.
+
+#### BUG-2026-048: The quality gate's residual check passes when fewer than three reference patches match
+
+- Area: CAP | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-CAP-09 | Fix version:
+
+**Steps**
+1. Read step 9 of `VisionQualityGate.evaluate`: `meanResidualDeltaE` starts at 0.0 and changes only inside `if (observedLinearRgbList.size >= 3)`.
+
+**Expected** A residual that cannot be computed fails the gate, as it does when the fit throws (the exception path sets 999.0).
+
+**Actual** With fewer than three sampled patches that have a reference value, the residual stays 0.0, HIGH_RESIDUAL cannot fire, and the gate passes this step. A comment A2 added to the 999.0 constant first described this wrongly; it now says what the code does.
+
+**Evidence** `VisionQualityGate.kt:172-205` and the constant at the end of the file, in `:engine:vision`. Found by the safety-reviewer on 27 October 2026.
+
+**Notes** Not reachable today as far as the review could trace: `PayloadParser` accepts only a card batch with exactly 23 patches, so a batch reference covers every sampled patch. It would matter if the card layout changed. Fix with the next quality-gate change that has clinical sign-off: start from the sentinel, overwrite it on success, and add a test for the fewer-than-three case (package E1).
+
+#### BUG-2026-049: ScreeningOfflineTest asserts a network-call count that nothing increments
+
+- Area: EST | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-EST-04 | Fix version:
+
+**Steps**
+1. Read `ScreeningOfflineTest`: `networkCallCount` is an `AtomicInteger(0)` (line 39) and the test asserts it is 0 (line 113).
+
+**Expected** The offline test (TC-EST-04: no network request during a full screening) fails when the screening path makes one.
+
+**Actual** Nothing increments the counter, so the test passes whatever the screening path does. It also carried unused `SocketImplFactory` imports from a hook that was never installed; the A2 formatting pass removed them.
+
+**Evidence** `ScreeningOfflineTest.kt:39,113` in `:feature:screening`. Found by the safety-reviewer on 27 October 2026.
+
+**Notes** The property is guarded elsewhere: only `:sync:research` may depend on the HTTP client (`tools/check_dependencies.py`). This test adds nothing to that. Fix in package E1 with the other tautological tests (BUG-2026-037): install a hook that counts or forbids socket use, or rely on the airplane-mode run in package E2.
+
+#### BUG-2026-050: The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders
+
+- Area: UI | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-UI-01, TC-A11Y-05 | Fix version:
+
+**Steps**
+1. Compare `NgTriageCard` with the border row of doc 6 Section 3.
+
+**Expected** Each of the four actions has its own colour, icon, border and words, so none relies on colour alone (TC-UI-01, hazard H11). "No further action" has a 2 dp dashed border.
+
+**Actual** `NO_FURTHER_ACTION` is drawn with a 2 dp solid border, the same as `RECHECK`; there is no dashed border anywhere in the app. `ColorVisionDistinguishabilityTest` lists "Distinct borders" in its description but asserts only icons.
+
+**Evidence** `NgTriageCard.kt:76-91` in `:core:designsystem`; `docs/6_UI_UX_Guidelines.md` Section 3 (border row); `ColorVisionDistinguishabilityTest.kt:12-14`. Found by the safety-reviewer on 27 October 2026. An unused `borderDp` map in that test was removed as dead code in `93a2f9f`.
+
+**Notes** Colour, icon and wording still differ between the two actions, so a reader is not left with colour alone; the border is the missing fourth signal. Fix in package E1, with the result-screen work in BUG-2026-006: draw the dashed border and assert all four borders in the test.
+
+#### BUG-2026-051: The session detail screen formats clinical numbers with the default locale
+
+- Area: UI | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-A11Y-03 | Fix version:
+
+**Steps**
+1. Set the phone language to Bangla and open S22 for a saved session.
+
+**Expected** Clinical numbers appear in Western digits by default in both languages (doc 6 Section 12, TC-A11Y-03, TC-ONB-04).
+
+**Actual** S22 formats the estimate, its interval and the threshold with `"%.1f mg/dL".format(...)`, which uses the default locale, so the digits and the decimal separator follow the phone's language settings. `ClinicalNumberFormatter` exists for this.
+
+**Evidence** `S22SessionDetailScreen.kt:244,246,254` in `:feature:log`. Found by the safety-reviewer on 27 October 2026.
+
+**Notes** Fix in package F1 (localization), with the other number and string work: use `ClinicalNumberFormatter` and add a test that renders S22 under a Bangla locale.
+
 ---
 
 ## 5. Closed Defects
@@ -866,8 +1006,8 @@ Updated with each test summary report (doc 9 Section 15).
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
-| S2 | 20 | 0 | 0 |
-| S3 | 8 | 0 | 0 |
+| S2 | 22 | 0 | 0 |
+| S3 | 14 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
 As of 27 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
