@@ -63,3 +63,15 @@ Every pull request must fulfill:
 - [ ] CI checks pass green.
 - [ ] PR description (or the commit message, for the owner) details manual verification steps for the second approver.
 - [ ] No AI attribution in any commit message.
+
+---
+
+## 5. Static Analysis (detekt)
+
+`./gradlew detekt` runs on every Android module in CI, and one finding fails the build. The rules and thresholds are in `android/config/detekt/detekt.yml`; the four pure engines add `detekt-engine.yml` (the StrictMath rules).
+
+- **Fix, do not baseline.** There is no baseline file. Unused code, swallowed exceptions, locale-dependent formatting and similar findings are fixed.
+- **Suppress with a reason.** Use `@Suppress("Rule") // why` on the smallest scope. A temporary suppression names the package that removes it. Numbers that are a published standard, a byte layout or the clinical rule stay literal, with a file-level `@Suppress("MagicNumber")` that names the source.
+- **Size and branching limits** (`LongMethod` 120, `CyclomaticComplexMethod` 25, `NestedBlockDepth` 5, 3 returns or throws per function, 8 function and 10 constructor parameters, 15 functions per type, 140 characters per line) sit where the code is today. They stop new growth and are lowered as the packages that rewrite the suppressed functions land.
+- **Formatting is automatic:** `./gradlew :<module>:detekt --auto-correct`. The flag applies to the task right before it, so repeat it for every module you list. Run it twice: the second pass fixes what the first one exposed.
+- **Do not split a hardcoded UI string with `+` to satisfy the line limit.** `tools/check_strings.py` counts string literals, and its baseline can only shrink.

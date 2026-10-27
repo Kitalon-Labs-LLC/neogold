@@ -89,6 +89,7 @@ Fill this in as work packages create them; keep it current.
 | Android unit tests | `cd android && ./gradlew testReleaseUnitTest` |
 | Engine checks | `./gradlew verifyGoldenVectors triageDifferentialTest verifyConfigSchema` |
 | Android lint | `./gradlew lintRelease detekt` |
+| Android formatting (detekt auto-correct) | `./gradlew :<module>:detekt --auto-correct` (repeat the flag after every module; run twice; see `CONTRIBUTING.md` Section 5) |
 | Backend tests | `cd backend && pytest -q` |
 | Card generator | `python card/generator/render_card.py` |
 | Card signing tool | `python3 card/tools/neogold-sign/neogold_sign.py --help` |
