@@ -3,12 +3,13 @@
 tools/check_strictmath.py
 
 Enforces P25 / Doc 4 Section 4.2:
-Pure engines (:engine:*) must use StrictMath for powers, roots, and exponentials
-so that arm64-v8a and armeabi-v7a give bit-identical results.
+Pure engines (:engine:*) must use StrictMath for powers, roots, exponentials, logarithms,
+and trigonometric functions so that arm64-v8a and armeabi-v7a give bit-identical results.
 Bans:
 - import java.lang.Math
-- import kotlin.math power/root/exponential functions (pow, sqrt, exp, ln, log, log10, log2, hypot)
-- Call sites like Math.pow, Math.sqrt, Math.exp, etc.
+- import kotlin.math for those functions (pow, sqrt, cbrt, exp, expm1, ln, ln1p, log, log10, log2,
+  hypot, sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh), and import kotlin.math.*
+- Call sites like Math.pow, Math.cbrt, Math.sin, Math.atan2, etc.
 """
 
 import glob
@@ -16,16 +17,23 @@ import re
 import sys
 from pathlib import Path
 
+_FUNCS = "pow|sqrt|cbrt|exp|expm1|log|log10|log1p|hypot|sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh"
+
 FORBIDDEN_IMPORT_PATTERNS = [
     (re.compile(r"import\s+java\.lang\.Math\b"), "import java.lang.Math is forbidden; use java.lang.StrictMath"),
     (
-        re.compile(r"import\s+kotlin\.math\.(pow|sqrt|exp|ln|log|log10|log2|hypot)\b"),
-        "import kotlin.math for powers, roots, or exponentials is forbidden; use java.lang.StrictMath",
+        re.compile(r"import\s+kotlin\.math\.(" + _FUNCS + r"|ln|ln1p|log2)\b"),
+        "import kotlin.math for powers, roots, exponentials, logarithms, or trigonometry is forbidden; "
+        "use java.lang.StrictMath",
+    ),
+    (
+        re.compile(r"import\s+kotlin\.math\.\*"),
+        "import kotlin.math.* is forbidden; it hides sqrt, sin and the other functions from this check",
     ),
 ]
 
 FORBIDDEN_CALL_PATTERNS = [
-    (re.compile(r"\bMath\.(pow|sqrt|exp|log|log10|hypot)\b"), "Math.<func> is forbidden; use StrictMath.<func>"),
+    (re.compile(r"\bMath\.(" + _FUNCS + r")\b"), "Math.<func> is forbidden; use StrictMath.<func>"),
 ]
 
 

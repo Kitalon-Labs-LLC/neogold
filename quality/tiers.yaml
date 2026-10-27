@@ -5,16 +5,20 @@
 tiers:
   0:
     name: "clinical"
-    description: "Clinical safety and estimation path: triage, estimation, color science, card trust, vision quality gate, config, clinical strings, and result screen"
+    description: "Clinical safety and estimation path: triage, estimation, color science, card trust, vision quality gate and its defaults, the screening pipeline, config and its bundled copies, the StrictMath lint config, clinical strings, and result screen"
     paths:
       - "android/engine/triage/**"
       - "android/engine/estimation/**"
       - "android/engine/colorscience/**"
       - "android/engine/cardtrust/**"
-      - "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/QualityGate*.kt"
+      - "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/*QualityGate*.kt"
+      - "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/VisionModels.kt"
+      - "android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/CardSampler.kt"
+      - "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/domain/ScreeningPipelineUseCase.kt"
       - "android/feature/result/**"
+      - "android/config/detekt/**"
       - "config/**"
-      - "android/app/src/main/assets/model.json"
+      - "android/app/src/main/assets/**"
       - "android/core/designsystem/src/main/res/values/strings.xml"
       - "android/core/designsystem/src/main/res/values-bn/strings.xml"
       - "CLINICAL_SIGNOFF.md"

@@ -120,8 +120,8 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-043 | The three bundled-asset JSON parsers have no nesting-depth or size limit | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-SEC-03 | |
 | BUG-2026-044 | S10 and R03 pre-fill the baby's age with 48 hours | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
 | BUG-2026-045 | The colour and estimation golden-vector tests rewrite their own expected files | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S2 | No | - | P2 | New | Unassigned | TC-EST-01, TC-EST-07 | |
-| BUG-2026-046 | The tier map does not cover the vision quality gate, its defaults, or the detekt config | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P2 | New | Unassigned | n/a (tools/quality_gate.py) | |
-| BUG-2026-047 | The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P3 | New | Unassigned | TC-EST-07 | |
+| BUG-2026-046 | The tier map does not cover the vision quality gate, its defaults, or the detekt config | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P2 | Fixed | Unassigned | n/a (tools/quality_gate.py) | |
+| BUG-2026-047 | The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P3 | Fixed | Unassigned | TC-EST-07 | |
 | BUG-2026-048 | The quality gate's residual check passes when fewer than three reference patches match | 2026-10-27 | Review | commit 3c60999 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-09 | |
 | BUG-2026-049 | ScreeningOfflineTest asserts a network-call count that nothing increments | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S3 | No | - | P3 | New | Unassigned | TC-EST-04 | |
 | BUG-2026-050 | The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-UI-01, TC-A11Y-05 | |
@@ -894,23 +894,25 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-046: The tier map does not cover the vision quality gate, its defaults, or the detekt config
 
 - Area: OPS | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: n/a (`tools/quality_gate.py`) | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: n/a (`tools/quality_gate.py`) | Fix version:
 
 **Steps**
 1. Run `python3 tools/quality_gate.py --base <ref>` on a change to `VisionQualityGate.kt`.
 
 **Expected** A change to the quality gate (blur, glare, exposure, light uniformity, residual and skin checks) is Tier 0: the mutation check and a safety-reviewer section are required (`quality/tiers.yaml` describes Tier 0 as including the vision quality gate).
 
-**Actual** The Tier 0 pattern is `android/engine/vision/.../QualityGate*.kt`, which matches no file, because the class is `VisionQualityGate.kt`. That file, the defaults in `VisionModels.kt`, the skin check in `CardSampler.kt` and `ScreeningPipelineUseCase.kt` all fall under Tier 2 patterns, and `android/config/detekt/*.yml` (where the StrictMath import ban lives) under Tier 3.
+**Actual** The Tier 0 pattern is `android/engine/vision/.../QualityGate*.kt`, which matches no file, because the class is `VisionQualityGate.kt`. That file, the defaults in `VisionModels.kt`, the skin check in `CardSampler.kt` and `ScreeningPipelineUseCase.kt` all fall under Tier 2 patterns, and `android/config/detekt/*.yml` (where the StrictMath import ban lives) under Tier 3. The app's bundled copies of `triage-config.json` and `trust-list.json` (byte-identical to the files in `config/` today) and `bundle-manifest.json` were Tier 2 as well; only the bundled `model.json` was Tier 0.
 
 **Evidence** `quality/tiers.yaml` (Tier 0 `paths`); `tools/quality_gate.py` (`match_path_to_tier`, which uses `fnmatch`). Found by the safety-reviewer on 27 October 2026.
 
-**Notes** The A2 change set touched `VisionQualityGate.kt` and `VisionModels.kt` without the Tier 0 requirements; the safety-reviewer covered them by hand. A later change that loosened a default in `VisionModels.kt` (for example the maximum blur) would let blurry or colour-distorted photos through with no Tier 0 check (H1, H5, H6). Fix: add `*QualityGate*.kt`, `VisionModels.kt`, `CardSampler.kt`, `ScreeningPipelineUseCase.kt` and `android/config/detekt/**` to Tier 0. `quality/` is a P25 guardrail path, so the owner confirms the edit.
+**Notes** The A2 change set touched `VisionQualityGate.kt` and `VisionModels.kt` without the Tier 0 requirements; the safety-reviewer covered them by hand. A later change that loosened a default in `VisionModels.kt` (for example the maximum blur) would let blurry or colour-distorted photos through with no Tier 0 check (H1, H5, H6).
+
+**Fix** `quality/tiers.yaml` now lists `*QualityGate*.kt`, `VisionModels.kt`, `CardSampler.kt`, `ScreeningPipelineUseCase.kt`, `android/config/detekt/**` and `android/app/src/main/assets/**` in Tier 0. `tools/tests/test_quality_gate.py` now loads the real map and fails when a Tier 0 pattern matches no tracked file or when one of those files falls out of Tier 0; both tests fail against the previous map (mutation check, 27 October 2026). Still open for the owner: `.claude/hooks/protect_clinical.py` protects only the bundled `model.json`, not the bundled `triage-config.json` and `trust-list.json`. Package E1 adds `ScreeningStateMachine.kt` to Tier 0 when it starts making the triage call.
 
 #### BUG-2026-047: The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs
 
 - Area: OPS | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
-- Status: New | Owner: Unassigned | Test case: TC-EST-07 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-EST-07 | Fix version:
 
 **Steps**
 1. In a pure engine, add `Math.cbrt(x)`, `Math.pow(x, 2.0)` or `import kotlin.math.sin`.
@@ -922,7 +924,9 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Evidence** `tools/check_strictmath.py` (the two pattern lists); `android/config/detekt/detekt-engine.yml`. Found by the safety-reviewer and confirmed with the probe.
 
-**Notes** Current engine code is compliant, and a one-ulp difference rarely moves an integer tenth, so the risk is low. A2 widened the detekt import ban to cbrt and the trigonometric functions, removed the inert rule, and corrected `CLAUDE.md` and `CONTRIBUTING.md`. Still open: widen the lists in `tools/check_strictmath.py` (a P25 guardrail file, so the owner confirms the edit) and decide whether doc 4 should name the trigonometric functions. Running detekt with type resolution on the engines (`detektMain`) is a candidate for package F4.
+**Notes** Current engine code is compliant, and a one-ulp difference rarely moves an integer tenth, so the risk is low. A2 widened the detekt import ban to cbrt and the trigonometric functions, removed the inert rule, and corrected `CLAUDE.md` and `CONTRIBUTING.md`.
+
+**Fix** `tools/check_strictmath.py` now bans `Math.` calls and `kotlin.math` imports for cbrt and the exponential, logarithm and trigonometric families, and the `kotlin.math.*` wildcard import. Its tests cover each family and a clean `StrictMath` file, and fail against the previous script (mutation check, 27 October 2026). Doc 4 Section 6.2 and the CLAUDE.md rule now name logarithms and trigonometric functions. Running detekt with type resolution on the engines (`detektMain`) stays an optional extra for package F4.
 
 #### BUG-2026-048: The quality gate's residual check passes when fewer than three reference patches match
 
