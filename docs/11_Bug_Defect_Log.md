@@ -116,6 +116,8 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-039 | ResearchJpegSanitizer is never called outside tests, and extractOrientation reads the wrong bytes | 2026-10-27 | Review | commit 93a2f9f | n/a | PRIV | S2 | No | - | P2 | New | Unassigned | TC-API-20 | |
 | BUG-2026-040 | StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message | 2026-10-27 | Review | commit 93a2f9f | n/a | SYNC | S3 | No | - | P2 | New | Unassigned | TC-API-07 | |
 | BUG-2026-041 | TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it | 2026-10-27 | Review | commit 93a2f9f | n/a | TRI | S3 | No | - | P3 | New | Unassigned | TC-CAP-04 | |
+| BUG-2026-042 | The trust list parser accepts a missing or malformed revocation list and duplicate key ids | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P2 | New | Unassigned | TC-CARD-06 | |
+| BUG-2026-043 | The three bundled-asset JSON parsers have no nesting-depth or size limit | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-SEC-03 | |
 
 ### 4.1 Entries
 
@@ -807,11 +809,44 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Expected** No default for gestational age, age or a safety question (PRD FR-01, FR-02, CLAUDE.md).
 
-**Actual** The command-line entry point fills missing clinical inputs with defaults. Nothing in the repository references it (the differential test runs the engine in-process), so it cannot affect a screening, but it is in the engine's main source set and so in the app.
+**Actual** The command-line entry point fills missing clinical inputs with defaults. Nothing in the repository references it (the differential test runs the engine in-process), so it cannot affect a screening. It is in the engine's main source set, so it is compiled into debug builds; release builds are minified and probably drop it (an APK was not inspected).
 
 **Evidence** `android/engine/triage/src/main/kotlin/com/kitalonlabs/neogold/engine/triage/TriageCli.kt`. Found while preparing the detekt pass on the engines (A2).
 
 **Notes** Decision in A2 with the safety-reviewer: delete the dead file, or make every field required.
+
+#### BUG-2026-042: The trust list parser accepts a missing or malformed revocation list and duplicate key ids
+
+- Area: SEC | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
+- Status: New | Owner: Unassigned | Test case: TC-CARD-06 | Fix version:
+
+**Steps**
+1. Parse a trust list whose revocation field is misspelled (`revoked_card_batch`), or whose list holds a non-string entry (`["NG-2026-0007", 7]`).
+2. Parse a trust list with two keys that share a `key_id`.
+
+**Expected** A trust list that does not match its schema is rejected, as every other field already is. A revoked batch never verifies (doc 8, threat T5, hazard H4).
+
+**Actual** `revoked_card_batches` and `revoked_study_codes` are the only optional fields: a missing or non-array field becomes an empty list and non-string entries are dropped silently. Entries are not checked against the schema patterns. Duplicate `key_id` values are accepted and `firstOrNull` keeps the first, so a rotated key that reuses an id never takes effect.
+
+**Evidence** `android/engine/cardtrust/src/main/kotlin/com/kitalonlabs/neogold/engine/cardtrust/TrustList.kt` (the revocation fields and key list) and `CardTrustVerifier.kt` (the revocation checks). Found by the privacy-security-reviewer on 27 October 2026.
+
+**Notes** Defense in depth: CI's `tools/verify_config_schema.py` validates the shipped `config/trust-list.json`, and the manifest signature covers the file's hash, so this needs a process failure to matter. No main-source code parses the trust list yet. Fix in package B1, where the verified asset loader makes this parser live: require both fields to be arrays of strings that match the schema patterns, reject duplicate `key_id`, one test per case. The verifier and the parser each encode the QR layout on their own (header size, 64-byte signature, 23 patches of 6 bytes); share the constants so one edit cannot make them disagree (package F4).
+
+#### BUG-2026-043: The three bundled-asset JSON parsers have no nesting-depth or size limit
+
+- Area: SEC | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-SEC-03 | Fix version:
+
+**Steps**
+1. Feed a document of a few thousand nested `[` to `TrustListParser.parse`, `TriageConfigParser.parse` or `EstimationModelParser.parse`.
+
+**Expected** A typed rejection (`IllegalArgumentException`, or `InvalidModelException` for the model).
+
+**Actual** The recursive-descent parsers run out of stack and throw `StackOverflowError`, an `Error` that neither callers nor the `catch (e: Exception)` in `EstimationModelParser.parse` handle.
+
+**Evidence** `TrustList.kt` (`parseValue`), `TriageConfigParser.kt` (`parseValue`), `EstimationModelParser.kt` (`parseValue`). Found by the privacy-security-reviewer on 27 October 2026.
+
+**Notes** Not reachable today: the files are bundled, hashed under K3 and not parsed at runtime. It matters once the asset loader (B1) parses them, and more if over-the-air updates ship (NG-062). Fix in B1: a depth counter of about 32 in each `parseValue` and a size cap before parsing, with a test for each parser.
 
 ---
 
@@ -832,7 +867,7 @@ Updated with each test summary report (doc 9 Section 15).
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
 | S2 | 20 | 0 | 0 |
-| S3 | 6 | 0 | 0 |
+| S3 | 8 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
 As of 27 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
