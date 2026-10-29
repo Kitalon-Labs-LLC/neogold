@@ -88,10 +88,10 @@ Both marker options occupy the exact same physical footprint ($16.0 \times 16.0\
 | **Physical module width** | **$2.67\text{ mm}$** ($16\text{ mm} / 6$) | **$2.00\text{ mm}$** ($16\text{ mm} / 8$) |
 | **Pixel size at 20 cm ($1080\text{p}$)** | Approx. $13.3\text{ px/module}$ | Approx. $10.0\text{ px/module}$ |
 | **Detection robustness** | Larger modules; easier to resolve under slight motion blur on low-end cameras. | Higher Hamming distance (11 vs 3); lower false positive rate, slightly finer modules. |
-| **C/C++ Library size** | OpenCV `objdetect` module (~1.8–3.5 MB depending on strip). | Standalone C library (`apriltag`) ~150–250 KB compiled. |
+| **C/C++ Library size** | OpenCV Android library (ADR-018): 9.3 MB deflated on `arm64-v8a` and 7.6 MB on `armeabi-v7a`, because the official build ships every OpenCV module in one library (measured 27 October 2026). | Standalone C library (`apriltag`) ~150–250 KB compiled [Guessing]; not built or measured. |
 | **Layout impact** | **Zero impact** on card layout; both fit $16 \times 16\text{ mm}$. | **Zero impact** on card layout; both fit $16 \times 16\text{ mm}$. |
 
-**Decision & Status:** Per ADR-003 and `docs/4_System_Architecture.md` Section 16, the card artwork v1 is committed with **ArUco 4x4 (IDs 0, 1, 2, 3)**. The final binary engine choice between OpenCV ArUco and standalone AprilTag will be measured against the 25 MB APK download budget in work package P08.
+**Decision & Status:** Per ADR-003 and `docs/4_System_Architecture.md` Section 16, the card artwork v1 is committed with **ArUco 4x4 (IDs 0, 1, 2, 3)**. The detection library is decided: OpenCV ArUco (ADR-018, 27 October 2026), measured on a release App Bundle against the 25 MB download and 40 MB install budgets of NFR-04.
 
 ### 3.3 Quiet Zone and Keepout
 - A minimum keepout zone of **$3.0\text{ mm}$** of pure white background surrounds every marker on all interior sides. No color patch, line, or text enters this zone.

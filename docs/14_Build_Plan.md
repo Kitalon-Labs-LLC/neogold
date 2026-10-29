@@ -137,7 +137,7 @@ Claude Code stops and waits at these points. Your second approver reviews the PR
 |---|---|---|
 | Card layout and QR formats | P02 | Approve the card spec before anything is printed or coded against it |
 | Config schema | P03 | Approve the structure the clinical lead will sign |
-| Marker library | P08 | OpenCV or AprilTag, decided by the measured size on both ABIs |
+| Marker library | P08 | OpenCV (ArUco 4x4), decided by the measured size on both ABIs (ADR-018, 27 October 2026) |
 | Model format | P06 | Approve `model.json` before the training pipeline writes it |
 | Database schema v1 | P11 | Approve before the first build that real study phones install, because it can only migrate forward from then on |
 | Release | P16, P22 | Go or no-go with the second approver |

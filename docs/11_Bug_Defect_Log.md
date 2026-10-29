@@ -127,6 +127,12 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-050 | The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-UI-01, TC-A11Y-05 | |
 | BUG-2026-051 | The session detail screen formats clinical numbers with the default locale | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-A11Y-03 | |
 | BUG-2026-052 | The release bundle cannot be built, because ABI splits are on and the Android Gradle plugin 9 refuses `bundleRelease` | 2026-10-27 | Review | commit ea82b0a | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-OPS-01, TC-OPS-02 | |
+| BUG-2026-053 | No workflow checks the app size, and the script never checks install size | 2026-10-27 | Review | commit 3556b25 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-PERF-04 | |
+| BUG-2026-054 | TC-CAP-17 rendered the AprilTag artwork, which the printed card does not use | 2026-10-27 | Review | commit 3556b25 | n/a | CAP | S3 | No | - | P3 | In progress | Unassigned | TC-CAP-17 | |
+| BUG-2026-055 | The vision engine accepts any four markers with the right IDs and never checks that they form the card | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S2 | No | - | P2 | In progress | Unassigned | TC-CAP-11 | |
+| BUG-2026-056 | CARD_ANGLE does not enforce the 20 degree limit for every in-plane rotation of the card | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S2 | No | - | P2 | New | Unassigned | TC-CAP-03 | |
+| BUG-2026-057 | A phone on which OpenCV fails to load silently runs the looser Kotlin detector | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S3 | No | - | P2 | In progress | Unassigned | TC-CAP-17 | |
+| BUG-2026-058 | No gate checks what the bundled native libraries import, or that screening writes no file and sends no traffic | 2026-10-29 | Review | commit 3556b25 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-PRIV-01 | |
 
 ### 4.1 Entries
 
@@ -1011,6 +1017,108 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Fix** The splits are turned off when the Gradle command names a bundle task and stay on for APK builds. `./gradlew :app:bundleRelease` now builds (3 min 48 s on the developer machine), and `bundletool` 1.18.3 reports the per-ABI download and install sizes. A command that names both an assemble and a bundle task gets no splits. Becomes Verified when the release workflow builds a bundle on a runner.
 
+#### BUG-2026-053: No workflow checks the app size, and the script never checks install size
+
+- Area: OPS | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: New | Owner: Unassigned | Test case: TC-PERF-04 | Fix version:
+
+**Steps**
+1. Search `.github/workflows` for `check_bundle_size`.
+2. Read `tools/check_bundle_size.py`.
+
+**Expected** NFR-04 (download under 25 MB, install under 40 MB) is checked on every release, and on pull requests that add a dependency, a font or an asset (CLAUDE.md "Budgets", TC-PERF-04).
+
+**Actual** No workflow calls `tools/check_bundle_size.py`. The script reads only the download size, and when `bundletool` fails it falls back to the raw size of the bundle, which is larger. It never checks the install size. With OpenCV in (ADR-018) the install size is the tight budget: 34.28 MB of 40 MB on arm64-v8a. The older test summaries quote sizes (v0.1: 14.85 MB download and 26.40 MB install, marked CONTRADICTED) that no CI artifact backs.
+
+**Evidence** `.github/workflows/*.yml` (no match); `tools/check_bundle_size.py`; the A3 measurement of 27 October 2026 (doc 4, ADR-018).
+
+**Notes** Fix in package F2 (release readiness): after `bundleRelease` in `android-release.yml`, run `bundletool get-size total` for the download and add up the extracted split APKs for the install size, for an arm64-v8a and an armeabi-v7a device spec as the A3 measurement did, and fail above 25 MB or 40 MB. Run the same in `android-ci.yml` if the extra bundle build (about 4 minutes) is acceptable. Until then every package that adds code, a font or a library measures by hand (CLAUDE.md Commands). The fix must also change the script itself: it starts its maximum at the raw size of the bundle (`max_observed = file_bytes`), which is 27.13 MiB with OpenCV, so it would fail a healthy build whose real per-device download is about 14 MiB. Its 25 MB is 25 MiB (`25 * 1024 * 1024`); in decimal megabytes the budgets are tighter.
+
+#### BUG-2026-054: TC-CAP-17 rendered the AprilTag artwork, which the printed card does not use
+
+- Area: CAP | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: In progress | Owner: Unassigned | Test case: TC-CAP-17 | Fix version:
+
+**Steps**
+1. Read the `markerFamily` default in `SyntheticRenderConfig` and the TC-CAP-17 test in `VisionQualityGateTest`.
+
+**Expected** The synthetic cards carry the artwork of the printed card, ARUCO_4X4 (`card/spec/card-v1.json`).
+
+**Actual** The default `markerFamily` is `APRILTAG_36H11` and no test set it, so every vision test, TC-CAP-17 included, rendered AprilTag markers and ran the Kotlin detector on them. "TC-CAP-17 passes" therefore said nothing about the ArUco markers on the card.
+
+**Evidence** `SyntheticCardRenderer.kt:35`; `VisionQualityGateTest.kt` (`tcCap17_cardDetectionAndPatchExtractionAccuracy`). Found while preparing the OpenCV detector (package A3).
+
+**Fix, for TC-CAP-17 only** A3 added `tcCap17_cardDetectionAndPatchExtractionAccuracy_onArucoArtwork` (JVM, Kotlin detector) and the OpenCV tests of `OpenCvMarkerDetectorInstrumentedTest`, all on ARUCO_4X4. Both pass.
+
+**Still open, package D1** The other JVM capture cases (TC-CAP-02 to 10) still render the AprilTag default. The committed image sets in `testdata/bad` and `testdata/golden/vision` carry AprilTag markers, so through OpenCV's `DICT_4X4_50` they give four markers in 0 of 13 and 1 of 10 images, and TC-CAP-11 and TC-CAP-12 cannot exercise the production detector (the safety reviewer re-rendered the same 12 bad and 9 golden conditions with ARUCO and got four markers every time, so the data fix is cheap). No CI job runs the on-device tests, although doc 9 promises a nightly emulator job. `tools/trace.py` counts test-case IDs in `src/androidTest` files as coverage, which CI cannot vouch for; the OpenCV test names none. Package F4 switches the default artwork and drops the AprilTag decode branch of `FastMarkerDetector`.
+
+#### BUG-2026-055: The vision engine accepts any four markers with the right IDs and never checks that they form the card
+
+- Area: CAP | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: In progress | Owner: Unassigned | Test case: TC-CAP-11 | Fix version:
+
+**Steps**
+1. Read `VisionEngine.processFrame`: once the four IDs are found it builds the homography from the four marker centres and never reads the corners again.
+2. Put two cards in view, or let glare move one marker's corner.
+
+**Expected** A marker set that cannot be one card (two cards in view, a foreign marker larger than the real one, a corner moved by glare) is rejected (hazards H1, H4, H5).
+
+**Actual** Two cards in view give every ID twice. The first version of the OpenCV detector took the larger marker of each pair, which reads whichever card is nearer, and the engine kept the last of a repeated ID. Fixed on 28 October 2026: a repeated ID is dropped by the detector and by the engine, with tests on the JVM and on a device. Still open: a marker with the right ID in the wrong place passes. In the safety reviewer's model 9 of 441 complete sets had a corner off by more than 6 px (up to 22.7 px), which moved patch sampling by up to 7.2 canonical px against an 18 px margin. Nothing compares the four markers' corners with the homography that the four centres define.
+
+**Evidence** `VisionEngine.kt` (marker handling and the homography), `CardMarkerSelection.kt`; the safety review of 28 October 2026 (F1).
+
+**Notes** Fix in package E1, with bench photos: compare each marker's corners with the four-centre homography, or fit all sixteen corners by least squares, and reject above a threshold. In the reviewer's model a 4 px threshold flagged all 9 bad sets and 11 of 432 others. The threshold belongs in the quality configuration, so it needs the clinical lead (CLAUDE.md). `LiveCardAnalyzer.kt:61` still collects markers with `associateBy`, which is harmless while the detectors drop repeated IDs. A threshold-free interim check, that the four centres form a convex quadrilateral with the winding TL, TR, BR, BL, would already catch swapped IDs and a mirrored card. This entry, 056 and 057 must be closed or accepted by the clinical lead before any build sets `triageEnabled` to true.
+
+#### BUG-2026-056: CARD_ANGLE does not enforce the 20 degree limit for every in-plane rotation of the card
+
+- Area: CAP | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: New | Owner: Unassigned | Test case: TC-CAP-03 | Fix version:
+
+**Steps**
+1. Render the synthetic card turned 45 degrees in the plane and tilted 20, 30 and 40 degrees.
+2. Read the card angle the engine reports.
+
+**Expected** A tilt above the limit (`QualityThresholds.maxCardAngleDegrees`, 20 degrees) is rejected with `CARD_ANGLE` whatever the in-plane rotation (TC-CAP-03).
+
+**Actual** The estimator reads only the aspect compression of the card. With the tilt axis fixed to the camera and the card turned 45 degrees in the plane, true tilts of 20, 30 and 40 degrees read 2.2, 2.5 and 1.1 degrees; at 30 degrees of rotation a true 30 reads 20.9. Every test applies the tilt before the rotation, so none of them reaches this.
+
+**Evidence** `Homography.kt:164-191`, `VisionEngine.kt:82`, `VisionQualityGateTest.kt:77-93`; the safety review of 28 October 2026 (F4), reproduced in a Python model.
+
+**Notes** Pre-existing, found while reviewing A3. A card seen at a steep slant gives colours the correction was not fitted for (hazards H5, H6). Fix in package E1: derive the tilt from the homography (the ratio of the singular values of its local affine part) and sweep the rotation from 0 to 180 degrees in TC-CAP-03. This entry, 055 and 057 must be closed or accepted by the clinical lead before any build sets `triageEnabled` to true.
+
+#### BUG-2026-057: A phone on which OpenCV fails to load silently runs the looser Kotlin detector
+
+- Area: CAP | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
+- Status: In progress | Owner: Unassigned | Test case: TC-CAP-17 | Fix version:
+
+**Steps**
+1. Make `System.loadLibrary("opencv_java4")` fail on a supported phone (a packaging fault, or R8 once the detector is referenced).
+
+**Expected** The screening is blocked and the fault is recorded. No photo is read by a detector that the printed card was never tried with.
+
+**Actual** `OpenCvMarkerDetector.isAvailable()` stays false for the whole process, and `DefaultMarkerDetector` hands every frame to the Kotlin detector. That detector accepts one flipped bit (OpenCV accepts none), tries both windings so it accepts mirrored cards, decodes the AprilTag family the card does not carry, and samples one pixel per module. Nothing logs, flags or blocks it.
+
+**Evidence** `DefaultMarkerDetector.kt`; the safety review of 28 October 2026 (F2).
+
+**Notes** Today nothing in the app calls the detector, so no user is affected. A3 added `DefaultMarkerDetector.usesFallback`, which reports the state, and a frame on which OpenCV throws now counts as "no markers" instead of going to the Kotlin detector. Still open, package E1: when `usesFallback` is true on an arm64-v8a or armeabi-v7a phone, block the screening and record a non-personal "detector=fallback" flag, and add a smoke test of the minified release build once something calls the detector. A3 also added `DefaultMarkerDetector.failedFrames`, which counts the frames on which OpenCV threw: a swallowed `NoSuchMethodError` would otherwise look like a permanent "no card" with `usesFallback` false, and package E1 flags a count that keeps rising. The Kotlin fallback reports the mean of the corners as a marker's centre, not the crossing of the diagonals. This entry, 055 and 056 must be closed or accepted by the clinical lead before any build sets `triageEnabled` to true.
+
+#### BUG-2026-058: No gate checks what the bundled native libraries import, or that screening writes no file and sends no traffic
+
+- Area: SEC | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-PRIV-01 | Fix version:
+
+**Steps**
+1. In `:engine:vision`, call `Imgcodecs.imwrite` on a frame (a debug aid that someone forgets).
+2. Run every CI gate.
+
+**Expected** A screening image is never written to disk, and the screening path makes no network call (CLAUDE.md, doc 8 Sections 2 and 6.1).
+
+**Actual** Nothing stops it except review. `proguard-rules.pro` keeps all of `org.opencv.**`, so the release dex holds `Imgcodecs`, `VideoCapture`, `dnn.Net` and `android.Utils`. `NetworkIsolationTest` reads build files only, `tools/check_dependencies.py` reads Maven names, and the OpenCV on-device tests do not run in CI. A3 adds a detekt ban on those four OpenCV imports (checked with a probe file), which covers the Kotlin source but not a native call.
+
+**Evidence** The supply-chain review of 29 October 2026 (findings 1 and 2); `android/config/detekt/detekt-engine.yml`.
+
+**Notes** Fix in package D1: check the imported symbols of every `lib/*.so` in the release APK against an allow-list (`libsqlcipher.so` already imports `socket`, `connect` and `getaddrinfo`), and make the OpenCV on-device test assert that the files and cache directories are unchanged and that `TrafficStats.getUidTxBytes` stays flat across `initLocal` and `detectMarkers`. The library also embeds libjpeg-turbo, libwebp, libpng, libtiff, libopenjp2, OpenEXR, protobuf and oneTBB, which neither the Trivy gate nor the SBOM sees; track OpenCV releases by hand until the SBOM lists them.
+
 ---
 
 ## 5. Closed Defects
@@ -1029,8 +1137,8 @@ Updated with each test summary report (doc 9 Section 15).
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
-| S2 | 23 | 0 | 0 |
-| S3 | 14 | 0 | 0 |
+| S2 | 26 | 0 | 0 |
+| S3 | 17 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
 As of 27 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.

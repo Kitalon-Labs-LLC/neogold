@@ -90,6 +90,8 @@ Fill this in as work packages create them; keep it current.
 | Engine checks | `./gradlew verifyGoldenVectors triageDifferentialTest verifyConfigSchema` |
 | Android lint | `./gradlew lintRelease detekt` |
 | Android formatting (detekt auto-correct) | `./gradlew :<module>:detekt --auto-correct` (repeat the flag after every module; run twice; see `CONTRIBUTING.md` Section 5) |
+| On-device vision tests (OpenCV, emulator or phone) | `cd android && ./gradlew :engine:vision:assembleDebugAndroidTest`, then `adb install -r -t engine/vision/build/outputs/apk/androidTest/debug/vision-debug-androidTest.apk` and `adb shell am instrument -w com.kitalonlabs.neogold.engine.vision.test/androidx.test.runner.AndroidJUnitRunner` |
+| Release bundle and its size (ADR-018, NFR-04) | `cd android && ./gradlew :app:bundleRelease`, then `bundletool build-apks` and `bundletool get-size total` with `--device-spec` for an arm64-v8a and an armeabi-v7a phone (download under 25 MB, install under 40 MB) |
 | Backend tests | `cd backend && pytest -q` |
 | Card generator | `python card/generator/render_card.py` |
 | Card signing tool | `python3 card/tools/neogold-sign/neogold_sign.py --help` |

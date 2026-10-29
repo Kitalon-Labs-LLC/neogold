@@ -465,7 +465,7 @@ G3 was adopted on 11 October 2026 together with the decision to keep v1.0 a clos
 |---|---|---|
 | NeoGold code | MIT (PRD) | Keep notice |
 | Card design and documentation | CC BY 4.0 (PRD) | Attribution |
-| OpenCV (if chosen) | Apache 2.0 [Certain] | Notice file |
+| OpenCV (ADR-018) | Apache 2.0 [Certain] | Notice file (S24 lists it) |
 | Tink | Apache 2.0 [Certain] | Notice file |
 | SQLCipher for Android, community edition | BSD 3-Clause [Certain, verified in docs/spikes/2026-10-26-sqlcipher-license.md] | Notice in app |
 | Bouncy Castle (if chosen) | MIT-style Bouncy Castle license [Certain] | Notice |
