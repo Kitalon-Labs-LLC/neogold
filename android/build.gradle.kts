@@ -10,9 +10,23 @@ plugins {
     alias(libs.plugins.detekt) apply false
 }
 
+// Guava is on the lint tool, the annotation-processor and the test classpaths only, never in an APK. CVE-2026-102554
+// is fixed in 33.7.2, so every configuration gets that release, in the flavor it asked for (BUG-2026-059).
+val guavaFixedRelease = "33.7.2"
+
 allprojects {
     dependencyLocking {
         lockAllConfigurations()
+    }
+
+    configurations.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.google.guava" && requested.name == "guava") {
+                val flavor = if (requested.version.orEmpty().endsWith("-android")) "android" else "jre"
+                useVersion("$guavaFixedRelease-$flavor")
+                because("CVE-2026-102554 is fixed in Guava $guavaFixedRelease (BUG-2026-059)")
+            }
+        }
     }
 }
 
