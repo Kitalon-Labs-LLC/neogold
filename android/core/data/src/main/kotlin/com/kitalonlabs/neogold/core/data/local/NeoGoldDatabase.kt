@@ -57,6 +57,14 @@ abstract class NeoGoldDatabase : RoomDatabase() {
     companion object {
         const val DATABASE_NAME = "neogold.db"
 
+        /**
+         * sqlcipher-android does not load its native library by itself: without this, the first query throws
+         * UnsatisfiedLinkError and the app closes (BUG-2026-062). Loaded once per process, before the first factory.
+         */
+        private val sqlCipherLibrary: Unit by lazy { System.loadLibrary("sqlcipher") }
+
+        private fun loadSqlCipher() = sqlCipherLibrary
+
         val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE research_study ADD COLUMN export_public_key BLOB")
@@ -69,9 +77,13 @@ abstract class NeoGoldDatabase : RoomDatabase() {
             databaseName: String = DATABASE_NAME,
             openHelperFactory: SupportSQLiteOpenHelper.Factory? = null
         ): NeoGoldDatabase {
-            val factory = openHelperFactory ?: SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())
+            val factory = openHelperFactory ?: run {
+                loadSqlCipher()
+                SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())
+            }
             return Room.databaseBuilder(context, NeoGoldDatabase::class.java, databaseName)
-                .openHelperFactory(factory)
+                // Never let the library delete a database that will not open (doc 8 Section 5.1, TC-SEC-07).
+                .openHelperFactory(KeepOnCorruptionFactory(factory))
                 .addMigrations(MIGRATION_1_2)
                 .addCallback(DatabaseCallback)
                 .build()
