@@ -1,5 +1,6 @@
-# Extra rules for the four pure engines (:engine:colorscience, :estimation, :triage, :cardtrust).
-# Doc 4 Section 4.2: they use java.lang.StrictMath so arm64-v8a and armeabi-v7a give bit-identical results.
+# Extra rules for every :engine:* module (the four pure engines, :engine:vision and :engine:camera).
+# Doc 4 Section 4.2: the pure engines use java.lang.StrictMath so arm64-v8a and armeabi-v7a give bit-identical results.
+# The last four entries keep :engine:vision to the OpenCV modules it needs (ADR-018, supply-chain review of 29 October).
 #
 # This file bans importing the platform versions. A call such as Math.pow(x, 2.0) needs no import, so
 # tools/check_strictmath.py is the check that catches those. detekt's ForbiddenMethodCall would too, but it needs
@@ -54,3 +55,11 @@ style:
         reason: 'Pure engines must use java.lang.StrictMath.cosh for bit-identical cross-platform results (Doc 4 Section 4.2).'
       - value: 'kotlin.math.tanh'
         reason: 'Pure engines must use java.lang.StrictMath.tanh for bit-identical cross-platform results (Doc 4 Section 4.2).'
+      - value: 'org.opencv.imgcodecs.*'
+        reason: 'Screening images are never written to disk, and OpenCV image file I/O is not needed (Doc 8 Section 2, ADR-018).'
+      - value: 'org.opencv.videoio.*'
+        reason: 'The screening path makes no network call and reads no video file; OpenCV video I/O is not needed (Doc 8 Section 6.1, ADR-018).'
+      - value: 'org.opencv.dnn.*'
+        reason: 'No neural network runs on the device in v1 (ADR-004, ADR-018).'
+      - value: 'org.opencv.android.Utils'
+        reason: 'Bitmap conversion is not needed: the vision engine takes an ImageFrame (ADR-018).'

@@ -367,6 +367,35 @@ class VisionQualityGateTest {
         }
     }
 
+    // The same check on the artwork the card is printed with (card/spec/card-v1.json: ARUCO_4X4, ADR-018). The
+    // default synthetic artwork in the test above is AprilTag, which the printed card does not use.
+    @Test
+    fun tcCap17_cardDetectionAndPatchExtractionAccuracy_onArucoArtwork() {
+        val testConfigs = listOf(
+            SyntheticRenderConfig(scale = 0.85, tiltDegrees = 0.0, rotationDegrees = 0.0),
+            SyntheticRenderConfig(scale = 1.00, tiltDegrees = 5.0, rotationDegrees = 0.0),
+            SyntheticRenderConfig(scale = 1.15, tiltDegrees = 0.0, rotationDegrees = 0.0),
+            SyntheticRenderConfig(scale = 1.00, tiltDegrees = 0.0, rotationDegrees = 90.0),
+            SyntheticRenderConfig(scale = 1.00, tiltDegrees = 0.0, rotationDegrees = 180.0),
+            SyntheticRenderConfig(scale = 1.00, tiltDegrees = 0.0, rotationDegrees = 270.0)
+        ).map { it.copy(markerFamily = "ARUCO_4X4") }
+
+        for (cfg in testConfigs) {
+            val result = engine.processFrame(renderer.renderFrame(cfg))
+
+            assertWithMessage("ArUco frame (scale=${cfg.scale}, rot=${cfg.rotationDegrees}) must pass quality gate")
+                .that(result.passed).isTrue()
+            assertThat(result.metrics.markersDetected).isEqualTo(4)
+
+            val sampledPatches = CardSampler.samplePatches(result.canonicalImage!!)
+            for ((id, def) in CardGeometry.PATCHES) {
+                val deltaE = ciede2000(sampledPatches.getValue(id).lab, def.nominalLab)
+                assertWithMessage("Patch $id at scale=${cfg.scale}, rot=${cfg.rotationDegrees} Delta E ($deltaE)")
+                    .that(deltaE).isAtMost(0.5)
+            }
+        }
+    }
+
     // -------------------------------------------------------------------------
     // TC-CARD-07: Home-printed copy of genuine QR -> HIGH_RESIDUAL (bench placeholder)
     // -------------------------------------------------------------------------

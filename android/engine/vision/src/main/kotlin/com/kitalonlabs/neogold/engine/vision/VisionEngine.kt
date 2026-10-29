@@ -42,9 +42,10 @@ class VisionEngine(
             peakAllocationBytes = currentTotal
         }
 
-        // 1. Detect corner markers
+        // 1. Detect corner markers. An ID reported twice cannot be told apart (two cards in view, or a false
+        // detection), so it counts as missing and is never guessed, whichever detector reported it (ADR-018).
         val detectedList = markerDetector.detectMarkers(frame)
-        val markerMap = detectedList.associateBy { it.id }
+        val markerMap = detectedList.groupBy { it.id }.filterValues { it.size == 1 }.mapValues { it.value.single() }
 
         // Check if all 4 corner markers (0=TL, 1=TR, 2=BR, 3=BL) are found
         val hasAllFour = markerMap.keys.containsAll(listOf(0, 1, 2, 3))

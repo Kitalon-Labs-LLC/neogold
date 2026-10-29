@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber") // quad corner indices and marker grid sizes; replaced behind MarkerDetector in A3
+@file:Suppress("MagicNumber") // quad corner indices and marker grid sizes of the card's two marker families
 
 package com.kitalonlabs.neogold.engine.vision
 
@@ -68,6 +68,9 @@ object MarkerCodebook {
 
 /**
  * Pure Kotlin marker detector capable of finding corner markers in camera and synthetic frames.
+ *
+ * The app prefers OpenCV's ArUco detector (see [DefaultMarkerDetector], ADR-018). This one is the JVM-testable
+ * reference and the fallback when OpenCV cannot load.
  */
 class FastMarkerDetector : MarkerDetector {
 
@@ -129,7 +132,7 @@ class FastMarkerDetector : MarkerDetector {
     @Suppress(
         "NestedBlockDepth",
         "ReturnCount"
-    ) // image-processing loops; the detector is replaced behind MarkerDetector in A3
+    ) // image-processing loops of the reference and fallback detector (ADR-018)
     private fun decodeGrid(
         frame: ImageFrame,
         corners: List<Point2D>,
@@ -223,7 +226,7 @@ class FastMarkerDetector : MarkerDetector {
         "CyclomaticComplexMethod",
         "LongMethod",
         "NestedBlockDepth"
-    ) // image-processing loops; the detector is replaced behind MarkerDetector in A3
+    ) // image-processing loops of the reference and fallback detector (ADR-018)
     fun findCandidateQuads(frame: ImageFrame): List<List<Point2D>> {
         val w = frame.width
         val h = frame.height
