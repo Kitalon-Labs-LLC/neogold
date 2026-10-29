@@ -5,6 +5,10 @@
     @androidx.navigation.* <methods>;
 }
 
+# OpenCV (ADR-018): its native library finds the Java classes by name through JNI, so R8 must neither rename
+# nor remove them. The Java side is about 0.4 MB.
+-keep class org.opencv.** { *; }
+
 # Release logging: strip android.util.Log calls in release builds (TC-SEC-03, doc 8 Section 6.1)
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);

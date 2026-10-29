@@ -52,7 +52,7 @@ flowchart LR
 
 | Container | Technology | Responsibility | Runs where |
 |---|---|---|---|
-| **Android app** | Kotlin, Jetpack Compose, CameraX, native marker library (OpenCV or AprilTag), SQLCipher, Tink | Capture, color correction, estimation, triage, local log, research mode, export, optional sync | Health worker's phone |
+| **Android app** | Kotlin, Jetpack Compose, CameraX, OpenCV for ArUco marker detection (ADR-018), SQLCipher, Tink | Capture, color correction, estimation, triage, local log, research mode, export, optional sync | Health worker's phone |
 | **Study Intake Service** | Python 3.12, FastAPI, PostgreSQL 16, Caddy, Docker Compose | Device enrollment, receive research sessions and images, integrity checks, de-identified export | One small VM per study, chosen by the partner |
 | **Training pipeline** | Python 3.12, NumPy, OpenCV, scikit-learn, pinned with a lockfile and a Docker image | Rebuild features from exported data, train and calibrate the model, generate metrics and model card | Researcher's machine or CI, never a public server |
 | **Card Production Kit** | Design files (SVG/PDF), Python signing CLI | Card layout, print spec, batch measurement import, QR generation and signing | Card producer's machine |
@@ -162,7 +162,7 @@ Production dependencies the diagram does not draw, approved in the 2026-10-26 di
 | Async | Coroutines and Flow | Standard |
 | Navigation | Compose Navigation with type-safe routes | Standard |
 | Camera | CameraX with `Camera2Interop` | Needed to turn off scene modes and effects, lock AE and AWB where available, and read `CaptureResult` metadata; this is the reason Flutter was rejected (doc 1, Section 10) |
-| Computer vision | Decided in v0.1 by measured size: (a) OpenCV Android from Maven Central (`org.opencv:opencv`, Apache 2.0) [Certain] with ArUco markers in `objdetect` [Likely], or (b) the small AprilTag C library through JNI plus homography and blur math in Kotlin [Likely smaller] | The download budget is 25 MB (NFR-04). The full OpenCV package is large [Likely]; whichever option fits the budget on both ABIs wins |
+| Computer vision | OpenCV Android from Maven Central (`org.opencv:opencv` 4.14.0, Apache 2.0) with ArUco 4x4 markers in `objdetect`, used in `:engine:vision` only (ADR-018). The pure Kotlin detector stays as the JVM-testable reference; it runs in the app only when the native library is missing, and says so | Measured on a release App Bundle on 27 October 2026 (MiB): OpenCV adds 9.9 to the arm64-v8a download (13.96 in all, budget 25) and 8.1 to the armeabi-v7a download (11.82), and 25.3 to the arm64-v8a install (34.28 in all, budget 40). The 64-bit libraries are 16 KB aligned. The install budget is the tight one |
 | ABIs | `arm64-v8a` and `armeabi-v7a` | Some low-end and Android Go phones run 32-bit Android [Likely] (the 2026-10-26 spike, docs/spikes/2026-10-26-dual-abi-armeabi-v7a.md, only inspected the build configuration, so it does not confirm what phones run); App Bundle splits deliver one ABI per phone |
 | Estimation | Pure Kotlin linear model from JSON | v1 model is ridge regression on engineered color features; no ML runtime needed, fully auditable. LiteRT reserved for the v2 sclera model |
 | Local DB | Room on SQLCipher | Encrypted at rest for both screening log and research data |
@@ -192,6 +192,7 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `junit:junit`, `com.google.truth:truth`, `app.cash.turbine:turbine`, `org.robolectric:robolectric` | any | test | P01 allowed list; doc 9 Section 3 |
 | `io.gitlab.arturbosch.detekt:*` | any | all | P01 allowed list |
 | `androidx.camera:*` | `:engine:camera` | all | Section 4.3 Camera |
+| `org.opencv:opencv` | `:engine:vision` | all | ADR-018; Section 4.3 Computer vision |
 | `androidx.room:room-runtime`, `androidx.room:room-ktx`, `androidx.room:room-compiler` | any | all | Section 4.3 Local DB; ADR-008 |
 | `androidx.room:room-testing` | any | test | doc 9 Section 3 (`MigrationTestHelper`) |
 | `net.zetetic:sqlcipher-android` | `:core:data` | all | Section 4.3 Local DB; ADR-008 |
@@ -207,6 +208,7 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `com.jakewharton.timber:timber` | any | all | doc 8 Section 6.1 Release logging |
 | `androidx.biometric:biometric` | any | all | doc 8 Section 6.3 (`BiometricPrompt`) |
 | `androidx.test.ext:junit`, `androidx.test.espresso:espresso-core` | any | test | doc 9 Section 3 UI (instrumented) |
+| `androidx.test:runner` | any | test | The instrumentation runner (`AndroidJUnitRunner`) that the convention plugins already name; `androidx.test.ext:junit` does not bring it. First used by the OpenCV tests of `:engine:vision` (ADR-018). This row is not a transcription of an earlier approval: it was added with A3 and waits for the owner's decision (CLAUDE.md: ask before adding a dependency) |
 
 ### 4.4 Screening state machine
 
@@ -301,7 +303,7 @@ A phone that fails is limited to research mode, where its images still help the 
 
 ### 5.2 Card detection and sampling
 
-- Four corner markers (ArUco or AprilTag, decided in v0.1) give a homography to a canonical card image (for example 1200 x 760 px). [Likely] Markers make detection robust to angle and partial shadow at low CPU cost.
+- Four corner markers (ArUco 4x4, ADR-018) give a homography to a canonical card image (for example 1200 x 760 px). [Likely] Markers make detection robust to angle and partial shadow at low CPU cost.
 - The card carries duplicate gray and skin-tone patches in opposite corners. Comparing them on every capture detects uneven light and phone processing that varies across the image.
 - Patch values are trimmed means (drop the brightest and darkest 10% of pixels) from the inner 60% of each patch, which removes edge bleed and specular highlights.
 - The skin value comes from the punched window, inner 70% only. A skin plausibility check (chromaticity range, uniformity, no hard edges) rejects cloth, shadow, a finger, or an empty window.
@@ -608,12 +610,34 @@ Detailed in `12_Deployment_Runbook.md`. Summary:
 | ADR-015 | Monotone piecewise-linear linearization with PAVA isotonic filtering | Cubic splines (PCHIP, natural splines), unconstrained polynomials | Unconditional monotonicity across all inputs without Runge oscillations or spline overshoot; noise-resilient with 6 to 7 gray patches; exact node fidelity; zero matrix inversion |
 | ADR-016 | Bouncy Castle Argon2id (pure Java) for the research PIN hash, in `:core:security` only | argon2kt over JNI | No extra native library to build and 16 KB-align on two ABIs; R8 shrinks it. Timing on the 2 GB floor phone is not yet measured [Guessing]; switch to argon2kt if a hash takes over 1 s (doc 8 Section 6.2). Recorded in the 2026-10-26 direction check (P24, A15) |
 | ADR-017 | Manual dependency wiring in `:app` | Hilt | The app was built without it; adopting Hilt now is a cross-module refactor with no user-facing gain. Recorded in the 2026-10-26 direction check (P24, A17) |
+| ADR-018 | OpenCV (`org.opencv:opencv` 4.14.0) for ArUco 4x4 marker detection, in `:engine:vision` only. When OpenCV loads its answer is final; the pure Kotlin detector runs only when OpenCV is missing altogether, and says so (`usesFallback`) | The AprilTag C library through JNI (the 273-line stand-in in the repository was never built here: no NDK, and the card artwork is ArUco); pure Kotlin only; OpenCV 5.0.0 | Both ABIs fit both NFR-04 budgets with the full OpenCV library, measured on a release App Bundle; install size is the tight one. OpenCV 5.0.0 fails the install budget and gate S4. The measurement, the rules the detector applies and what is not yet verified are in the notes below the table |
+
+**ADR-018 notes (27 October 2026).**
+
+Measurement, on a release App Bundle with bundletool 1.18.3 (the version and checksum the release workflow pins). Sizes are MiB (1,048,576 bytes), as the repository's scripts count them:
+
+| | Before OpenCV | With OpenCV 4.14.0 | Budget (NFR-04) |
+|---|---|---|---|
+| arm64-v8a download | 4.07 | 13.96 | 25 |
+| arm64-v8a install | 8.97 | 34.28 | 40 |
+| armeabi-v7a download | 3.68 | 11.82 | 25 |
+| armeabi-v7a install | 7.31 | 24.02 | 40 |
+
+In decimal megabytes the arm64-v8a install is 35.95 against 40, so the headroom is 4.0 MB, and the later packages will use it. No workflow checks these sizes yet (BUG-2026-053).
+
+- **Why not 5.0.0.** It is 3.7 MiB larger to download but 8.4 MiB larger to install on arm64-v8a, which alone would pass 40 MiB, and its arm64-v8a `libc++_shared.so` is 4 KB aligned, which fails gate S4. The 4.14.0 libraries are 16 KB aligned on arm64-v8a (`zipalign -c -P 16` passes and the ELF `LOAD` alignment is 16384); the 32-bit armeabi-v7a libraries are 4 KB, which S4 does not cover.
+- **Build.** Release builds keep only `arm64-v8a` and `armeabi-v7a` (the OpenCV x86 and x86_64 libraries alone add 100 MB). R8 keeps `org.opencv.**` because the native library finds its Java classes by name.
+- **Rules the detector applies**, all in code and tested on the JVM: only IDs 0 to 3 count; an ID found twice is dropped, never guessed (two cards in view, or a false detection), and the vision engine drops a repeated ID from any detector that reports one (the Kotlin fallback never does); a frame on which OpenCV fails counts as "no markers"; the centre of a marker is where its diagonals cross. When OpenCV is missing, the Kotlin detector runs and `DefaultMarkerDetector.usesFallback` is true. On a supported phone that is an error state: the screening flow must block and record it (package E1, BUG-2026-057).
+- **Evidence.** On an x86_64 emulator (API 37), 72 synthetic frames (three scales, three tilts up to 20 degrees, eight rotations) all gave four markers, with corners within 0.8 px and centres within 0.8 px of the rendered card. Two cards in one frame were not taken for one. The quality gate passed and all 23 patches were read within 0.5 Delta E 2000 on nine frames, including the card at the size the card spec gives it in a photo. Detection took a median of 20 ms in one run and 110 ms in another on the same code: an emulator's speed follows the host load and says nothing about a phone [Guessing for phones].
+- **Provenance** (supply-chain review, 29 October 2026). The checksum pins date from the P08 commit, before OpenCV was used, so the review checked them again. The AAR passes `gpg --verify` under key 72D1FA7F942F5D762BD1790EAED1E41000A267FC ("OpenCV Team <admin@opencv.org>"), and its `libopencv_java4.so` for all four ABIs is byte-identical to the file in GitHub's `opencv-4.14.0-android-sdk.zip`. The `.module` file Central serves lists the AAR as 3.3 to 3.6 MB with hashes that match no real file, in all five versions from 4.12.0 to 5.0.0.1: upstream's build script publishes a Java-only AAR first and then copies the full one over it. Gradle ignores those fields. A pinned hash fails any later change of the served bytes; `verify-signatures` is false, so repeat this check (`gpgv` plus the GitHub digest) at every OpenCV bump. The signing key changed between 4.12.0 (RSA, expired December 2025) and 4.13.0 (Ed25519, created 22 January 2026), self-signed only.
+- **What the binary can do.** The AAR manifest holds only `uses-sdk`. The Java classes use no `java.net`, `android.net`, provider or receiver, and the library imports no socket, `getaddrinfo` or SSL symbol on either ABI; gate S5 passes on the merged manifests. The library embeds libjpeg-turbo, libwebp, libpng, libtiff, libopenjp2, OpenEXR, protobuf and oneTBB, which neither the Trivy gate (S2) nor the SBOM sees. Only ArUco runs, and detekt forbids the `imgcodecs`, `videoio`, `dnn` and `android.Utils` imports in the engine modules, so those codecs stay unreachable from Kotlin; track OpenCV releases by hand. What the native libraries import is not checked by any gate yet (BUG-2026-058).
+- **Not verified.** Any ARM device; printed cards under clinic light (package D1); the minified release build running OpenCV (the app does not call the detector yet, so R8 removes its call sites). The four markers are not checked against each other's geometry (BUG-2026-055). The on-device tests run by hand, not in CI (BUG-2026-054).
 
 ---
 
 ## 16. Open Issues for Review
 
-1. **Marker library:** OpenCV vs AprilTag, decided by measured download size against the 25 MB budget in v0.1.
+1. **Marker library:** resolved on 27 October 2026 by ADR-018 (OpenCV, ArUco 4x4), after a measurement against the 25 MB download and 40 MB install budgets.
 2. **Qualification thresholds:** the repeatability, uniformity, and accuracy limits in Section 5.1 are starting values; tune on the device test matrix.
 3. **Root-polynomial vs linear correction:** decide on v0.5 data.
 4. **Bangladesh hosting provider:** partner infrastructure first; if the partner has none, compare two Dhaka providers on encryption, backups, and access control before the study.

@@ -146,7 +146,11 @@ gradle:androidx.sqlite:sqlite
 gradle:androidx.sqlite:sqlite-framework
 gradle:androidx.startup:startup-runtime
 gradle:androidx.test.espresso:espresso-idling-resource
+gradle:androidx.test.ext:junit
+gradle:androidx.test.services:storage
+gradle:androidx.test:core
 gradle:androidx.test:monitor
+gradle:androidx.test:runner
 gradle:androidx.tracing:tracing
 gradle:androidx.tracing:tracing-ktx
 gradle:androidx.vectordrawable:vectordrawable
@@ -288,6 +292,7 @@ gradle:org.junit.platform:junit-platform-engine
 gradle:org.junit.platform:junit-platform-launcher
 gradle:org.junit:junit-bom
 gradle:org.jvnet.staxex:stax-ex
+gradle:org.opencv:opencv
 gradle:org.opentest4j:opentest4j
 gradle:org.ow2.asm:asm
 gradle:org.ow2.asm:asm-analysis

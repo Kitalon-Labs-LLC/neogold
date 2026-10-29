@@ -81,6 +81,10 @@ class NeoGoldAndroidApplicationPlugin : Plugin<Project> {
                     release {
                         isMinifyEnabled = true
                         isShrinkResources = true
+                        // Only the two supported ABIs (CLAUDE.md); OpenCV's x86 and x86_64 libraries add 100 MB.
+                        ndk {
+                            abiFilters += setOf("arm64-v8a", "armeabi-v7a")
+                        }
                         if (releaseSigning != null) {
                             signingConfig = releaseSigning
                         }

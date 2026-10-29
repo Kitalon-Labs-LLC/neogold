@@ -76,6 +76,7 @@ GROUP_LICENSE_MAP = {
     "junit": "EPL-2.0",
     "org.junit": "EPL-2.0",
     "org.junit.platform": "EPL-2.0",
+    "org.opencv": "Apache-2.0",        # OpenCV Android SDK (ADR-018); the POM declares Apache-2.0
     "org.opentest4j": "Apache-2.0",
     "jakarta.activation": "EDL-1.0",
     "jakarta.xml.bind": "EDL-1.0",
