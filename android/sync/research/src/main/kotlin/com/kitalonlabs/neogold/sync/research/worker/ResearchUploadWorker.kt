@@ -42,7 +42,8 @@ open class ResearchUploadWorker(
 
         val deviceKeyManager = AndroidDeviceKeyManager()
         val clockManager = ClockManager()
-        val okHttpClient = okhttp3.OkHttpClient.Builder().build()
+        // A redirect would send the request body, and the device assertion's claims, to a server the study never named.
+        val okHttpClient = okhttp3.OkHttpClient.Builder().followRedirects(false).followSslRedirects(false).build()
         val apiClient = ResearchApiClient(
             okHttpClient = okHttpClient,
             clockManager = clockManager,

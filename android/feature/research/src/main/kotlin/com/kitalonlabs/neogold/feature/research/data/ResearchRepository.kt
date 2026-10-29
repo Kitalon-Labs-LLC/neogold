@@ -185,7 +185,7 @@ class ResearchRepository(
         if (!ResearchFormats.isValidParticipantCode(cleanCode)) {
             return Result.failure(
                 IllegalArgumentException(
-                    "Invalid participant code format: '$cleanCode'. Must match ^[A-Z]{2,5}-[0-9]{3,6}$"
+                    "Invalid participant code format. Must match ^[A-Z]{2,5}-[0-9]{3,6}$"
                 )
             )
         }
@@ -202,7 +202,7 @@ class ResearchRepository(
             if (existing.consentFormId != cleanConsent) {
                 return Result.failure(
                     IllegalStateException(
-                        "Participant code $cleanCode is already registered with a different consent form ID"
+                        "Participant code is already registered with a different consent form ID"
                     )
                 )
             }
@@ -470,7 +470,7 @@ class ResearchRepository(
             ?: return Result.failure(IllegalStateException("No active research study"))
 
         val participant = database.researchParticipantDao().getParticipantByCode(study.id, cleanCode)
-            ?: return Result.failure(IllegalArgumentException("Participant $cleanCode not found"))
+            ?: return Result.failure(IllegalArgumentException("Participant not found"))
 
         if (tsbMgDl <= 0.0 || tsbMgDl > MAX_TSB_MG_DL) {
             return Result.failure(

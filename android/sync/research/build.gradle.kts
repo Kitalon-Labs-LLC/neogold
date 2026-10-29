@@ -26,8 +26,10 @@ dependencies {
 
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.bouncycastle.bcprov)
 
+    // Not used by the module's own code. Robolectric brings a vulnerable Bouncy Castle (1.78.1) to the test compile
+    // classpath; this keeps it at the version the rest of the app uses (BUG-2026-036).
+    testImplementation(libs.bouncycastle.bcprov)
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.okhttp.mockwebserver)

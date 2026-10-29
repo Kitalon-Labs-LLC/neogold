@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.sync.research.crypto
 
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.UUID
 
 object DeviceAssertionMinter {
@@ -8,7 +9,7 @@ object DeviceAssertionMinter {
         Base64Url.encode(Base64Url.sha256(ByteArray(0)))
     }
 
-    @Suppress("LongParameterList") // JWT claim list; reworked with the audience fix in B2
+    @Suppress("LongParameterList") // one parameter per claim input; the claims are the contract in doc 7 Section 4.2
     fun mintToken(
         deviceId: String,
         keyAlias: String,
@@ -19,10 +20,28 @@ object DeviceAssertionMinter {
         imageSha256Hex: String?,
         clockManager: ClockManager,
         keyManager: DeviceKeyManager
+    ): String = mintToken(
+        deviceId, keyAlias, baseAudUrl, httpMethod, requestUrl, bodyBytes, imageSha256Hex, keyManager,
+        issuedAt = clockManager.currentServerAdjustedEpochSeconds(),
+        jti = UUID.randomUUID().toString()
+    )
+
+    /** The same token with the time and the identifier given, so a test can compare it with the shared vector. */
+    @Suppress("LongParameterList") // one parameter per claim input; the claims are the contract in doc 7 Section 4.2
+    internal fun mintToken(
+        deviceId: String,
+        keyAlias: String,
+        baseAudUrl: String,
+        httpMethod: String,
+        requestUrl: String,
+        bodyBytes: ByteArray?,
+        imageSha256Hex: String?,
+        keyManager: DeviceKeyManager,
+        issuedAt: Long,
+        jti: String
     ): String {
-        val iat = clockManager.currentServerAdjustedEpochSeconds()
+        val iat = issuedAt
         val exp = iat + ASSERTION_TTL_SECONDS
-        val jti = UUID.randomUUID().toString()
 
         val bsh = when {
             imageSha256Hex != null -> Base64Url.encode(Base64Url.hexToBytes(imageSha256Hex))
@@ -31,6 +50,15 @@ object DeviceAssertionMinter {
         }
 
         val aud = baseAudUrl.trimEnd('/')
+        // The server compares `aud` with its public base URL, which ends in /v1 (doc 7 Section 4.2). A host without
+        // it was a 401 on every call (audit finding, package B2): refuse to mint one.
+        require(aud.endsWith("/v1")) { "aud must be the API base URL, ending in /v1" }
+        val audUrl = aud.toHttpUrlOrNull()
+        require(
+            audUrl != null && audUrl.username.isEmpty() && audUrl.password.isEmpty() && audUrl.query == null && audUrl.fragment == null
+        ) {
+            "aud must be a plain address: no user name, query or fragment"
+        }
         // Normalize request URL (strip query parameters if any)
         val htu = requestUrl.substringBefore('?').substringBefore('#')
 

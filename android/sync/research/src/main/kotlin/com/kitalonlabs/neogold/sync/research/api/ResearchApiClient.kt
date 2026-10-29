@@ -20,6 +20,7 @@ import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
 import com.kitalonlabs.neogold.sync.research.crypto.DeviceAssertionMinter
 import com.kitalonlabs.neogold.sync.research.crypto.DeviceKeyManager
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,6 +30,20 @@ import okhttp3.Response
 import okio.BufferedSink
 import okio.source
 import java.io.InputStream
+
+/**
+ * The API base URL, always ending in `/v1`: what the server is configured with as its public base URL and what the
+ * device assertion's `aud` claim must equal (doc 7 Section 4.2). The study profile gives a host, with or without it.
+ */
+internal fun apiBaseUrl(baseUrl: String): String {
+    // A parsed address has its scheme and host in lower case and its default port dropped, which is how the server
+    // compares them; an address that does not parse is left as it is and fails later.
+    val base = (baseUrl.trim().toHttpUrlOrNull()?.toString() ?: baseUrl).trimEnd('/')
+    return if (base.endsWith("/v1")) base else "$base/v1"
+}
+
+/** The URL of [path] on the API: [apiBaseUrl] plus the path, which is also the token's `htu`. */
+internal fun requestUrl(baseUrl: String, path: String): String = "${apiBaseUrl(baseUrl)}/${path.trimStart('/')}"
 
 @Suppress("TooManyFunctions") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
 class ResearchApiClient(
@@ -285,15 +300,7 @@ class ResearchApiClient(
         return json.decodeFromString(TsbReceipt.serializer(), responseStr)
     }
 
-    private fun normalizeUrl(baseUrl: String, path: String): String {
-        val base = baseUrl.trimEnd('/')
-        val cleanPath = path.trimStart('/')
-        return if (base.endsWith("/v1")) {
-            "$base/$cleanPath"
-        } else {
-            "$base/v1/$cleanPath"
-        }
-    }
+    private fun normalizeUrl(baseUrl: String, path: String): String = requestUrl(baseUrl, path)
 
     private fun executeCall(request: Request): String {
         val response = okHttpClient.newCall(request).execute()
@@ -320,7 +327,7 @@ class ResearchApiClient(
         val token = DeviceAssertionMinter.mintToken(
             deviceId = deviceId,
             keyAlias = keyAlias,
-            baseAudUrl = baseUrl,
+            baseAudUrl = apiBaseUrl(baseUrl),
             httpMethod = method,
             requestUrl = requestUrl,
             bodyBytes = bodyBytes,
@@ -403,7 +410,7 @@ class ResearchApiClient(
         val token = DeviceAssertionMinter.mintToken(
             deviceId = deviceId,
             keyAlias = keyAlias,
-            baseAudUrl = baseUrl,
+            baseAudUrl = apiBaseUrl(baseUrl),
             httpMethod = "PUT",
             requestUrl = requestUrl,
             bodyBytes = null,

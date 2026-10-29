@@ -130,7 +130,7 @@ def put_participant(
             )
         else:
             raise ParticipantCodeTakenError(
-                f"Participant code {body.participant_code} is already in use with a different consent form ID"
+                "Participant code is already in use with a different consent form ID"
             )
 
     # Case D: New participant

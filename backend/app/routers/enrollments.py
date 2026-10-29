@@ -67,7 +67,7 @@ def enroll_device(
     # 1. Compute code HMAC
     code_raw = body.enrollment_code.strip()
     code_hash = hmac.new(
-        settings.ENROLLMENT_CODE_SECRET.encode("utf-8"),
+        settings.enrollment_code_key(),
         code_raw.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()

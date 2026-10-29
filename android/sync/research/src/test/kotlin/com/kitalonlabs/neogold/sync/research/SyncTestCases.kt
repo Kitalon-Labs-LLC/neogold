@@ -18,10 +18,15 @@ import com.kitalonlabs.neogold.core.security.DefaultEncryptedFileStore
 import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.FakeMasterKeyProvider
+import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
+import com.kitalonlabs.neogold.engine.cardtrust.PayloadParser
+import com.kitalonlabs.neogold.engine.cardtrust.TrustList
+import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
 import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
 import com.kitalonlabs.neogold.sync.research.crypto.SoftwareDeviceKeyManager
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyEnrollmentManager
+import com.kitalonlabs.neogold.sync.research.enrollment.StudyProfileVerifier
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyRevocationManager
 import com.kitalonlabs.neogold.sync.research.enrollment.StudySettingsMismatchException
 import com.kitalonlabs.neogold.sync.research.outbox.OutboxProcessor
@@ -1092,9 +1097,12 @@ class SyncTestCases {
         val enrollmentManager = StudyEnrollmentManager(
             apiClient = apiClient,
             keyManager = keyManager,
-            cardTrustVerifier = null,
+            // A test double: the mock QR below is not signed, and this test is about the settings check, not the
+            // signature. The real verifier is exercised by the two tests after it.
+            studyProfileVerifier = { VerificationResult.Verified(requireNotNull(PayloadParser.parseStudyProfile(it))) },
             studyDao = database.researchStudyDao(),
-            appVersion = appVersion
+            appVersion = appVersion,
+            allowCleartext = true // the mock server is plain http on localhost
         )
 
         server.enqueue(
@@ -1123,6 +1131,75 @@ class SyncTestCases {
         } catch (e: StudySettingsMismatchException) {
             assertThat(e.message).contains("Study settings do not match")
             assertThat(keyManager.hasDeviceKey(enrollmentAlias)).isFalse()
+        }
+    }
+
+    /**
+     * BUG-2026-040: a study QR that no trusted K5 key signed is never used. Nothing is sent, and no device key is made,
+     * because the profile names the server the phone would send research data to.
+     */
+    @Test
+    fun unsignedStudyProfile_isRefused_beforeAnyKeyIsMadeOrAnythingIsSent() = runBlocking {
+        val emptyTrustList = TrustList(
+            1,
+            1,
+            java.time.LocalDate.of(2026, 10, 1),
+            java.time.LocalDate.of(2028, 10, 1),
+            emptyList(),
+            emptyList(),
+            emptyList()
+        )
+        val manager = StudyEnrollmentManager(
+            apiClient = apiClient,
+            keyManager = keyManager,
+            studyProfileVerifier = StudyProfileVerifier.of(CardTrustVerifier(emptyTrustList)),
+            studyDao = database.researchStudyDao(),
+            appVersion = appVersion,
+            allowCleartext = true // the mock server is plain http on localhost
+        )
+        val qrBytes = createMockStudyQrBytes(
+            studyCode = "SKP-2026",
+            displayName = "Sakhipur Study",
+            partner = "BRAC",
+            host = server.url("/v1").toString(),
+            timestampPrecision = 0
+        )
+
+        try {
+            manager.enroll(qrPayload = qrBytes, enrollmentCode = "7K2X-M49P-3ABC")
+            fail("Expected IllegalArgumentException")
+        } catch (e: IllegalArgumentException) {
+            assertThat(e.message).doesNotContain("7K2X")
+        }
+
+        assertThat(server.requestCount).isEqualTo(0)
+        assertThat(keyManager.hasDeviceKey("neogold_device_key_SKP-2026")).isFalse()
+    }
+
+    /** BUG-2026-040: an enrollment code is a credential, so the error for a badly formed one does not repeat it. */
+    @Test
+    fun aBadlyFormedEnrollmentCode_isRefusedWithoutEchoingIt() = runBlocking {
+        val manager = StudyEnrollmentManager(
+            apiClient = apiClient,
+            keyManager = keyManager,
+            studyProfileVerifier = { VerificationResult.Verified(requireNotNull(PayloadParser.parseStudyProfile(it))) },
+            studyDao = database.researchStudyDao(),
+            appVersion = appVersion,
+            allowCleartext = true // the mock server is plain http on localhost
+        )
+        val qrBytes = createMockStudyQrBytes(
+            studyCode = "SKP-2026",
+            displayName = "Sakhipur Study",
+            partner = "BRAC",
+            host = server.url("/v1").toString(),
+            timestampPrecision = 0
+        )
+
+        try {
+            manager.enroll(qrPayload = qrBytes, enrollmentCode = "secret-code-123")
+            fail("Expected IllegalArgumentException")
+        } catch (e: IllegalArgumentException) {
+            assertThat(e.message).doesNotContain("secret-code-123")
         }
     }
 

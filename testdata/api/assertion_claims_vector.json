@@ -1,0 +1,22 @@
+{
+  "description": "One PUT /participants/{id} as the phone sends it. study_host is what the signed study profile carries; public_base_url is what the server is configured with.",
+  "study_host": "intake.example.bd",
+  "public_base_url": "https://intake.example.bd/v1",
+  "device_id": "0b8f5a14-6c2e-4d7b-8a39-5e1c7d9f3a60",
+  "jti": "c3a9d1f2-7b44-4e08-a5c6-1f2e3d4b5a69",
+  "iat": 1790000000,
+  "exp": 1790000300,
+  "method": "PUT",
+  "path": "/participants/6f1d2c9e-3b7a-4a55-9c1e-0d4f6a8b2c31",
+  "body": "{\"participant_code\":\"SKP-0001\",\"consent_form_id\":\"CF-2026-01\",\"consent_date\":\"2026-10-10\"}",
+  "expected_claims": {
+    "iss": "0b8f5a14-6c2e-4d7b-8a39-5e1c7d9f3a60",
+    "aud": "https://intake.example.bd/v1",
+    "iat": 1790000000,
+    "exp": 1790000300,
+    "jti": "c3a9d1f2-7b44-4e08-a5c6-1f2e3d4b5a69",
+    "htm": "PUT",
+    "htu": "https://intake.example.bd/v1/participants/6f1d2c9e-3b7a-4a55-9c1e-0d4f6a8b2c31",
+    "bsh": "iL_tCdoO318VpHJq2V3ShSBFdbIqGXQsV93qTfaafC8"
+  }
+}

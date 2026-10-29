@@ -4,25 +4,69 @@ import android.os.Build
 import com.kitalonlabs.neogold.core.data.local.dao.ResearchStudyDao
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
 import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
-import com.kitalonlabs.neogold.engine.cardtrust.PayloadParser
 import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
+import com.kitalonlabs.neogold.sync.research.api.apiBaseUrl
 import com.kitalonlabs.neogold.sync.research.api.models.DeviceInfo
 import com.kitalonlabs.neogold.sync.research.api.models.EnrollmentRequest
 import com.kitalonlabs.neogold.sync.research.api.models.EnrollmentResponse
 import com.kitalonlabs.neogold.sync.research.crypto.DeviceKeyManager
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.UUID
 
 class StudySettingsMismatchException(message: String) : Exception(message)
 
-class StudyEnrollmentManager(
+/**
+ * Checks a scanned study QR against the trust list (doc 8 Section 4, K5). There is no "skip the check" value: a study
+ * profile that is not verified is never used, because it names the server the phone will send research data to
+ * (BUG-2026-040).
+ */
+internal fun interface StudyProfileVerifier {
+    fun verify(qrPayload: ByteArray): VerificationResult<StudyProfilePayload>
+
+    companion object {
+        fun of(cardTrustVerifier: CardTrustVerifier) = StudyProfileVerifier { cardTrustVerifier.verifyStudyProfile(it) }
+    }
+}
+
+/**
+ * The API base URL a study profile names, checked and normalized: https, no user name, query or fragment, and no path
+ * but the optional `/v1`. The host is lower-cased and a default port dropped, as the server compares them (doc 7 Section
+ * 4.2). Anything else is refused, because this is the server the phone sends research data and its device assertions to.
+ *
+ * @param allowCleartext only the tests' local server; the app's network security config refuses cleartext anyway
+ */
+internal fun studyBaseUrl(host: String, allowCleartext: Boolean = false): String {
+    val url = (if ("://" in host) host else "https://$host").toHttpUrlOrNull()
+        ?: throw IllegalArgumentException("Study profile host is not a valid address")
+    require(url.isHttps || allowCleartext) { "Study profile host must use https" }
+    require(url.username.isEmpty() && url.password.isEmpty() && url.query == null && url.fragment == null) {
+        "Study profile host must be a plain address"
+    }
+    require(url.encodedPath == "/" || url.encodedPath == "/v1" || url.encodedPath == "/v1/") {
+        "Study profile host must not name a path"
+    }
+    return apiBaseUrl(url.newBuilder().encodedPath("/").build().toString())
+}
+
+class StudyEnrollmentManager internal constructor(
     private val apiClient: ResearchApiClient,
     private val keyManager: DeviceKeyManager,
-    private val cardTrustVerifier: CardTrustVerifier?,
+    private val studyProfileVerifier: StudyProfileVerifier,
     private val studyDao: ResearchStudyDao,
-    private val appVersion: String
+    private val appVersion: String,
+    private val allowCleartext: Boolean
 ) {
+    /** The only way the app builds one: the study profile is always checked against the trust list. */
+    constructor(
+        apiClient: ResearchApiClient,
+        keyManager: DeviceKeyManager,
+        cardTrustVerifier: CardTrustVerifier,
+        studyDao: ResearchStudyDao,
+        appVersion: String
+    ) : this(apiClient, keyManager, StudyProfileVerifier.of(cardTrustVerifier), studyDao, appVersion, false)
+
     @Suppress("TooGenericExceptionCaught") // delete the device key on any enrollment failure, then rethrow
     suspend fun enroll(
         qrPayload: ByteArray,
@@ -40,14 +84,11 @@ class StudyEnrollmentManager(
         // 2. Validate one-time code format (Crockford base32: 3 groups of 4 chars)
         val cleanCode = enrollmentCode.trim().uppercase()
         val codeRegex = Regex("^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$")
-        require(codeRegex.matches(cleanCode)) { "Invalid enrollment code format: $enrollmentCode" }
+        // The message never repeats the code: it is a credential, and messages reach logs and crash reports.
+        require(codeRegex.matches(cleanCode)) { "Invalid enrollment code format" }
 
         val serverHost = profile.host ?: error("Study profile does not specify a server host")
-        val baseUrl = if (serverHost.startsWith("http://") || serverHost.startsWith("https://")) {
-            serverHost
-        } else {
-            "https://$serverHost"
-        }
+        val baseUrl = studyBaseUrl(serverHost, allowCleartext)
 
         val keyAlias = "neogold_device_key_${profile.studyCode}"
 
@@ -119,12 +160,10 @@ class StudyEnrollmentManager(
         return response
     }
 
-    private fun resolveStudyProfile(qrPayload: ByteArray): StudyProfilePayload {
-        val profileResult = cardTrustVerifier?.verifyStudyProfile(qrPayload)
-        require(profileResult !is VerificationResult.Expired) { "Study profile has expired" }
-        if (profileResult is VerificationResult.Verified) return profileResult.payload
-        require(cardTrustVerifier == null) { "Invalid study profile signature: $profileResult" }
-        return PayloadParser.parseStudyProfile(qrPayload)
-            ?: throw IllegalArgumentException("Malformed study profile QR")
-    }
+    private fun resolveStudyProfile(qrPayload: ByteArray): StudyProfilePayload =
+        when (val result = studyProfileVerifier.verify(qrPayload)) {
+            is VerificationResult.Verified -> result.payload
+            is VerificationResult.Expired -> throw IllegalArgumentException("Study profile has expired")
+            else -> throw IllegalArgumentException("Study profile could not be verified")
+        }
 }

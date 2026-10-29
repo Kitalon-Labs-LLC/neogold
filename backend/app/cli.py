@@ -43,7 +43,7 @@ CROCKFORD_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 def get_purge_db() -> Session:
     if settings.PURGE_DATABASE_URL:
-        purge_engine = create_engine(settings.PURGE_DATABASE_URL, pool_pre_ping=True)
+        purge_engine = create_engine(settings.PURGE_DATABASE_URL, pool_pre_ping=True, hide_parameters=True)
         PurgeSession = sessionmaker(autocommit=False, autoflush=False, bind=purge_engine)
         return PurgeSession()
     return SessionLocal()
@@ -51,7 +51,7 @@ def get_purge_db() -> Session:
 
 def get_export_db() -> Session:
     if settings.EXPORT_DATABASE_URL:
-        export_engine = create_engine(settings.EXPORT_DATABASE_URL, pool_pre_ping=True)
+        export_engine = create_engine(settings.EXPORT_DATABASE_URL, pool_pre_ping=True, hide_parameters=True)
         ExportSession = sessionmaker(autocommit=False, autoflush=False, bind=export_engine)
         return ExportSession()
     return SessionLocal()
@@ -240,7 +240,7 @@ def handle_code_issue(args: argparse.Namespace) -> int:
         expires_at = datetime.datetime.now(datetime.UTC) + duration
 
         count = args.count or 1
-        secret_bytes = settings.ENROLLMENT_CODE_SECRET.encode("utf-8")
+        secret_bytes = settings.enrollment_code_key()
 
         issued_codes = []
         for _ in range(count):
