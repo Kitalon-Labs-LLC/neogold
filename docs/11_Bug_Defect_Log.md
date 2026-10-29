@@ -133,6 +133,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-056 | CARD_ANGLE does not enforce the 20 degree limit for every in-plane rotation of the card | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S2 | No | - | P2 | New | Unassigned | TC-CAP-03 | |
 | BUG-2026-057 | A phone on which OpenCV fails to load silently runs the looser Kotlin detector | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S3 | No | - | P2 | In progress | Unassigned | TC-CAP-17 | |
 | BUG-2026-058 | No gate checks what the bundled native libraries import, or that screening writes no file and sends no traffic | 2026-10-29 | Review | commit 3556b25 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-PRIV-01 | |
+| BUG-2026-059 | Gate S2 fails on a new Guava advisory (CVE-2026-102554, HIGH) that sits only on lint, test and annotation-processor classpaths | 2026-10-29 | CI | commit 6a9e4e8 | n/a | SEC | S3 | No | - | P3 | In progress | Unassigned | TC-SEC-05 | |
 
 ### 4.1 Entries
 
@@ -1119,6 +1120,23 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix in package D1: check the imported symbols of every `lib/*.so` in the release APK against an allow-list (`libsqlcipher.so` already imports `socket`, `connect` and `getaddrinfo`), and make the OpenCV on-device test assert that the files and cache directories are unchanged and that `TrafficStats.getUidTxBytes` stays flat across `initLocal` and `detectMarkers`. The library also embeds libjpeg-turbo, libwebp, libpng, libtiff, libopenjp2, OpenEXR, protobuf and oneTBB, which neither the Trivy gate nor the SBOM sees; track OpenCV releases by hand until the SBOM lists them.
 
+#### BUG-2026-059: Gate S2 fails on a new Guava advisory (CVE-2026-102554, HIGH) that sits only on lint, test and annotation-processor classpaths
+
+- Area: SEC | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: In progress | Owner: Unassigned | Test case: TC-SEC-05 | Fix version:
+
+**Steps**
+1. Run the `scan` job of `android-ci.yml` on `dev` after the advisory reached the vulnerability database.
+2. List where Guava is resolved: `grep '^com.google.guava:guava:' $(find android -name gradle.lockfile)`, and read the configuration names after the `=`.
+
+**Expected** A finding on a library that the app does not contain does not block `dev`; a finding on one it does contain does (gate S2, doc 8 Section 10).
+
+**Actual** android-ci run 40824452863 on `6a9e4e8` failed in `scan`: `com.google.guava:guava` CVE-2026-102554 (GHSA-xxph-c9ww-hj94, HIGH, fixed in 33.7.2) in 15 lockfiles, in four versions. The advisory: `CompactHashMap`, `CompactHashSet` and `MapMakerInternalMap` read a size from the stream in `readObject` and allocate an array of that size, so a crafted Java-serialized object can exhaust memory (OSV, read on 29 October 2026). 31.1-jre is on the KSP and kapt processor classpaths of `:core:data` (the Room 2.6.1 compiler). 33.2.1-android and 33.3.1-jre are on unit-test classpaths, and 33.2.1-android is also on the `debugAndroidTest` classpaths of `:engine:vision`, so the instrumented-test APK holds it; that APK exists only on a developer's emulator or phone. 33.4.0-jre is in `androidLintTool`, Android's lint. In all 22 lockfiles no `releaseRuntimeClasspath`, `debugRuntimeClasspath` or main `*CompileClasspath` lists Guava, so neither app APK contains it, and `android/` uses no Java serialization (no `ObjectInputStream`, `ObjectOutputStream` or `readObject`). The cause is the vulnerability database, not the A3 change: the last green android-ci run is `3556b25` (run 40543308626, 27 October 2026), the A3 commits `2d03bd8` and `fe22eb7` were pushed together with `6a9e4e8` and got no run of their own, and eight of the 15 flagged lockfiles were not touched by A3. The lint, processor and test JVMs read only this repository's own files.
+
+**Evidence** The `scan` log of android-ci run 40824452863; the lockfiles (step 2); OSV GHSA-xxph-c9ww-hj94. An independent review (privacy-security-reviewer, 29 October 2026) confirmed the configuration list and the purl match, and made four findings, all fixed: the first wording ("clears with a Room or Android Gradle Plugin upgrade") was not supported, because such an upgrade can change the version without reaching 33.7.2, and then the entry stops matching; a version-scoped exception would go on hiding Guava if it ever reached a shipped classpath; the first expiry (31 January 2027) was longer than doc 8's 30 days for a high finding; and the green baseline I cited was not the nearest.
+
+**Notes** Time-boxed in `.trivyignore.yaml`: one entry per version, each naming the configuration that carries it. They expire on 28 November 2026, 30 days from the finding (doc 8 Section 10). Gate S2 at release needs no open high finding (doc 8 Section 13.3, TC-SEC-05), so they are gone before any release candidate. `tools/tests/test_trivy_exceptions.py` (repo-ci) fails if a tooling-only exception names a configuration an APK is built from or one not seen before, if its version is in no lockfile any more, or if an entry lacks a versioned purl, a reason or an expiry; a mutation check on copies of the real lockfiles caught each break. The lasting fix is due before the expiry: a Guava constraint at 33.7.2 (published as `-jre` and `-android`) on the kapt and KSP, `androidLintTool` and test configurations. It rewrites the 22 lockfiles and adds checksums; then the four entries go, and the test's dead-entry check tells whoever deletes them. Status becomes Fixed then. Two decisions belong to the owner. (1) Gate S2 scans every configuration the lockfiles list, build tooling included, so each new advisory against lint, a compiler plugin or a test library turns `dev` red until an exception is written; failing only on the release runtime classpaths would stop that, but it loosens what the gate checks, so it is not done. (2) The BUG-2026-036 entries run to 31 January 2027, but doc 8 gives a critical finding 7 days and a high one 30: Bouncy Castle CVE-2026-8763 is critical (in the lint tool only) and the three protobuf findings are high and ship. Either shorten them or write the rule for unshipped tooling into doc 8 Section 10.
+
 ---
 
 ## 5. Closed Defects
@@ -1138,10 +1156,10 @@ Updated with each test summary report (doc 9 Section 15).
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
 | S2 | 26 | 0 | 0 |
-| S3 | 17 | 0 | 0 |
+| S3 | 18 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
-As of 27 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
+As of 29 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
 
 ---
 
