@@ -55,7 +55,8 @@ jobs:
             -PuploadKeystorePassword="$UPLOAD_KEYSTORE_PASSWORD" \
             -PuploadKeyAlias="$UPLOAD_KEY_ALIAS" \
             -PuploadKeyPassword="$UPLOAD_KEY_PASSWORD" \
-            -PmanifestKey="$RUNNER_TEMP/manifest.key"
+            -PmanifestKey="$RUNNER_TEMP/manifest.key" \
+            -PrequireReleaseKey=true
           mkdir -p "$RUNNER_TEMP/upload"
           cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/upload/"
       - name: Install bundletool and put SDK and NDK tools on PATH

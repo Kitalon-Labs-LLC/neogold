@@ -6,6 +6,7 @@ import com.kitalonlabs.neogold.core.data.local.dao.AuditEventDao
 import com.kitalonlabs.neogold.core.data.local.dao.ResearchStudyDao
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
+import com.kitalonlabs.neogold.core.security.KeystoreLossException
 import com.kitalonlabs.neogold.core.security.pin.Argon2PinHasher
 import com.kitalonlabs.neogold.core.security.pin.PinPolicyValidator
 import com.kitalonlabs.neogold.core.security.pin.PinValidationResult
@@ -16,6 +17,12 @@ sealed interface PinCheckResult {
     data object Success : PinCheckResult
     data class WrongPin(val failedAttempts: Int, val attemptsUntilNextLockout: Int) : PinCheckResult
     data class LockedOut(val lockedUntilMs: Long, val remainingMinutes: Int) : PinCheckResult
+
+    /**
+     * The PIN verifier key K9 is gone, so the PIN cannot be checked at all. It is not a wrong PIN and does not count as
+     * one; the phone has to be enrolled in the study again (doc 8 Section 5.1, BUG-2026-011).
+     */
+    data object VerifierKeyLost : PinCheckResult
 }
 
 /**
@@ -68,14 +75,19 @@ class ResearchPinManager(
         val study = studyDao.getStudyById(studyId)
             ?: throw IllegalArgumentException("Study not found with id $studyId")
 
-        // 1. Check existing lockout
-        if (isStudyLocked(study, now)) {
-            val lockedUntil = study.lockedUntil!!
-            val remMins = getRemainingLockoutMinutes(study, now)
-            return PinCheckResult.LockedOut(lockedUntil, remMins)
+        return when {
+            // An existing lockout is answered first.
+            isStudyLocked(study, now) ->
+                PinCheckResult.LockedOut(study.lockedUntil!!, getRemainingLockoutMinutes(study, now))
+            // Without K9 there is nothing to compare with. Say so before the counter moves, so that a correct PIN never
+            // runs the lockout up because the key was lost.
+            !verifierKeyPresent() -> PinCheckResult.VerifierKeyLost
+            else -> judgePin(study, candidatePin, now)
         }
+    }
 
-        // 2. Pre-check write: Increment failure counter BEFORE evaluating the PIN
+    private suspend fun judgePin(study: ResearchStudyEntity, candidatePin: String, now: Long): PinCheckResult {
+        // Pre-check write: Increment failure counter BEFORE evaluating the PIN
         val nextAttempts = study.failedPinAttempts + 1
         val lockoutDurationMs: Long? = when {
             nextAttempts >= LOCKOUT_TIER_3_ATTEMPTS -> LOCKOUT_1_HOUR_MS
@@ -91,8 +103,14 @@ class ResearchPinManager(
         )
         studyDao.update(preCheckStudy)
 
-        // 3. Evaluate PIN hash
-        val isMatch = pinHasher.verifyPin(candidatePin, study.pinSalt, study.pinHash)
+        // Evaluate PIN hash. K9 can still vanish between the check in verifyPin and here; then the counter goes back to
+        // what it was, because the PIN was never judged.
+        val isMatch = try {
+            pinHasher.verifyPin(candidatePin, study.pinSalt, study.pinHash)
+        } catch (expected: KeystoreLossException) {
+            studyDao.update(study)
+            return PinCheckResult.VerifierKeyLost
+        }
 
         return if (isMatch) {
             // Success: Reset failure count and lockout
@@ -135,6 +153,12 @@ class ResearchPinManager(
                 PinCheckResult.WrongPin(nextAttempts, attemptsRemaining)
             }
         }
+    }
+
+    private fun verifierKeyPresent(): Boolean = try {
+        pinHasher.hasVerifierKey()
+    } catch (expected: KeystoreLossException) {
+        false // a Keystore that cannot be reached is a lost key, for the purpose of this check
     }
 
     /**

@@ -102,7 +102,7 @@ class ScreeningFlowTest {
             isPublicBuild = false,
             clock = { LocalDate.of(2026, 10, 17) }
         )
-        stateMachine = ScreeningStateMachine()
+        stateMachine = ScreeningStateMachine(integrityChecker = { true })
     }
 
     private fun createQualityResult(passed: Boolean, failureReasons: List<QualityReasonCode>): QualityGateResult {
@@ -303,7 +303,7 @@ class ScreeningFlowTest {
         stateMachine.dispatch(ScreeningEvent.StartScreening)
         stateMachine.dispatch(ScreeningEvent.SubmitInputs(validInputs))
 
-        val freshStateMachine = ScreeningStateMachine()
+        val freshStateMachine = ScreeningStateMachine(integrityChecker = { true })
         assertThat(freshStateMachine.state.value).isEqualTo(ScreeningState.Initial)
         assertThat(freshStateMachine.state.value).isNotInstanceOf(ScreeningState.Result::class.java)
     }

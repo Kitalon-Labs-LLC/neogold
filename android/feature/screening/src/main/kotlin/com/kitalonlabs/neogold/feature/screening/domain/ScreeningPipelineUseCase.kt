@@ -44,10 +44,8 @@ sealed class PipelineExecutionResult {
  * - Screening_CaptureToResult
  */
 class ScreeningPipelineUseCase(
-    private val visionEngine: VisionEngine = VisionEngine(),
-    private val integrityChecker: IntegrityChecker = IntegrityChecker {
-        true
-    }
+    private val integrityChecker: IntegrityChecker,
+    private val visionEngine: VisionEngine = VisionEngine()
 ) {
 
     companion object {

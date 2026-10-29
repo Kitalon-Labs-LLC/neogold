@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.core.security.pin
 
+import com.kitalonlabs.neogold.core.security.KeystoreLossException
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.security.MessageDigest
@@ -95,9 +96,22 @@ class Argon2PinHasher(
     }
 
     /**
+     * True when K9 is in the Keystore, so a stored PIN hash can still be checked.
+     *
+     * @throws KeystoreLossException when the Keystore cannot be reached
+     */
+    fun hasVerifierKey(): Boolean = hmacKeyProvider.hasKey()
+
+    /**
      * Constant-time verification of a candidate PIN against stored salt and hash.
+     *
+     * @throws KeystoreLossException when K9 is gone: a PIN hash that was bound to a lost key cannot be checked, and
+     * making a new key here would only turn every correct PIN into a wrong one and run the lockout counter up
      */
     fun verifyPin(pin: String, salt: ByteArray, expectedHash: ByteArray): Boolean {
+        if (!hmacKeyProvider.hasKey()) {
+            throw KeystoreLossException("PIN verifier key K9 is missing")
+        }
         val computedHash = hashPin(pin, salt)
         return MessageDigest.isEqual(computedHash, expectedHash)
     }

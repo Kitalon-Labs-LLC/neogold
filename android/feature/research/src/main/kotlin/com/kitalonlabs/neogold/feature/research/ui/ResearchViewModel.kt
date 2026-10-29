@@ -167,6 +167,9 @@ class ResearchViewModel(
                     _errorMessage.value = "Incorrect PIN. ${check.attemptsUntilNextLockout} attempts remaining before lockout."
                     loadActiveStudy()
                 }
+                is PinCheckResult.VerifierKeyLost -> {
+                    _errorMessage.value = "The PIN cannot be checked on this phone. Enroll in the study again."
+                }
             }
         }
     }

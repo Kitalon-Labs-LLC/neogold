@@ -1,3 +1,26 @@
 <resources>
     <string name="app_name">NeoGold</string>
+
+    <!-- Saved data that cannot be opened (doc 8 Section 5.1, BUG-2026-011) -->
+    <string name="storage_opening">Opening saved data…</string>
+    <string name="storage_unreadable_title">Saved data could not be opened</string>
+    <string name="storage_unreadable_body">The data saved on this phone could not be opened. This can happen after the phone was reset or restored. Try again, or reset the saved data and carry on. Your paper register is not affected.</string>
+    <string name="storage_unreadable_try_again">Try again</string>
+    <string name="storage_unreadable_reset">Reset saved data</string>
+    <string name="storage_reset_confirm_title">Reset saved data?</string>
+    <string name="storage_reset_confirm_body">This deletes everything saved on this phone, including research items that have not been sent yet. It cannot be undone.</string>
+    <string name="storage_reset_confirm_yes">Reset</string>
+    <string name="storage_reset_confirm_no">Cancel</string>
+
+    <!-- The app's own files failed their check (doc 4 Section 12, BUG-2026-007) -->
+    <string name="integrity_blocked_title">Screening and research are turned off</string>
+    <string name="integrity_blocked_body">NeoGold\'s own files did not pass a check on this phone. Install NeoGold again from the official source. Until then, use your facility\'s usual process.</string>
+    <string name="integrity_blocked_dev_key_body">This build was signed for development and cannot be used with babies. Install the release from the official source.</string>
+
+    <!-- Delete all data (FR-33, BUG-2026-009) -->
+    <string name="delete_all_deleting">Deleting all data…</string>
+    <string name="delete_all_incomplete_title">Some items could not be deleted</string>
+    <string name="delete_all_incomplete_body">These could not be removed: %1$s. Restart the phone and try again.</string>
+    <string name="delete_all_retry">Try again</string>
+    <string name="delete_all_close">Close</string>
 </resources>

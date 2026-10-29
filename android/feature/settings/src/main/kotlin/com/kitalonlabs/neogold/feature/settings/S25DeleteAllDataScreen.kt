@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,18 +33,23 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcon
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
 import com.kitalonlabs.neogold.core.designsystem.theme.LocalTriageColors
+import com.kitalonlabs.neogold.feature.settings.R as SettingsR
 
 /**
  * S25: Delete all data (confirm) (FR-33, NG-026, doc 6 Section 5).
  *
  * Prompts user to permanently erase all local screening sessions,
- * database keys, and settings. Calls DataPurgeManager.deleteAllData().
+ * database keys, and settings. The caller runs DataPurgeManager.deleteAllData().
+ *
+ * @param unsentResearchItems research items the study has not acknowledged; deleting loses them, so the user is told
+ * (doc 8 Section 7.3)
  */
 @Composable
 fun S25DeleteAllDataScreen(
     onConfirmDelete: () -> Unit,
     onCancel: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    unsentResearchItems: Int = 0
 ) {
     val triageColors = LocalTriageColors.current
 
@@ -99,6 +105,21 @@ fun S25DeleteAllDataScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+
+                    if (unsentResearchItems > 0) {
+                        Spacer(modifier = Modifier.height(Dimens.SpacingSm))
+                        Text(
+                            text = pluralStringResource(
+                                SettingsR.plurals.delete_data_unsent_research,
+                                unsentResearchItems,
+                                unsentResearchItems
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = triageColors.urgentSolid,
+                            modifier = Modifier.testTag("delete_data_unsent_research")
+                        )
+                    }
                 }
             }
         }

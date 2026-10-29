@@ -117,6 +117,9 @@ class ResearchRepository(
                         "Incorrect PIN. ${check.attemptsUntilNextLockout} attempts remaining before lockout."
                     )
                 )
+                is PinCheckResult.VerifierKeyLost -> Result.failure(
+                    SecurityException("The PIN cannot be checked on this phone. Enroll in the study again.")
+                )
             }
         } else {
             // New study: Validate PIN policy

@@ -15,15 +15,18 @@ import android.view.WindowManager
 object SecureScreenHelper {
 
     val SECURE_DESTINATIONS = setOf(
+        "s14_rule_outcome", // asks for the register number, like S20
         "s20_result",
         "s21_log",
         "s22_session_detail",
+        "r01_research_unlock", // the PIN is typed here
         "r02_study_home",
         "r03_participant_consent",
         "r04_capture_protocol",
         "r05_tsb_entry",
         "r06_session_complete",
-        "r07_export_sync"
+        "r07_export_sync",
+        "r08_enrollment" // shows the one-time enrollment code
     )
 
     /**

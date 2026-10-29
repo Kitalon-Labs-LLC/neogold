@@ -1,0 +1,27 @@
+<resources>
+    <!-- Draft for the nurse wording panel, like the rest of the Bangla text (doc 6 Section 10.4) -->
+    <string name="app_name">NeoGold</string>
+
+    <!-- Saved data that cannot be opened (doc 8 Section 5.1, BUG-2026-011) -->
+    <string name="storage_opening">সংরক্ষিত তথ্য খোলা হচ্ছে…</string>
+    <string name="storage_unreadable_title">সংরক্ষিত তথ্য খোলা যায়নি</string>
+    <string name="storage_unreadable_body">এই ফোনে সংরক্ষিত তথ্য খোলা যায়নি। ফোন রিসেট বা রিস্টোর করার পর এমন হতে পারে। আবার চেষ্টা করুন, অথবা সংরক্ষিত তথ্য রিসেট করে কাজ চালিয়ে যান। আপনার কাগজের রেজিস্টারে কিছু হবে না।</string>
+    <string name="storage_unreadable_try_again">আবার চেষ্টা করুন</string>
+    <string name="storage_unreadable_reset">সংরক্ষিত তথ্য রিসেট করুন</string>
+    <string name="storage_reset_confirm_title">সংরক্ষিত তথ্য রিসেট করবেন?</string>
+    <string name="storage_reset_confirm_body">এতে এই ফোনে সংরক্ষিত সব তথ্য মুছে যাবে, যেসব গবেষণা তথ্য এখনো পাঠানো হয়নি সেগুলোসহ। এটি আর ফেরানো যাবে না।</string>
+    <string name="storage_reset_confirm_yes">রিসেট করুন</string>
+    <string name="storage_reset_confirm_no">বাতিল করুন</string>
+
+    <!-- The app's own files failed their check (doc 4 Section 12, BUG-2026-007) -->
+    <string name="integrity_blocked_title">পরীক্ষা ও গবেষণা বন্ধ আছে</string>
+    <string name="integrity_blocked_body">এই ফোনে নিওগোল্ডের নিজস্ব ফাইল যাচাইয়ে উত্তীর্ণ হয়নি। অফিসিয়াল উৎস থেকে নিওগোল্ড আবার ইনস্টল করুন। ততক্ষণ আপনার প্রতিষ্ঠানের নিয়মিত প্রক্রিয়া অনুসরণ করুন।</string>
+    <string name="integrity_blocked_dev_key_body">এই বিল্ডটি ডেভেলপমেন্টের জন্য সই করা, শিশুদের ক্ষেত্রে ব্যবহার করা যাবে না। অফিসিয়াল উৎস থেকে রিলিজ ইনস্টল করুন।</string>
+
+    <!-- Delete all data (FR-33, BUG-2026-009) -->
+    <string name="delete_all_deleting">সব তথ্য মুছে ফেলা হচ্ছে…</string>
+    <string name="delete_all_incomplete_title">কিছু অংশ মোছা যায়নি</string>
+    <string name="delete_all_incomplete_body">এগুলো সরানো যায়নি: %1$s। ফোন রিস্টার্ট করে আবার চেষ্টা করুন।</string>
+    <string name="delete_all_retry">আবার চেষ্টা করুন</string>
+    <string name="delete_all_close">বন্ধ করুন</string>
+</resources>

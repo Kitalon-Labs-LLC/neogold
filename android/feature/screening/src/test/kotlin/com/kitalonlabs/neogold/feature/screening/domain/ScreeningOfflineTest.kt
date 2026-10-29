@@ -93,7 +93,7 @@ class ScreeningOfflineTest {
                 SyntheticRenderConfig(windowContent = SyntheticWindowContent.SKIN_NORMAL)
             )
 
-            val pipeline = ScreeningPipelineUseCase()
+            val pipeline = ScreeningPipelineUseCase(integrityChecker = { true })
             val result = pipeline.execute(
                 frame = frame,
                 cardBatch = cardBatch,

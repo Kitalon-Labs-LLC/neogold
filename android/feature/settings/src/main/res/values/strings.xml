@@ -1,0 +1,7 @@
+<resources>
+    <!-- S25 Delete all data: what deleting also takes away (doc 8 Section 7.3) -->
+    <plurals name="delete_data_unsent_research">
+        <item quantity="one">%d research item has not been sent to the study yet. It will be deleted too.</item>
+        <item quantity="other">%d research items have not been sent to the study yet. They will be deleted too.</item>
+    </plurals>
+</resources>

@@ -86,10 +86,10 @@ def test_clinical_files_the_safety_review_found_outside_tier_0_are_in_it():
         vision + "CardWarper.kt",
         vision + "CardGeometry.kt",
         pipeline + "ScreeningPipelineUseCase.kt",
-        "android/app/src/main/assets/model.json",
-        "android/app/src/main/assets/triage-config.json",
-        "android/app/src/main/assets/trust-list.json",
-        "android/app/src/main/assets/bundle-manifest.json",
+        # the clinical files the app ships are signed from config/ at build time; no copy is committed (BUG-2026-007)
+        "config/model.json",
+        "config/triage-config.json",
+        "config/trust-list.json",
         "android/config/detekt/detekt.yml",
         "android/config/detekt/detekt-engine.yml",
     ):

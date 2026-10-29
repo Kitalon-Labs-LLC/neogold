@@ -13,7 +13,9 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:model"))
     implementation(project(":core:common"))
-    implementation(project(":core:security"))
+    // api: the state machine and the pipeline take an IntegrityChecker, so their callers need the type. There is no
+    // default that says "intact"; the caller passes the app's real check (BUG-2026-007).
+    api(project(":core:security"))
     implementation(project(":core:data"))
 
     // Engine modules for v0.1 pipeline integration (P10)

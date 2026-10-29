@@ -33,6 +33,17 @@ class SecureScreenHelperTest {
     }
 
     @Test
+    fun s14RuleOutcome_isSecure_becauseItTakesTheRegisterNumber_TC_PRIV_02() {
+        assertThat(SecureScreenHelper.isDestinationSecure("s14_rule_outcome")).isTrue()
+    }
+
+    @Test
+    fun pinEntryAndEnrollment_areSecure_becauseThePinAndTheEnrollmentCodeAreTypedThere_TC_PRIV_02() {
+        assertThat(SecureScreenHelper.isDestinationSecure("r01_research_unlock")).isTrue()
+        assertThat(SecureScreenHelper.isDestinationSecure("r08_enrollment")).isTrue()
+    }
+
+    @Test
     fun setSecureScreen_togglesWindowFlagSecure_TC_PRIV_02() {
         val activity = Robolectric.buildActivity(Activity::class.java).create().get()
         val window = activity.window

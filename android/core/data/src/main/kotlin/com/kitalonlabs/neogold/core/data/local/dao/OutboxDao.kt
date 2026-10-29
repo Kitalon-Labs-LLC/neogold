@@ -32,6 +32,10 @@ interface OutboxDao {
     @Query("SELECT * FROM outbox WHERE state = :state ORDER BY updated_at ASC")
     suspend fun getItemsByState(state: String): List<OutboxEntity>
 
+    /** Research items the server has not acknowledged: waiting, in flight, or given up on. Deleting all data loses them. */
+    @Query("SELECT COUNT(*) FROM outbox WHERE state != 'ACKED'")
+    suspend fun countUnsent(): Int
+
     @Query("UPDATE outbox SET state = 'PENDING' WHERE state = 'IN_FLIGHT'")
     suspend fun resetInFlightToPending(): Int
 

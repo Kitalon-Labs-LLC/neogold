@@ -33,18 +33,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.designsystem.components.organisms.TriageUiAction
 import com.kitalonlabs.neogold.core.designsystem.theme.NeoGoldTheme
-import com.kitalonlabs.neogold.core.security.AndroidMasterKeyProvider
-import com.kitalonlabs.neogold.core.security.DefaultDatabaseKeyProvider
 import com.kitalonlabs.neogold.core.security.applock.AppLockManager
 import com.kitalonlabs.neogold.core.security.crash.CrashReportManager
 import com.kitalonlabs.neogold.core.security.privacy.SecureScreenHelper
@@ -65,7 +64,9 @@ import com.kitalonlabs.neogold.feature.screening.ui.S16CameraScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S17PhotoProblemScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S18ForeheadPhotoScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S19AnalyzingScreen
+import com.kitalonlabs.neogold.integrity.VerifiedAssets
 import com.kitalonlabs.neogold.navigation.Destinations
+import com.kitalonlabs.neogold.storage.StorageState
 import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
@@ -73,9 +74,12 @@ class MainActivity : FragmentActivity() {
     internal val appLockManager = AppLockManager()
     private lateinit var dataStore: NeoGoldDataStore
 
+    private val container: NeoGoldContainer
+        get() = (application as NeoGoldApplication).container
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dataStore = DefaultNeoGoldDataStore(applicationContext)
+        dataStore = container.dataStore
 
         // Privacy controls: Prevent recents snapshot on API 33+ (TC-PRIV-02, doc 8 Section 6.1)
         SecureScreenHelper.setRecentsScreenshotEnabled(this, false)
@@ -156,11 +160,38 @@ class MainActivity : FragmentActivity() {
                     )
                 } else {
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        NeoGoldNavHost(
-                            navController = navController,
-                            dataStore = dataStore,
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                        val storageState by container.storage.state.collectAsState()
+                        val deleteState by container.deleteState.collectAsState()
+                        val content = Modifier.padding(innerPadding)
+
+                        when {
+                            deleteState is DeleteState.Deleting -> DeletingAllDataScreen(content)
+                            deleteState is DeleteState.Incomplete -> DeleteIncompleteScreen(
+                                incomplete = (deleteState as DeleteState.Incomplete).items,
+                                onRetry = container::startDeleteAll,
+                                onClose = container::restartAfterIncompleteDelete,
+                                modifier = content
+                            )
+                            else -> when (val state = storageState) {
+                                StorageState.Opening -> StorageOpeningScreen(content)
+                                StorageState.Unreadable -> StorageUnreadableScreen(
+                                    onTryAgain = { container.applicationScope.launch { container.storage.open() } },
+                                    onReset = { container.applicationScope.launch { container.storage.resetAndOpen() } },
+                                    modifier = content
+                                )
+                                is StorageState.Ready -> NeoGoldNavHost(
+                                    navController = navController,
+                                    dataStore = dataStore,
+                                    database = state.database,
+                                    assets = container.assets,
+                                    appVersion = BuildConfig.VERSION_NAME,
+                                    triageEnabled = container.screeningAvailable(),
+                                    unsentResearchItems = container::unsentResearchItems,
+                                    onDeleteAllData = container::startDeleteAll,
+                                    modifier = content
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -222,27 +253,39 @@ private fun AppLockScreen(onUnlock: () -> Unit) {
     }
 }
 
+/**
+ * The app's navigation graph. There are no defaults for what must come from the container: the database, the
+ * integrity result and the triage switch are passed in, so a caller cannot forget them and get a fail-open screen.
+ *
+ * @param assets the startup check of the bundled files; screening and research screens show a block screen unless it
+ * is valid (BUG-2026-007). Saved records take the config and model versions from it.
+ * @param triageEnabled whether screening is offered today: the signed config says so, it is not past `validUntil`,
+ * and the app really computes a result (`NeoGoldContainer.screeningAvailable`). The screening screens are not
+ * reachable otherwise.
+ * @param unsentResearchItems asks how many research items the study has not acknowledged, for S25's warning
+ */
 @Composable
+@Suppress(
+    "LongParameterList"
+) // the container's pieces, passed in and not defaulted; shrinks with the per-screen ViewModels (E1)
 fun NeoGoldNavHost(
     navController: NavHostController,
+    dataStore: NeoGoldDataStore,
+    database: NeoGoldDatabase,
+    assets: VerifiedAssets,
+    appVersion: String,
+    triageEnabled: Boolean,
+    unsentResearchItems: suspend () -> Int,
+    onDeleteAllData: () -> Unit,
     modifier: Modifier = Modifier,
-    dataStore: NeoGoldDataStore = DefaultNeoGoldDataStore(androidx.compose.ui.platform.LocalContext.current),
-    database: NeoGoldDatabase? = null,
-    startDestination: String = Destinations.S01_LANGUAGE,
-    triageEnabled: Boolean = false
+    startDestination: String = Destinations.S01_LANGUAGE
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var lastQualificationResult by remember {
         mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null)
     }
     val context = androidx.compose.ui.platform.LocalContext.current
-    val db = remember(database) {
-        database ?: run {
-            val masterKey = AndroidMasterKeyProvider(context.applicationContext)
-            val keyProvider = DefaultDatabaseKeyProvider(context.applicationContext, masterKey)
-            NeoGoldDatabase.buildDatabase(context.applicationContext, keyProvider)
-        }
-    }
+    val db = database
 
     // Screening session flow state
     var sessionAgeHours by remember { androidx.compose.runtime.mutableDoubleStateOf(0.0) }
@@ -263,11 +306,40 @@ fun NeoGoldNavHost(
     var logSessions by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
     var dueRechecks by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
 
+    val integrity = assets.integrity
+    val bundleUsable = integrity.isScreeningAllowed
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier
     ) {
+        // Research runs only on files that passed the startup check (BUG-2026-007, TC-SEC-09).
+        fun NavGraphBuilder.researchComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(NavBackStackEntry) -> Unit
+        ) = composable(route) { entry ->
+            if (bundleUsable) content(entry) else IntegrityBlockedScreen(integrity)
+        }
+
+        // Screening needs the same, and a switch that is on today (TC-TRI-26): with triage off no screening screen
+        // is reachable, whichever button or saved recheck leads to it, and Home is where the user lands.
+        fun NavGraphBuilder.screeningComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(NavBackStackEntry) -> Unit
+        ) = composable(route) { entry ->
+            when {
+                !bundleUsable -> IntegrityBlockedScreen(integrity)
+                !triageEnabled -> {
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
+                    }
+                    Box(modifier = Modifier.fillMaxSize())
+                }
+                else -> content(entry)
+            }
+        }
+
         // S01 to S08 Onboarding & Qualification
         composable(Destinations.S01_LANGUAGE) {
             val currentLang by dataStore.language.collectAsState(initial = "bn")
@@ -385,7 +457,7 @@ fun NeoGoldNavHost(
         }
 
         // S10a to S20 Screening Flow
-        composable(Destinations.S10A_GUARDIAN_CONSENT) {
+        screeningComposable(Destinations.S10A_GUARDIAN_CONSENT) {
             S10aGuardianConsentScreen(
                 onConsentConfirmed = {
                     navController.navigate(Destinations.S10_BIRTH_TIME_GA)
@@ -396,7 +468,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S10_BIRTH_TIME_GA) {
+        screeningComposable(Destinations.S10_BIRTH_TIME_GA) {
             S10BirthTimeGaScreen(
                 onNext = { ageHours, gaWeeks, birthTimeMs ->
                     sessionAgeHours = ageHours
@@ -410,7 +482,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S11_EARLY_JAUNDICE) {
+        screeningComposable(Destinations.S11_EARLY_JAUNDICE) {
             S11EarlyJaundiceScreen(
                 onAnswered = { isEarlyJaundice ->
                     if (isEarlyJaundice) {
@@ -426,7 +498,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S12_DANGER_SIGNS) {
+        screeningComposable(Destinations.S12_DANGER_SIGNS) {
             S12DangerSignsScreen(
                 onAnswered = { hasDangerSigns ->
                     if (hasDangerSigns) {
@@ -442,7 +514,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S13_PHOTOTHERAPY) {
+        screeningComposable(Destinations.S13_PHOTOTHERAPY) {
             S13PhototherapyScreen(
                 onAnswered = { hadPhototherapy ->
                     if (hadPhototherapy) {
@@ -464,7 +536,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S14_RULE_OUTCOME) {
+        screeningComposable(Destinations.S14_RULE_OUTCOME) {
             val rule = sessionRuleOutcome ?: TriageReasonCode.R1
             S14RuleOutcomeScreen(
                 ruleCode = rule,
@@ -502,10 +574,10 @@ fun NeoGoldNavHost(
                             estimateHidden = 0,
                             experimentalLabelShown = 1,
                             deviceProfileId = null,
-                            cardBatchId = "NG-2026-001",
-                            appVersion = "1.0.0",
+                            cardBatchId = null, // the batch a card scan stored; scanning is wired in C1 (BUG-2026-060)
+                            appVersion = appVersion,
                             modelVersion = null,
-                            configVersion = "2026.10.0"
+                            configVersion = assets.triageConfig?.configVersion ?: "unknown"
                         )
                         db.screeningSessionDao().insert(entity)
                         navController.navigate(Destinations.S09_HOME) {
@@ -516,7 +588,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S15_CAPTURE_GUIDE) {
+        screeningComposable(Destinations.S15_CAPTURE_GUIDE) {
             S15CaptureGuideScreen(
                 onOpenCamera = {
                     navController.navigate(Destinations.S16_CAMERA)
@@ -527,7 +599,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S16_CAMERA) {
+        screeningComposable(Destinations.S16_CAMERA) {
             S16CameraScreen(
                 onCaptureCompleted = { _ ->
                     sessionCapturesCount++
@@ -539,7 +611,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S17_PHOTO_PROBLEM) {
+        screeningComposable(Destinations.S17_PHOTO_PROBLEM) {
             S17PhotoProblemScreen(
                 reason = lastQualityReason,
                 attempt = sessionCapturesCount,
@@ -557,7 +629,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S18_FOREHEAD_PHOTO) {
+        screeningComposable(Destinations.S18_FOREHEAD_PHOTO) {
             S18ForeheadPhotoScreen(
                 onAddForehead = {
                     navController.navigate(Destinations.S16_CAMERA)
@@ -571,7 +643,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S19_ANALYZING) {
+        screeningComposable(Destinations.S19_ANALYZING) {
             androidx.compose.runtime.LaunchedEffect(Unit) {
                 kotlinx.coroutines.delay(1200L) // Under 3s budget (NFR-02)
                 sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION
@@ -593,7 +665,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S20_RESULT) {
+        screeningComposable(Destinations.S20_RESULT) {
             S20ResultScreen(
                 action = sessionTriageAction,
                 nextStepText = when (sessionTriageAction) {
@@ -609,6 +681,9 @@ fun NeoGoldNavHost(
                 threshold = sessionThreshold,
                 recheckHours = sessionRecheckHours,
                 triageEnabled = triageEnabled,
+                appVersion = appVersion,
+                modelVersion = assets.modelVersion ?: "unknown",
+                configVersion = assets.triageConfig?.configVersion ?: "unknown",
                 onSaveToLog = { registerNumber ->
                     coroutineScope.launch {
                         val recheckDueTime = if (sessionTriageAction == TriageUiAction.RECHECK) {
@@ -629,7 +704,7 @@ fun NeoGoldNavHost(
                             flagDangerSigns = 0,
                             flagPriorPhototherapy = 0,
                             ruleOutcome = null,
-                            triageAction = sessionTriageAction.name,
+                            triageAction = if (triageEnabled) sessionTriageAction.name else TriageUiAction.CANNOT_SCREEN.name,
                             reasonCodes = if (sessionReasonCodes.isNotEmpty()) {
                                 "[\"${sessionReasonCodes.joinToString(
                                     "\",\""
@@ -637,14 +712,14 @@ fun NeoGoldNavHost(
                             } else {
                                 null
                             },
-                            estimateMgDl = if (sessionEstimatedLow != null && sessionEstimatedHigh != null) {
+                            estimateMgDl = if (triageEnabled && sessionEstimatedLow != null && sessionEstimatedHigh != null) {
                                 (sessionEstimatedLow!! + sessionEstimatedHigh!!) / 2.0
                             } else {
                                 null
                             },
-                            estimateLowMgDl = sessionEstimatedLow,
-                            estimateHighMgDl = sessionEstimatedHigh,
-                            thresholdMgDl = sessionThreshold,
+                            estimateLowMgDl = sessionEstimatedLow.takeIf { triageEnabled },
+                            estimateHighMgDl = sessionEstimatedHigh.takeIf { triageEnabled },
+                            thresholdMgDl = sessionThreshold.takeIf { triageEnabled },
                             recheckDueAt = recheckDueTime,
                             captureAttempts = sessionCapturesCount,
                             registerNumber = registerNumber,
@@ -653,10 +728,10 @@ fun NeoGoldNavHost(
                             estimateHidden = 0,
                             experimentalLabelShown = 1,
                             deviceProfileId = null,
-                            cardBatchId = "NG-2026-001",
-                            appVersion = "1.0.0",
-                            modelVersion = "1.0.0",
-                            configVersion = "2026.10.0"
+                            cardBatchId = null, // the batch a card scan stored; scanning is wired in C1 (BUG-2026-060)
+                            appVersion = appVersion,
+                            modelVersion = null, // no model runs until E1 wires the pipeline (BUG-2026-001)
+                            configVersion = assets.triageConfig?.configVersion ?: "unknown"
                         )
                         db.screeningSessionDao().insert(entity)
                         navController.navigate(Destinations.S09_HOME) {
@@ -756,15 +831,13 @@ fun NeoGoldNavHost(
         }
 
         composable(Destinations.S25_DELETE_DATA) {
+            // Delete all data removes the database, encrypted files, every key and the staging and crash files,
+            // then restarts the app empty (FR-33, TC-LOG-11). It also loses research items the study has not
+            // acknowledged, so the screen says how many (doc 8 Section 7.3).
+            val unsent by androidx.compose.runtime.produceState(initialValue = 0) { value = unsentResearchItems() }
             com.kitalonlabs.neogold.feature.settings.S25DeleteAllDataScreen(
-                onConfirmDelete = {
-                    coroutineScope.launch {
-                        dataStore.clearAll()
-                        navController.navigate(Destinations.S01_LANGUAGE) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                },
+                unsentResearchItems = unsent,
+                onConfirmDelete = onDeleteAllData,
                 onCancel = {
                     navController.popBackStack()
                 }
@@ -772,7 +845,7 @@ fun NeoGoldNavHost(
         }
 
         // R01 to R09 Research Mode
-        composable(Destinations.R01_RESEARCH_UNLOCK) {
+        researchComposable(Destinations.R01_RESEARCH_UNLOCK) {
             var isLockedOut by remember { mutableStateOf(false) }
             var lockoutMinutes by remember { androidx.compose.runtime.mutableIntStateOf(0) }
             var unlockErrorMessage by remember { mutableStateOf<String?>(null) }
@@ -793,7 +866,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.R02_STUDY_HOME) {
+        researchComposable(Destinations.R02_STUDY_HOME) {
             com.kitalonlabs.neogold.feature.research.ui.R02StudyHomeScreen(
                 studyName = "NeoGold Clinical Validation Study",
                 studyCode = "DHK-01",
@@ -817,7 +890,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.R03_PARTICIPANT_CONSENT) {
+        researchComposable(Destinations.R03_PARTICIPANT_CONSENT) {
             com.kitalonlabs.neogold.feature.research.ui.R03ParticipantConsentScreen(
                 studyName = "NeoGold Study",
                 onContinueToCapture = { code, _, _, _, _, _, _, _ ->
@@ -826,7 +899,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.R04_CAPTURE_PROTOCOL) {
+        researchComposable(Destinations.R04_CAPTURE_PROTOCOL) {
             com.kitalonlabs.neogold.feature.research.ui.R04ResearchCaptureScreen(
                 participantCode = "SKP-0142",
                 onProtocolCompleted = { _ ->
@@ -838,7 +911,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.R05_TSB_ENTRY) {
+        researchComposable(Destinations.R05_TSB_ENTRY) {
             com.kitalonlabs.neogold.feature.research.ui.R05TsbEntryScreen(
                 initialParticipantCode = "SKP-0142",
                 isDeferredEntry = false,
@@ -851,7 +924,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.R06_SESSION_COMPLETE) {
+        researchComposable(Destinations.R06_SESSION_COMPLETE) {
             com.kitalonlabs.neogold.feature.research.ui.R06SessionCompleteScreen(
                 participantCode = "SKP-0142",
                 capturesCount = 4,
@@ -867,7 +940,7 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.R07_EXPORT_SYNC) {
+        researchComposable(Destinations.R07_EXPORT_SYNC) {
             var exportProgress by remember {
                 mutableStateOf<com.kitalonlabs.neogold.feature.research.export.ExportProgress?>(
                     null
@@ -908,8 +981,8 @@ fun NeoGoldNavHost(
                 }
             )
         }
-        composable(Destinations.R08_ENROLLMENT) { PlaceholderScreen("R08: Study Enrollment") }
-        composable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }
+        researchComposable(Destinations.R08_ENROLLMENT) { PlaceholderScreen("R08: Study Enrollment") }
+        researchComposable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }
     }
 }
 

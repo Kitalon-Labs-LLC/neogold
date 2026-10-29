@@ -36,8 +36,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * The UI only renders state; it never decides clinical flow.
  */
 class ScreeningStateMachine(
-    initialState: ScreeningState = ScreeningState.Initial,
-    private val integrityChecker: IntegrityChecker = IntegrityChecker { true }
+    private val integrityChecker: IntegrityChecker,
+    initialState: ScreeningState = ScreeningState.Initial
 ) {
     private val _state = MutableStateFlow<ScreeningState>(initialState)
     val state: StateFlow<ScreeningState> = _state.asStateFlow()

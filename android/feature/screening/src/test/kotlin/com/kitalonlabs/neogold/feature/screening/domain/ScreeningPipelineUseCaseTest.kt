@@ -46,7 +46,7 @@ class ScreeningPipelineUseCaseTest {
 
     @Before
     fun setUp() {
-        pipelineUseCase = ScreeningPipelineUseCase(visionEngine = VisionEngine())
+        pipelineUseCase = ScreeningPipelineUseCase(integrityChecker = { true }, visionEngine = VisionEngine())
 
         val modelFile = File(repoRoot, "testdata/models/model.synthetic.json")
         estimationEngine = EstimationEngine.fromJson(modelFile.readText())

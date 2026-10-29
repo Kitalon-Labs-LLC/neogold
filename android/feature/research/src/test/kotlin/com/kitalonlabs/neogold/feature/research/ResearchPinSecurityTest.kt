@@ -229,6 +229,48 @@ class ResearchPinSecurityTest {
     }
 
     /**
+     * TC-RSH-06 (key loss): a PIN hash whose Keystore key K9 is gone cannot be checked. The result says so, the failure
+     * counter does not move and no lockout starts, however often the correct PIN is entered (BUG-2026-011).
+     */
+    @Test
+    fun tcRsh06_lostVerifierKeyIsNotAWrongPin() = runBlocking {
+        val studyId = UUID.randomUUID().toString()
+        val correctPin = "839174"
+        val salt = pinHasher.generateSalt()
+        val hash = pinHasher.hashPin(correctPin, salt)
+        database.researchStudyDao().insert(
+            ResearchStudyEntity(
+                id = studyId,
+                studyCode = "SKP01",
+                siteCode = "SKP01",
+                displayName = "Sakhipur Study",
+                serverUrl = "https://intake.neogold.example.bd/v1",
+                deviceKeyAlias = null,
+                serverDeviceId = null,
+                pinHash = hash,
+                pinSalt = salt,
+                failedPinAttempts = 2,
+                lockedUntil = null,
+                timestampPrecision = "DAY_PLUS_OFFSETS",
+                timeZone = "Asia/Dhaka",
+                dataGeneration = null,
+                localRetentionAfterAckDays = 14,
+                status = "ACTIVE",
+                enrolledAt = 1_000_000L
+            )
+        )
+
+        hmacKeyProvider.deleteKey()
+
+        repeat(8) {
+            assertThat(pinManager.verifyPin(studyId, correctPin, 2_000_000L)).isEqualTo(PinCheckResult.VerifierKeyLost)
+        }
+        val after = database.researchStudyDao().getStudyById(studyId)!!
+        assertThat(after.failedPinAttempts).isEqualTo(2)
+        assertThat(after.lockedUntil).isNull()
+    }
+
+    /**
      * TC-RSH-07: Re-lock (FR-25).
      * Background research mode for 5 minutes; separately, turn screen off.
      * PIN required again in both scenarios.

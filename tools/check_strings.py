@@ -55,6 +55,9 @@ def parse_strings(xml_path):
         name = elem.get("name")
         text = "".join(elem.itertext()).strip()
         strings[name] = text
+    for plural in root.findall("plurals"):
+        for item in plural.findall("item"):
+            strings[f"{plural.get('name')}[{item.get('quantity')}]"] = "".join(item.itertext()).strip()
     return strings
 
 
@@ -200,12 +203,21 @@ def write_baseline(repo_root, counts):
         f.write("\n")
 
 
+def find_res_dirs(repo_root):
+    """Every android/**/src/main/res folder that has a values/strings.xml, so a module's own strings are linted too."""
+    found = []
+    for dirpath, dirnames, filenames in os.walk(os.path.join(str(repo_root), "android")):
+        dirnames[:] = [d for d in dirnames if d not in SKIPPED_DIRS]
+        posix = dirpath.replace(os.sep, "/")
+        if posix.endswith("/src/main/res/values") and "strings.xml" in filenames:
+            found.append(Path(dirpath).parent)
+    return sorted(found)
+
+
 def main():
     update_baseline = "--update-baseline" in sys.argv[1:]
     repo_root = Path(__file__).resolve().parent.parent
-    res_dirs = [
-        repo_root / "android" / "core" / "designsystem" / "src" / "main" / "res",
-    ]
+    res_dirs = find_res_dirs(repo_root)
 
     total_en = 0
     total_bn = 0

@@ -130,6 +130,9 @@ fun resolvePythonCommand(): List<String> {
     return listOf("py", "-3")
 }
 
+// :app signs its bundle with the same Python.
+extra["pythonCommand"] = resolvePythonCommand()
+
 tasks.register("verifyGoldenVectors") {
     description = "Golden vectors verification for color science and estimation (implemented in P04/P06)"
     group = "verification"
@@ -172,19 +175,11 @@ tasks.register<Exec>("verifyStrictMath") {
     commandLine(pythonCmd + listOf("tools/check_strictmath.py"))
 }
 
-tasks.register<Exec>("signAssetManifest") {
+// The bundle is signed into :app's generated assets, never into the source tree (BUG-2026-007, BUG-2026-008).
+tasks.register("signAssetManifest") {
     description = "Signs the bundle assets manifest with K3 (doc 4 Section 12, doc 8 Section 6.5)"
     group = "build"
-    workingDir = rootDir.parentFile
-    val pythonCmd = resolvePythonCommand()
-    val manifestKeyProp = providers.gradleProperty("manifestKey").orNull
-    val argsList = mutableListOf<String>()
-    argsList.addAll(pythonCmd)
-    argsList.addAll(listOf("tools/sign_bundle_manifest.py", "--config-dir", "config", "--assets-dir", "android/app/src/main/assets"))
-    if (manifestKeyProp != null) {
-        argsList.addAll(listOf("--manifest-key", manifestKeyProp))
-    }
-    commandLine(argsList)
+    dependsOn(":app:signBundleManifest")
 }
 
 tasks.register<Exec>("cyclonedxBom") {

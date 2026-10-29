@@ -52,11 +52,11 @@ fun S20ResultScreen(
     estimatedHigh: Double?,
     threshold: Double?,
     recheckHours: Int = 24,
-    appVersion: String = "1.0.0",
-    modelVersion: String = "1.0.0",
-    configVersion: String = "2026.10.0",
-    cardBatchId: String? = "NG-2026-001",
-    triageEnabled: Boolean = true,
+    appVersion: String,
+    modelVersion: String,
+    configVersion: String,
+    cardBatchId: String? = null,
+    triageEnabled: Boolean,
     onSaveToLog: (registerNumber: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
