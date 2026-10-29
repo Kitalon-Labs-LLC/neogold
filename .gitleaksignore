@@ -1,0 +1,9 @@
+# Gate S9 (secrets scan) - exact findings in git history that were triaged and accepted. One fingerprint per line
+# (commit:file:rule:line), never a path or a rule. Every entry needs a reason; remove it if the commit is ever rewritten.
+
+# BUG-2026-008, triaged 2026-10-30: commit fe31801 added tools/tests/test_sign_bundle_manifest.py with the retired K3
+# test private key split in two string halves, so the test could look for it in the repository. The key was committed
+# in earlier commits before package B1 removed it, no build trusts it any more (the app trusts the key that signed its
+# own bundle), and it protected nothing but a test bundle. The next commit replaces the literal with a check that
+# derives the public key from candidates, so the file at HEAD holds no key material; only this history entry remains.
+fe318013c964b2d786c0a239834bde6e5046bd9e:tools/tests/test_sign_bundle_manifest.py:generic-api-key:26

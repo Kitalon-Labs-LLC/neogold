@@ -9,6 +9,7 @@ key, a development key is made once and reused, and no private key is committed 
 import base64
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -21,9 +22,10 @@ from tools import sign_bundle_manifest as sbm
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-# The test key whose private half used to be committed in this tool and in a Kotlin test (BUG-2026-008). Built from
-# two halves so this file does not hold the literal either.
-RETIRED_PRIVATE_KEY_HEX = "86b074c2d51b34c46b927d10f9c94bcc" + "087bc317de256d849594045f4bf08893"
+# The public half of the test key whose private half used to be committed in this tool and in a Kotlin test
+# (BUG-2026-008). Only the public half is kept here: the test finds the private key by deriving from candidates, so no
+# secret is needed to look for one. The name avoids the words a secrets scanner reads as a credential.
+RETIRED_SIGNER_ID = "7ea85ce6309d111e3446befeb992a4335907473c37534ca42df7e99e191c4772"
 
 
 @pytest.fixture
@@ -256,8 +258,24 @@ def test_the_committed_vector_verifies_in_the_tools_own_canonical_form():
     assert signed_by(vector / "bundle-manifest.json", pinned)
 
 
+HEX_64 = re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])")
+BASE64_32_BYTES = re.compile(r"(?<![A-Za-z0-9+/])[A-Za-z0-9+/]{43}=(?![A-Za-z0-9+/=])")
+
+
+def _is_the_retired_private_key(candidate: bytes) -> bool:
+    try:
+        derived = ed25519.Ed25519PrivateKey.from_private_bytes(candidate).public_key().public_bytes_raw()
+    except ValueError:
+        return False
+    return derived.hex() == RETIRED_SIGNER_ID
+
+
 def test_the_retired_test_key_is_not_in_the_repository():
-    """BUG-2026-008: a private key in the repository lets anyone sign a manifest the app accepts."""
+    """BUG-2026-008: a private key in the repository lets anyone sign a manifest the app accepts.
+
+    Every 64-character hex string and every base64 string of 32 bytes in a tracked text file is tried as an Ed25519
+    private key, so the key is found in any of its usual spellings without this file holding it.
+    """
     tracked = subprocess.run(
         ["git", "ls-files", "-z"], cwd=REPO_ROOT, capture_output=True, check=True
     ).stdout.decode("utf-8").split("\0")
@@ -270,6 +288,12 @@ def test_the_retired_test_key_is_not_in_the_repository():
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        if RETIRED_PRIVATE_KEY_HEX in text:
+        candidates = [bytes.fromhex(m.group()) for m in HEX_64.finditer(text)]
+        for m in BASE64_32_BYTES.finditer(text):
+            try:
+                candidates.append(base64.b64decode(m.group(), validate=True))
+            except ValueError:
+                continue
+        if any(len(c) == 32 and _is_the_retired_private_key(c) for c in candidates):
             offenders.append(name)
     assert offenders == []
