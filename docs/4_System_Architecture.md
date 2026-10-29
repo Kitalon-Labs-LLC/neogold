@@ -198,6 +198,7 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `net.zetetic:sqlcipher-android` | `:core:data` | all | Section 4.3 Local DB; ADR-008 |
 | `androidx.sqlite:sqlite`, `androidx.sqlite:sqlite-framework` | `:core:data` | all | SupportSQLite bridge between Room and SQLCipher; ADR-008 (P24, A15) |
 | `org.bouncycastle:bcprov-jdk18on` | `:core:security` | all | ADR-016; doc 8 Section 6.2 |
+| `org.bouncycastle:bcprov-jdk18on` | `:sync:research` | test | BUG-2026-036: holds the Bouncy Castle that Robolectric brings to this module's test classpath at the version the app uses; no production code in the module imports it |
 | `com.google.crypto.tink:tink` | any | all | Section 4.3 File encryption and Signatures; ADR-008 |
 | `androidx.work:work-runtime-ktx` | any | all | Section 4.3 Background work |
 | `androidx.work:work-testing` | any | test | doc 9 Section 3 |
@@ -564,7 +565,7 @@ flowchart LR
 | `trust-list.json` | Integer version | APK assets | Card issuer change |
 | Bundle manifest | Lists SHA-256 of all four, signed by release key | APK assets | Release pipeline |
 
-At startup the app verifies the manifest signature and every hash. Any mismatch disables screening. Over-the-air updates of these artifacts are a v1.1 Could-have (NG-062); in v1.0 they change only with an app release.
+At startup the app verifies the manifest signature and every hash. Any mismatch disables screening, research unlock and the triage switch. `config/` is the only source: the build signs these files into the app's generated assets (`:app:signBundleManifest`), and the app reads each file once, hashes those bytes and parses the config from the same bytes (`VerifiedAssets`), so nothing is checked and then read again. Over-the-air updates of these artifacts are a v1.1 Could-have (NG-062); in v1.0 they change only with an app release.
 
 ---
 
@@ -623,7 +624,7 @@ Measurement, on a release App Bundle with bundletool 1.18.3 (the version and che
 | armeabi-v7a download | 3.68 | 11.82 | 25 |
 | armeabi-v7a install | 7.31 | 24.02 | 40 |
 
-In decimal megabytes the arm64-v8a install is 35.95 against 40, so the headroom is 4.0 MB, and the later packages will use it. No workflow checks these sizes yet (BUG-2026-053).
+In decimal megabytes the arm64-v8a install is 35.95 against 40, so the headroom is 4.0 MB, and the later packages will use it. No workflow checks these sizes yet (BUG-2026-053). After package B1 wired the container, the integrity check, the Keystore and retention into the app (29 October 2026) the same measurement gives arm64-v8a 14.08 download and 34.57 install, armeabi-v7a 11.94 and 24.31 (MiB); in decimal megabytes the arm64-v8a install is 36.25 against 40, so the headroom is 3.75 MB.
 
 - **Why not 5.0.0.** It is 3.7 MiB larger to download but 8.4 MiB larger to install on arm64-v8a, which alone would pass 40 MiB, and its arm64-v8a `libc++_shared.so` is 4 KB aligned, which fails gate S4. The 4.14.0 libraries are 16 KB aligned on arm64-v8a (`zipalign -c -P 16` passes and the ELF `LOAD` alignment is 16384); the 32-bit armeabi-v7a libraries are 4 KB, which S4 does not cover.
 - **Build.** Release builds keep only `arm64-v8a` and `armeabi-v7a` (the OpenCV x86 and x86_64 libraries alone add 100 MB). R8 keeps `org.opencv.**` because the native library finds its Java classes by name.

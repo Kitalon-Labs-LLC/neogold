@@ -81,11 +81,11 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-004 | S07 qualification always returns QUALIFIED without measuring | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | DEV | S1 | Yes | H5 | P1 | New | Unassigned | TC-DEV-05 | |
 | BUG-2026-005 | S06 card scan shows VERIFIED without reading or checking a QR code | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CARD | S1 | Yes | H4 | P1 | New | Unassigned | TC-CARD-02 | |
 | BUG-2026-006 | Result next-step wording differs from doc 6 and drops the danger-signs reminder | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S1 | Yes | H1, H11 | P1 | New | Unassigned | TC-UI-01 | |
-| BUG-2026-007 | Startup integrity result is never used; modified assets do not disable screening | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | New | Unassigned | TC-SEC-09 | |
-| BUG-2026-008 | App trusts a test manifest key whose private half is in the repository | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | New | Unassigned | TC-SEC-09 | |
-| BUG-2026-009 | Delete all data clears settings only; database, files, and keys remain | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S1 | No | - | P1 | New | Unassigned | TC-LOG-11 | |
-| BUG-2026-010 | Retention never runs; register numbers and old records are kept | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S1 | No | - | P1 | New | Unassigned | TC-LOG-04 | |
-| BUG-2026-011 | PIN verifier key falls back to a hardcoded key on any Keystore error | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-06 | |
+| BUG-2026-007 | Startup integrity result is never used; modified assets do not disable screening | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | Fixed | Unassigned | TC-SEC-09 | |
+| BUG-2026-008 | App trusts a test manifest key whose private half is in the repository | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | Fixed | Unassigned | TC-SEC-09 | |
+| BUG-2026-009 | Delete all data clears settings only; database, files, and keys remain | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S1 | No | - | P1 | Fixed | Unassigned | TC-LOG-11 | |
+| BUG-2026-010 | Retention never runs; register numbers and old records are kept | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S1 | No | - | P1 | Fixed | Unassigned | TC-LOG-04 | |
+| BUG-2026-011 | PIN verifier key falls back to a hardcoded key on any Keystore error | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | Fixed | Unassigned | TC-RSH-06 | |
 | BUG-2026-012 | Research unlock accepts any PIN | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-05 | |
 | BUG-2026-013 | Research sessions are never saved or queued | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-14 | |
 | BUG-2026-014 | android-ci and android-release workflows are invalid YAML; Android CI has never passed | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S1 | No | - | P1 | Verified | Unassigned | TC-OPS-01 | |
@@ -114,7 +114,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-037 | TC-CAP-01 builds a LiveCardAnalyzer and never calls it, so the test asserts on objects it constructed itself | 2026-10-27 | Review | commit a0b6da2 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-01 | |
 | BUG-2026-038 | The export checkpoint keeps the data keyset in clear next to the staged ciphertext, and a failed export leaves both behind | 2026-10-27 | Review | commit 93a2f9f | n/a | EXP | S2 | No | - | P2 | New | Unassigned | TC-EXP-01 | |
 | BUG-2026-039 | ResearchJpegSanitizer is never called outside tests, and extractOrientation reads the wrong bytes | 2026-10-27 | Review | commit 93a2f9f | n/a | PRIV | S2 | No | - | P2 | New | Unassigned | TC-API-20 | |
-| BUG-2026-040 | StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message | 2026-10-27 | Review | commit 93a2f9f | n/a | SYNC | S3 | No | - | P2 | New | Unassigned | TC-API-07 | |
+| BUG-2026-040 | StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message | 2026-10-27 | Review | commit 93a2f9f | n/a | SYNC | S3 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
 | BUG-2026-041 | TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it | 2026-10-27 | Review | commit 93a2f9f | n/a | TRI | S3 | No | - | P3 | Fixed | Unassigned | TC-CAP-04 | |
 | BUG-2026-042 | The trust list parser accepts a missing or malformed revocation list and duplicate key ids | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P2 | New | Unassigned | TC-CARD-06 | |
 | BUG-2026-043 | The three bundled-asset JSON parsers have no nesting-depth or size limit | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-SEC-03 | |
@@ -133,7 +133,14 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-056 | CARD_ANGLE does not enforce the 20 degree limit for every in-plane rotation of the card | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S2 | No | - | P2 | New | Unassigned | TC-CAP-03 | |
 | BUG-2026-057 | A phone on which OpenCV fails to load silently runs the looser Kotlin detector | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S3 | No | - | P2 | In progress | Unassigned | TC-CAP-17 | |
 | BUG-2026-058 | No gate checks what the bundled native libraries import, or that screening writes no file and sends no traffic | 2026-10-29 | Review | commit 3556b25 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-PRIV-01 | |
-| BUG-2026-059 | Gate S2 fails on a new Guava advisory (CVE-2026-102554, HIGH) that sits only on lint, test and annotation-processor classpaths | 2026-10-29 | CI | commit 6a9e4e8 | n/a | SEC | S3 | No | - | P3 | In progress | Unassigned | TC-SEC-05 | |
+| BUG-2026-059 | Gate S2 fails on a new Guava advisory (CVE-2026-102554, HIGH) that sits only on lint, test and annotation-processor classpaths | 2026-10-29 | CI | commit 6a9e4e8 | n/a | SEC | S3 | No | - | P3 | Fixed | Unassigned | TC-SEC-05 | |
+| BUG-2026-060 | Saving a screening names a card batch the phone never stored, so the insert is refused | 2026-10-29 | Review | commit 79f5643 | n/a | LOG | S2 | No | - | P2 | Fixed | Unassigned | n/a (`ForeignKeyEnforcementTest`) | |
+| BUG-2026-061 | Home shows register numbers in the due-recheck list, but is not a protected screen | 2026-10-29 | Review | commit 79f5643 | n/a | PRIV | S3 | No | - | P3 | New | Unassigned | TC-PRIV-02 | |
+| BUG-2026-062 | The SQLCipher native library is never loaded, so the first database access closes the app | 2026-10-29 | Review | commit 64eee0e | n/a | LOG | S1 | No | - | P1 | Fixed | Unassigned | TC-SEC-08, TC-LOG-11 | |
+| BUG-2026-063 | The server's enrollment-code secret has a default that is published in the repository | 2026-10-30 | Review | commit 64eee0e | n/a | SEC | S2 | No | - | P2 | Fixed | Unassigned | n/a (`test_enrollment_secret.py`) | |
+| BUG-2026-064 | The device assertion names the study host as its audience, but the server checks the `/v1` base URL | 2026-10-30 | Review | commit 64eee0e | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
+| BUG-2026-065 | The problem detail for a taken participant code repeats the code, and the response is stored for replay | 2026-10-30 | Review | commit 64eee0e | n/a | PRIV | S3 | No | - | P3 | Fixed | Unassigned | TC-API-21 | |
+| BUG-2026-066 | Findings from the B2 privacy review that are not fixed yet: concurrent registration of one participant code, case-insensitive path comparison for `htu`, the key alias in key-manager messages, and no test for a bad signature from a trusted issuer | 2026-10-30 | Review | commit 64eee0e | n/a | SYNC | S3 | No | - | P3 | New | Unassigned | TC-API-21, TC-API-07 | |
 
 ### 4.1 Entries
 
@@ -240,7 +247,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-007: The startup integrity result is never used, so modified assets do not disable screening
 
 - Area: SEC | Severity: S1 | Clinical: Yes | Hazard: H7, H9 | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-SEC-09, TC-TRI-19 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-09, TC-TRI-19 | Fix version:
 
 **Steps**
 1. Change one byte in `assets/triage-config.json`, rebuild without re-signing the manifest, and launch.
@@ -253,10 +260,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R4.
 
+**Fix** Package B1. `NeoGoldContainer.verifyAssets()` checks the bundle at start-up through `BundleManifestVerifier.load`, which reads each file once, hashes those bytes and hands the same bytes on; `VerifiedAssets` parses the triage config from them, so nothing is checked and then read again. The result gates the triage switch (`VerifiedAssets.triageEnabled`), every screening and research route (`IntegrityBlockedScreen`) and, through `IntegrityChecker`, the state machine and the pipeline, which no longer default to "intact". Tests: `BundleManifestVerifierTest` (one open per file, a file swapped after the read cannot reach the caller, oversized asset, a bundle signed by the build tool), `VerifiedAssetsTest`, `SecurityInstrumentedTest` (a changed config asset on a device, TC-SEC-09). Becomes Verified when CI is green and `SecurityInstrumentedTest` has run on a phone. Not done: the "re-signed APK" case of TC-SEC-09 (an APK changed after signing and installed) is a device check for package D1.
+
 #### BUG-2026-008: The app trusts a test manifest key whose private half is in the repository
 
 - Area: SEC | Severity: S1 | Clinical: Yes | Hazard: H7, H9 | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-SEC-09 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-09 | Fix version:
 
 **Steps**
 1. Read `tools/sign_bundle_manifest.py:24-25` and `BundleManifestVerifier.kt:25-26,68-73`.
@@ -269,10 +278,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R4, together with BUG-2026-007.
 
+**Fix** Package B1. No key is committed: the test private key is gone from `tools/sign_bundle_manifest.py` and from `BundleManifestVerifierTest`, and `test_the_retired_test_key_is_not_in_the_repository` fails if it returns (it is still in git history; no build trusts it). The build signs the bundle into the app's generated assets (`:app:signBundleManifest`, nothing signed is committed) and the app trusts the public half of the key that signed its own bundle (`BuildConfig.K3_PUBLIC_KEY_HEX`). A release needs `-PmanifestKey` and `-PrequireReleaseKey=true` (the release workflow passes both) and a public key pinned in `config/k3-public-key.hex`; the build fails if the two differ. An installed build that is not debuggable and carries a development key turns screening and research off (`IntegrityResult.DevelopmentKeyInRelease`). Tests: `tools/tests/test_sign_bundle_manifest.py` (19 cases, among them: a release key with nothing pinned is refused even without the flag, and a raw key file whose first or last byte looks like whitespace is read intact), `VerifiedAssetsTest`. K3 detects a changed asset in an app that is otherwise intact; it does not stop someone who repackages the whole APK and signs it with their own key, because the app trusts the key that signed its own bundle. That case is covered by the Play app signature and the closed-track distribution, not by K3 (doc 8 Section 6.5). Open for the owner: `config/k3-public-key.hex` does not exist until K3 is generated (package G), so a release build is refused until then, which is intended.
+
 #### BUG-2026-009: Delete all data clears settings only; the database, encrypted files, and keys remain
 
 - Area: LOG | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-LOG-11 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-LOG-11 | Fix version:
 
 **Steps**
 1. Save a screening with a register number.
@@ -286,10 +297,14 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** A facility that deletes all data before handing a phone on still leaves every record on it. Fix package R4.
 
+**Fix** Package B1. `DataPurgeManager.deleteAllData()` returns a `PurgeResult` and runs `DataWiper`s for what it does not own: the PIN key K9, the device signing keys (`neogold_device_key_*`), the crash report key, the export staging folder and the crash reports. A wiper that fails is named in the `DATA_DELETED` audit event and shown to the user, and the app does not restart into a half-empty state. `NeoGoldContainer.startDeleteAll()` cancels background work, locks research, deletes, and restarts the process; S25 says how many research items the study has not acknowledged (doc 8 Section 7.3). Tests: `DataPurgeManagerTest`, `WipersTest`, `SecurityInstrumentedTest` (the database, an encrypted file, K9, a device key, the staging folder and the crash folder, on a device). Becomes Verified when CI is green and the instrumented test has run.
+
+**Still open after B1** (found in the privacy review, not part of this fix): a process kill in the middle of a delete leaves some data behind, and nothing records that a delete was under way, so the app starts normally and the user is not told. A marker written before the first step and cleared after the last, checked at start, would close it. Proposed for package D1, which exercises a kill during delete on a phone (TC-LOG-11).
+
 #### BUG-2026-010: Retention never runs; register numbers and old records are kept indefinitely
 
 - Area: LOG | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-LOG-04, TC-LOG-05 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-LOG-04, TC-LOG-05 | Fix version:
 
 **Steps**
 1. Search the app for a WorkManager periodic job or an app-start call to `RetentionManager`.
@@ -302,10 +317,14 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R4.
 
+**Fix** Package B1. `RetentionWorker.scheduleDaily` is called from `NeoGoldApplication.onCreate`; the worker reaches the app's own database through `RetentionComponent` instead of building a second set of keys; and the retention jobs run every time storage opens (`StorageCoordinator`, TC-LOG-04, TC-LOG-05). Tests: `StorageCoordinatorTest` (retention runs after opening, and a failing run does not stop the app); `RetentionManagerTest` still covers the jobs. Not verified: that WorkManager fires on a phone with a battery saver (package D1).
+
+**Still open after B1**: the retention jobs read the phone's own clock, so a clock set forward deletes records early and one set back keeps them too long; and encrypted files whose database row is already gone are not swept. Neither is new. Proposed for package D1.
+
 #### BUG-2026-011: The PIN verifier key falls back to a hardcoded key on any Keystore error
 
 - Area: RSH | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-RSH-06 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-RSH-06 | Fix version:
 
 **Steps**
 1. Make the Keystore throw (for example after a Keystore loss on a budget phone).
@@ -318,6 +337,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/pin/PinHmacKeyProvider.kt:52-55,80` (the catch, the fallback and `STATIC_KEY`).
 
 **Notes** Latent until the PIN path is wired (BUG-2026-012). Fix package R4. The detekt suppression on that function (A2) cites this bug so the fallback stays visible. `KeystoreRecoveryManager.checkKeystoreHealth` catches `Throwable`, which also swallows `OutOfMemoryError` and `CancellationException`; narrow it to `Exception` and rethrow cancellation when it is wired, and ask before wiping.
+
+**Fix** Package B1. `KeystorePinHmacKeyProvider` fails closed: every way the Keystore can fail is a `KeystoreLossException`, there is no software key, and `FakePinHmacKeyProvider` no longer appears in production code (`TestDoublesStayOutOfProductionTest`). `Argon2PinHasher.verifyPin` reports a missing K9 as a key loss, not a wrong PIN, so the lockout counter does not run up; `ResearchPinManager.verifyPin` checks for K9 before it moves the counter, puts the counter back if K9 disappears while the PIN is being checked, and returns `PinCheckResult.VerifierKeyLost`, which both callers show as enroll again (TC-RSH-06 key-loss test). `KeystoreRecoveryManager.checkKeystoreHealth` catches `Exception` instead of `Throwable`, rethrows cancellation and logs the class only. The health check runs before the database opens (`StorageCoordinator`), and nothing is deleted until the user chooses Reset saved data and confirms a dialog that says unsent research items are lost with it; `KeepOnCorruptionFactory` stops the SQLCipher library deleting a database it cannot open with the wrong key. Tests: `PinHmacKeyProviderTest`, `StorageCoordinatorTest`, `SecurityInstrumentedTest` (K9 on the real Keystore is non-exportable, TC-RSH-06; a lost database key, and a database opened with the wrong key that fails to open and keeps its file, TC-SEC-07). Deviation from the plan: the Fake classes stay in `src/main` of `:core:security` because five modules' tests share them and moving them needs a test-fixtures module; the scan test is what keeps them out of the app.
 
 #### BUG-2026-012: Research unlock accepts any PIN
 
@@ -598,6 +619,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The sync client passes its MockWebServer tests (34 in the local run) but cannot run in the app. Fix package R3.
 
+**Note from B1**: `ResearchUploadWorker` builds its own clients and keys instead of taking them from `NeoGoldContainer`, so it bypasses the storage coordinator and the integrity check. A worker that wakes while saved data is unreadable, or after the start-up check failed, would still try to upload. Package C4 makes the worker take everything from the container and stop when storage is not ready or the check did not pass.
+
 #### BUG-2026-028: No Play In-App Updates implementation
 
 - Area: ONB | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
@@ -800,7 +823,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-040: StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message
 
 - Area: SYNC | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-API-07 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-07 | Fix version:
 
 **Steps**
 1. Construct `StudyEnrollmentManager` with `cardTrustVerifier = null` and enroll with an unsigned study QR.
@@ -813,6 +836,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/enrollment/StudyEnrollmentManager.kt` (`resolveStudyProfile` and the `codeRegex` check). No production constructor exists yet, so it is not reachable today. Found by the privacy-security-reviewer on 27 October 2026.
 
 **Notes** Fix in packages B2/C4: make the verifier non-null (a test double in tests) and remove the code from the message.
+
+**Fix** Package B2. `StudyEnrollmentManager`'s public constructor takes the `CardTrustVerifier`, and the only other way to build one (`StudyProfileVerifier`, a test double) is `internal` to the module, so the app has no way to skip the signature check; a profile that does not verify is refused (`IllegalArgumentException`) before a device key is made or a request is sent, and the message for a badly formed enrollment code no longer repeats the code. Tests: `SyncTestCases` (`unsignedStudyProfile_isRefused_beforeAnyKeyIsMadeOrAnythingIsSent`, `aBadlyFormedEnrollmentCode_isRefusedWithoutEchoingIt`). Not done: nothing builds the verifier from the trust list yet; that is the enrollment screen (package C4).
 
 #### BUG-2026-041: TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it
 
@@ -915,7 +940,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The A2 change set touched `VisionQualityGate.kt` and `VisionModels.kt` without the Tier 0 requirements; the safety-reviewer covered them by hand. A later change that loosened a default in `VisionModels.kt` (for example the maximum blur) would let blurry or colour-distorted photos through with no Tier 0 check (H1, H5, H6).
 
-**Fix** `quality/tiers.yaml` now lists `*QualityGate*.kt`, `VisionModels.kt`, `CardSampler.kt`, `ScreeningPipelineUseCase.kt`, `android/config/detekt/**` and `android/app/src/main/assets/**` in Tier 0. `tools/tests/test_quality_gate.py` now loads the real map and fails when a Tier 0 pattern matches no tracked file or when one of those files falls out of Tier 0; both tests fail against the previous map (mutation check, 27 October 2026). Still open for the owner: `.claude/hooks/protect_clinical.py` protects only the bundled `model.json`, not the bundled `triage-config.json` and `trust-list.json`. Package E1 adds `ScreeningStateMachine.kt` to Tier 0 when it starts making the triage call.
+**Fix** `quality/tiers.yaml` now lists `*QualityGate*.kt`, `VisionModels.kt`, `CardSampler.kt`, `ScreeningPipelineUseCase.kt`, `android/config/detekt/**` and `android/app/src/main/assets/**` in Tier 0. `tools/tests/test_quality_gate.py` now loads the real map and fails when a Tier 0 pattern matches no tracked file or when one of those files falls out of Tier 0; both tests fail against the previous map (mutation check, 27 October 2026). The bundled copies of `triage-config.json` and `trust-list.json` that the hook did not protect no longer exist: package B1 stopped committing any signed copy under `android/app/src/main/assets` (the build signs `config/` into generated assets), so the protected files in `config/` are the only source and the Tier 0 pattern for the assets folder was removed. Package E1 adds `ScreeningStateMachine.kt` to Tier 0 when it starts making the triage call.
 
 #### BUG-2026-047: The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs
 
@@ -1123,7 +1148,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-059: Gate S2 fails on a new Guava advisory (CVE-2026-102554, HIGH) that sits only on lint, test and annotation-processor classpaths
 
 - Area: SEC | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
-- Status: In progress | Owner: Unassigned | Test case: TC-SEC-05 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-05 | Fix version:
 
 **Steps**
 1. Run the `scan` job of `android-ci.yml` on `dev` after the advisory reached the vulnerability database.
@@ -1136,6 +1161,135 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** The `scan` log of android-ci run 40824452863; the lockfiles (step 2); OSV GHSA-xxph-c9ww-hj94. An independent review (privacy-security-reviewer, 29 October 2026) confirmed the configuration list and the purl match, and made four findings, all fixed: the first wording ("clears with a Room or Android Gradle Plugin upgrade") was not supported, because such an upgrade can change the version without reaching 33.7.2, and then the entry stops matching; a version-scoped exception would go on hiding Guava if it ever reached a shipped classpath; the first expiry (31 January 2027) was longer than doc 8's 30 days for a high finding; and the green baseline I cited was not the nearest.
 
 **Notes** Time-boxed in `.trivyignore.yaml`: one entry per version, each naming the configuration that carries it. They expire on 28 November 2026, 30 days from the finding (doc 8 Section 10). Gate S2 at release needs no open high finding (doc 8 Section 13.3, TC-SEC-05), so they are gone before any release candidate. `tools/tests/test_trivy_exceptions.py` (repo-ci) fails if a tooling-only exception names a configuration an APK is built from or one not seen before, if its version is in no lockfile any more, or if an entry lacks a versioned purl, a reason or an expiry; a mutation check on copies of the real lockfiles caught each break. The lasting fix is due before the expiry: a Guava constraint at 33.7.2 (published as `-jre` and `-android`) on the kapt and KSP, `androidLintTool` and test configurations. It rewrites the 22 lockfiles and adds checksums; then the four entries go, and the test's dead-entry check tells whoever deletes them. Status becomes Fixed then. Two decisions belong to the owner. (1) Gate S2 scans every configuration the lockfiles list, build tooling included, so each new advisory against lint, a compiler plugin or a test library turns `dev` red until an exception is written; failing only on the release runtime classpaths would stop that, but it loosens what the gate checks, so it is not done. (2) The BUG-2026-036 entries run to 31 January 2027, but doc 8 gives a critical finding 7 days and a high one 30: Bouncy Castle CVE-2026-8763 is critical (in the lint tool only) and the three protobuf findings are high and ship. Either shorten them or write the rule for unshipped tooling into doc 8 Section 10.
+
+**Fix** Package A3b. `android/build.gradle.kts` maps every request for `com.google.guava:guava` to 33.7.2, in the flavor asked for, and the lockfiles and checksums moved with it (commit 1416ff2). android-ci then found one more line: `:core:data`'s lockfile still held the kapt classpath of the old Room compiler, with Guava 31.1-jre, for configurations that no longer exist; they were removed (commit 64eee0e). The four `.trivyignore.yaml` entries are deleted. android-ci run 40887986570 and repo-ci run 40887986608 on 64eee0e are green, scan included.
+
+#### BUG-2026-060: Saving a screening names a card batch the phone never stored, so the insert is refused
+
+- Area: LOG | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: n/a (`ForeignKeyEnforcementTest`) | Fix version:
+
+**Steps**
+1. In a build where screening is enabled, finish a screening or a rule outcome and choose Save to log.
+
+**Expected** The session is saved.
+
+**Actual** `MainActivity` wrote `cardBatchId = "NG-2026-001"`, a batch no one had inserted. The database enforces foreign keys, so `ScreeningSessionDao.insert` throws `SQLiteConstraintException` inside a coroutine that nothing catches, and the app closes with the result lost. `ForeignKeyEnforcementTest.sessionNamingACardBatchThatWasNeverStored_isRefused` reproduces it.
+
+**Evidence** `MainActivity.kt` (both `ScreeningSessionEntity(...)` calls); `ForeignKeyEnforcementTest`. Suspected in the 27 October plan and confirmed on 29 October 2026.
+
+**Notes** Latent in v1.0: the New screening button is hidden while `triageEnabled` is false (S09), so no study build reaches it. It would be the first thing to fail when screening is switched on. The same test also cleared a second suspicion: `CardBatchDao.insert` replaces on conflict, which looked as if it would break sessions that name the batch when a card is scanned again; SQLite checks the foreign key at the end of the statement, so it does not (`scanningACardBatchAgain_keepsTheSessionsThatNameIt`). A fabricated batch id on a clinical record is also false provenance (audit finding A11).
+
+**Fix** Package B1 stops writing the made-up id (`cardBatchId = null`). The real fix is package C1 (S06 stores the scanned batch) and E1 (the saved record names the batch that was scanned). Becomes Verified with E1.
+
+#### BUG-2026-061: Home shows register numbers in the due-recheck list, but is not a protected screen
+
+- Area: PRIV | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-PRIV-02 | Fix version:
+
+**Steps**
+1. Save a screening with a register number and a recheck, then open Home after the recheck is due.
+
+**Expected** Every screen that shows a register number is protected against screenshots and the recents thumbnail (doc 8 Section 6.1).
+
+**Actual** The due list on S09 prints `Reg <number>`. `SecureScreenHelper.SECURE_DESTINATIONS` does not include `s09_home`, and `SecureScreenHelperTest` asserts that Home is not secure.
+
+**Evidence** `S09HomeScreen.kt` (the `Reg ${session.registerNumber}` text); `SecureScreenHelperTest.secureDestinations_matchDoc8AndTC_PRIV_02`.
+
+**Notes** Found while adding S14 to the protected screens in package B1. It needs a decision, so it is not changed: either S09 becomes protected and that assertion changes, or the list drops register numbers until the app lock is open (doc 8 Section 6.3 says the Home list shows them only after the app lock). Belongs to the privacy reviewer and the owner.
+
+#### BUG-2026-062: The SQLCipher native library is never loaded, so the first database access closes the app
+
+- Area: LOG | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-08, TC-LOG-11 | Fix version:
+
+**Steps**
+1. Install the debug build on the emulator and run `SecurityInstrumentedTest`, which makes the app open its database through `NeoGoldContainer`. (On the code as it stood, the same first query came from S09 Home, `getDueRechecks`.)
+
+**Expected** The encrypted database opens (doc 5 Section 2.6, doc 8 Section 5.1).
+
+**Actual** The process dies with `java.lang.UnsatisfiedLinkError: No implementation found for long net.zetetic.database.sqlcipher.SQLiteConnection.nativeOpen(...) ... is the library loaded, e.g. System.loadLibrary?`. `net.zetetic:sqlcipher-android` does not load `libsqlcipher.so` by itself, and nothing in the repository called `System.loadLibrary`. An `Error` is not an `Exception`, so no `catch` in the app sees it.
+
+**Evidence** The instrumented run on the API 37 x86_64 emulator, 29 October 2026 (first run: the crash above; after the fix: 7 of 7 pass, and logcat shows `libsqlcipher.so` loaded from the base APK); `grep -rn loadLibrary android` found no call. The universal debug APK carries `libsqlcipher.so` for all four ABIs, so only the load was missing.
+
+**Notes** No unit test could see it: TC-SEC-08's JVM test checks only the format of the passphrase, and the Robolectric tests open the database through the framework SQLite helper (`openHelperFactory`), never through SQLCipher. Every phone that finished onboarding would have crashed on Home. It is the reason the plan asks for an emulator test with the real SQLCipher and Keystore (package B1).
+
+**Fix** `NeoGoldDatabase.buildDatabase` loads the library once per process before it builds the SQLCipher factory. `SecurityInstrumentedTest` opens the real database, deletes all data and resets after a lost key, so a regression fails there. That test runs by hand; wiring an emulator job into CI is package D1.
+
+#### BUG-2026-063: The server's enrollment-code secret has a default that is published in the repository
+
+- Area: SEC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: n/a (`backend/tests/test_enrollment_secret.py`) | Fix version:
+
+**Steps**
+1. Start the Study Intake Service without `ENROLLMENT_CODE_SECRET` in its environment.
+
+**Expected** The server refuses to start: K12 is a server secret (doc 8 Section 4) and a missing one is a deployment mistake.
+
+**Actual** `app/config.py` fell back to `default-study-enrollment-secret-key-32b`, a value anyone can read in this repository. The server started, issued enrollment codes and stored `HMAC-SHA256(secret, code)` as their hash. Whoever read a copy of the database could test guesses against those hashes offline with a key they already had.
+
+**Evidence** `backend/app/config.py` (the `os.getenv("ENROLLMENT_CODE_SECRET", "default-...")` default); `backend/app/cli.py` and `backend/app/routers/enrollments.py` read the setting directly. Found by the audit's action item A6 on 26 October 2026 and logged when package B2 started.
+
+**Notes** The enrollment code is 60 bits and expires, so this is a weakness in depth, not an open door. The real deployment sets the secret in the server's environment file (doc 12 Section 5); whether it was ever left at the default on staging cannot be told from the repository.
+
+**Fix** Package B2. There is no default. `Settings.enrollment_code_key()` raises `ConfigurationError` when the secret is missing, empty, shorter than 32 characters or the old published value, and the application's start-up hook (`lifespan` in `app.main`) calls it, so the server does not come up without it. The check runs at start and not at import, so Alembic, `backend/tools/diff_spec.py` and the drift inventory, which import the app only to read its API description, work without the secret (the privacy review found that an import-time check would have turned two CI steps red). The secret is trimmed first, and a long run of one character, or fewer than 10 different characters, is refused as not random. Tests: `test_enrollment_secret.py` (14). Becomes Verified when the staging server has started with its real secret.
+
+#### BUG-2026-064: The device assertion names the study host as its audience, but the server checks the `/v1` base URL
+
+- Area: SYNC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-07 | Fix version:
+
+**Steps**
+1. Enroll a phone from a study QR whose host has no `/v1` (for example `https://study.example`), then make any authenticated request.
+
+**Expected** The request is accepted (doc 7 Section 4.2: `aud` is the API base URL, `htu` the full request URL).
+
+**Actual** `ResearchApiClient` added `/v1` to the request URL but passed the host as it came from the QR to the token as `aud`. The server compares `aud` with its public base URL, which ends in `/v1`, so every authenticated call from such a phone would be refused with 401. `DeviceAssertionAudienceTest` reproduces the mismatch against the vector the backend tests also read.
+
+**Evidence** `ResearchApiClient.normalizeUrl` and the two `DeviceAssertionMinter.mintToken(... baseAudUrl = baseUrl ...)` calls; `testdata/api/assertion_claims_vector.json` and `backend/tests/test_assertion_claims_vector.py`. Listed as [Likely] in the 27 October plan and confirmed on 30 October 2026.
+
+**Notes** Latent: nothing in the app calls the API yet, and the unit tests used a base URL that already ended in `/v1`. It would have shown on the first real enrollment (package C4).
+
+**Fix** Package B2. `apiBaseUrl()` always returns the URL with `/v1` and is used for the request URL, `htu` and `aud` alike; `DeviceAssertionMinter` refuses an audience without `/v1` instead of minting a token the server will reject. Kotlin and Python tests read one claims vector, so the two sides cannot drift apart. The privacy review added: `StudyEnrollmentManager` accepts only an https address with no user name, query, fragment or path but `/v1` (`studyBaseUrl`), lower-cases the host and drops a default port as the server compares them, the minter refuses an audience with a user name, query or fragment, and `ResearchUploadWorker` no longer follows redirects, so a 307 cannot send an enrollment or participant body to another host. Tests: `DeviceAssertionAudienceTest` (4), `StudyBaseUrlTest` (5), `test_assertion_claims_vector.py` (6). Becomes Verified with the throttled-link run against staging (package C4).
+
+#### BUG-2026-065: The problem detail for a taken participant code repeats the code, and the response is stored for replay
+
+- Area: PRIV | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-21 | Fix version:
+
+**Steps**
+1. Register a participant code with one consent form ID, then register the same code with another.
+
+**Expected** A conflict whose text carries no participant code (doc 7 Section 6.1).
+
+**Actual** `PARTICIPANT_CODE_TAKEN` said `Participant code <code> is already in use ...`. The response body is also what the idempotency table stores for replay, so the code sat in `idempotency_record` as well as in the response.
+
+**Evidence** `backend/app/routers/participants.py` (`ParticipantCodeTakenError` message); `backend/tests/test_participants.py`.
+
+**Notes** A participant code is a study pseudonym, not a name, so this is S3; it still counts as a value that should not be copied into places that outlive the request.
+
+**Fix** Package B2. The message no longer names the code, and `test_participants.py` asserts that neither the response body, the problem detail nor the stored replay body in `idempotency_record` contains it. The review also found two more routes into the server journal, which are closed: the database engines hide statement parameters (`hide_parameters=True`; a failed insert used to log the participant code in the `[parameters: ...]` line) and the catch-all error handler logs the exception type and the request ID, not the message or traceback. On the phone, three messages in `ResearchRepository` that repeated the participant code (one of them any typed text, which could be a name) no longer do. Becomes Verified when CI is green.
+
+#### BUG-2026-066: Findings from the B2 privacy review that are not fixed yet
+
+- Area: SYNC | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-API-21, TC-API-07 | Fix version:
+
+**Steps** Read the privacy-security review of package B2 (30 October 2026); four of its findings are left open on purpose.
+
+**Expected** Each is either fixed or recorded with the package that fixes it.
+
+**Actual**
+1. Two phones registering the same participant code at the same moment both pass the lookup and the second insert hits the unique key (`participants.py`, the two new-participant cases). Nothing maps the database error to the alias or 409 path, so the second caller gets a 500. The values no longer reach the journal (BUG-2026-065), so this is a correctness fault, not a leak.
+2. `middleware/auth.py` compares the whole `htu` claim without regard to case, path included. Doc 7 Section 4.2 says only the scheme and host are compared that way.
+3. `DeviceKeyManager` puts the key alias (`neogold_device_key_<studyCode>`) into exception messages. A study code is not personal, so the sensitivity is low.
+4. `unsignedStudyProfile_isRefused_beforeAnyKeyIsMadeOrAnythingIsSent` covers a profile from an issuer that is not on the trust list. A profile with a bad signature from a trusted issuer is covered only by the cardtrust engine's own tests.
+
+**Evidence** The review report of 30 October 2026 (findings MEDIUM and LOW, items named above).
+
+**Notes** None of the four is reachable in v1.0: nothing in the app calls the API yet (packages C2 and C4).
+
+**Fix** Item 1 with package F3 (backend contract), which owns the participant endpoints; items 2 and 3 with package F3 and C4; item 4 with package C4 (enrollment screen), where the verifier is built from the real trust list.
 
 ---
 
@@ -1156,10 +1310,10 @@ Updated with each test summary report (doc 9 Section 15).
 |---|---|---|---|
 | S1 | 15 | 8 | 0 |
 | S2 | 26 | 0 | 0 |
-| S3 | 18 | 0 | 0 |
+| S3 | 19 | 0 | 0 |
 | S4 | 0 | 0 | 0 |
 
-As of 29 October 2026. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
+As of 30 October 2026, counted from the table in Section 4: a defect is open until it is Verified, so Fixed ones still count. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
 
 ---
 

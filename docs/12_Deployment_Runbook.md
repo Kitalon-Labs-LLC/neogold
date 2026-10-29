@@ -379,10 +379,10 @@ NeoGold has no analytics by design (FR-34), so Play's own vitals and direct repo
 | Key (doc 8 Section 4) | Rotation | Procedure |
 |---|---|---|
 | K2 Upload key | On compromise | Play Console upload key reset; update the `release` environment secret |
-| K3 Release manifest key | Each major version | Generate, update the public key in the app, update the secret; move to offline signing before NG-062 |
+| K3 Release manifest key | Each major version | Generate, commit the public key as `config/k3-public-key.hex`, update the secret; move to offline signing before NG-062 |
 | K4 Card issuer, K5 Study issuer | Every 2 years or on compromise | Generate on the offline machine; add the new public key to the trust list in an app release; keep the old key valid until its batches or profiles expire |
 | K11 TLS | Automatic | Caddy renews; alert at 14 days to expiry |
-| K12 Enrollment code secret | On compromise | Replace in `api.env`; unused codes become invalid; reissue |
+| K12 Enrollment code secret | On compromise | Replace in `api.env`; unused codes become invalid; reissue. The service does not start without it, so a missing or short value shows up at deployment, not later |
 | K13 Database passwords | Yearly | `ALTER ROLE ... PASSWORD`; update env files; `docker compose up -d` (safe, because `.env` always names the deployed digest) |
 | K14 Backup password | Per study, or on compromise | New repository: `restic init` at a new location, `restic copy` the snapshots into it, delete the old repository. Adding and removing a password keeps the same master key, so it does not protect old copies of the repository |
 | K15 SSH and WireGuard | On staff change | Remove the person's keys and peer entry the same day |
@@ -526,7 +526,8 @@ jobs:
           printf '%s' "$UPLOAD_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           printf '%s' "$RELEASE_MANIFEST_KEY_B64" | base64 -d > "$RUNNER_TEMP/manifest.key"
           ./gradlew --no-daemon signAssetManifest bundleRelease cyclonedxBom \
-            -PuploadKeystore="$RUNNER_TEMP/upload.jks" -PmanifestKey="$RUNNER_TEMP/manifest.key"
+            -PuploadKeystore="$RUNNER_TEMP/upload.jks" -PmanifestKey="$RUNNER_TEMP/manifest.key" \
+            -PrequireReleaseKey=true
           mkdir -p "$RUNNER_TEMP/upload"
           cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/upload/"
       - name: Install bundletool and put SDK and NDK tools on PATH

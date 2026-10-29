@@ -227,6 +227,19 @@ Components live in `:core:designsystem` (atoms, molecules) and the feature modul
 | R08 | Study server enrollment (scan signed study QR, enter one-time code, confirm study name and server) | Join study | NG-042 |
 | R09 | Leave study (confirm) | Leave study | NG-042 |
 
+### 5.1 System screens
+
+These stand in for the app when something underneath it cannot be trusted. They show no clinical content, no result and no register number. Their text is in the app module's own strings (`app/src/main/res/values` and `values-bn`; Bangla is a draft for the nurse panel, like the rest) and `tools/check_strings.py` checks it.
+
+| Screen | When | Actions |
+|---|---|---|
+| Opening saved data | While the keys are checked and the database opens, a moment at every start | None |
+| Saved data could not be opened | A Keystore key is gone, or the database does not open with its key (doc 8 Section 5.1) | Try again, or Reset saved data, which asks "Reset saved data?" first and says that research items not yet sent are lost with it. Nothing is deleted before the user confirms |
+| Screening and research are turned off | The app's own files failed the startup check, or the build carries a development key (doc 8 Section 6.5). It replaces every screening and research screen | None. The user installs the app again from the official source |
+| Deleting all data | While S25 runs, and afterwards if something could not be removed (doc 8 Section 7.3) | Try again, or Close |
+
+S25 also says how many research items the study has not acknowledged, because deleting all data loses them.
+
 ---
 
 ## 6. Key Flows
