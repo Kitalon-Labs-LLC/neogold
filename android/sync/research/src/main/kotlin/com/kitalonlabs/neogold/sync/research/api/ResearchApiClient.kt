@@ -304,7 +304,7 @@ class ResearchApiClient(
 
     private fun executeCall(request: Request): String {
         val response = okHttpClient.newCall(request).execute()
-        val bodyStr = response.body?.string() ?: ""
+        val bodyStr = response.boundedText()
         if (!response.isSuccessful) {
             handleErrorResponse(response, bodyStr)
         }
@@ -353,7 +353,7 @@ class ResearchApiClient(
         }
 
         val response = okHttpClient.newCall(reqBuilder.build()).execute()
-        val bodyStr = response.body?.string() ?: ""
+        val bodyStr = response.boundedText()
 
         if (!response.isSuccessful) {
             val problem = tryParseProblem(bodyStr, response.code)
@@ -439,7 +439,7 @@ class ResearchApiClient(
             .build()
 
         val response = okHttpClient.newCall(request).execute()
-        val bodyStr = response.body?.string() ?: ""
+        val bodyStr = response.boundedText()
 
         if (!response.isSuccessful) {
             val problem = tryParseProblem(bodyStr, response.code)
@@ -504,3 +504,18 @@ class ResearchApiClient(
 }
 
 private const val MAX_ERROR_DETAIL_CHARS = 200
+
+/**
+ * The response body as text, read at most [MAX_RESPONSE_BYTES]. Every answer of the study server is a small JSON document,
+ * so a larger one is not an answer; reading it whole could use up the memory of a 2 GB phone (BUG-2026-083 item 34).
+ */
+internal fun okhttp3.Response.boundedText(): String {
+    val body = body ?: return ""
+    if (body.contentLength() > MAX_RESPONSE_BYTES) throw java.io.IOException("Response is too large")
+    val bytes = peekBody(MAX_RESPONSE_BYTES + 1).bytes()
+    if (bytes.size > MAX_RESPONSE_BYTES) throw java.io.IOException("Response is too large")
+    return String(bytes, Charsets.UTF_8)
+}
+
+/** The largest answer of the study server the app reads (1 MiB; the largest documented answer is a few kilobytes). */
+internal const val MAX_RESPONSE_BYTES = 1L * 1024 * 1024
