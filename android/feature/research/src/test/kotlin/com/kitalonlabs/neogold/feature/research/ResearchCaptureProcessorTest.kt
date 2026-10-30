@@ -14,8 +14,10 @@ import com.kitalonlabs.neogold.engine.vision.DetectedMarker
 import com.kitalonlabs.neogold.engine.vision.ImageFrame
 import com.kitalonlabs.neogold.engine.vision.MarkerDetector
 import com.kitalonlabs.neogold.engine.vision.VisionEngine
+import com.kitalonlabs.neogold.feature.research.capture.CaptureTooLargeException
 import com.kitalonlabs.neogold.feature.research.capture.ResearchCaptureProcessor
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -54,12 +56,26 @@ class ResearchCaptureProcessorTest {
         override fun detectMarkers(frame: ImageFrame): List<DetectedMarker> = emptyList()
     }
 
-    private val camera = object : CameraSession {
+    private fun cameraTaking(photo: () -> ByteArray) = object : CameraSession {
         override val characteristics: CameraCharacteristics? = null
         override suspend fun captureFrame() = error("not used by R04")
-        override suspend fun captureStill(flash: Boolean) = CapturedStill(jpeg(), metadata)
+        override suspend fun captureStill(flash: Boolean) = CapturedStill(photo(), metadata)
         override suspend fun captureBurst() = error("not used by R04")
         override fun close() = Unit
+    }
+
+    private val camera = cameraTaking { jpeg() }
+
+    /** A photo of random pixels: it does not compress, so it is far over the upload limit. */
+    private fun hugeJpeg(): ByteArray {
+        val side = HUGE_SIDE
+        val random = java.util.Random(SEED)
+        val pixels = IntArray(side * side) { random.nextInt() or ALPHA }
+        val bitmap = Bitmap.createBitmap(pixels, side, side, Bitmap.Config.ARGB_8888)
+        val out = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
+        bitmap.recycle()
+        return out.toByteArray()
     }
 
     private fun processor(reference: Map<String, Lab>?) = ResearchCaptureProcessor(
@@ -106,8 +122,29 @@ class ResearchCaptureProcessorTest {
     }
 
     @Test
+    fun aPhotoOverTheUploadLimitIsRefusedAndNothingIsReturned() = runBlocking {
+        val huge = hugeJpeg()
+        assertThat(huge.size).isGreaterThan(ResearchCaptureProcessor.MAX_IMAGE_BYTES)
+
+        try {
+            processor(
+                reference = null
+            ).capture(cameraTaking { huge }, site = "STERNUM", attemptNumber = 1, flash = false)
+            fail("a photo over the limit must be refused")
+        } catch (expected: CaptureTooLargeException) {
+            // R04 shows the retake message and keeps nothing
+        }
+    }
+
+    @Test
     fun theUploadLimitIsTheStricterOfTheTwo() {
         // doc 7 allows a study up to 20,000,000; the app's own cap is lower
         assertThat(ResearchCaptureProcessor.MAX_IMAGE_BYTES).isEqualTo(5_000_000)
+    }
+
+    private companion object {
+        const val HUGE_SIDE = 2400
+        const val SEED = 7L
+        const val ALPHA = 0xFF000000.toInt()
     }
 }

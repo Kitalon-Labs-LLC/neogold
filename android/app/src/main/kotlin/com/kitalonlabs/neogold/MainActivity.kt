@@ -66,6 +66,7 @@ import com.kitalonlabs.neogold.feature.log.S22SessionDetailScreen
 import com.kitalonlabs.neogold.feature.log.ScreeningLogExportManager
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanState
 import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationState
+import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
 import com.kitalonlabs.neogold.feature.result.S20ResultScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S09HomeScreen
@@ -213,7 +214,8 @@ class MainActivity : FragmentActivity() {
                                             modifier = content,
                                             firstRun = firstRun,
                                             research = container.researchViewModel(state.database),
-                                            researchCaptureSetup = { container.researchCaptureSetup(state.database) }
+                                            researchCaptureSetup = { container.researchCaptureSetup(state.database) },
+                                            researchCardStatus = { container.researchCardStatus(state.database) }
                                         )
                                     }
                                 }
@@ -377,6 +379,7 @@ fun NeoGoldNavHost(
     firstRun: FirstRunState,
     research: ResearchViewModel?,
     researchCaptureSetup: suspend () -> NeoGoldContainer.ResearchCaptureSetup,
+    researchCardStatus: suspend () -> CardTrustStatus,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
@@ -1017,13 +1020,15 @@ fun NeoGoldNavHost(
             val scanned by session.scannedProfile.collectAsState()
             val lockedOut by session.isLockedOut.collectAsState()
             val lockoutMinutes by session.lockoutMinutes.collectAsState()
-            val error by session.errorMessage.collectAsState()
+            val error by session.error.collectAsState()
             val unlocked by session.isUnlocked.collectAsState()
             val openHome = {
                 navController.navigate(Destinations.R02_STUDY_HOME) {
                     popUpTo(Destinations.R01_RESEARCH_UNLOCK) { inclusive = true }
                 }
             }
+            // A message from the last visit is not shown again.
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.clearError() }
             // Already unlocked (Settings was opened again within the session): no second PIN.
             androidx.compose.runtime.LaunchedEffect(unlocked) { if (unlocked) openHome() }
 
@@ -1032,7 +1037,7 @@ fun NeoGoldNavHost(
                 existingStudyName = study?.displayName,
                 isLockedOut = lockedOut,
                 lockoutMinutes = lockoutMinutes,
-                errorMessage = error,
+                error = error,
                 onQrScanned = session::onStudyQrScanned,
                 onUnlockWithPin = { pin -> session.unlockWithPin(pin) { openHome() } },
                 onEnrollWithPin = { pin, confirmPin ->
@@ -1044,7 +1049,10 @@ fun NeoGoldNavHost(
         researchSessionComposable(Destinations.R02_STUDY_HOME) { session ->
             val study by session.activeStudy.collectAsState()
             val pending by session.pendingUploadsCount.collectAsState()
-            val cardStatus by session.cardTrustStatus.collectAsState()
+            // the card the phone works with, not the card of the last saved session (which is nothing before the first)
+            val cardStatus by androidx.compose.runtime.produceState(CardTrustStatus.UNVERIFIED) {
+                value = researchCardStatus()
+            }
             androidx.compose.runtime.LaunchedEffect(Unit) { session.refreshPendingUploads() }
 
             study?.let {
@@ -1065,10 +1073,10 @@ fun NeoGoldNavHost(
 
         researchSessionComposable(Destinations.R03_PARTICIPANT_CONSENT) { session ->
             val study by session.activeStudy.collectAsState()
-            val error by session.errorMessage.collectAsState()
+            val error by session.error.collectAsState()
             com.kitalonlabs.neogold.feature.research.ui.R03ParticipantConsentScreen(
                 studyName = study?.displayName.orEmpty(),
-                errorMessage = error,
+                error = error,
                 onContinueToCapture = { code, consentFormId, birthTime, ageHours, gestationalWeeks, early, danger, prior ->
                     session.registerParticipantAndInputs(
                         participantCode = code,
@@ -1110,7 +1118,7 @@ fun NeoGoldNavHost(
 
         researchSessionComposable(Destinations.R05_TSB_ENTRY) { session ->
             val participant by session.currentParticipant.collectAsState()
-            val error by session.errorMessage.collectAsState()
+            val error by session.error.collectAsState()
             val current = participant
             val finish = { researchTsb: Pair<Double, String>? ->
                 researchTsbEntered = researchTsb

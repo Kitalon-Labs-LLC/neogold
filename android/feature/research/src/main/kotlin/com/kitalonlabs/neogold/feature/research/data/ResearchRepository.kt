@@ -24,6 +24,9 @@ import com.kitalonlabs.neogold.engine.cardtrust.PayloadParser
 import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
 import com.kitalonlabs.neogold.engine.cardtrust.TrustList
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
+import com.kitalonlabs.neogold.feature.research.ui.ResearchError
+import com.kitalonlabs.neogold.feature.research.ui.ResearchMessage
+import com.kitalonlabs.neogold.feature.research.ui.ResearchRefusal
 import timber.log.Timber
 import java.security.MessageDigest
 import java.time.LocalDate
@@ -108,6 +111,7 @@ class ResearchRepository(
     ): Result<StudyProfilePayload> {
         val verification = cardTrustVerifier.verifyStudyProfile(qrPayload, evaluationDate)
         if (verification !is VerificationResult.Verified) {
+            val reason = if (verification is VerificationResult.Expired) ResearchMessage.QR_EXPIRED else ResearchMessage.QR_NOT_VALID
             val errorMsg = when (verification) {
                 is VerificationResult.BadSignature -> "Invalid signature on study profile QR"
                 is VerificationResult.Expired -> "Study profile has expired"
@@ -116,7 +120,7 @@ class ResearchRepository(
                 is VerificationResult.WrongPurpose -> "Key is not certified for STUDY_ISSUER"
                 else -> "Malformed study profile payload"
             }
-            return Result.failure(SecurityException(errorMsg))
+            return Result.failure(ResearchRefusal(ResearchError(reason), errorMsg))
         }
         return Result.success(verification.payload)
     }
@@ -152,15 +156,22 @@ class ResearchRepository(
                     }
                 }
                 is PinCheckResult.LockedOut -> Result.failure(
-                    SecurityException("PIN locked out for ${check.remainingMinutes} minutes")
+                    ResearchRefusal(
+                        ResearchError(ResearchMessage.LOCKED_OUT, minutes = check.remainingMinutes),
+                        "PIN locked out for ${check.remainingMinutes} minutes"
+                    )
                 )
                 is PinCheckResult.WrongPin -> Result.failure(
-                    SecurityException(
+                    ResearchRefusal(
+                        ResearchError(ResearchMessage.WRONG_PIN, attempts = check.attemptsUntilNextLockout),
                         "Incorrect PIN. ${check.attemptsUntilNextLockout} attempts remaining before lockout."
                     )
                 )
                 is PinCheckResult.VerifierKeyLost -> Result.failure(
-                    SecurityException("The PIN cannot be checked on this phone. Enroll in the study again.")
+                    ResearchRefusal(
+                        ResearchError(ResearchMessage.VERIFIER_KEY_LOST),
+                        "The PIN cannot be checked on this phone. Enroll in the study again."
+                    )
                 )
             }
         } else {
@@ -170,7 +181,8 @@ class ResearchRepository(
             val active = database.researchStudyDao().getActiveStudy()
             if (active != null) {
                 return Result.failure(
-                    SecurityException(
+                    ResearchRefusal(
+                        ResearchError(ResearchMessage.ANOTHER_STUDY),
                         "Another study is already set up on this phone. To set up a new one, delete all data in Settings."
                     )
                 )
@@ -179,7 +191,7 @@ class ResearchRepository(
             val validation = PinPolicyValidator.validate(pin)
             if (validation is PinValidationResult.Invalid) {
                 return Result.failure(
-                    IllegalArgumentException("PIN rejected: ${validation.error}")
+                    ResearchRefusal(ResearchError(ResearchMessage.WEAK_PIN), "PIN rejected: ${validation.error}")
                 )
             }
 
@@ -317,15 +329,25 @@ class ResearchRepository(
         now: Long = System.currentTimeMillis()
     ): Result<ResearchSessionResult> {
         if (captures.isEmpty()) {
-            return Result.failure(IllegalArgumentException("Research session requires at least one capture"))
+            return Result.failure(
+                ResearchRefusal(
+                    ResearchError(ResearchMessage.NO_CAPTURES),
+                    "Research session requires at least one capture"
+                )
+            )
         }
         if (ageHours.isNaN() || ageHours < 0.0 || ageHours > MAX_AGE_HOURS) {
             return Result.failure(
-                IllegalArgumentException("The baby's age is outside 0 to 720 hours. Check the birth time.")
+                ResearchRefusal(
+                    ResearchError(ResearchMessage.AGE_OUT_OF_RANGE),
+                    "The baby's age is outside 0 to 720 hours. Check the birth time."
+                )
             )
         }
         if (captures.any { !isAllowedImage(it.imageBytes) }) {
-            return Result.failure(IllegalArgumentException("A capture image is not an allowed JPEG"))
+            return Result.failure(
+                ResearchRefusal(ResearchError(ResearchMessage.BAD_IMAGE), "A capture image is not an allowed JPEG")
+            )
         }
 
         // Verify card batch status (TC-CARD-02, TC-CARD-05: research goes on, and the record says what the card was)

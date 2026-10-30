@@ -18,7 +18,6 @@ dependencies {
 
     implementation(project(":engine:cardtrust"))
     implementation(project(":engine:colorscience"))
-    implementation(project(":engine:estimation"))
     implementation(project(":engine:camera"))
     implementation(project(":engine:vision"))
 

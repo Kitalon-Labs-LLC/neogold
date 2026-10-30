@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,7 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
+import com.kitalonlabs.neogold.feature.research.R
 import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 
 /**
@@ -51,7 +53,7 @@ fun R05TsbEntryScreen(
     initialParticipantCode: String? = null,
     isDeferredEntry: Boolean = false,
     /** Why the session or the value could not be saved, from the layer below. */
-    saveError: String? = null,
+    saveError: ResearchError? = null,
     onSaveTsb: (
         participantCode: String,
         tsbMgDl: Double,
@@ -65,7 +67,7 @@ fun R05TsbEntryScreen(
     var tsbValueText by remember { mutableStateOf("") }
     var selectedMethod by remember { mutableStateOf("LAB") } // LAB, POINT_OF_CARE, OTHER
     var drawTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<Int?>(null) } // a string resource
 
     val methods = listOf(
         "LAB" to "Laboratory (HPLC / Diazo)",
@@ -88,7 +90,7 @@ fun R05TsbEntryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(R.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.testTag("r05_research_badge")
@@ -115,7 +117,7 @@ fun R05TsbEntryScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Enter the reference total serum bilirubin result. This will be linked to the research session.",
+            text = stringResource(R.string.r05_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -134,7 +136,7 @@ fun R05TsbEntryScreen(
                 // Participant code input (editable if not provided or if deferred)
                 if (initialParticipantCode.isNullOrBlank()) {
                     Text(
-                        text = "Participant Code",
+                        text = stringResource(R.string.r05_code_label),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -146,7 +148,7 @@ fun R05TsbEntryScreen(
                             participantCode = it.uppercase()
                             errorMessage = null
                         },
-                        placeholder = { Text("e.g. SKP-0142") },
+                        placeholder = { Text(stringResource(R.string.r05_code_hint)) },
                         singleLine = true,
                         isError = participantCode.isNotBlank() && !ResearchFormats.isValidParticipantCode(participantCode),
                         modifier = Modifier
@@ -158,7 +160,7 @@ fun R05TsbEntryScreen(
 
                 // TSB Value Input
                 Text(
-                    text = "TSB Value (mg/dL)",
+                    text = stringResource(R.string.r05_value_label),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -170,7 +172,7 @@ fun R05TsbEntryScreen(
                         tsbValueText = it
                         errorMessage = null
                     },
-                    placeholder = { Text("e.g. 14.5") },
+                    placeholder = { Text(stringResource(R.string.r05_value_hint)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier
@@ -182,7 +184,7 @@ fun R05TsbEntryScreen(
 
                 // Method Selection
                 Text(
-                    text = "Measurement Method",
+                    text = stringResource(R.string.r05_method),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -227,7 +229,7 @@ fun R05TsbEntryScreen(
 
                 // Blood Draw Time
                 Text(
-                    text = "Blood Draw Time",
+                    text = stringResource(R.string.r05_draw_time),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -255,7 +257,7 @@ fun R05TsbEntryScreen(
             }
         }
 
-        val shownError = errorMessage ?: saveError
+        val shownError = errorMessage?.let { stringResource(it) } ?: saveError?.text()
         if (shownError != null) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
@@ -270,16 +272,16 @@ fun R05TsbEntryScreen(
 
         // Save TSB Button
         NgPrimaryButton(
-            text = "Save TSB",
+            text = stringResource(R.string.r05_save),
             onClick = {
                 val cleanCode = participantCode.trim()
                 if (!ResearchFormats.isValidParticipantCode(cleanCode)) {
-                    errorMessage = "Invalid participant code format (must match ^[A-Z]{2,5}-[0-9]{3,6}$)"
+                    errorMessage = R.string.r05_error_code_format
                     return@NgPrimaryButton
                 }
                 val tsbVal = tsbValueText.toDoubleOrNull()
                 if (tsbVal == null || tsbVal <= 0.0 || tsbVal > 40.0) {
-                    errorMessage = "TSB value must be a valid number between 0.0 and 40.0 mg/dL"
+                    errorMessage = R.string.r05_error_tsb_range
                     return@NgPrimaryButton
                 }
                 onSaveTsb(cleanCode, tsbVal, drawTimeMillis, selectedMethod)
@@ -291,7 +293,7 @@ fun R05TsbEntryScreen(
         if (onSkipTsb != null) {
             Spacer(modifier = Modifier.height(12.dp))
             NgSecondaryButton(
-                text = "Enter TSB Later",
+                text = stringResource(R.string.r05_later),
                 onClick = onSkipTsb,
                 modifier = Modifier.testTag("r05_skip_button")
             )

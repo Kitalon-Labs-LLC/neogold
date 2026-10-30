@@ -39,6 +39,7 @@ import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTim
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimePicker
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
+import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 /**
  * R03: Participant & Consent Screen (FR-26, NG-029, doc 6 Section 5).
@@ -49,7 +50,7 @@ import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 fun R03ParticipantConsentScreen(
     studyName: String,
     /** Why the participant could not be registered (a code already used in this study, for example). */
-    errorMessage: String? = null,
+    error: ResearchError? = null,
     onContinueToCapture: (
         participantCode: String,
         consentFormId: String,
@@ -106,13 +107,13 @@ fun R03ParticipantConsentScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Participant & Consent",
+                text = stringResource(ResearchR.string.r03_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(ResearchR.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
@@ -120,9 +121,9 @@ fun R03ParticipantConsentScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (errorMessage != null) {
+        if (error != null) {
             Text(
-                text = errorMessage,
+                text = error.text(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.testTag("r03_error_message")
@@ -141,7 +142,7 @@ fun R03ParticipantConsentScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Study: $studyName",
+                    text = stringResource(ResearchR.string.r03_study, studyName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -150,11 +151,11 @@ fun R03ParticipantConsentScreen(
                 OutlinedTextField(
                     value = participantCode,
                     onValueChange = { participantCode = it.uppercase() },
-                    label = { Text("Participant Code (e.g. SKP-0142)") },
+                    label = { Text(stringResource(ResearchR.string.r03_code_label)) },
                     isError = participantCode.isNotBlank() && !isParticipantCodeValid,
                     supportingText = {
                         if (participantCode.isNotBlank() && !isParticipantCodeValid) {
-                            Text("Format must match ^[A-Z]{2,5}-[0-9]{3,6}$")
+                            Text(stringResource(ResearchR.string.r03_code_help))
                         }
                     },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
@@ -167,11 +168,11 @@ fun R03ParticipantConsentScreen(
                 OutlinedTextField(
                     value = consentFormId,
                     onValueChange = { consentFormId = it.uppercase() },
-                    label = { Text("Paper Consent Form ID (e.g. SKP-C-0142)") },
+                    label = { Text(stringResource(ResearchR.string.r03_consent_label)) },
                     isError = consentFormId.isNotBlank() && !isConsentFormIdValid,
                     supportingText = {
                         if (consentFormId.isNotBlank() && !isConsentFormIdValid) {
-                            Text("Format must match ^[A-Z]{2,5}-[A-Z0-9-]{2,26}$")
+                            Text(stringResource(ResearchR.string.r03_consent_help))
                         }
                     },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
@@ -196,7 +197,7 @@ fun R03ParticipantConsentScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Clinical Details",
+                    text = stringResource(ResearchR.string.r03_clinical),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -248,7 +249,7 @@ fun R03ParticipantConsentScreen(
 
                 Column {
                     Text(
-                        text = "Gestational age (weeks)",
+                        text = stringResource(ResearchR.string.r03_ga),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -264,7 +265,7 @@ fun R03ParticipantConsentScreen(
 
                 Column {
                     Text(
-                        text = "Yellow color in first 24 hours?",
+                        text = stringResource(ResearchR.string.r03_q_early_jaundice),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -278,7 +279,7 @@ fun R03ParticipantConsentScreen(
 
                 Column {
                     Text(
-                        text = "Any danger signs present?",
+                        text = stringResource(ResearchR.string.r03_q_danger),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -292,7 +293,7 @@ fun R03ParticipantConsentScreen(
 
                 Column {
                     Text(
-                        text = "Prior phototherapy received?",
+                        text = stringResource(ResearchR.string.r03_q_prior_photo),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -309,7 +310,7 @@ fun R03ParticipantConsentScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         NgPrimaryButton(
-            text = "Start Captures",
+            text = stringResource(ResearchR.string.r03_start),
             enabled = areInputsComplete,
             onClick = {
                 onContinueToCapture(

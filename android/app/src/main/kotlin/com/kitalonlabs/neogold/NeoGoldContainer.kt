@@ -39,6 +39,7 @@ import com.kitalonlabs.neogold.feature.onboarding.domain.CardBatchReference
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanService
 import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationService
 import com.kitalonlabs.neogold.feature.research.capture.ResearchCaptureProcessor
+import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import com.kitalonlabs.neogold.feature.research.data.ResearchProvenance
 import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
@@ -218,6 +219,18 @@ class NeoGoldContainer(private val application: Application) {
         )
     }
 
+    /**
+     * The status of the card the phone works with, for R02 before any session is saved: the same card a session would name
+     * ([chooseResearchCard]). A card whose signature checked and that has not expired is VERIFIED; one that has expired is
+     * EXPIRED; no card, or one whose signature did not check, is UNVERIFIED.
+     */
+    suspend fun researchCardStatus(database: NeoGoldDatabase): CardTrustStatus = withContext(Dispatchers.IO) {
+        val batches = database.cardBatchDao()
+        val profileCard = database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let { batches.getBatch(it) }
+        val now = System.currentTimeMillis()
+        cardStatusOf(chooseResearchCard(profileCard, batches.getAllBatches(), now), now)
+    }
+
     /** Verifies the bundle once and keeps the result. Called first thing at start-up. */
     fun verifyAssets() {
         val verifier = BundleManifestVerifier(BuildConfig.K3_PUBLIC_KEY_HEX)
@@ -383,3 +396,10 @@ internal fun chooseResearchCard(
 internal fun cardHasExpired(card: CardBatchEntity, now: Long): Boolean = now >= card.expiresAt + MILLIS_PER_DAY
 
 private const val MILLIS_PER_DAY = 86_400_000L
+
+/** What R02 says about the card: VERIFIED while it is valid, EXPIRED after, UNVERIFIED when there is none. */
+internal fun cardStatusOf(card: CardBatchEntity?, now: Long): CardTrustStatus = when {
+    card == null -> CardTrustStatus.UNVERIFIED
+    cardHasExpired(card, now) -> CardTrustStatus.EXPIRED
+    else -> CardTrustStatus.VERIFIED
+}

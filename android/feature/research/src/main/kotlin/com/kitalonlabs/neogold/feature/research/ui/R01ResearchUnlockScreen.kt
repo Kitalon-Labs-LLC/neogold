@@ -56,7 +56,7 @@ fun R01ResearchUnlockScreen(
     existingStudyName: String?,
     isLockedOut: Boolean,
     lockoutMinutes: Int,
-    errorMessage: String?,
+    error: ResearchError?,
     onQrScanned: (qrPayload: ByteArray) -> Unit,
     onUnlockWithPin: (pin: String) -> Unit,
     onEnrollWithPin: (pin: String, confirmPin: String) -> Unit,
@@ -92,13 +92,13 @@ fun R01ResearchUnlockScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Research Unlock",
+                text = stringResource(ResearchR.string.r01_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(ResearchR.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
@@ -136,7 +136,7 @@ fun R01ResearchUnlockScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        if (errorMessage != null) {
+        if (error != null) {
             Card(
                 shape = RoundedCornerShape(CardCornerRadius),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
@@ -145,7 +145,7 @@ fun R01ResearchUnlockScreen(
                     .testTag("error_card")
             ) {
                 Text(
-                    text = errorMessage,
+                    text = error.text(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(16.dp)
@@ -168,28 +168,35 @@ fun R01ResearchUnlockScreen(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "Confirm Study Profile",
+                        text = stringResource(ResearchR.string.r01_confirm_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Study: ${scannedProfile.displayName} (${scannedProfile.studyCode})",
+                        text = stringResource(
+                            ResearchR.string.r01_study_named,
+                            scannedProfile.displayName,
+                            scannedProfile.studyCode
+                        ),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Partner: ${scannedProfile.partner}",
+                        text = stringResource(ResearchR.string.r01_partner, scannedProfile.partner),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Server Host: ${scannedProfile.host ?: "Offline / USB Export Only"}",
+                        text = stringResource(
+                            ResearchR.string.r01_host,
+                            scannedProfile.host ?: stringResource(ResearchR.string.r01_no_host)
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Valid until: ${scannedProfile.expiresAt}",
+                        text = stringResource(ResearchR.string.r01_valid_until, scannedProfile.expiresAt.toString()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -199,7 +206,7 @@ fun R01ResearchUnlockScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Set a 6-digit PIN for research mode on this phone:",
+                text = stringResource(ResearchR.string.r01_set_pin),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -209,7 +216,7 @@ fun R01ResearchUnlockScreen(
             OutlinedTextField(
                 value = enteredPin,
                 onValueChange = { if (it.length <= 12) enteredPin = it },
-                label = { Text("Research PIN (min 6 digits)") },
+                label = { Text(stringResource(ResearchR.string.r01_pin_label)) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 singleLine = true,
@@ -223,7 +230,7 @@ fun R01ResearchUnlockScreen(
             OutlinedTextField(
                 value = confirmPin,
                 onValueChange = { if (it.length <= 12) confirmPin = it },
-                label = { Text("Confirm PIN") },
+                label = { Text(stringResource(ResearchR.string.r01_pin_confirm)) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                 singleLine = true,
@@ -235,7 +242,7 @@ fun R01ResearchUnlockScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             NgPrimaryButton(
-                text = "Confirm & Set PIN",
+                text = stringResource(ResearchR.string.r01_pin_set_button),
                 enabled = !isLockedOut && enteredPin.length >= 6 && enteredPin == confirmPin,
                 onClick = { onEnrollWithPin(enteredPin, confirmPin) },
                 modifier = Modifier.testTag("enroll_button")
@@ -253,7 +260,7 @@ fun R01ResearchUnlockScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Enrolled Study",
+                            text = stringResource(ResearchR.string.r01_enrolled_study),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -271,7 +278,7 @@ fun R01ResearchUnlockScreen(
                 OutlinedTextField(
                     value = enteredPin,
                     onValueChange = { if (it.length <= 12) enteredPin = it },
-                    label = { Text("Enter Research PIN") },
+                    label = { Text(stringResource(ResearchR.string.r01_enter_pin)) },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     singleLine = true,
@@ -284,7 +291,7 @@ fun R01ResearchUnlockScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 NgPrimaryButton(
-                    text = "Unlock Research Mode",
+                    text = stringResource(ResearchR.string.r01_unlock),
                     enabled = !isLockedOut && enteredPin.length >= 6,
                     onClick = { onUnlockWithPin(enteredPin) },
                     modifier = Modifier.testTag("unlock_button")
@@ -294,7 +301,7 @@ fun R01ResearchUnlockScreen(
             }
 
             NgSecondaryButton(
-                text = "Scan Study QR",
+                text = stringResource(ResearchR.string.r01_scan_qr),
                 onClick = { scanning = true },
                 modifier = Modifier.testTag("scan_study_qr_button")
             )

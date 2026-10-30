@@ -36,6 +36,8 @@ data class ResearchClinicalInputs(
  * State holder orchestrating research mode UI state, session security lifecycle,
  * participant registration, blinded capture protocol, and paired TSB records.
  */
+// One state holder for the whole research flow, R01 to R06; it is split when R08 and R09 are wired (C4).
+@Suppress("TooManyFunctions")
 class ResearchViewModel(
     private val repository: ResearchRepository,
     private val sessionManager: ResearchSessionManager? = null,
@@ -56,8 +58,10 @@ class ResearchViewModel(
     private val _lockoutMinutes = MutableStateFlow(0)
     val lockoutMinutes: StateFlow<Int> = _lockoutMinutes.asStateFlow()
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _error = MutableStateFlow<ResearchError?>(null)
+
+    /** What went wrong, as a typed message; the screen writes it in the language it shows (see [text]). */
+    val error: StateFlow<ResearchError?> = _error.asStateFlow()
 
     private val _currentParticipant = MutableStateFlow<ResearchParticipantEntity?>(null)
     val currentParticipant: StateFlow<ResearchParticipantEntity?> = _currentParticipant.asStateFlow()
@@ -84,8 +88,11 @@ class ResearchViewModel(
     private val _isBusy = MutableStateFlow(false)
     val isBusy: StateFlow<Boolean> = _isBusy.asStateFlow()
 
-    /** Counts locks. An unlock that was started before a lock and finished after it does not open the session. */
-    private var lockEpoch = 0
+    /**
+     * The session's lock count (see [ResearchSessionManager.lockCount]). Work that was started before a lock and finished
+     * after it (an unlock, a save) must not touch the state the lock cleared. Zero when there is no session manager.
+     */
+    private val lockEpoch: Int get() = sessionManager?.lockCount ?: 0
 
     private val _pendingUploadsCount = MutableStateFlow(0)
     val pendingUploadsCount: StateFlow<Int> = _pendingUploadsCount.asStateFlow()
@@ -98,13 +105,12 @@ class ResearchViewModel(
         if (sessionManager != null) {
             scope.launch {
                 sessionManager.isUnlocked.collect { unlocked ->
-                    _isUnlocked.value = unlocked
                     if (!unlocked) {
                         // Whatever lock it was (timeout, screen off, button), nothing of the session stays in memory.
-                        lockEpoch++
                         clearSessionState()
                         clearScannedProfile()
                     }
+                    _isUnlocked.value = unlocked
                 }
             }
         }
@@ -142,13 +148,13 @@ class ResearchViewModel(
 
     /** A study QR was scanned: check its signature and show which study it is. A QR that fails says why. */
     fun onStudyQrScanned(qrPayload: ByteArray) {
-        _errorMessage.value = null
+        _error.value = null
         repository.verifyStudyProfile(qrPayload)
             .onSuccess {
                 _scannedProfile.value = it
                 scannedProfileBytes = qrPayload
             }
-            .onFailure { _errorMessage.value = it.message }
+            .onFailure { _error.value = it.toError() }
     }
 
     fun clearScannedProfile() {
@@ -160,7 +166,7 @@ class ResearchViewModel(
     fun enrollWithScannedProfile(pin: String, confirmPin: String, onSuccess: (ResearchStudyEntity) -> Unit) {
         val bytes = scannedProfileBytes ?: return
         if (pin != confirmPin) {
-            _errorMessage.value = "The two PINs do not match."
+            _error.value = ResearchError(ResearchMessage.PINS_DO_NOT_MATCH)
             return
         }
         unlockOrEnrollWithQr(bytes, pin) {
@@ -177,7 +183,7 @@ class ResearchViewModel(
         if (!_isBusy.compareAndSet(expect = false, update = true)) return
         val epoch = lockEpoch
         scope.launch {
-            _errorMessage.value = null
+            _error.value = null
             val result = try {
                 guarded { withContext(cpu) { repository.unlockWithStudyQr(qrPayload, pin) } }
             } finally {
@@ -192,7 +198,7 @@ class ResearchViewModel(
                 sessionManager?.unlock(study.id)
                 onSuccess(study)
             }.onFailure { err ->
-                _errorMessage.value = err.message
+                _error.value = err.toError()
                 loadActiveStudy()
             }
         }
@@ -204,13 +210,13 @@ class ResearchViewModel(
     ) {
         val study = _activeStudy.value
         if (study == null) {
-            _errorMessage.value = "No study enrolled. Please scan study profile QR."
+            _error.value = ResearchError(ResearchMessage.NO_STUDY)
             return
         }
         if (!_isBusy.compareAndSet(expect = false, update = true)) return
         val epoch = lockEpoch
         scope.launch {
-            _errorMessage.value = null
+            _error.value = null
             val check = try {
                 guarded { withContext(cpu) { repository.verifyPin(study.id, pin) } }
             } finally {
@@ -229,15 +235,15 @@ class ResearchViewModel(
                 is PinCheckResult.LockedOut -> {
                     _isLockedOut.value = true
                     _lockoutMinutes.value = check.remainingMinutes
-                    _errorMessage.value = "PIN locked out for ${check.remainingMinutes} minutes"
+                    _error.value = ResearchError(ResearchMessage.LOCKED_OUT, minutes = check.remainingMinutes)
                     loadActiveStudy()
                 }
                 is PinCheckResult.WrongPin -> {
-                    _errorMessage.value = "Incorrect PIN. ${check.attemptsUntilNextLockout} attempts remaining before lockout."
+                    _error.value = ResearchError(ResearchMessage.WRONG_PIN, attempts = check.attemptsUntilNextLockout)
                     loadActiveStudy()
                 }
                 is PinCheckResult.VerifierKeyLost -> {
-                    _errorMessage.value = "The PIN cannot be checked on this phone. Enroll in the study again."
+                    _error.value = ResearchError(ResearchMessage.VERIFIER_KEY_LOST)
                 }
             }
         }
@@ -257,7 +263,7 @@ class ResearchViewModel(
     ) {
         val study = _activeStudy.value ?: return
         scope.launch {
-            _errorMessage.value = null
+            _error.value = null
             val res = repository.registerParticipant(study.id, participantCode, consentFormId)
             res.onSuccess { participant ->
                 _currentParticipant.value = participant
@@ -274,7 +280,7 @@ class ResearchViewModel(
                 sessionManager?.recordUserActivity()
                 onSuccess()
             }.onFailure { err ->
-                _errorMessage.value = err.message
+                _error.value = err.toError()
             }
         }
     }
@@ -308,7 +314,7 @@ class ResearchViewModel(
         if (!_isBusy.compareAndSet(expect = false, update = true)) return
         val epoch = lockEpoch
         scope.launch {
-            _errorMessage.value = null
+            _error.value = null
             val result = try {
                 guarded {
                     repository.saveBlindedResearchSession(
@@ -336,7 +342,7 @@ class ResearchViewModel(
                 sessionManager?.recordUserActivity()
                 onCompleted(sessionResult)
             }.onFailure { err ->
-                _errorMessage.value = err.message
+                _error.value = err.toError()
             }
         }
     }
@@ -349,7 +355,7 @@ class ResearchViewModel(
         onSuccess: () -> Unit
     ) {
         scope.launch {
-            _errorMessage.value = null
+            _error.value = null
             val result = repository.recordTsb(
                 participantCode = participantCode,
                 tsbMgDl = tsbMgDl,
@@ -361,7 +367,7 @@ class ResearchViewModel(
                 sessionManager?.recordUserActivity()
                 onSuccess()
             }.onFailure { err ->
-                _errorMessage.value = err.message
+                _error.value = err.toError()
             }
         }
     }
@@ -376,8 +382,13 @@ class ResearchViewModel(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        _errorMessage.value = "Something went wrong. Try again."
+        _error.value = ResearchError(ResearchMessage.UNEXPECTED)
         null
+    }
+
+    /** Clears the message, for a screen that is entered again (a stale message from the last visit is not shown). */
+    fun clearError() {
+        _error.value = null
     }
 
     fun lockResearchSession() {
@@ -391,7 +402,7 @@ class ResearchViewModel(
         _currentCaptures.value = emptyList()
         _lastSessionResult.value = null
         _cardTrustStatus.value = CardTrustStatus.UNVERIFIED
-        _errorMessage.value = null
+        _error.value = null
     }
 }
 
@@ -408,3 +419,7 @@ internal fun researchAgeHours(birthTimeMillis: Long, nowMillis: Long): Double =
 
 private const val MILLIS_PER_HOUR = 3_600_000.0
 private const val TENTHS = 10.0
+
+/** The typed reason of a refusal from the repository, or the generic one for anything else. */
+private fun Throwable.toError(): ResearchError =
+    (this as? ResearchRefusal)?.error ?: ResearchError(ResearchMessage.UNEXPECTED)

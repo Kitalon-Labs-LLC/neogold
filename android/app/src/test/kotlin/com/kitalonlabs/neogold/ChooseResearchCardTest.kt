@@ -2,6 +2,7 @@ package com.kitalonlabs.neogold
 
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
+import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import org.junit.Test
 
 /**
@@ -76,5 +77,15 @@ class ChooseResearchCardTest {
         assertThat(cardHasExpired(startOfExpiryDay, 100 * day)).isFalse() // the start of its last valid day
         assertThat(cardHasExpired(startOfExpiryDay, 101 * day - 1)).isFalse() // the last millisecond of that day
         assertThat(cardHasExpired(startOfExpiryDay, 101 * day)).isTrue() // the next day
+    }
+
+    @Test
+    fun r02SaysVerifiedForAValidCardExpiredForAnOldOneAndUnverifiedForNone_TC_CARD_05() {
+        val valid = batch("valid", signatureValid = 1, expiresAt = now + day)
+        val old = batch("old", signatureValid = 1, expiresAt = now - 2 * day)
+
+        assertThat(cardStatusOf(valid, now)).isEqualTo(CardTrustStatus.VERIFIED)
+        assertThat(cardStatusOf(old, now)).isEqualTo(CardTrustStatus.EXPIRED)
+        assertThat(cardStatusOf(null, now)).isEqualTo(CardTrustStatus.UNVERIFIED)
     }
 }
