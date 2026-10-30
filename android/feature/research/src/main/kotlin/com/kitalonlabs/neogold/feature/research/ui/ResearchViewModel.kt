@@ -7,6 +7,9 @@ import com.kitalonlabs.neogold.core.security.pin.ResearchSessionManager
 import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import com.kitalonlabs.neogold.feature.research.data.ResearchCaptureInput
+import com.kitalonlabs.neogold.feature.research.data.ResearchError
+import com.kitalonlabs.neogold.feature.research.data.ResearchMessage
+import com.kitalonlabs.neogold.feature.research.data.ResearchRefusal
 import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
 import com.kitalonlabs.neogold.feature.research.data.ResearchSessionResult
 import com.kitalonlabs.neogold.feature.research.data.TsbInput
@@ -93,6 +96,13 @@ class ResearchViewModel(
      * after it (an unlock, a save) must not touch the state the lock cleared. Zero when there is no session manager.
      */
     private val lockEpoch: Int get() = sessionManager?.lockCount ?: 0
+
+    /**
+     * Whether research mode is unlocked right now, read from the session manager itself: this view model's own copy
+     * (`isUnlocked`) trails a lock by one collection, and an action must not start in that gap. With no session manager
+     * (tests of other things) it is always open.
+     */
+    private val sessionIsOpen: Boolean get() = sessionManager?.isUnlocked?.value ?: true
 
     private val _pendingUploadsCount = MutableStateFlow(0)
     val pendingUploadsCount: StateFlow<Int> = _pendingUploadsCount.asStateFlow()
@@ -261,10 +271,14 @@ class ResearchViewModel(
         flagPriorPhototherapy: Boolean,
         onSuccess: () -> Unit
     ) {
+        if (!sessionIsOpen) return
         val study = _activeStudy.value ?: return
+        val epoch = lockEpoch
         scope.launch {
             _error.value = null
-            val res = repository.registerParticipant(study.id, participantCode, consentFormId)
+            val res = guarded { repository.registerParticipant(study.id, participantCode, consentFormId) } ?: return@launch
+            // locked while the participant was being saved: the row is kept, nothing of it is put back in memory
+            if (epoch != lockEpoch) return@launch
             res.onSuccess { participant ->
                 _currentParticipant.value = participant
                 _clinicalInputs.value = ResearchClinicalInputs(
@@ -289,6 +303,7 @@ class ResearchViewModel(
         captures: List<ResearchCaptureInput>,
         onProceedToTsb: () -> Unit
     ) {
+        if (!sessionIsOpen) return
         _currentCaptures.value = captures
         sessionManager?.recordUserActivity()
         onProceedToTsb()
@@ -301,6 +316,7 @@ class ResearchViewModel(
         cardBatchBytes: ByteArray? = null,
         onCompleted: (ResearchSessionResult) -> Unit
     ) {
+        if (!sessionIsOpen) return
         val participant = _currentParticipant.value ?: return
         val inputs = _clinicalInputs.value ?: return
         val captures = _currentCaptures.value
@@ -354,14 +370,19 @@ class ResearchViewModel(
         method: String,
         onSuccess: () -> Unit
     ) {
+        if (!sessionIsOpen) return
+        val epoch = lockEpoch
         scope.launch {
             _error.value = null
-            val result = repository.recordTsb(
-                participantCode = participantCode,
-                tsbMgDl = tsbMgDl,
-                drawTime = drawTimeMillis,
-                method = method
-            )
+            val result = guarded {
+                repository.recordTsb(
+                    participantCode = participantCode,
+                    tsbMgDl = tsbMgDl,
+                    drawTime = drawTimeMillis,
+                    method = method
+                )
+            } ?: return@launch
+            if (epoch != lockEpoch) return@launch
             result.onSuccess {
                 refreshPendingUploads()
                 sessionManager?.recordUserActivity()

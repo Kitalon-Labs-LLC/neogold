@@ -40,6 +40,7 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButto
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.R
+import com.kitalonlabs.neogold.feature.research.data.ResearchError
 import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 
 /**
@@ -70,9 +71,9 @@ fun R05TsbEntryScreen(
     var errorMessage by remember { mutableStateOf<Int?>(null) } // a string resource
 
     val methods = listOf(
-        "LAB" to "Laboratory (HPLC / Diazo)",
-        "POINT_OF_CARE" to "Point of Care (Bilirubinometer)",
-        "OTHER" to "Other Clinical Method"
+        "LAB" to stringResource(R.string.r05_method_lab),
+        "POINT_OF_CARE" to stringResource(R.string.r05_method_poc),
+        "OTHER" to stringResource(R.string.r05_method_other)
     )
 
     Column(

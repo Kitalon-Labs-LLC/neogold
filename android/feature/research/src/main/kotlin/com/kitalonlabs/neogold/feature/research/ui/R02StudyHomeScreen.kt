@@ -118,9 +118,12 @@ fun R02StudyHomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     val (cardBadgeText, cardBadgeColor) = when (cardStatus) {
-                        CardTrustStatus.VERIFIED -> "CARD VERIFIED" to MaterialTheme.colorScheme.primary
-                        CardTrustStatus.EXPIRED -> "CARD EXPIRED" to MaterialTheme.colorScheme.error
-                        CardTrustStatus.UNVERIFIED -> "CARD UNVERIFIED" to MaterialTheme.colorScheme.outline
+                        CardTrustStatus.VERIFIED ->
+                            stringResource(ResearchR.string.r_card_verified_badge) to MaterialTheme.colorScheme.primary
+                        CardTrustStatus.EXPIRED ->
+                            stringResource(ResearchR.string.r_card_expired_badge) to MaterialTheme.colorScheme.error
+                        CardTrustStatus.UNVERIFIED ->
+                            stringResource(ResearchR.string.r_card_unverified_badge) to MaterialTheme.colorScheme.outline
                     }
                     NgBadge(
                         text = cardBadgeText,

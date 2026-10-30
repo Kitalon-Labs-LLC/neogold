@@ -40,7 +40,7 @@
     <string name="r_err_bad_image">একটি ছবি রাখা যায়নি। আবার তুলুন।</string>
     <string name="r_err_unexpected">কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।</string>
     <string name="r05_error_code_format">অংশগ্রহণকারীর কোড সঠিক ফরম্যাটে নেই।</string>
-    <string name="r05_error_tsb_range">টিএসবি ০.০ থেকে ৪০.০ মিগ্রা/ডেসিলি-এর মধ্যে দিন।</string>
+    <string name="r05_error_tsb_range">টিএসবি ০.০ থেকে ৪০.০ মিগ্রা/ডেসিলিটার-এর মধ্যে দিন।</string>
     <string name="r01_title">গবেষণা আনলক</string>
     <string name="r01_confirm_title">স্টাডি প্রোফাইল নিশ্চিত করুন</string>
     <string name="r01_study_named">স্টাডি: %1$s (%2$s)</string>
@@ -76,7 +76,7 @@
     <string name="r05_intro">রেফারেন্স মোট সিরাম বিলিরুবিনের ফলাফল দিন। এটি গবেষণা সেশনের সাথে যুক্ত হবে।</string>
     <string name="r05_code_label">অংশগ্রহণকারীর কোড</string>
     <string name="r05_code_hint">যেমন SKP-0142</string>
-    <string name="r05_value_label">টিএসবি মান (মিগ্রা/ডেসিলি)</string>
+    <string name="r05_value_label">টিএসবি মান (মিগ্রা/ডেসিলিটার)</string>
     <string name="r05_value_hint">যেমন ১৪.৫</string>
     <string name="r05_method">পরিমাপের পদ্ধতি</string>
     <string name="r05_draw_time">রক্ত নেওয়ার সময়</string>
@@ -94,4 +94,13 @@
     <string name="r06_outbox">আউটবক্স সারি</string>
     <string name="r06_queued">সিঙ্কের জন্য অপেক্ষমাণ</string>
     <string name="r06_done">সম্পন্ন</string>
+    <string name="r_card_verified_badge">কার্ড যাচাই হয়েছে</string>
+    <string name="r_card_expired_badge">কার্ডের মেয়াদ শেষ</string>
+    <string name="r_card_unverified_badge">কার্ড যাচাই হয়নি</string>
+    <string name="r06_verified">যাচাই হয়েছে</string>
+    <string name="r06_expired">মেয়াদ শেষ</string>
+    <string name="r06_unverified">যাচাই হয়নি</string>
+    <string name="r05_method_lab">ল্যাবরেটরি (HPLC / ডায়াজো)</string>
+    <string name="r05_method_poc">পয়েন্ট অফ কেয়ার (বিলিরুবিনোমিটার)</string>
+    <string name="r05_method_other">অন্য ক্লিনিক্যাল পদ্ধতি</string>
 </resources>

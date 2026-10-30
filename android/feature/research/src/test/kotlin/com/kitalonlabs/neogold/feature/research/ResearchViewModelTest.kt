@@ -15,8 +15,8 @@ import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
 import com.kitalonlabs.neogold.engine.cardtrust.TrustListParser
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import com.kitalonlabs.neogold.feature.research.data.ResearchCaptureInput
+import com.kitalonlabs.neogold.feature.research.data.ResearchMessage
 import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
-import com.kitalonlabs.neogold.feature.research.ui.ResearchMessage
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -282,6 +282,74 @@ class ResearchViewModelTest {
 
         assertThat(viewModel.error.value?.message).isEqualTo(ResearchMessage.AGE_OUT_OF_RANGE)
         assertThat(researchSessions()).isEmpty()
+    }
+
+    @Test
+    fun tcRsh07_registeringRightAfterALockPutsNothingInMemoryEvenBeforeTheViewModelHasSeenTheLock() {
+        enroll()
+        session.lock() // not waited for: the view model's own copy of the state still says unlocked
+        val wentOn = AtomicBoolean(false)
+
+        viewModel.registerParticipantAndInputs(
+            participantCode = "SKP-0142",
+            consentFormId = "CF-2026-0001",
+            birthTimeMillis = System.currentTimeMillis() - 48 * A_HOUR_MS,
+            ageHours = 48.0,
+            gestationalAgeWeeks = 38,
+            flagEarlyJaundice = false,
+            flagDangerSigns = false,
+            flagPriorPhototherapy = false
+        ) { wentOn.set(true) }
+        Thread.sleep(SETTLE_MS)
+
+        assertThat(wentOn.get()).isFalse()
+        assertThat(viewModel.currentParticipant.value).isNull()
+        assertThat(viewModel.clinicalInputs.value).isNull()
+    }
+
+    @Test
+    fun tcRsh07_aSaveRightAfterALockSavesNothingAndShowsNothing() {
+        enroll()
+        registerParticipant()
+        viewModel.onCapturesCompleted(listOf(shot("STERNUM"))) {}
+        session.lock() // not waited for
+        val saved = AtomicBoolean(false)
+
+        viewModel.completeSessionWithTsb(tsbMgDl = null, drawTimeMillis = null, method = null) { saved.set(true) }
+        Thread.sleep(SETTLE_MS)
+
+        assertThat(saved.get()).isFalse()
+        assertThat(researchSessions()).isEmpty()
+        assertThat(viewModel.lastSessionResult.value).isNull()
+    }
+
+    @Test
+    fun tcRsh07_anEnrollmentThatFinishesAfterALockDoesNotOpenResearchMode() {
+        viewModel.onStudyQrScanned(qr)
+        val opened = AtomicBoolean(false)
+
+        viewModel.enrollWithScannedProfile(pin, pin) { opened.set(true) }
+        session.lock() // while the PIN is being hashed
+        Thread.sleep(SETTLE_MS * 2)
+
+        assertThat(opened.get()).isFalse()
+        assertThat(viewModel.isUnlocked.value).isFalse()
+    }
+
+    @Test
+    fun tcRsh07_aTsbEnteredLaterIsRefusedWhileLocked() {
+        enroll()
+        registerParticipant()
+        lockThenWaitForTheViewModelToSeeIt()
+        val recorded = AtomicBoolean(false)
+
+        viewModel.recordDeferredTsb("SKP-0142", 14.2, System.currentTimeMillis() - A_HOUR_MS, "LAB") {
+            recorded.set(true)
+        }
+        Thread.sleep(SETTLE_MS)
+
+        assertThat(recorded.get()).isFalse()
+        assertThat(viewModel.error.value).isNull()
     }
 
     @Test

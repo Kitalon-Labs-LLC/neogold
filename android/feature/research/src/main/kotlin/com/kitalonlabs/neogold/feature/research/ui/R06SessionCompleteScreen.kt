@@ -208,9 +208,9 @@ fun R06SessionCompleteScreen(
                     )
                     NgBadge(
                         text = when (cardStatus) {
-                            CardTrustStatus.VERIFIED -> "VERIFIED"
-                            CardTrustStatus.EXPIRED -> "EXPIRED"
-                            CardTrustStatus.UNVERIFIED -> "UNVERIFIED"
+                            CardTrustStatus.VERIFIED -> stringResource(ResearchR.string.r06_verified)
+                            CardTrustStatus.EXPIRED -> stringResource(ResearchR.string.r06_expired)
+                            CardTrustStatus.UNVERIFIED -> stringResource(ResearchR.string.r06_unverified)
                         },
                         containerColor = when (cardStatus) {
                             CardTrustStatus.VERIFIED -> MaterialTheme.colorScheme.primaryContainer

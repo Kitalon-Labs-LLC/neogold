@@ -95,4 +95,13 @@
     <string name="r06_outbox">Outbox queue</string>
     <string name="r06_queued">Queued for sync</string>
     <string name="r06_done">Done</string>
+    <string name="r_card_verified_badge">CARD VERIFIED</string>
+    <string name="r_card_expired_badge">CARD EXPIRED</string>
+    <string name="r_card_unverified_badge">CARD UNVERIFIED</string>
+    <string name="r06_verified">VERIFIED</string>
+    <string name="r06_expired">EXPIRED</string>
+    <string name="r06_unverified">UNVERIFIED</string>
+    <string name="r05_method_lab">Laboratory (HPLC / Diazo)</string>
+    <string name="r05_method_poc">Point of Care (Bilirubinometer)</string>
+    <string name="r05_method_other">Other Clinical Method</string>
 </resources>

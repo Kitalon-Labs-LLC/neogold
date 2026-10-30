@@ -33,6 +33,7 @@ import com.kitalonlabs.neogold.core.security.pin.ResearchSessionManager
 import com.kitalonlabs.neogold.engine.camera.qualification.CameraQualifier
 import com.kitalonlabs.neogold.engine.camera.qualification.QualificationThresholds
 import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
+import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import com.kitalonlabs.neogold.engine.vision.QualityThresholds
 import com.kitalonlabs.neogold.engine.vision.VisionEngine
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardBatchReference
@@ -221,14 +222,16 @@ class NeoGoldContainer(private val application: Application) {
 
     /**
      * The status of the card the phone works with, for R02 before any session is saved: the same card a session would name
-     * ([chooseResearchCard]). A card whose signature checked and that has not expired is VERIFIED; one that has expired is
-     * EXPIRED; no card, or one whose signature did not check, is UNVERIFIED.
+     * ([chooseResearchCard]), checked against the trust list now, exactly as a session save checks it. So a card whose
+     * issuer key was revoked after it was scanned no longer shows as verified. No trust list, or no card, is UNVERIFIED.
      */
     suspend fun researchCardStatus(database: NeoGoldDatabase): CardTrustStatus = withContext(Dispatchers.IO) {
+        val trustList = assets.trustList ?: return@withContext CardTrustStatus.UNVERIFIED
         val batches = database.cardBatchDao()
         val profileCard = database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let { batches.getBatch(it) }
-        val now = System.currentTimeMillis()
-        cardStatusOf(chooseResearchCard(profileCard, batches.getAllBatches(), now), now)
+        val card = chooseResearchCard(profileCard, batches.getAllBatches(), System.currentTimeMillis())
+            ?: return@withContext CardTrustStatus.UNVERIFIED
+        cardStatusOf(CardTrustVerifier(trustList).verifyCardBatch(card.qrPayload))
     }
 
     /** Verifies the bundle once and keeps the result. Called first thing at start-up. */
@@ -397,9 +400,9 @@ internal fun cardHasExpired(card: CardBatchEntity, now: Long): Boolean = now >= 
 
 private const val MILLIS_PER_DAY = 86_400_000L
 
-/** What R02 says about the card: VERIFIED while it is valid, EXPIRED after, UNVERIFIED when there is none. */
-internal fun cardStatusOf(card: CardBatchEntity?, now: Long): CardTrustStatus = when {
-    card == null -> CardTrustStatus.UNVERIFIED
-    cardHasExpired(card, now) -> CardTrustStatus.EXPIRED
-    else -> CardTrustStatus.VERIFIED
+/** What R02 and the session record say about a card, from the verifier's answer (the same mapping the save uses). */
+internal fun cardStatusOf(result: VerificationResult<*>): CardTrustStatus = when (result) {
+    is VerificationResult.Verified<*> -> CardTrustStatus.VERIFIED
+    is VerificationResult.Expired -> CardTrustStatus.EXPIRED
+    else -> CardTrustStatus.UNVERIFIED
 }

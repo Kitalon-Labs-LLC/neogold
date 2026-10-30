@@ -62,6 +62,18 @@ class ResearchBlindingGuardTest {
     }
 
     @Test
+    fun tcRsh10_noTextOfTheResearchScreensSpeaksOfAnEstimateARiskOrATriageZone() {
+        // whole words: "reference" (the reference bilirubin result) is not "refer"
+        val forbidden = Regex("""\b(estimate|estimated|risk|zone|triage|urgent|referral|refer)\b""")
+        val files = listOf("values", "values-bn").map { File(moduleDir, "src/main/res/$it/strings.xml") }
+        for (file in files) {
+            // only what can be shown: a comment in the file is not text on a screen
+            val shown = file.readText().replace(Regex("""<!--.*?-->""", RegexOption.DOT_MATCHES_ALL), "").lowercase()
+            assertThat(forbidden.find(shown)?.value).isNull()
+        }
+    }
+
+    @Test
     fun tcRsh10_theRepositoryWritesEveryEstimateAndTriageFieldAsNullAndMarksTheSessionBlinded() {
         val text = sources("data").single { it.name == "ResearchRepository.kt" }.readText()
 

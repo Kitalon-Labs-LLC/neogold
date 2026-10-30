@@ -44,6 +44,7 @@ import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.engine.camera.host.CameraMode
 import com.kitalonlabs.neogold.engine.camera.ui.CameraPreviewHost
 import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
+import com.kitalonlabs.neogold.feature.research.data.ResearchError
 import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 /**

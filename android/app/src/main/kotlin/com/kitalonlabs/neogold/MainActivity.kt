@@ -1051,7 +1051,8 @@ fun NeoGoldNavHost(
             val pending by session.pendingUploadsCount.collectAsState()
             // the card the phone works with, not the card of the last saved session (which is nothing before the first)
             val cardStatus by androidx.compose.runtime.produceState(CardTrustStatus.UNVERIFIED) {
-                value = researchCardStatus()
+                // the badge starts at UNVERIFIED and stays there if the storage is closing (a lock, a reset)
+                value = runCatching { researchCardStatus() }.getOrDefault(CardTrustStatus.UNVERIFIED)
             }
             androidx.compose.runtime.LaunchedEffect(Unit) { session.refreshPendingUploads() }
 
@@ -1074,6 +1075,8 @@ fun NeoGoldNavHost(
         researchSessionComposable(Destinations.R03_PARTICIPANT_CONSENT) { session ->
             val study by session.activeStudy.collectAsState()
             val error by session.error.collectAsState()
+            // a message from the last screen (a save error from R05, a PIN message from R01) is not shown here
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.clearError() }
             com.kitalonlabs.neogold.feature.research.ui.R03ParticipantConsentScreen(
                 studyName = study?.displayName.orEmpty(),
                 error = error,
@@ -1119,6 +1122,7 @@ fun NeoGoldNavHost(
         researchSessionComposable(Destinations.R05_TSB_ENTRY) { session ->
             val participant by session.currentParticipant.collectAsState()
             val error by session.error.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.clearError() }
             val current = participant
             val finish = { researchTsb: Pair<Double, String>? ->
                 researchTsbEntered = researchTsb

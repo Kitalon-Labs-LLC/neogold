@@ -38,6 +38,7 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgYesNoButtons
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimeField
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimePicker
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
+import com.kitalonlabs.neogold.feature.research.data.ResearchError
 import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 import com.kitalonlabs.neogold.feature.research.R as ResearchR
 

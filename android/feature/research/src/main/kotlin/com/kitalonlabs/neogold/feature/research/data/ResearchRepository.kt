@@ -24,9 +24,6 @@ import com.kitalonlabs.neogold.engine.cardtrust.PayloadParser
 import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
 import com.kitalonlabs.neogold.engine.cardtrust.TrustList
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
-import com.kitalonlabs.neogold.feature.research.ui.ResearchError
-import com.kitalonlabs.neogold.feature.research.ui.ResearchMessage
-import com.kitalonlabs.neogold.feature.research.ui.ResearchRefusal
 import timber.log.Timber
 import java.security.MessageDigest
 import java.time.LocalDate

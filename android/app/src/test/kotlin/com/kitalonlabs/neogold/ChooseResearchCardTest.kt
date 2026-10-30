@@ -2,6 +2,7 @@ package com.kitalonlabs.neogold
 
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
+import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import org.junit.Test
 
@@ -80,12 +81,14 @@ class ChooseResearchCardTest {
     }
 
     @Test
-    fun r02SaysVerifiedForAValidCardExpiredForAnOldOneAndUnverifiedForNone_TC_CARD_05() {
-        val valid = batch("valid", signatureValid = 1, expiresAt = now + day)
-        val old = batch("old", signatureValid = 1, expiresAt = now - 2 * day)
-
-        assertThat(cardStatusOf(valid, now)).isEqualTo(CardTrustStatus.VERIFIED)
-        assertThat(cardStatusOf(old, now)).isEqualTo(CardTrustStatus.EXPIRED)
-        assertThat(cardStatusOf(null, now)).isEqualTo(CardTrustStatus.UNVERIFIED)
+    fun r02AndTheRecordMapTheVerifiersAnswerTheSameWay_TC_CARD_05() {
+        assertThat(cardStatusOf(VerificationResult.Verified(Unit))).isEqualTo(CardTrustStatus.VERIFIED)
+        assertThat(cardStatusOf(VerificationResult.Expired)).isEqualTo(CardTrustStatus.EXPIRED)
+        // a card that verified when it was scanned but whose issuer key was revoked since is not verified now
+        assertThat(cardStatusOf(VerificationResult.Revoked)).isEqualTo(CardTrustStatus.UNVERIFIED)
+        assertThat(cardStatusOf(VerificationResult.UnknownIssuer)).isEqualTo(CardTrustStatus.UNVERIFIED)
+        assertThat(cardStatusOf(VerificationResult.BadSignature)).isEqualTo(CardTrustStatus.UNVERIFIED)
+        assertThat(cardStatusOf(VerificationResult.WrongPurpose)).isEqualTo(CardTrustStatus.UNVERIFIED)
+        assertThat(cardStatusOf(VerificationResult.Malformed)).isEqualTo(CardTrustStatus.UNVERIFIED)
     }
 }
