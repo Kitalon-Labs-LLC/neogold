@@ -311,6 +311,42 @@ class ResearchSessionRecordTest {
     }
 
     @Test
+    fun anAgeOutsideTheContractsRangeIsRefusedAndNothingIsKept_BUG_2026_081() = runBlocking<Unit> {
+        for (age in listOf(-0.1, 720.1, Double.NaN)) {
+            val result = repository().saveBlindedResearchSession(
+                participant = participant,
+                ageHours = age,
+                gestationalAgeWeeks = 38,
+                flagEarlyJaundice = false,
+                flagDangerSigns = false,
+                flagPriorPhototherapy = false,
+                captures = listOf(shot("STERNUM")),
+                cardBatchBytes = null
+            )
+            assertThat(result.isFailure).isTrue()
+        }
+        assertThat(database.screeningSessionDao().getSessionsByMode("RESEARCH")).isEmpty()
+        assertThat(storageDir.listFiles().orEmpty().filter { it.name.endsWith(".enc") }).isEmpty()
+    }
+
+    @Test
+    fun theEdgesOfTheAgeRangeAreAccepted_BUG_2026_081() = runBlocking<Unit> {
+        for (age in listOf(0.0, 720.0)) {
+            val result = repository().saveBlindedResearchSession(
+                participant = participant,
+                ageHours = age,
+                gestationalAgeWeeks = 38,
+                flagEarlyJaundice = false,
+                flagDangerSigns = false,
+                flagPriorPhototherapy = false,
+                captures = listOf(shot("STERNUM")),
+                cardBatchBytes = null
+            )
+            assertThat(result.isSuccess).isTrue()
+        }
+    }
+
+    @Test
     fun aPhotoWithGpsInItIsRefused_TC_API_20() = runBlocking<Unit> {
         val withComment = cleanJpeg().let { jpeg ->
             val text = "GPS: 23.8103, 90.4125".toByteArray()

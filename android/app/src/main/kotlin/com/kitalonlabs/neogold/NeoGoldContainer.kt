@@ -6,6 +6,7 @@ import android.os.Build
 import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
+import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.pin.ResearchPinManager
 import com.kitalonlabs.neogold.core.data.purge.DataWiper
 import com.kitalonlabs.neogold.core.data.purge.DefaultDataPurgeManager
@@ -194,20 +195,32 @@ class NeoGoldContainer(private val application: Application) {
     /**
      * What a research photo session needs from the card the phone works with: the camera step that takes and checks the
      * photos, and the signed bytes of the card, which the session record keeps. The card is the one of the active
-     * device profile, else the newest one whose signature was valid. Without a card the photos are still taken, with no
+     * device profile, else the newest one whose signature was valid; a card that has not expired is preferred over one that
+     * has. Without a card the photos are still taken, with no
      * color residual measured, and the record says the card was not verified.
      */
     class ResearchCaptureSetup(val processor: ResearchCaptureProcessor, val cardSignedBytes: ByteArray?)
 
     suspend fun researchCaptureSetup(database: NeoGoldDatabase): ResearchCaptureSetup = withContext(Dispatchers.IO) {
         val batches = database.cardBatchDao()
-        val batch = database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let { batches.getBatch(it) }
-            ?: batches.getAllBatches().firstOrNull { it.signatureValid == 1 }
+        val now = System.currentTimeMillis()
+        val candidates = listOfNotNull(
+            database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let {
+                batches.getBatch(it)
+            }
+        ) +
+            batches.getAllBatches()
+        val batch = chooseResearchCard(candidates, now)
         val limits = assets.triageConfig?.qualityThresholds.orEmpty()
         ResearchCaptureSetup(
             processor = ResearchCaptureProcessor(
                 vision = VisionEngine(thresholds = QualityThresholds.fromMap(limits)),
-                reference = batch?.let { CardBatchReference.fromJson(it.referenceValues) }
+                // An expired card still goes into the record (as EXPIRED) but gives the quality gate no reference.
+                reference = batch?.takeIf { it.expiresAt > now }?.let {
+                    CardBatchReference.fromJson(
+                        it.referenceValues
+                    )
+                }
             ),
             cardSignedBytes = batch?.qrPayload
         )
@@ -353,4 +366,14 @@ class NeoGoldContainer(private val application: Application) {
         const val EXPORT_STAGING_DIR = "export_staging"
         const val CRASH_REPORTS_DIR = "crash_reports"
     }
+}
+
+/**
+ * The card a research session works with: the first of [candidates] (the active profile's card, then the newest first) whose
+ * signature was valid and that has not expired; if every such card has expired, the first of those, which the record keeps as
+ * EXPIRED. A card whose signature did not verify is never chosen.
+ */
+internal fun chooseResearchCard(candidates: List<CardBatchEntity>, now: Long): CardBatchEntity? {
+    val signed = candidates.filter { it.signatureValid == 1 }
+    return signed.firstOrNull { it.expiresAt > now } ?: signed.firstOrNull()
 }

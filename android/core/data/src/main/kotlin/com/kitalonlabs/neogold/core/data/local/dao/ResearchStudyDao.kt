@@ -21,7 +21,7 @@ interface ResearchStudyDao {
     @Query("SELECT * FROM research_study WHERE study_code = :studyCode")
     suspend fun getStudyByCode(studyCode: String): ResearchStudyEntity?
 
-    @Query("SELECT * FROM research_study WHERE status = 'ACTIVE' LIMIT 1")
+    @Query("SELECT * FROM research_study WHERE status = 'ACTIVE' ORDER BY enrolled_at DESC LIMIT 1")
     suspend fun getActiveStudy(): ResearchStudyEntity?
 
     @Query("DELETE FROM research_study")

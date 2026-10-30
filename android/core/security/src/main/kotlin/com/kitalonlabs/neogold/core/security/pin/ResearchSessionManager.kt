@@ -39,7 +39,7 @@ class ResearchSessionManager(
         _isUnlocked.value = true
         lastActiveTimestamp = timestamp
         backgroundedTimestamp = null
-        Timber.i("Research session unlocked for study $studyId")
+        Timber.i("Research session unlocked")
     }
 
     /**
@@ -118,7 +118,7 @@ class ResearchSessionManager(
             try {
                 context.unregisterReceiver(it)
             } catch (e: Exception) {
-                Timber.w(e, "Error unregistering screen off receiver")
+                Timber.w("Error unregistering screen off receiver (%s)", e.javaClass.name)
             }
             screenReceiver = null
         }

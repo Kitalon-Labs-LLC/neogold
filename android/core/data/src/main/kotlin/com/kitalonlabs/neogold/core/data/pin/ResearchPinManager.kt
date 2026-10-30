@@ -10,6 +10,8 @@ import com.kitalonlabs.neogold.core.security.KeystoreLossException
 import com.kitalonlabs.neogold.core.security.pin.Argon2PinHasher
 import com.kitalonlabs.neogold.core.security.pin.PinPolicyValidator
 import com.kitalonlabs.neogold.core.security.pin.PinValidationResult
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 import kotlin.math.ceil
 
@@ -34,6 +36,8 @@ class ResearchPinManager(
     private val auditEventDao: AuditEventDao,
     private val pinHasher: Argon2PinHasher = Argon2PinHasher()
 ) {
+
+    private val checkLock = Mutex()
 
     companion object {
         const val LOCKOUT_TIER_1_ATTEMPTS = 5
@@ -71,11 +75,13 @@ class ResearchPinManager(
         studyId: String,
         candidatePin: String,
         now: Long = System.currentTimeMillis()
-    ): PinCheckResult {
+    ): PinCheckResult = checkLock.withLock {
+        // One check at a time: each check reads the failure counter, writes it back plus one, then hashes. Two checks
+        // that overlap would both read the same count and advance it once (a parallel guess would be free).
         val study = studyDao.getStudyById(studyId)
             ?: throw IllegalArgumentException("Study not found with id $studyId")
 
-        return when {
+        when {
             // An existing lockout is answered first.
             isStudyLocked(study, now) ->
                 PinCheckResult.LockedOut(study.lockedUntil!!, getRemainingLockoutMinutes(study, now))

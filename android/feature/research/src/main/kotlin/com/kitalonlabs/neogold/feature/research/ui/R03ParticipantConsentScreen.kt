@@ -72,7 +72,10 @@ fun R03ParticipantConsentScreen(
     var showBirthPicker by remember { mutableStateOf(false) }
     val birthTime = birthTimeMillis
     val birthInFuture = birthTime != null && birthTime > now
-    val ageHours: Double? = birthTime?.takeIf { !birthInFuture }?.let { (now - it) / MILLIS_PER_HOUR }
+    val rawAgeHours: Double? = birthTime?.takeIf { !birthInFuture }?.let { (now - it) / MILLIS_PER_HOUR }
+    // The study server takes ages of 0 to 720 hours (doc 7): a birth time further back is a typing mistake.
+    val birthTooOld = rawAgeHours != null && rawAgeHours > MAX_AGE_HOURS
+    val ageHours: Double? = rawAgeHours?.takeIf { !birthTooOld }
 
     var gestationalAgeWeeks by remember { mutableStateOf<Int?>(null) } // No silent default (H3)
     var earlyJaundiceAnswer by remember { mutableStateOf<Boolean?>(null) }
@@ -222,6 +225,14 @@ fun R03ParticipantConsentScreen(
                         modifier = Modifier.testTag("birth_time_future_error")
                     )
                 }
+                if (birthTooOld) {
+                    Text(
+                        text = stringResource(R.string.birth_time_too_old_error),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("birth_time_too_old_error")
+                    )
+                }
                 if (showBirthPicker) {
                     NgBirthTimePicker(
                         nowEpochMs = now,
@@ -317,3 +328,4 @@ fun R03ParticipantConsentScreen(
 }
 
 private const val MILLIS_PER_HOUR = 3_600_000.0
+private const val MAX_AGE_HOURS = 720.0

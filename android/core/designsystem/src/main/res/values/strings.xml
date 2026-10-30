@@ -161,6 +161,7 @@
 
     <!-- S10 Birth time & Stepper -->
     <string name="birth_time_future_error">Birth time cannot be in the future.</string>
+    <string name="birth_time_too_old_error">The age is over 30 days. Check the birth time.</string>
     <string name="birth_age_hours_display">Age now: %d hours</string>
 
     <!-- S14 Rule outcomes -->

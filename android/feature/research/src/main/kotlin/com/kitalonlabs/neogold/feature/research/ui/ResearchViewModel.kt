@@ -79,6 +79,13 @@ class ResearchViewModel(
     val scannedProfile: StateFlow<StudyProfilePayload?> = _scannedProfile.asStateFlow()
     private var scannedProfileBytes: ByteArray? = null
 
+    /** True while a PIN check or a session save runs. A second tap in that time is ignored, not queued. */
+    private val _isBusy = MutableStateFlow(false)
+    val isBusy: StateFlow<Boolean> = _isBusy.asStateFlow()
+
+    /** Counts locks. An unlock that was started before a lock and finished after it does not open the session. */
+    private var lockEpoch = 0
+
     private val _pendingUploadsCount = MutableStateFlow(0)
     val pendingUploadsCount: StateFlow<Int> = _pendingUploadsCount.asStateFlow()
 
@@ -91,6 +98,12 @@ class ResearchViewModel(
             scope.launch {
                 sessionManager.isUnlocked.collect { unlocked ->
                     _isUnlocked.value = unlocked
+                    if (!unlocked) {
+                        // Whatever lock it was (timeout, screen off, button), nothing of the session stays in memory.
+                        lockEpoch++
+                        clearSessionState()
+                        clearScannedProfile()
+                    }
                 }
             }
         }
@@ -160,9 +173,16 @@ class ResearchViewModel(
         pin: String,
         onSuccess: (ResearchStudyEntity) -> Unit
     ) {
+        if (!_isBusy.compareAndSet(expect = false, update = true)) return
+        val epoch = lockEpoch
         scope.launch {
             _errorMessage.value = null
-            val result = withContext(cpu) { repository.unlockWithStudyQr(qrPayload, pin) }
+            val result = try {
+                withContext(cpu) { repository.unlockWithStudyQr(qrPayload, pin) }
+            } finally {
+                _isBusy.value = false
+            }
+            if (epoch != lockEpoch) return@launch
             result.onSuccess { study ->
                 _activeStudy.value = study
                 _isUnlocked.value = true
@@ -186,9 +206,17 @@ class ResearchViewModel(
             _errorMessage.value = "No study enrolled. Please scan study profile QR."
             return
         }
+        if (!_isBusy.compareAndSet(expect = false, update = true)) return
+        val epoch = lockEpoch
         scope.launch {
             _errorMessage.value = null
-            when (val check = withContext(cpu) { repository.verifyPin(study.id, pin) }) {
+            val check = try {
+                withContext(cpu) { repository.verifyPin(study.id, pin) }
+            } finally {
+                _isBusy.value = false
+            }
+            if (epoch != lockEpoch) return@launch
+            when (check) {
                 is PinCheckResult.Success -> {
                     _isUnlocked.value = true
                     _isLockedOut.value = false
@@ -276,19 +304,24 @@ class ResearchViewModel(
             null
         }
 
+        if (!_isBusy.compareAndSet(expect = false, update = true)) return
         scope.launch {
             _errorMessage.value = null
-            val result = repository.saveBlindedResearchSession(
-                participant = participant,
-                ageHours = inputs.ageHours,
-                gestationalAgeWeeks = inputs.gestationalAgeWeeks,
-                flagEarlyJaundice = inputs.flagEarlyJaundice,
-                flagDangerSigns = inputs.flagDangerSigns,
-                flagPriorPhototherapy = inputs.flagPriorPhototherapy,
-                captures = captures,
-                cardBatchBytes = cardBatchBytes,
-                tsbInput = tsbInput
-            )
+            val result = try {
+                repository.saveBlindedResearchSession(
+                    participant = participant,
+                    ageHours = researchAgeHours(inputs.birthTimeMillis, System.currentTimeMillis()),
+                    gestationalAgeWeeks = inputs.gestationalAgeWeeks,
+                    flagEarlyJaundice = inputs.flagEarlyJaundice,
+                    flagDangerSigns = inputs.flagDangerSigns,
+                    flagPriorPhototherapy = inputs.flagPriorPhototherapy,
+                    captures = captures,
+                    cardBatchBytes = cardBatchBytes,
+                    tsbInput = tsbInput
+                )
+            } finally {
+                _isBusy.value = false
+            }
 
             result.onSuccess { sessionResult ->
                 _lastSessionResult.value = sessionResult
@@ -337,8 +370,19 @@ class ResearchViewModel(
         _clinicalInputs.value = null
         _currentCaptures.value = emptyList()
         _lastSessionResult.value = null
+        _cardTrustStatus.value = CardTrustStatus.UNVERIFIED
         _errorMessage.value = null
     }
 }
 
 private const val MILLIS_PER_MINUTE = 60_000L
+
+/**
+ * The baby's age in hours at [nowMillis], to a tenth of an hour (the contract takes multiples of 0.1, doc 7). It is worked out
+ * when the session is saved, from the birth time that was set, so the minutes spent on the captures are not left out.
+ */
+internal fun researchAgeHours(birthTimeMillis: Long, nowMillis: Long): Double =
+    kotlin.math.round((nowMillis - birthTimeMillis) / MILLIS_PER_HOUR * TENTHS) / TENTHS
+
+private const val MILLIS_PER_HOUR = 3_600_000.0
+private const val TENTHS = 10.0

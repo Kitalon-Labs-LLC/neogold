@@ -28,6 +28,7 @@ import timber.log.Timber
 import java.security.MessageDigest
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.coroutines.cancellation.CancellationException
 
 enum class CardTrustStatus {
     VERIFIED,
@@ -91,7 +92,10 @@ class ResearchRepository(
     /** Read when a session is saved, so the record names the app, model, config and profile that really ran. */
     private val provenance: suspend () -> ResearchProvenance,
     /** Whether a photo may be kept: a JPEG that carries nothing but its orientation. Tests of other things pass `{ true }`. */
-    private val isAllowedImage: (ByteArray) -> Boolean = { ResearchJpegSanitizer.validateAllowList(it).isValid }
+    private val isAllowedImage: (ByteArray) -> Boolean = {
+        // A damaged file can make the check itself throw (a length that runs past the end): that is a refusal, not a crash.
+        runCatching { ResearchJpegSanitizer.validateAllowList(it).isValid }.getOrDefault(false)
+    }
 ) {
 
     /**
@@ -121,6 +125,7 @@ class ResearchRepository(
      * Unlocks or enrolls research mode by verifying the signed study profile QR payload
      * and checking/setting the PIN (FR-25, NG-028, TC-RSH-01, TC-RSH-02, TC-RSH-03).
      */
+    @Suppress("ReturnCount") // each refusal returns at once: bad QR, PIN refused, a second study, a weak PIN
     suspend fun unlockWithStudyQr(
         qrPayload: ByteArray,
         pin: String,
@@ -156,6 +161,16 @@ class ResearchRepository(
                 )
             }
         } else {
+            // A second study is never enrolled over an active one: whoever holds the phone could type a PIN of their own
+            // and get past the first study's PIN. Leaving a study goes through R09 (C4), not through another QR.
+            val active = database.researchStudyDao().getActiveStudy()
+            if (active != null) {
+                return Result.failure(
+                    SecurityException(
+                        "Another study is already set up on this phone. Leave it before enrolling in a new one."
+                    )
+                )
+            }
             // New study: Validate PIN policy
             val validation = PinPolicyValidator.validate(pin)
             if (validation is PinValidationResult.Invalid) {
@@ -300,6 +315,11 @@ class ResearchRepository(
         if (captures.isEmpty()) {
             return Result.failure(IllegalArgumentException("Research session requires at least one capture"))
         }
+        if (ageHours.isNaN() || ageHours < 0.0 || ageHours > MAX_AGE_HOURS) {
+            return Result.failure(
+                IllegalArgumentException("The baby's age is outside 0 to 720 hours. Check the birth time.")
+            )
+        }
         if (captures.any { !isAllowedImage(it.imageBytes) }) {
             return Result.failure(IllegalArgumentException("A capture image is not an allowed JPEG"))
         }
@@ -377,11 +397,12 @@ class ResearchRepository(
                     val imageSha256 = computeSha256(cap.imageBytes)
                     val filename = "cap_$captureId.enc"
 
+                    // Listed before the write, so a write that fails halfway is cleaned up with the others.
+                    writtenFiles.add(filename)
                     // Encrypt image with Tink streaming AEAD via EncryptedFileStore
                     encryptedFileStore.writeEncryptedFile(filename) { outputStream ->
                         outputStream.write(cap.imageBytes)
                     }
-                    writtenFiles.add(filename)
 
                     val captureEntity = CaptureEntity(
                         id = captureId,
@@ -489,6 +510,10 @@ class ResearchRepository(
                     )
                 )
             }
+        } catch (e: CancellationException) {
+            // The save was cancelled: the database rolled back, so remove the files and let the cancellation go on.
+            writtenFiles.forEach { runCatching { encryptedFileStore.delete(it) } }
+            throw e
         } catch (e: Exception) {
             // Only the type is logged: the message of a database error can carry values (doc 8 Section 6.6).
             Timber.e("Error saving research session (%s); rolling back transaction", e.javaClass.name)
@@ -660,3 +685,6 @@ class ResearchRepository(
         return computeSha256(text.toByteArray(Charsets.UTF_8))
     }
 }
+
+/** The study server takes ages of 0 to 720 hours (doc 7, `age_hours`). */
+private const val MAX_AGE_HOURS = 720.0

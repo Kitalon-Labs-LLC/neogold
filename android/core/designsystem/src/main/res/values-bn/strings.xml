@@ -161,6 +161,7 @@
 
     <!-- S10 Birth time & Stepper -->
     <string name="birth_time_future_error">জন্মের সময় বর্তমান সময়ের চেয়ে পরে হতে পারে না।</string>
+    <string name="birth_time_too_old_error">বয়স ৩০ দিনের বেশি। জন্মের সময় আবার দেখুন।</string>
     <string name="birth_age_hours_display">এখন বয়স: %d ঘণ্টা</string>
 
     <!-- S14 Rule outcomes -->

@@ -52,9 +52,13 @@ class ResearchCaptureProcessor(
                     imageBytes = clean,
                     qualityPassed = gate.passed,
                     qualityFailReasons = gate.failureReasons.map { it.name },
-                    // the residual is measured only when the card was found and there was a batch to compare it with
-                    correctionResidualDe = gate.metrics.meanCorrectionResidualDeltaE
-                        .takeIf { reference != null && gate.metrics.markersDetected >= CARD_MARKERS },
+                    // the residual is measured only when the card was found (the gate leaves 0.0 behind when the markers were
+                    // seen but the card could not be fitted) and there was a batch to compare it with
+                    correctionResidualDe = gate.metrics.meanCorrectionResidualDeltaE.takeIf {
+                        reference != null &&
+                            gate.metrics.markersDetected >= CARD_MARKERS &&
+                            QualityReasonCode.NO_CARD !in gate.failureReasons
+                    },
                     iso = shot.metadata.sensorSensitivity,
                     exposureNs = shot.metadata.exposureTimeNs,
                     aeLocked = shot.metadata.aeLocked.toInt(),
@@ -72,7 +76,11 @@ class ResearchCaptureProcessor(
         colorCorrectionGains?.joinToString(prefix = "[", postfix = "]", separator = ",")
 
     companion object {
-        /** The study server's `max_image_bytes` (doc 7 Section 5.1). */
+        /**
+         * The app's own cap on a research photo. The server's `max_image_bytes` is a per-study policy of up to 20,000,000
+         * (doc 7 Section 5.1), so this is the stricter of the two; a study that sets a lower limit than this is not yet
+         * followed (the policy value reaches the app with enrollment, package C4).
+         */
         const val MAX_IMAGE_BYTES = 5_000_000
         private const val CARD_MARKERS = 4
     }
