@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.bouncycastle.bcprov)
 
+    testImplementation(project(":neogold-decrypt"))
     testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)
 }

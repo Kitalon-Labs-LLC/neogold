@@ -194,7 +194,7 @@ gradle:com.google.auto.value:auto-value-annotations
 gradle:com.google.auto:auto-common
 gradle:com.google.code.findbugs:jsr305
 gradle:com.google.code.gson:gson
-gradle:com.google.crypto.tink:tink
+gradle:com.google.crypto.tink:tink-android
 gradle:com.google.devtools.ksp:symbol-processing
 gradle:com.google.devtools.ksp:symbol-processing-api
 gradle:com.google.devtools.ksp:symbol-processing-cmdline

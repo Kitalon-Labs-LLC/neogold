@@ -28,3 +28,17 @@ regexes = [
   '''^DEFAULT_TEST_K3_PRIVATE_HEX$''',
   '''^FORWARDED_ALLOW_IPS=172\.30\.0\.10$''',
 ]
+
+# BUG-2026-083 item 27: the Tink 1.7.0 compatibility fixture holds a throwaway X25519 key made for this test only (it protects
+# nothing; the fixture's plaintext is a sentence saying so). Exact file AND exact value, so any other key still matches.
+[[allowlists]]
+description = "Synthetic test key in the Tink 1.7.0 export fixture (BUG-2026-083 item 27)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = [
+  '''^android/core/security/src/test/resources/export/legacy-tink-1\.7\.0\.properties$''',
+]
+regexTarget = "secret"
+regexes = [
+  '''^j3DD/h2VccIM7AZwB84tNeobOn3Mmw53i1hMlBJ5Sb8=$''',
+]

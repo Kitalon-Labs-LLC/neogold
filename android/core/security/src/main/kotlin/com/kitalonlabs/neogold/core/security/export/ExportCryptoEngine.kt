@@ -1,200 +1,88 @@
 package com.kitalonlabs.neogold.core.security.export
 
-import com.google.crypto.tink.BinaryKeysetReader
-import com.google.crypto.tink.BinaryKeysetWriter
-import com.google.crypto.tink.CleartextKeysetHandle
-import com.google.crypto.tink.HybridDecrypt
 import com.google.crypto.tink.HybridEncrypt
+import com.google.crypto.tink.InsecureSecretKeyAccess
 import com.google.crypto.tink.KeysetHandle
+import com.google.crypto.tink.RegistryConfiguration
 import com.google.crypto.tink.StreamingAead
+import com.google.crypto.tink.TinkProtoKeysetFormat
+import com.google.crypto.tink.hybrid.HpkeParameters
+import com.google.crypto.tink.hybrid.HpkePublicKey
 import com.google.crypto.tink.hybrid.HybridConfig
-import com.google.crypto.tink.proto.HpkeAead
-import com.google.crypto.tink.proto.HpkeKdf
-import com.google.crypto.tink.proto.HpkeKem
-import com.google.crypto.tink.proto.HpkeParams
-import com.google.crypto.tink.proto.HpkePrivateKey
-import com.google.crypto.tink.proto.HpkePublicKey
-import com.google.crypto.tink.proto.KeyData
-import com.google.crypto.tink.proto.KeyStatusType
-import com.google.crypto.tink.proto.Keyset
-import com.google.crypto.tink.proto.OutputPrefixType
-import com.google.crypto.tink.streamingaead.AesGcmHkdfStreamingKeyManager
+import com.google.crypto.tink.streamingaead.PredefinedStreamingAeadParameters
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
-import com.google.crypto.tink.subtle.X25519
-import com.google.protobuf.ByteString
+import com.google.crypto.tink.util.Bytes
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
-import java.security.GeneralSecurityException
 import java.security.MessageDigest
 import java.util.Base64
 
+/**
+ * The encrypting side of the research export (doc 8 Section 5.2, docs/specs/export-format.md). The phone only encrypts:
+ * there is no function here that unwraps a data key or decrypts a stream, and none that handles the study's private key.
+ * That side lives in the offline decrypt tool (`:neogold-decrypt`), and the app's tests use it to check this side.
+ *
+ * Everything except [createSession], [sha256Hex] and [CONTEXT_INFO] is internal: the data key is reachable only through an
+ * [ExportSession], which cannot serialize it.
+ */
 object ExportCryptoEngine {
 
     val CONTEXT_INFO: ByteArray = "neogold-export-v1".toByteArray(StandardCharsets.UTF_8)
     private const val BUFFER_SIZE = 8192
+    private const val X25519_KEY_BYTES = 32
+    private const val HPKE_KEY_ID = 1
+
+    /** HPKE (X25519, HKDF-SHA256, AES-256-GCM) with no key prefix: the wrap format of export-format v1. */
+    private val HPKE_PARAMETERS: HpkeParameters = HpkeParameters.builder()
+        .setKemId(HpkeParameters.KemId.DHKEM_X25519_HKDF_SHA256)
+        .setKdfId(HpkeParameters.KdfId.HKDF_SHA256)
+        .setAeadId(HpkeParameters.AeadId.AES_256_GCM)
+        .setVariant(HpkeParameters.Variant.NO_PREFIX)
+        .build()
 
     init {
-        try {
-            HybridConfig.register()
-            StreamingAeadConfig.register()
-        } catch (_: Exception) {}
-    }
-
-    /**
-     * Generates a fresh ephemeral Tink streaming AEAD keyset for encrypting export files.
-     */
-    fun generateDataKeysetHandle(): KeysetHandle {
+        HybridConfig.register()
         StreamingAeadConfig.register()
-        return KeysetHandle.generateNew(AesGcmHkdfStreamingKeyManager.aes256GcmHkdf4KBTemplate())
     }
+
+    /** A fresh ephemeral AES-256-GCM-HKDF (4 KB segments) streaming keyset for the files of one export. */
+    internal fun generateDataKeysetHandle(): KeysetHandle =
+        KeysetHandle.generateNew(PredefinedStreamingAeadParameters.AES256_GCM_HKDF_4KB)
 
     /**
-     * Serializes a data keyset handle and wraps it with Tink HPKE (X25519, HKDF-SHA256, AES-256-GCM)
-     * using the 32-byte raw X25519 public key from the signed study profile.
+     * Serializes the data keyset and wraps it with Tink HPKE to the 32-byte raw X25519 public key from the signed study
+     * profile. The serialized key exists only inside this function and is zeroed before it returns.
      */
-    fun wrapDataKey(dataKeysetHandle: KeysetHandle, exportPublicKeyBytes: ByteArray): String {
-        require(exportPublicKeyBytes.size == 32) {
-            "Export public key must be exactly 32 bytes (X25519), got ${exportPublicKeyBytes.size}"
+    internal fun wrapDataKey(dataKeysetHandle: KeysetHandle, exportPublicKeyBytes: ByteArray): String {
+        require(exportPublicKeyBytes.size == X25519_KEY_BYTES) {
+            "Export public key must be exactly $X25519_KEY_BYTES bytes (X25519), got ${exportPublicKeyBytes.size}"
         }
-        HybridConfig.register()
-
-        // 1. Serialize data keyset to cleartext binary
-        val baos = ByteArrayOutputStream()
-        CleartextKeysetHandle.write(dataKeysetHandle, BinaryKeysetWriter.withOutputStream(baos))
-        val cleartextDataKeyBytes = baos.toByteArray()
-
-        // 2. Build Tink HPKE public key keyset
-        val hpkePubKeyProto = HpkePublicKey.newBuilder()
-            .setVersion(0)
-            .setParams(
-                HpkeParams.newBuilder()
-                    .setKem(HpkeKem.DHKEM_X25519_HKDF_SHA256)
-                    .setKdf(HpkeKdf.HKDF_SHA256)
-                    .setAead(HpkeAead.AES_256_GCM)
-                    .build()
-            )
-            .setPublicKey(ByteString.copyFrom(exportPublicKeyBytes))
+        val publicKey = HpkePublicKey.create(HPKE_PARAMETERS, Bytes.copyFrom(exportPublicKeyBytes), null)
+        val publicHandle = KeysetHandle.newBuilder()
+            .addEntry(KeysetHandle.importKey(publicKey).withFixedId(HPKE_KEY_ID).makePrimary())
             .build()
+        val encryptor = publicHandle.getPrimitive(RegistryConfiguration.get(), HybridEncrypt::class.java)
 
-        val pubKeyData = KeyData.newBuilder()
-            .setTypeUrl("type.googleapis.com/google.crypto.tink.HpkePublicKey")
-            .setValue(hpkePubKeyProto.toByteString())
-            .setKeyMaterialType(KeyData.KeyMaterialType.ASYMMETRIC_PUBLIC)
-            .build()
-
-        val pubKeyset = Keyset.newBuilder()
-            .setPrimaryKeyId(1)
-            .addKey(
-                Keyset.Key.newBuilder()
-                    .setKeyData(pubKeyData)
-                    .setStatus(KeyStatusType.ENABLED)
-                    .setKeyId(1)
-                    .setOutputPrefixType(OutputPrefixType.RAW)
-                    .build()
-            )
-            .build()
-
-        val pubHandle = CleartextKeysetHandle.fromKeyset(pubKeyset)
-        val encryptor = pubHandle.getPrimitive(HybridEncrypt::class.java)
-
-        // 3. Encrypt the data keyset using HPKE
-        val wrappedBytes = encryptor.encrypt(cleartextDataKeyBytes, CONTEXT_INFO)
-        return Base64.getEncoder().encodeToString(wrappedBytes)
-    }
-
-    /**
-     * Unwraps the data keyset using Tink HPKE with the offline 32-byte raw X25519 private key.
-     */
-    @Suppress(
-        "ThrowsCount",
-        "TooGenericExceptionCaught"
-    ) // any decode or crypto failure maps to a typed DecryptionException
-    fun unwrapDataKey(wrappedDataKeyB64: String, exportPrivateKeyBytes: ByteArray): KeysetHandle {
-        require(exportPrivateKeyBytes.size == 32) {
-            "Export private key must be exactly 32 bytes (X25519), got ${exportPrivateKeyBytes.size}"
-        }
-        HybridConfig.register()
-
-        val ciphertext = try {
-            Base64.getDecoder().decode(wrappedDataKeyB64.trim())
-        } catch (e: Exception) {
-            throw DecryptionException("Malformed base64 in wrapped data key header", e)
-        }
-
-        // Derive public key from private key using RFC 7748 X25519 scalar multiplication
-        val derivedPublicBytes = try {
-            X25519.publicFromPrivate(exportPrivateKeyBytes)
-        } catch (e: Exception) {
-            throw DecryptionException("Invalid X25519 private key", e)
-        }
-
-        val hpkePubKeyProto = HpkePublicKey.newBuilder()
-            .setVersion(0)
-            .setParams(
-                HpkeParams.newBuilder()
-                    .setKem(HpkeKem.DHKEM_X25519_HKDF_SHA256)
-                    .setKdf(HpkeKdf.HKDF_SHA256)
-                    .setAead(HpkeAead.AES_256_GCM)
-                    .build()
-            )
-            .setPublicKey(ByteString.copyFrom(derivedPublicBytes))
-            .build()
-
-        val hpkePrivKeyProto = HpkePrivateKey.newBuilder()
-            .setVersion(0)
-            .setPublicKey(hpkePubKeyProto)
-            .setPrivateKey(ByteString.copyFrom(exportPrivateKeyBytes))
-            .build()
-
-        val privKeyData = KeyData.newBuilder()
-            .setTypeUrl("type.googleapis.com/google.crypto.tink.HpkePrivateKey")
-            .setValue(hpkePrivKeyProto.toByteString())
-            .setKeyMaterialType(KeyData.KeyMaterialType.ASYMMETRIC_PRIVATE)
-            .build()
-
-        val privKeyset = Keyset.newBuilder()
-            .setPrimaryKeyId(1)
-            .addKey(
-                Keyset.Key.newBuilder()
-                    .setKeyData(privKeyData)
-                    .setStatus(KeyStatusType.ENABLED)
-                    .setKeyId(1)
-                    .setOutputPrefixType(OutputPrefixType.RAW)
-                    .build()
-            )
-            .build()
-
-        val privHandle = CleartextKeysetHandle.fromKeyset(privKeyset)
-        val decryptor = privHandle.getPrimitive(HybridDecrypt::class.java)
-
-        val cleartextBytes = try {
-            decryptor.decrypt(ciphertext, CONTEXT_INFO)
-        } catch (e: GeneralSecurityException) {
-            throw DecryptionException(
-                "Failed to unwrap export data key: wrong private key or corrupted export header",
-                e
-            )
-        }
-
-        return try {
-            CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(cleartextBytes))
-        } catch (e: Exception) {
-            throw DecryptionException("Failed to parse unwrapped Tink keyset handle", e)
+        val cleartextDataKeyBytes = TinkProtoKeysetFormat.serializeKeyset(
+            dataKeysetHandle,
+            InsecureSecretKeyAccess.get()
+        )
+        try {
+            return Base64.getEncoder().encodeToString(encryptor.encrypt(cleartextDataKeyBytes, CONTEXT_INFO))
+        } finally {
+            cleartextDataKeyBytes.fill(0)
         }
     }
 
-    fun getStreamingAead(dataKeysetHandle: KeysetHandle): StreamingAead {
-        return dataKeysetHandle.getPrimitive(StreamingAead::class.java)
-    }
+    internal fun getStreamingAead(dataKeysetHandle: KeysetHandle): StreamingAead =
+        dataKeysetHandle.getPrimitive(RegistryConfiguration.get(), StreamingAead::class.java)
 
-    /**
-     * Encrypts an [InputStream] to an [OutputStream] using Tink Streaming AEAD.
-     */
-    fun encryptStream(
+    /** Encrypts an [InputStream] to an [OutputStream] using Tink Streaming AEAD. */
+    internal fun encryptStream(
         streamingAead: StreamingAead,
         inputStream: InputStream,
         outputStream: OutputStream,
@@ -210,37 +98,7 @@ object ExportCryptoEngine {
         }
     }
 
-    /**
-     * Decrypts an [InputStream] to an [OutputStream] using Tink Streaming AEAD.
-     * Throws [TamperedCiphertextException] on integrity or authentication tag failure.
-     */
-    @Suppress("TooGenericExceptionCaught") // any decode or crypto failure maps to a typed decryption error
-    fun decryptStream(
-        streamingAead: StreamingAead,
-        inputStream: InputStream,
-        outputStream: OutputStream,
-        associatedData: ByteArray = ByteArray(0)
-    ) {
-        try {
-            streamingAead.newDecryptingStream(inputStream, associatedData).use { decryptingStream ->
-                val buffer = ByteArray(BUFFER_SIZE)
-                var bytesRead: Int
-                while (decryptingStream.read(buffer).also { bytesRead = it } != -1) {
-                    outputStream.write(buffer, 0, bytesRead)
-                }
-                outputStream.flush()
-            }
-        } catch (e: GeneralSecurityException) {
-            throw TamperedCiphertextException(
-                "Authentication failed while decrypting ciphertext stream: data has been tampered with or corrupted",
-                e
-            )
-        } catch (e: Exception) {
-            throw TamperedCiphertextException("Error while reading decrypting stream: ${e.message}", e)
-        }
-    }
-
-    fun encryptBytes(
+    internal fun encryptBytes(
         streamingAead: StreamingAead,
         plaintext: ByteArray,
         associatedData: ByteArray = ByteArray(0)
@@ -248,17 +106,6 @@ object ExportCryptoEngine {
         val bais = ByteArrayInputStream(plaintext)
         val baos = ByteArrayOutputStream()
         encryptStream(streamingAead, bais, baos, associatedData)
-        return baos.toByteArray()
-    }
-
-    fun decryptBytes(
-        streamingAead: StreamingAead,
-        ciphertext: ByteArray,
-        associatedData: ByteArray = ByteArray(0)
-    ): ByteArray {
-        val bais = ByteArrayInputStream(ciphertext)
-        val baos = ByteArrayOutputStream()
-        decryptStream(streamingAead, bais, baos, associatedData)
         return baos.toByteArray()
     }
 
@@ -277,12 +124,6 @@ object ExportCryptoEngine {
             }
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
-    }
-
-    fun generateKeyPair(): Pair<ByteArray, ByteArray> {
-        val priv = X25519.generatePrivateKey()
-        val pub = X25519.publicFromPrivate(priv)
-        return Pair(priv, pub)
     }
 
     fun createSession(): ExportSession {

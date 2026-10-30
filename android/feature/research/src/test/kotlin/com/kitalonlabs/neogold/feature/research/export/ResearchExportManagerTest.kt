@@ -13,7 +13,6 @@ import com.kitalonlabs.neogold.core.security.DefaultEncryptedFileStore
 import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.FakeMasterKeyProvider
-import com.kitalonlabs.neogold.core.security.export.ExportCryptoEngine
 import com.kitalonlabs.neogold.decrypt.DecryptEngine
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -38,7 +37,7 @@ class ResearchExportManagerTest {
     private lateinit var encryptedFileStore: EncryptedFileStore
     private lateinit var exportManager: ResearchExportManager
 
-    private val keyPair = ExportCryptoEngine.generateKeyPair()
+    private val keyPair = DecryptEngine.generateKeyPair()
     private val studyPrivateKey = keyPair.first
     private val studyPublicKey = keyPair.second
 

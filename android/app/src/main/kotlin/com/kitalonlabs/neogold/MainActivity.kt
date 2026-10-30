@@ -6,6 +6,7 @@
 package com.kitalonlabs.neogold
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -67,8 +68,10 @@ import com.kitalonlabs.neogold.feature.log.ScreeningLogExportManager
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanState
 import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationState
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
+import com.kitalonlabs.neogold.feature.research.export.ExportDestination
 import com.kitalonlabs.neogold.feature.research.export.ExportFileRemains
 import com.kitalonlabs.neogold.feature.research.export.ExportProgress
+import com.kitalonlabs.neogold.feature.research.export.PendingPick
 import com.kitalonlabs.neogold.feature.research.export.ResearchExportManager
 import com.kitalonlabs.neogold.feature.research.export.exportFileName
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
@@ -90,6 +93,8 @@ import com.kitalonlabs.neogold.navigation.Destinations
 import com.kitalonlabs.neogold.onboarding.FirstRunState
 import com.kitalonlabs.neogold.onboarding.OnboardingServices
 import com.kitalonlabs.neogold.storage.StorageState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
@@ -99,6 +104,29 @@ class MainActivity : FragmentActivity() {
 
     private val container: NeoGoldContainer
         get() = (application as NeoGoldApplication).container
+
+    /**
+     * The "save the export" picker belongs to the activity, not to a screen: when the research session locks while the picker
+     * is open the screen is gone, and the empty document the picker already created is deleted here (BUG-083 item 30).
+     */
+    private val pendingExportPick = PendingPick<Uri> { uri ->
+        // not cancelled with the activity: the empty document is deleted even when the activity is leaving
+        lifecycleScope.launch(
+            Dispatchers.IO + NonCancellable
+        ) { ExportDestination.forUri(contentResolver, uri).discard() }
+    }
+
+    /**
+     * Lint asks for androidx.fragment 1.3.0 or newer (the app resolves 1.2.5, through the biometric library) because older
+     * FragmentActivity versions mishandle the results of permission requests made through the ActivityResult API. This
+     * launcher is only the document picker; the camera permission is asked with ActivityCompat and its own request code.
+     * Raising the fragment version is a dependency change and waits for the owner (BUG-2026-083 item 30).
+     */
+    @SuppressLint("InvalidFragmentVersionForActivityResult")
+    private val exportPickerLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri -> pendingExportPick.deliver(uri) }
+    private val exportPicker = ExportPicker(pendingExportPick) { exportPickerLauncher.launch(it) }
 
     /** Whether the camera may be used. The screens that open it read this through [LocalCameraPermission]. */
     private var cameraGranted by mutableStateOf(false)
@@ -220,7 +248,8 @@ class MainActivity : FragmentActivity() {
                                             research = container.researchViewModel(state.database),
                                             researchCaptureSetup = { container.researchCaptureSetup(state.database) },
                                             researchCardStatus = { container.researchCardStatus(state.database) },
-                                            researchExport = container.researchExportManager(state.database)
+                                            researchExport = container.researchExportManager(state.database),
+                                            exportPicker = exportPicker
                                         )
                                     }
                                 }
@@ -386,6 +415,7 @@ fun NeoGoldNavHost(
     researchCaptureSetup: suspend () -> NeoGoldContainer.ResearchCaptureSetup,
     researchCardStatus: suspend () -> CardTrustStatus,
     researchExport: ResearchExportManager,
+    exportPicker: ExportPicker,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
@@ -1192,26 +1222,29 @@ fun NeoGoldNavHost(
             val exportScope = androidx.compose.runtime.rememberCoroutineScope()
             val contentResolver = androidx.compose.ui.platform.LocalContext.current.contentResolver
 
-            val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-                contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")
-            ) { uri ->
+            // A place chosen after this screen was left, or after a lock, is deleted by the picker's owner; it is not used.
+            androidx.compose.runtime.DisposableEffect(Unit) { onDispose { exportPicker.pending.cancel() } }
+
+            fun startExport(uri: Uri) {
                 // a result that arrives after a lock (the picker was open when the screen turned off) is not acted on
-                if (uri != null && !isExporting && session.isSessionOpen()) {
-                    isExporting = true
-                    exportFailed = false
-                    exportFileRemains = false
-                    exportProgress = null
-                    exportScope.launch {
-                        val result = researchExport.exportToUri(
-                            contentResolver,
-                            uri,
-                            canContinue = session::isSessionOpen
-                        ) { exportProgress = it }
-                        isExporting = false
-                        result.onSuccess { exportCompleted = true }.onFailure {
-                            exportFailed = true
-                            exportFileRemains = it is ExportFileRemains
-                        }
+                if (isExporting || !session.isSessionOpen()) {
+                    exportPicker.pending.reject(uri)
+                    return
+                }
+                isExporting = true
+                exportFailed = false
+                exportFileRemains = false
+                exportProgress = null
+                exportScope.launch {
+                    val result = researchExport.exportToUri(
+                        contentResolver,
+                        uri,
+                        canContinue = session::isSessionOpen
+                    ) { exportProgress = it }
+                    isExporting = false
+                    result.onSuccess { exportCompleted = true }.onFailure {
+                        exportFailed = true
+                        exportFileRemains = it is ExportFileRemains
                     }
                 }
             }
@@ -1229,7 +1262,8 @@ fun NeoGoldNavHost(
                     // the server side (enrollment, upload now, leave study) is wired in package C4
                     showCloudSync = false,
                     onChooseDestinationClicked = {
-                        exportLauncher.launch(exportFileName(it.studyCode, java.time.Instant.now()))
+                        exportPicker.pending.expect(::startExport)
+                        exportPicker.launch(exportFileName(it.studyCode, java.time.Instant.now()))
                     },
                     onDoneClicked = { navController.popBackStack() }
                 )
@@ -1239,6 +1273,9 @@ fun NeoGoldNavHost(
         researchComposable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }
     }
 }
+
+/** The activity's "save the export" picker: ask for a place with [launch], answers go through [pending]. */
+class ExportPicker(val pending: PendingPick<Uri>, val launch: (String) -> Unit)
 
 @Composable
 private fun PlaceholderScreen(title: String) {

@@ -43,4 +43,21 @@ class ExportWiringGuardTest {
         assertThat(screen).doesNotContain("exportProgress.message")
         assertThat(screen).doesNotContain(".message}")
     }
+
+    /**
+     * BUG-083 item 30: the picker is owned by the activity, so a result that arrives after the screen is gone (a lock sent
+     * the worker back to R01) is deleted instead of leaving an empty document on the drive.
+     */
+    @Test
+    fun tcExp01_theSavePickerIsOwnedByTheActivityAndAnOrphanedResultIsDiscarded_BUG_083() {
+        val text = productionText()
+
+        assertThat(text).contains("registerForActivityResult(")
+        assertThat(text).contains("ActivityResultContracts.CreateDocument(")
+        assertThat(text).doesNotContain("rememberLauncherForActivityResult")
+        assertThat(text).contains("pendingExportPick.deliver(")
+        assertThat(text).contains("ExportDestination.forUri(contentResolver, uri).discard()")
+        assertThat(text).contains("exportPicker.pending.cancel()")
+        assertThat(text).contains("exportPicker.pending.reject(uri)")
+    }
 }

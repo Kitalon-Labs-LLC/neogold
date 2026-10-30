@@ -12,7 +12,7 @@ import com.kitalonlabs.neogold.core.security.DefaultEncryptedFileStore
 import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.FakeMasterKeyProvider
-import com.kitalonlabs.neogold.core.security.export.ExportCryptoEngine
+import com.kitalonlabs.neogold.decrypt.DecryptEngine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +38,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.ZipFile
 
 /**
  * What an export leaves on the phone (BUG-2026-038, TC-EXP-01): the data key never reaches the disk, and a failed, a
@@ -55,7 +56,9 @@ class ResearchExportCleanupTest {
     private lateinit var store: EncryptedFileStore
     private lateinit var staging: File
 
-    private val publicKey = ExportCryptoEngine.generateKeyPair().second
+    private val keyPair = DecryptEngine.generateKeyPair()
+    private val publicKey = keyPair.second
+    private val startedAt = System.currentTimeMillis() - 1_000
 
     /** Opens the image of the capture whose number is [failOn] with an IOException that names a path. */
     private class FlakyStore(private val real: EncryptedFileStore, var failOn: Int = 0, var asError: Boolean = false) :
@@ -201,25 +204,82 @@ class ResearchExportCleanupTest {
         database.auditEventDao().getAllEvents().any { it.eventType == "EXPORT_CREATED" }
     }
 
+    /** Every file this test run could have written, wherever the app or the JVM keeps temporary data. */
+    private fun filesWrittenSoFar(): List<File> =
+        listOf(
+            context.cacheDir,
+            context.filesDir,
+            context.codeCacheDir,
+            tempFolder.root,
+            File(System.getProperty("java.io.tmpdir"))
+        ).distinct().flatMap { root ->
+            root.walkTopDown().maxDepth(WALK_DEPTH)
+                .filter { it.isFile && it.length() < MAX_SCANNED_BYTES && it.lastModified() >= startedAt }
+                .toList()
+        }.distinctBy { it.canonicalPath }
+
+    private fun containsBytes(haystack: ByteArray, needle: ByteArray): Boolean {
+        if (needle.isEmpty() || haystack.size < needle.size) return false
+        outer@ for (i in 0..haystack.size - needle.size) {
+            for (k in needle.indices) if (haystack[i + k] != needle[k]) continue@outer
+            return true
+        }
+        return false
+    }
+
+    private fun holdsAny(bytes: ByteArray, secrets: List<ByteArray>) = secrets.any { containsBytes(bytes, it) }
+
+    private fun dataKeyOf(archive: File): List<ByteArray> {
+        val header = ZipFile(archive).use { zip ->
+            zip.getInputStream(zip.getEntry("header.json")).readBytes().toString(Charsets.UTF_8)
+        }
+        return DecryptEngine.dataKeyBytes(
+            DecryptEngine.parseHeaderJson(header).getValue("wrapped_data_key_b64"),
+            keyPair.first
+        )
+    }
+
+    /**
+     * BUG-083 item 31 (strengthens BUG-2026-038): the data key is looked for by its bytes, not by file names, and in every
+     * place a file could land (app cache and files, code cache, the test folder, the JVM temp directory), at every step of
+     * the export and again at the end. The key is learned from the finished archive, by unwrapping it with the study key.
+     */
     @Test
     fun tcExp01_theDataKeyIsNeverOnTheDiskWhileAnExportRuns_BUG_2026_038() = runBlocking {
-        val seen = mutableSetOf<String>()
-        val leaked = mutableListOf<String>()
+        val snapshots = mutableListOf<Pair<String, ByteArray>>()
+        val out = archive()
 
-        val result = manager.exportToStream(archive().outputStream(), staging) {
-            for (f in filesUnder(staging)) {
-                seen += f.name
-                // a keyset, a checkpoint, or anything that is not ciphertext
-                if (f.name.contains("checkpoint") || f.name.contains("keyset") || f.readText(Charsets.ISO_8859_1).contains("raw_keyset")) {
-                    leaked += f.name
-                }
+        val result = manager.exportToStream(out.outputStream(), staging) {
+            filesWrittenSoFar().forEach { snapshots += it.path to it.readBytes() }
+        }
+        assertThat(result.isSuccess).isTrue()
+        assertThat(snapshots).isNotEmpty()
+        filesWrittenSoFar().forEach { snapshots += it.path to it.readBytes() }
+
+        val secrets = dataKeyOf(out)
+        val leaks = snapshots.filter { snapshot -> holdsAny(snapshot.second, secrets) }.map { it.first }.distinct()
+        assertThat(leaks).isEmpty()
+        // what staging held was ciphertext only
+        assertThat(snapshots.filter { it.first.contains("export_staging") }.all { it.first.endsWith(".enc") }).isTrue()
+    }
+
+    /** The scan above must be able to find a key: a file holding it is found in each place it looks. */
+    @Test
+    fun tcExp01_theKeyScanFindsAKeyThatWasWrittenToDisk_BUG_2026_038() = runBlocking {
+        val out = archive()
+        assertThat(manager.exportToStream(out.outputStream(), staging).isSuccess).isTrue()
+        val secrets = dataKeyOf(out)
+
+        for (dir in listOf(context.cacheDir, context.filesDir, File(System.getProperty("java.io.tmpdir")))) {
+            val planted = File.createTempFile("planted", ".bin", dir)
+            try {
+                planted.writeBytes(byteArrayOf(1, 2, 3) + secrets[0] + byteArrayOf(4))
+                val found = filesWrittenSoFar().filter { f -> holdsAny(f.readBytes(), secrets) }
+                assertThat(found.map { it.canonicalPath }).contains(planted.canonicalPath)
+            } finally {
+                planted.delete()
             }
         }
-
-        assertThat(result.isSuccess).isTrue()
-        assertThat(seen).isNotEmpty()
-        assertThat(leaked).isEmpty()
-        assertThat(seen.all { it.endsWith(".enc") }).isTrue()
     }
 
     @Test
@@ -472,5 +532,7 @@ class ResearchExportCleanupTest {
         const val LATCH_SECONDS = 20L
         const val WAIT_MILLIS = 700L
         const val BREAK_AFTER = 40
+        const val WALK_DEPTH = 4
+        const val MAX_SCANNED_BYTES = 4_000_000L
     }
 }

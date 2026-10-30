@@ -31,3 +31,9 @@
 # One more of the same kind, referenced by Tink's MAC key classes. They became reachable when the research export was wired
 # into the app (C3, R07), which is when R8 first reported it. Exactly the class it lists in missing_rules.txt; no wildcard.
 -dontwarn com.google.errorprone.annotations.RestrictedApi
+
+# Tink 1.24 (ADR-019) refers to Android's own HPKE classes (android.crypto.hpke, a newer platform API than compileSdk) from its
+# X-Wing HPKE code. The export uses X25519 HPKE written by Tink itself, never that path, so R8 can leave the reference
+# unresolved. Exactly the two classes it lists in missing_rules.txt; still no wildcard.
+-dontwarn android.crypto.hpke.Hpke
+-dontwarn android.crypto.hpke.Message
