@@ -14,3 +14,9 @@ fe318013c964b2d786c0a239834bde6e5046bd9e:tools/tests/test_sign_bundle_manifest.p
 # "synthetic ... Not real data"; the key protects nothing and is used by no study, no build and no server. The fixture has to
 # hold key material for the test to mean anything, so the file stays and only this history entry is accepted.
 fb91cd186fd91e401b17148ab4e9401d94059f25:android/core/security/src/test/resources/export/legacy-tink-1.7.0.properties:generic-api-key:2
+
+# Package C4, triaged 2026-10-30: commit 6f2a471 added ResearchUploadWorkerTest, which makes a software test key with the sample
+# enrollment code 7K2X-M49P-3ABC. That string is the format example printed in the docs and used in the other sync tests; it is
+# not a code any server issued. The scanner read it as a generic key because the argument sits next to the word "key". Only this
+# history entry is accepted.
+6f2a47153c399dd2a0e41b112b08904c76ed45aa:android/sync/research/src/test/kotlin/com/kitalonlabs/neogold/sync/research/ResearchUploadWorkerTest.kt:generic-api-key:70
