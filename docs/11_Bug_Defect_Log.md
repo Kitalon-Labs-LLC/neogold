@@ -158,6 +158,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-081 | R03 accepts a birth time of any age, but the server takes 0 to 720 hours in steps of 0.1 | 2026-10-30 | Review | commit d303597 | n/a | RSH | S2 | No | H2 | P2 | Fixed | Unassigned | TC-UI-11 | |
 | BUG-2026-082 | The research age is worked out when R03 opens, but saved after the captures and the TSB step | 2026-10-30 | Review | commit d303597 | n/a | RSH | S2 | No | H2 | P2 | Fixed | Unassigned | TC-UI-11 | |
 | BUG-2026-083 | Findings from the C2 part 1 reviews that are left open for later packages | 2026-10-30 | Review | commit d303597 | n/a | RSH | S3 | No | H2, H4 | P3 | New | Unassigned | TC-RSH-07, TC-RSH-14, TC-API-20 | |
+| BUG-2026-084 | The API does not send X-Content-Type-Options when it is reached on its own port (the proxy sets it in production) | 2026-10-30 | Test | commit 1f32e1b | n/a | SEC | S4 | No | - | P3 | Fixed | Unassigned | n/a (`test_health.py`) | |
 
 ### 4.1 Entries
 
@@ -1552,6 +1553,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Known cost, until package C4** Nothing ever sets a study's status to anything but ACTIVE (`leaveStudy` and the revocation handler only clear the device id and key; a server answer of CLOSED is only returned to the worker), and no screen calls `leaveStudy`. So a phone whose study ended, was revoked or lost its PIN key cannot enroll in the next study except through Settings, Delete all data, which also removes unsent research sessions (S25 warns with a count). The refusal says so. Package C4 must ship R09 so that leaving sets the status in the same transaction that clears the device ids, record CLOSED when the server reports it, and give a lost verifier key a way back (the message "Enroll in the study again" loops today for the same study code). This is why BUG-2026-083 item 14 exists.
 
+**Decision (30 October 2026, product and technical)** Keep the refusal; build no switching screen now. v1.0 is a closed build for one partner's validation study (PRD D10), so a phone holds one study for its whole life and the cost lands only at hand-over, where the phone is re-provisioned anyway. A switch gated by the old PIN would still need the old study's unsent sessions handled first (the outbox sends through the active study, so sessions of the old study would go to the new study's server), and that logic belongs in R09, not in a rushed variant of R01. R09 (package C4) must: ask for the PIN, refuse while the outbox is not empty or not exported, set the status in one transaction, and be done before any second study is set up. Until then, moving a phone to another study is: upload or export the pending sessions, then Settings, Delete all data.
+
 #### BUG-2026-079: Two PIN checks that overlap each read the same failure count, so parallel guesses count once
 
 - Area: SEC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
@@ -1634,7 +1637,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Expected** Each is fixed or recorded with the package that fixes it.
 
 **Actual**
-1. With no reference card (none stored, or the stored one has expired), the gate checks against nominal patch colors and a photo can be stored as PASSED; only the residual is left empty. Decide whether the verdict should say "not checked against a card". (C2 or E1.)
+1. RESOLVED (decision of 30 October 2026): a photo taken with no card to compare with (none stored, or the stored one has expired) is recorded FAILED with the reason `NO_REFERENCE_CARD` and an empty residual. The worker is not stopped or asked to retake: the photo is still taken, because a session on a missing or expired card is still data (TC-CARD-05), and the session record carries the card status (`UNVERIFIED` or `EXPIRED`). An analyst who filters on PASSED gets only photos that were checked against a card. Test: `ResearchCaptureProcessorTest`. Open: R02 still shows the card status of the last saved session, so the worker is not told before the session that the card is missing (hand-off follow-up a, package C2).
 2. A process kill after an encrypted photo is written and before the database commits leaves a `cap_*.enc` file with no row. `EncryptedFileStore` cannot list files; it needs a `listFiles` and a start-up sweep that deletes files no capture row names. (C2, privacy review.)
 3. `ResearchJpegSanitizer.validateAllowList` accepts a longer APP0 or APP1 segment, a missing EOI and stray bytes between segments. `sanitize()` rewrites every photo first, so this is depth only; the repository now treats an exception from it as a refusal. (D1.)
 4. The unlock and save buttons are not drawn disabled while a check or save runs; the view model ignores the extra tap. Photo bytes are not zeroed after a lock; the state is cleared. (C2.)
@@ -1651,9 +1654,28 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 15. The card the record names is the one the phone holds (the active profile's), not the card in the photo; a worker holding a different card gets the profile card's status. Binding the batch to the scanned card needs a card scan in the research session. (C2 or C4; doc 6 says so.)
 16. A save that finishes after a lock now keeps the rows and shows nothing; the save is not cancelled when the session locks. A cancellation that arrives while the transaction commits is covered by a `committed` flag, but the Room version's behaviour was not checked. (C2.)
 17. The screening save path in `MainActivity` clamps an age with `coerceIn(0.0, 720.0)` instead of refusing it (a birth time in the future becomes age 0, a very old one becomes 720). It matters only when screening is switched on. (E1, with BUG-2026-001.)
+19. No DAST pass has reached the authenticated routes: StackHawk cannot make a device assertion, so it got 401 on every route except `/health` and `/enrollments` (BUG-2026-084). A test-only issuer key and a helper that signs assertions for the scanner would let it exercise participants, sessions, captures and TSB, and the cross-device checks. (F3, with the Schemathesis work.)
 18. The age shown on R03 is the whole hours (`toInt`, rounded down) and the record is rounded down to a tenth: the two agree to within a tenth of an hour. (None.)
 
 **Expected fix** Per item, in the package named.
+
+#### BUG-2026-084: The API does not send X-Content-Type-Options when it is reached on its own port
+
+- Area: SEC | Severity: S4 | Clinical: No | Hazard: - | Priority: P3
+- Status: Fixed | Owner: Unassigned | Test case: n/a (`test_health.py`) | Fix version:
+
+**Steps**
+1. Start the Study Intake Service on a local port and scan it with StackHawk (`stackhawk.yml`, first run on 30 October 2026).
+
+**Expected** Responses carry `X-Content-Type-Options: nosniff` (doc 8 Section 10).
+
+**Actual** `GET /v1/health` had no such header. Only `deploy/Caddyfile` sets it, so the API depended on the proxy. The scan reached all 8 route groups of `docs/api/openapi.yaml` and reported this one Low finding and nothing else.
+
+**Evidence** StackHawk scan 38413821-2912-496b-abe2-773212640c90 (app `neogold-backend`, environment Development); rescan c7a8a2b7-ea48-4d8b-b3c2-3487c653550a after the fix: no findings.
+
+**Notes** Behind Caddy the header was already present, so no study server was affected. What the scan did not test: every route except `/health` and `/enrollments` needs a device assertion signed by a phone's hardware key, which a scanner cannot make, so the scan got 401 on them. Authorization logic (a device reading another device's participants or sessions) has not had a DAST pass; see BUG-2026-083 item 19.
+
+**Fix** `SecurityHeadersMiddleware` sets the header on every response, including 401s from the auth layer (it is the outermost middleware). Test: `test_responses_carry_x_content_type_options_nosniff`. The backend suite passes (80 tests).
 
 ---
 
@@ -1675,7 +1697,7 @@ Updated with each test summary report (doc 9 Section 15).
 | S1 | 19 | 10 | 0 |
 | S2 | 37 | 0 | 0 |
 | S3 | 21 | 1 | 0 |
-| S4 | 0 | 0 | 0 |
+| S4 | 1 | 0 | 0 |
 
 As of 30 October 2026, counted from the table in Section 4: a defect is open until it is Verified, so Fixed ones still count. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
 

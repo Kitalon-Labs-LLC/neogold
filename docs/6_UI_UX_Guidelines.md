@@ -290,7 +290,7 @@ Gestational age is collected on S10, so the gestational age check needs no extra
 
 `R01 Unlock` → `R02 Study home` → `R03 Participant code + consent ID` → `S10 to S13 inputs` → `R04 Captures: sternum, forehead, sclera flash, sclera no-flash (estimate hidden)` → `R05 TSB value and draw time (now or later)` → `R06 Complete` → outbox.
 
-R03 starts with no birth time and no age. The age on the record is worked out from the birth time when the session is saved, rounded down to a tenth of an hour (toward the younger age); the form refuses an age over 719 hours with a message (the limit in doc 7 is 720, and one hour is left for the captures), and a birth time after the save time is refused. The card named in the record is the one of the phone's active device profile, which is not necessarily the card in the photo; if that card has expired the record says `EXPIRED` and the quality check gets no reference colors. A card is valid through the whole day it expires on.
+R03 starts with no birth time and no age. The age on the record is worked out from the birth time when the session is saved, rounded down to a tenth of an hour (toward the younger age); the form refuses an age over 719 hours with a message (the limit in doc 7 is 720, and one hour is left for the captures), and a birth time after the save time is refused. The card named in the record is the one of the phone's active device profile, which is not necessarily the card in the photo; if that card has expired the record says `EXPIRED` and the quality check gets no reference colors; a photo taken with no card to compare with is recorded as not passed, with the reason `NO_REFERENCE_CARD`, and the worker is not stopped. A card is valid through the whole day it expires on.
 
 ---
 

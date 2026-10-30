@@ -95,6 +95,7 @@ Fill this in as work packages create them; keep it current.
 | On-device security and camera tests (real Keystore, SQLCipher, delete-all, the camera host; emulator or phone) | `cd android && ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest`, then `adb install -r -t app/build/outputs/apk/debug/app-universal-debug.apk` and `adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`, then `adb shell am instrument -w com.kitalonlabs.neogold.debug.test/androidx.test.runner.AndroidJUnitRunner` |
 | Release bundle and its size (ADR-018, NFR-04) | `cd android && ./gradlew :app:bundleRelease`, then `bundletool build-apks` and `bundletool get-size total` with `--device-spec` for an arm64-v8a and an armeabi-v7a phone (download under 25 MB, install under 40 MB) |
 | Backend tests | `cd backend && pytest -q` |
+| DAST scan of the backend (StackHawk; start the service on a local port first, never scan a study server; the key comes from the environment only) | `APP_HOST=http://127.0.0.1:8000 HAWK_API_KEY=... hawk scan stackhawk.yml` |
 | Card generator | `python card/generator/render_card.py` |
 | Card signing tool | `python3 card/tools/neogold-sign/neogold_sign.py --help` |
 | Card package tests | `pytest card/tests` |
