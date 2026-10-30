@@ -23,6 +23,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.fail
@@ -144,6 +147,23 @@ class ResearchViewModelTest {
         assertThat(viewModel.activeStudy.value?.studyCode).isEqualTo("SKP01")
         assertThat(viewModel.scannedProfile.value).isNull()
         assertThat(study("SKP01")).isNotNull()
+    }
+
+    @Test
+    fun tcRsh01_aScannedQrSurvivesTheFirstLockedStateEveryNewViewModelReceives() = runTest {
+        // A paused dispatcher: the view model's collector of the session has not run yet when the QR is scanned.
+        val paused = StandardTestDispatcher(testScheduler)
+        val fresh = ResearchViewModel(
+            repository = repository,
+            sessionManager = session,
+            scope = CoroutineScope(paused + SupervisorJob()),
+            cpu = paused
+        )
+
+        fresh.onStudyQrScanned(qr)
+        advanceUntilIdle() // now the collector receives the session's first state, "locked"
+
+        assertThat(fresh.scannedProfile.value).isNotNull()
     }
 
     @Test

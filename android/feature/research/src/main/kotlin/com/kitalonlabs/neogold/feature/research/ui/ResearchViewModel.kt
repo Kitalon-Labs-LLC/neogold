@@ -114,9 +114,13 @@ class ResearchViewModel(
         // Observe session lock state
         if (sessionManager != null) {
             scope.launch {
+                var clearedAt = sessionManager.lockCount
                 sessionManager.isUnlocked.collect { unlocked ->
-                    if (!unlocked) {
-                        // Whatever lock it was (timeout, screen off, button), nothing of the session stays in memory.
+                    // A real lock (the count moved), whatever caused it (timeout, screen off, button): nothing of the session
+                    // stays in memory. The first "locked" that every new collector receives is not a lock: it must not wipe
+                    // a QR that was scanned a moment after this view model was made.
+                    if (!unlocked && sessionManager.lockCount != clearedAt) {
+                        clearedAt = sessionManager.lockCount
                         clearSessionState()
                         clearScannedProfile()
                     }
