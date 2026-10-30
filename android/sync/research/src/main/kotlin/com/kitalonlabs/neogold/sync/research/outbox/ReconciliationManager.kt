@@ -111,7 +111,9 @@ class ReconciliationManager(
      * Triggered when data_generation increases from GET /device (doc 7 Section 5.4, TC-SYNC-14).
      * Re-sends every held item (card batches, participants, manifests, images, TSBs).
      */
-    @Suppress("NestedBlockDepth") // reworked with the sync wiring in C4
+    @Suppress(
+        "NestedBlockDepth"
+    ) // a session is deleted only after every related item is acknowledged and the server reports it complete
     suspend fun recheckAndResendAllHeldItems(studyId: String, newGeneration: Long) {
         val now = System.currentTimeMillis()
 

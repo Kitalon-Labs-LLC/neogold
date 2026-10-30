@@ -39,7 +39,9 @@ sealed class OutboxResult {
     data class Error(val message: String, val cause: Throwable? = null) : OutboxResult()
 }
 
-@Suppress("LongParameterList") // upload state machine; reworked with the sync wiring in C4
+@Suppress(
+    "LongParameterList"
+) // upload state machine; the collaborators are the DAOs and the API client, injected for tests
 class OutboxProcessor(
     private val apiClient: ResearchApiClient,
     private val outboxDao: OutboxDao,
@@ -427,7 +429,7 @@ class OutboxProcessor(
         )
     }
 
-    @Suppress("ReturnCount") // upload state machine; reworked with the sync wiring in C4
+    @Suppress("ReturnCount") // upload state machine; each early exit is a different server answer
     private suspend fun handleApiError(item: OutboxEntity, error: ApiException) {
         val now = System.currentTimeMillis()
         val code = error.errorCode

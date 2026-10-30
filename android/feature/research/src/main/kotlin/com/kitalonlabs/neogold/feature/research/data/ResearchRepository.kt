@@ -238,7 +238,7 @@ class ResearchRepository(
     /**
      * Enrolls or retrieves a participant with format validation (FR-26, TC-RSH-08, TC-RSH-09).
      */
-    @Suppress("ReturnCount") // one database transaction per call; reworked with the research session in C2
+    @Suppress("ReturnCount") // one database transaction per call; each early exit is a different refusal
     suspend fun registerParticipant(
         studyId: String,
         participantCode: String,
@@ -589,7 +589,7 @@ class ResearchRepository(
      * Records a TSB measurement by participant code (FR-28, NG-031, TC-RSH-11).
      * Can be entered later without a session ID.
      */
-    @Suppress("ReturnCount") // one database transaction per call; reworked with the research session in C2
+    @Suppress("ReturnCount") // one database transaction per call; each early exit is a different refusal
     suspend fun recordTsb(
         participantCode: String,
         tsbMgDl: Double,

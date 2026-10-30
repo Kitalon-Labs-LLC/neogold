@@ -166,7 +166,9 @@ class ScreeningStateMachine(
         }
     }
 
-    @Suppress("ReturnCount") // reworked with the screening wiring in E1
+    @Suppress(
+        "ReturnCount"
+    ) // each early exit is a different state: a passed frame, a retake, or the blood-test fallback
     private fun handleFrameCaptured(event: ScreeningEvent.FrameCaptured): ScreeningState {
         val current = _state.value
         val (inputs, cardBatch, attempt) = when (current) {

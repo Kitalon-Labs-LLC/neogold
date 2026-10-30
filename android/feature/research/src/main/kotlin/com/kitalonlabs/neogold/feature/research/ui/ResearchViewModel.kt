@@ -270,7 +270,9 @@ class ResearchViewModel(
         }
     }
 
-    @Suppress("LongParameterList") // reworked with the research session in C2
+    @Suppress(
+        "LongParameterList"
+    ) // the constructor takes the repository, clock, retention and the data-queued callback; a holder class would only move them
     fun registerParticipantAndInputs(
         participantCode: String,
         consentFormId: String,

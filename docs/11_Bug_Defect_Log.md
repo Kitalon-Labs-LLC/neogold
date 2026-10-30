@@ -706,6 +706,9 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Adding the library needs dependency approval (CLAUDE.md). Fix package R6.
 
+**Assessment, package F2 (31 October 2026): not built, owner decision.** `com.google.android.play:app-update` 2.1.0 (the latest; published May 2023) is under the "Play Core Software Development Kit Terms of Service", a proprietary licence, and pulls `play-services-basement` and `play-services-tasks` (proprietary Google Play services libraries) and `core-common`. The repository is MIT and the licence gate (`tools/check_licenses.py`, TC-OPS-08) accepts only permissive licences, so adding it needs a decision to allow a proprietary Google library into an otherwise open-source, SDK-free build, plus a licence mapping, lockfile and checksum changes, a manifest check (Gate S5) and a size measurement. What exists without it: in research mode the study server's `min_app_version` already blocks an old build, and Play closed testing delivers updates normally. Without the library an app can only open the store listing; the in-app update priority (0 to 5) cannot be read. Recommendation: do not add it for the v1.0 closed research build; decide for the public release. `InAppUpdateManager` and its fake remain as the interface.
+
+
 #### BUG-2026-029: About 150 hardcoded English UI strings; the string lint does not check Kotlin
 
 - Area: A11Y | Severity: S2 | Clinical: No | Hazard: - | Priority: P2

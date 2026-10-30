@@ -130,7 +130,7 @@ class ResearchExportManager(
     @Suppress(
         "LongMethod",
         "TooGenericExceptionCaught"
-    ) // report any export failure through Result and progress, never crash; reworked with the export wiring in C3
+    ) // report any export failure through Result and progress, never crash
     suspend fun exportToStream(
         outputStream: OutputStream,
         stagingDir: File = File(context.cacheDir, "export_staging"),
