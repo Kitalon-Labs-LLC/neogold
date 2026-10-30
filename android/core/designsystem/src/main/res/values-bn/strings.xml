@@ -5,6 +5,8 @@
     <string name="action_recheck">%d ঘণ্টা পর আবার পরীক্ষা করুন</string>
     <string name="action_no_further">এই পরীক্ষা থেকে আর কিছু করার নেই</string>
     <string name="next_no_further">নিয়মিত যত্ন চালিয়ে যান। বিপদচিহ্নের দিকে নজর রাখুন।</string>
+    <string name="next_blood_test">আজই রক্ত পরীক্ষার জন্য পাঠান।</string>
+    <string name="next_recheck">%1$s সময়ে আবার দেখুন। বিপদচিহ্ন দেখা দিলে আরও আগে ফিরে আসুন।</string>
     <string name="confirm_blood">সবসময় রক্ত পরীক্ষা করে নিশ্চিত হোন।</string>
     <string name="experimental">পরীক্ষামূলক। বাংলাদেশে এখনো যাচাই করা হয়নি।</string>
     <string name="cannot_screen">নিওগোল্ড এই শিশুকে পরীক্ষা করতে পারবে না। রক্ত পরীক্ষা করান।</string>

@@ -48,13 +48,7 @@ fun WhatToTellTheMotherCard(
 ) {
     var expanded by remember { mutableStateOf(initiallyExpanded) }
 
-    val scriptResId = when (action) {
-        TriageUiAction.REFER_URGENT -> R.string.mother_card_refer_urgent
-        TriageUiAction.BLOOD_TEST -> R.string.mother_card_blood_test
-        TriageUiAction.RECHECK -> R.string.mother_card_recheck
-        TriageUiAction.NO_FURTHER_ACTION -> R.string.mother_card_no_further
-        TriageUiAction.CANNOT_SCREEN -> R.string.cannot_screen
-    }
+    val scriptResId = motherCardScriptRes(action)
 
     Card(
         shape = RoundedCornerShape(CardCornerRadius),
@@ -104,6 +98,16 @@ fun WhatToTellTheMotherCard(
             }
         }
     }
+}
+
+/** The script for each result (TC-UI-09); a test reads the strings these point at. */
+@androidx.annotation.StringRes
+internal fun motherCardScriptRes(action: TriageUiAction): Int = when (action) {
+    TriageUiAction.REFER_URGENT -> R.string.mother_card_refer_urgent
+    TriageUiAction.BLOOD_TEST -> R.string.mother_card_blood_test
+    TriageUiAction.RECHECK -> R.string.mother_card_recheck
+    TriageUiAction.NO_FURTHER_ACTION -> R.string.mother_card_no_further
+    TriageUiAction.CANNOT_SCREEN -> R.string.cannot_screen
 }
 
 private const val EXPANDED_ARROW_ROTATION_DEGREES = 180f

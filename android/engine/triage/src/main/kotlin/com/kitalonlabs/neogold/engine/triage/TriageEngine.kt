@@ -15,6 +15,16 @@ class TriageEngine(
 ) {
 
     /**
+     * Steps 1 and 2 of [evaluate] on their own, for the screen that decides whether the camera opens at all: the
+     * configuration is available (enabled, signed for a public build, not expired) and none of the hard rules R1 to R5
+     * fires. No estimate is needed, so none is read.
+     *
+     * @return [TriageResult.Unavailable] or the [TriageResult.Action] of the first hard rule that matches, or null when
+     * capture may begin. This is the same code [evaluate] runs for those steps, so the two cannot disagree.
+     */
+    fun evaluateBeforeCapture(inputs: TriageInputs): TriageResult? = unavailableOrHardRule(inputs, interval = null)
+
+    /**
      * Evaluates triage inputs against configuration rules and phototherapy thresholds.
      *
      * @param inputs Clinical screening inputs and bilirubin estimation interval.
@@ -22,32 +32,6 @@ class TriageEngine(
      */
     @Suppress("LongMethod", "ReturnCount") // ordered rules, the first match returns (doc 4 Section 6)
     fun evaluate(inputs: TriageInputs): TriageResult {
-        // Step 1: Config availability check
-        if (!config.triageEnabled) {
-            return TriageResult.Unavailable(
-                reason = TriageUnavailableReason.TRIAGE_DISABLED,
-                message = "Triage is disabled in this configuration. Please confirm with a blood test.",
-                configVersion = config.configVersion
-            )
-        }
-
-        if (isPublicBuild && config.clinicalSignoff.status != SignoffStatus.SIGNED) {
-            return TriageResult.Unavailable(
-                reason = TriageUnavailableReason.CONFIG_UNSIGNED,
-                message = "Clinical configuration is not signed for public release. Please confirm with a blood test.",
-                configVersion = config.configVersion
-            )
-        }
-
-        val today = clock()
-        if (today.isAfter(config.validUntil)) {
-            return TriageResult.Unavailable(
-                reason = TriageUnavailableReason.CONFIG_EXPIRED,
-                message = "Triage configuration has expired. Please update the application.",
-                configVersion = config.configVersion
-            )
-        }
-
         val interval = if (inputs.estimate != null && inputs.lowerBound != null && inputs.upperBound != null) {
             PredictionInterval(
                 estimate = inputs.estimate,
@@ -58,56 +42,8 @@ class TriageEngine(
             null
         }
 
-        // Step 2: Hard rules in strict order R1 to R5 (first match wins)
-        if (inputs.dangerSigns) {
-            return TriageResult.Action(
-                action = TriageAction.REFER_URGENT,
-                reasonCode = TriageReasonCode.R1,
-                thresholdUsed = null,
-                interval = interval,
-                configVersion = config.configVersion
-            )
-        }
-
-        if (inputs.jaundiceOnsetUnder24h) {
-            return TriageResult.Action(
-                action = TriageAction.REFER_URGENT,
-                reasonCode = TriageReasonCode.R2,
-                thresholdUsed = null,
-                interval = interval,
-                configVersion = config.configVersion
-            )
-        }
-
-        if (inputs.gestationalAgeWeeks < config.scope.minGestationalAgeWeeks) {
-            return TriageResult.Action(
-                action = TriageAction.CANNOT_SCREEN_BLOOD_TEST,
-                reasonCode = TriageReasonCode.R3,
-                thresholdUsed = null,
-                interval = interval,
-                configVersion = config.configVersion
-            )
-        }
-
-        if (inputs.priorPhototherapy) {
-            return TriageResult.Action(
-                action = TriageAction.CANNOT_SCREEN_BLOOD_TEST,
-                reasonCode = TriageReasonCode.R4,
-                thresholdUsed = null,
-                interval = interval,
-                configVersion = config.configVersion
-            )
-        }
-
-        if (inputs.ageHours > config.scope.maxAgeHours) {
-            return TriageResult.Action(
-                action = TriageAction.CANNOT_SCREEN_CLINICAL_REVIEW,
-                reasonCode = TriageReasonCode.R5,
-                thresholdUsed = null,
-                interval = interval,
-                configVersion = config.configVersion
-            )
-        }
+        // Steps 1 and 2: configuration availability, then the hard rules in strict order R1 to R5 (first match wins)
+        unavailableOrHardRule(inputs, interval)?.let { return it }
 
         // Step 3: Quality fallback (3 failed capture attempts)
         if (inputs.qualityFailedAttempts >= 3) {
@@ -203,4 +139,60 @@ class TriageEngine(
             configVersion = config.configVersion
         )
     }
+
+    /** Step 1 (configuration availability) and step 2 (hard rules R1 to R5), shared by [evaluate] and [evaluateBeforeCapture]. */
+    @Suppress("ReturnCount") // ordered rules, the first match returns (doc 4 Section 6)
+    private fun unavailableOrHardRule(inputs: TriageInputs, interval: PredictionInterval?): TriageResult? {
+        // Step 1: Config availability check
+        if (!config.triageEnabled) {
+            return TriageResult.Unavailable(
+                reason = TriageUnavailableReason.TRIAGE_DISABLED,
+                message = "Triage is disabled in this configuration. Please confirm with a blood test.",
+                configVersion = config.configVersion
+            )
+        }
+
+        if (isPublicBuild && config.clinicalSignoff.status != SignoffStatus.SIGNED) {
+            return TriageResult.Unavailable(
+                reason = TriageUnavailableReason.CONFIG_UNSIGNED,
+                message = "Clinical configuration is not signed for public release. Please confirm with a blood test.",
+                configVersion = config.configVersion
+            )
+        }
+
+        val today = clock()
+        if (today.isAfter(config.validUntil)) {
+            return TriageResult.Unavailable(
+                reason = TriageUnavailableReason.CONFIG_EXPIRED,
+                message = "Triage configuration has expired. Please update the application.",
+                configVersion = config.configVersion
+            )
+        }
+
+        // Step 2: Hard rules in strict order R1 to R5 (first match wins)
+        if (inputs.dangerSigns) {
+            return hardRule(TriageAction.REFER_URGENT, TriageReasonCode.R1, interval)
+        }
+        if (inputs.jaundiceOnsetUnder24h) {
+            return hardRule(TriageAction.REFER_URGENT, TriageReasonCode.R2, interval)
+        }
+        if (inputs.gestationalAgeWeeks < config.scope.minGestationalAgeWeeks) {
+            return hardRule(TriageAction.CANNOT_SCREEN_BLOOD_TEST, TriageReasonCode.R3, interval)
+        }
+        if (inputs.priorPhototherapy) {
+            return hardRule(TriageAction.CANNOT_SCREEN_BLOOD_TEST, TriageReasonCode.R4, interval)
+        }
+        if (inputs.ageHours > config.scope.maxAgeHours) {
+            return hardRule(TriageAction.CANNOT_SCREEN_CLINICAL_REVIEW, TriageReasonCode.R5, interval)
+        }
+        return null
+    }
+
+    private fun hardRule(action: TriageAction, reasonCode: String, interval: PredictionInterval?) = TriageResult.Action(
+        action = action,
+        reasonCode = reasonCode,
+        thresholdUsed = null,
+        interval = interval,
+        configVersion = config.configVersion
+    )
 }
