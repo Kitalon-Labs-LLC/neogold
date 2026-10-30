@@ -76,6 +76,8 @@ All Bengali strings below are currently **Draft for nurse panel review**.
 | `clock_wrong_block` | The phone's date or time looks wrong. Set the date and time automatically, then try again. | ফোনের তারিখ বা সময় ভুল মনে হচ্ছে। তারিখ ও সময় স্বয়ংক্রিয়ভাবে সেট করে আবার চেষ্টা করুন। | S10 Blocked screening | Draft for nurse panel |
 | `clock_auto_off` | Automatic date and time is off. Turn it on so the baby's age is calculated correctly. | স্বয়ংক্রিয় তারিখ ও সময় বন্ধ আছে। শিশুর বয়স ঠিকভাবে হিসাব করতে এটি চালু করুন। | S10 Battery/clock alert | Draft for nurse panel |
 | `study_settings_mismatch` | Study settings do not match. Contact your coordinator. | স্টাডির সেটিংস মিলছে না। আপনার কোঅর্ডিনেটরের সাথে যোগাযোগ করুন। | R08 Setting profile error | Draft for nurse panel |
+| `forehead_photo_problem` | The forehead photo could not be used. Place the card flat on the forehead and try again, or continue without it. | কপালের ছবিটি ব্যবহার করা যায়নি। কার্ডটি কপালে সমতলভাবে রেখে আবার তুলুন, অথবা ছবি ছাড়াই এগিয়ে যান। | S18 after a forehead photo was refused | Draft for nurse panel |
+| `forehead_photo_limit` | The forehead photo could not be used after three tries. Continue without it. | তিনবার চেষ্টা করেও কপালের ছবি ব্যবহার করা যায়নি। ছবি ছাড়াই এগিয়ে যান। | S18 after three tries | Draft for nurse panel |
 
 ---
 

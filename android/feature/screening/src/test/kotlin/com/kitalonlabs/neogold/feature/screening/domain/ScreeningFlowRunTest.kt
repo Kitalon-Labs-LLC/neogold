@@ -181,6 +181,9 @@ class ScreeningFlowRunTest {
         val state = f.analyze(goodFrame, null)
 
         val result = state as ScreeningState.Result
+        // the worker is first asked about the optional forehead photo (FR-15); nothing is saved before that choice
+        assertThat(f.record("s", 1L, "12/345", "profile-1", captureAttempts = 1)).isNull()
+        f.skipForehead()
         val row = f.record("s", 1L, "12/345", "profile-1", captureAttempts = 1)!!
         assertThat(result.versions.cardBatchId).isEqualTo("BATCH-2026-TEST")
         assertThat(row.cardBatchId).isEqualTo("BATCH-2026-TEST")

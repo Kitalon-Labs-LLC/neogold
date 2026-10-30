@@ -194,6 +194,8 @@
     <string name="forehead_photo_desc">শিশুর কপালে কার্ড রেখে দ্বিতীয় ছবি তুললে অনুমানে অতিরিক্ত সাহায্য করে।</string>
     <string name="btn_add_forehead">কপালের ছবি যোগ করুন</string>
     <string name="btn_skip_forehead">কপালের ছবি বাদ দিন</string>
+    <string name="forehead_photo_problem">কপালের ছবিটি ব্যবহার করা যায়নি। কার্ডটি কপালে সমতলভাবে রেখে আবার তুলুন, অথবা ছবি ছাড়াই এগিয়ে যান।</string>
+    <string name="forehead_photo_limit">তিনবার চেষ্টা করেও কপালের ছবি ব্যবহার করা যায়নি। ছবি ছাড়াই এগিয়ে যান।</string>
 
     <!-- S19 Analyzing -->
     <string name="analyzing_title">ছবি বিশ্লেষণ করা হচ্ছে...</string>

@@ -56,6 +56,17 @@ fun resultRouteFor(state: ScreeningState): String = when (state) {
     else -> Destinations.S20_RESULT
 }
 
+/**
+ * Where to go once a photo has been analysed. A result made from the chest photo is not shown yet when the model can also use
+ * a forehead photo: the worker is first asked whether to add one (S18, FR-15), so the result on the screen is the final one.
+ */
+fun routeAfterAnalysis(flow: ScreeningFlow, state: ScreeningState): String =
+    if (state is ScreeningState.Result && flow.shouldOfferForehead) {
+        Destinations.S18_FOREHEAD_PHOTO
+    } else {
+        resultRouteFor(state)
+    }
+
 /** Writes the screening log row for a finished screening. Nothing is written for a screening with no decision. */
 suspend fun saveScreening(
     flow: ScreeningFlow?,

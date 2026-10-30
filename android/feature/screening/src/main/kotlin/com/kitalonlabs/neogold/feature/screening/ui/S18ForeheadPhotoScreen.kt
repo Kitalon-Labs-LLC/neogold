@@ -39,7 +39,9 @@ import com.kitalonlabs.neogold.core.designsystem.R
 
 /**
  * S18 Optional Forehead Photo screen.
- * Health worker can choose to add a forehead photo or skip (FR-15, NG-040, TC-CAP-16).
+ * Health worker can choose to add a forehead photo or skip (FR-15, NG-040, TC-CAP-16). A forehead photo that was tried and
+ * could not be used is said so ([photoProblem]); once three have been tried only skipping is left ([canAdd] false). Skipping,
+ * or a photo that fails, never changes the result from the chest photo.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +49,9 @@ fun S18ForeheadPhotoScreen(
     onAddForehead: () -> Unit,
     onSkipForehead: () -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    photoProblem: Boolean = false,
+    canAdd: Boolean = true
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -63,7 +67,7 @@ fun S18ForeheadPhotoScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.btn_back)
                         )
                     }
                 },
@@ -115,6 +119,18 @@ fun S18ForeheadPhotoScreen(
                             color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 24.sp
                         )
+
+                        if (photoProblem) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(
+                                    if (canAdd) R.string.forehead_photo_problem else R.string.forehead_photo_limit
+                                ),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                lineHeight = 24.sp
+                            )
+                        }
                     }
                 }
             }
@@ -126,6 +142,7 @@ fun S18ForeheadPhotoScreen(
             ) {
                 Button(
                     onClick = onAddForehead,
+                    enabled = canAdd,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

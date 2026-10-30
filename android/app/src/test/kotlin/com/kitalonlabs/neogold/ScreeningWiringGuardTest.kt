@@ -48,6 +48,13 @@ class ScreeningWiringGuardTest {
         // an outcome that is settled is shown at once, and a route that lost its flow goes Home, never to an empty screen
         assertThat(activity).contains("flow?.decideEarly()")
         assertThat(activity).contains("screening == null ->")
+        // the optional forehead photo (FR-15): offered before the result is shown, skipped or added through the flow, and
+        // the result screen never shows the chest-only result while the choice is still open
+        assertThat(activity).contains("Destinations.S18_FOREHEAD_PHOTO")
+        assertThat(activity).contains("flow.addForehead(")
+        assertThat(activity).contains("flow?.skipForehead()")
+        assertThat(activity).contains("flow.shouldOfferForehead")
+        assertThat(activity).contains("routeAfterAnalysis(flow, after)")
         // the screening is held by the app, so rotation and the app lock do not lose it
         assertThat(activity).contains("var screening by screeningHolder::flow")
         // nothing in a route sets a rule outcome or a result by hand

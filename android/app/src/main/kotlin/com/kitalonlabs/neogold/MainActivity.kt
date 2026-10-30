@@ -93,6 +93,7 @@ import com.kitalonlabs.neogold.feature.screening.ui.S14RuleOutcomeScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S15CaptureGuideScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S16CameraScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S17PhotoProblemScreen
+import com.kitalonlabs.neogold.feature.screening.ui.S18ForeheadPhotoScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S19AnalyzingScreen
 import com.kitalonlabs.neogold.feature.screening.ui.nextStepText
 import com.kitalonlabs.neogold.feature.screening.ui.reasonText
@@ -828,12 +829,32 @@ fun NeoGoldNavHost(
             )
         }
 
-        // S18 (an optional forehead photo) is not in the flow: the estimate is made from the sternum photo alone. A second
-        // site needs the pipeline to take two photos (BUG-2026-090).
+        // S18: the optional forehead photo (FR-15, NG-040). Offered after the chest photo has passed, before the result is
+        // shown; skipping, or a forehead photo that fails, leaves the result from the chest photo as it is.
+        screeningComposable(Destinations.S18_FOREHEAD_PHOTO) {
+            val flow = screening
+            S18ForeheadPhotoScreen(
+                onAddForehead = {
+                    if (flow?.startForeheadPhoto() == true) navController.navigate(Destinations.S16_CAMERA)
+                },
+                onSkipForehead = {
+                    flow?.skipForehead()
+                    navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
+                },
+                // Back is "go on without it": the result already exists and is never thrown away unseen
+                onBack = {
+                    flow?.skipForehead()
+                    navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
+                },
+                photoProblem = (flow?.foreheadAttempts ?: 0) > 0,
+                canAdd = flow?.canAddForehead == true
+            )
+        }
 
         screeningComposable(Destinations.S19_ANALYZING) {
             val flow = screening
             val photo = remember { pendingPhoto } // read once, when the screen is entered
+            val isForehead = remember { flow?.awaitingForehead == true } // the optional second photo, not the first
             // the photo is dropped when the worker leaves this screen by any way
             androidx.compose.runtime.DisposableEffect(Unit) { onDispose { pendingPhoto = null } }
             androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -843,7 +864,18 @@ fun NeoGoldNavHost(
                         Destinations.S16_CAMERA
                     ) { popUpTo(Destinations.S19_ANALYZING) { inclusive = true } }
                 }
-                if (flow != null && photo != null) {
+                if (flow != null && photo != null && isForehead) {
+                    val outcome = flow.addForehead(photo.first)
+                    pendingPhoto = null // the photo is dropped as soon as the analysis is over
+                    if (outcome is ScreeningFlow.ForeheadOutcome.Added) {
+                        navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
+                    } else {
+                        // refused or not usable: the worker may try again or go on without it
+                        navController.navigate(Destinations.S18_FOREHEAD_PHOTO) {
+                            popUpTo(Destinations.S18_FOREHEAD_PHOTO) { inclusive = true }
+                        }
+                    }
+                } else if (flow != null && photo != null) {
                     val after = flow.analyze(photo.first, photo.second)
                     pendingPhoto = null // the photo is dropped as soon as the analysis is over
                     if (after is ScreeningState.Capture) {
@@ -851,18 +883,29 @@ fun NeoGoldNavHost(
                             popUpTo(Destinations.S19_ANALYZING) { inclusive = true }
                         }
                     } else {
-                        navController.navigate(resultRouteFor(after)) { popUpTo(Destinations.S09_HOME) }
+                        navController.navigate(routeAfterAnalysis(flow, after)) { popUpTo(Destinations.S09_HOME) }
                     }
                 }
             }
             S19AnalyzingScreen(
                 onTimeoutFallback = {
-                    // the worker does not want to wait: a blood test, decided by the engine
                     pendingPhoto = null
-                    val after = flow?.giveUp()
-                    if (after != null) {
-                        navController.navigate(resultRouteFor(after)) { popUpTo(Destinations.S09_HOME) }
+                    if (isForehead) {
+                        // the optional photo is not worth waiting for: go on without it, the chest result is untouched
+                        flow?.skipForehead()
+                        navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
+                    } else {
+                        // the worker does not want to wait: a blood test, decided by the engine
+                        val after = flow?.giveUp()
+                        if (after != null) {
+                            navController.navigate(resultRouteFor(after)) { popUpTo(Destinations.S09_HOME) }
+                        }
                     }
+                },
+                fallbackLabel = if (isForehead) {
+                    com.kitalonlabs.neogold.core.designsystem.R.string.btn_skip_forehead
+                } else {
+                    com.kitalonlabs.neogold.core.designsystem.R.string.action_blood_test
                 }
             )
         }
@@ -870,7 +913,12 @@ fun NeoGoldNavHost(
         screeningComposable(Destinations.S20_RESULT) {
             val flow = screening
             val shown = flow?.currentState?.shownResult()
-            if (flow != null && shown != null) {
+            if (flow != null && flow.shouldOfferForehead) {
+                // the worker has not yet chosen whether to add a forehead photo: the result shown is the final one
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    navController.navigate(Destinations.S18_FOREHEAD_PHOTO) { popUpTo(Destinations.S09_HOME) }
+                }
+            } else if (flow != null && shown != null) {
                 val presentation = shown.presentation
                 S20ResultScreen(
                     action = presentation.uiAction,

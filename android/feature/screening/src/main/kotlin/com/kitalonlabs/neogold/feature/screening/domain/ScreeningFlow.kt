@@ -5,9 +5,11 @@ import com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker
 import com.kitalonlabs.neogold.engine.camera.model.CaptureMetadata
 import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
+import com.kitalonlabs.neogold.engine.estimation.BodySite
 import com.kitalonlabs.neogold.engine.estimation.EstimationEngine
 import com.kitalonlabs.neogold.engine.triage.TriageEngine
 import com.kitalonlabs.neogold.engine.vision.ImageFrame
+import com.kitalonlabs.neogold.engine.vision.QualityReasonCode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -54,6 +56,16 @@ class ScreeningFlow(
             versions = run.versions,
             captureMetadata = run.metadata
         )
+    },
+    private val runForehead: (ForeheadAnalysis) -> PipelineExecutionResult = { run ->
+        pipeline.addForehead(
+            sternum = run.sternum,
+            frame = run.frame,
+            attempt = run.attempt,
+            inputs = run.inputs,
+            estimationEngine = run.estimationEngine,
+            triageEngine = run.triageEngine
+        )
     }
 ) {
     /** What one analysis is given. */
@@ -67,6 +79,28 @@ class ScreeningFlow(
         val triageEngine: TriageEngine,
         val versions: VersionsRecord
     )
+
+    /** What one forehead analysis is given: the sternum result it adds to, and the photo. */
+    class ForeheadAnalysis(
+        val sternum: ScreeningIntermediateData,
+        val frame: ImageFrame,
+        val attempt: Int,
+        val inputs: ScreeningInputs,
+        val estimationEngine: EstimationEngine,
+        val triageEngine: TriageEngine
+    )
+
+    /** What adding the forehead photo came to. In every case but [Added] the result from the sternum photo stands. */
+    sealed class ForeheadOutcome {
+        /** Both sites were used and the engine decided again. */
+        data object Added : ForeheadOutcome()
+
+        /** The quality gate refused the photo; [reason] says why, and the worker may take it again or go on without it. */
+        data class PhotoProblem(val reason: QualityReasonCode?) : ForeheadOutcome()
+
+        /** The photo could not be used (too slow, or the analysis failed); the worker may go on without it. */
+        data object NotUsed : ForeheadOutcome()
+    }
 
     private val machine = ScreeningStateMachine(integrityChecker)
 
@@ -95,6 +129,22 @@ class ScreeningFlow(
     var photosTaken: Int = 0
         private set
 
+    // the optional forehead photo (FR-15): tries so far, whether the worker has settled it, and why the last try was refused
+    private var sternumAttempt = 1
+    private var foreheadSettled = false
+
+    /** How many forehead photos have been tried in this screening. */
+    var foreheadAttempts: Int = 0
+        private set
+
+    /** Why the last forehead photo was refused, or null. */
+    var foreheadProblem: QualityReasonCode? = null
+        private set
+
+    /** True from the moment the worker chooses to add a forehead photo until that photo has been analysed. */
+    var awaitingForehead: Boolean = false
+        private set
+
     /** Starts a new screening. [guardianConsentConfirmed] is the answer at S10a; without it the camera never opens. */
     fun begin(guardianConsentConfirmed: Boolean): ScreeningState {
         consent = guardianConsentConfirmed
@@ -104,6 +154,11 @@ class ScreeningFlow(
         dangerSigns = null
         priorPhototherapy = null
         photosTaken = 0
+        sternumAttempt = 1
+        foreheadSettled = false
+        foreheadAttempts = 0
+        foreheadProblem = null
+        awaitingForehead = false
         decidedAtMs = 0L
         saved = false
         machine.dispatch(ScreeningEvent.Reset)
@@ -210,14 +265,11 @@ class ScreeningFlow(
      * Analyses one photo. A photo the quality gate refuses sends the worker back to take another (up to three, then a blood
      * test); a photo that passes is carried through colour correction, the estimate and the triage decision.
      */
-    @Suppress(
-        "ReturnCount",
-        "TooGenericExceptionCaught",
-        "SwallowedException"
-    ) // a failed analysis is a blood test, never a crash
+    @Suppress("ReturnCount") // each early exit is a different state: no engine, or not at the camera
     suspend fun analyze(frame: ImageFrame, metadata: CaptureMetadata?): ScreeningState {
         val capture = machine.currentState as? ScreeningState.Capture ?: return machine.currentState
         photosTaken++
+        sternumAttempt = capture.attempt
         val engine = triageEngine
         val model = estimationEngine
         if (engine == null || model == null) return noteDecision(machine.dispatch(ScreeningEvent.AnalysisFailed))
@@ -232,10 +284,17 @@ class ScreeningFlow(
             triageEngine = engine,
             versions = baseVersions.copy(cardBatchId = capture.cardBatch.batchId)
         )
-        // The analysis runs in its own job and is awaited with a time limit. The wait is cancellable even when the analysis
-        // is not, so a computation that never checks for cancellation cannot keep the worker past the limit; its result is
-        // simply dropped (NFR-02).
-        val job = analysisScope.async(cpu) { runPipeline(run) }
+        return noteDecision(finishAnalysis(withTimeLimit { runPipeline(run) }, frame, metadata))
+    }
+
+    /**
+     * Runs [work] in its own job and waits for it with the time limit. The wait is cancellable even when the work is not, so
+     * a computation that never checks for cancellation cannot keep the worker past the limit; its result is simply dropped
+     * (NFR-02). Null when the work was too slow or threw.
+     */
+    @Suppress("SwallowedException", "TooGenericExceptionCaught") // too slow, or failed: the callers fall back
+    private suspend fun <T : Any> withTimeLimit(work: () -> T): T? {
+        val job = analysisScope.async(cpu) { work() }
         val outcome = try {
             withTimeoutOrNull(timeoutMs) { job.await() }
         } catch (e: CancellationException) {
@@ -245,7 +304,88 @@ class ScreeningFlow(
             null
         }
         if (outcome == null) job.cancel()
-        return noteDecision(finishAnalysis(outcome, frame, metadata))
+        return outcome
+    }
+
+    // ---- the optional forehead photo (FR-15, NG-040, TC-CAP-16) --------------------------------------------------------
+
+    private val sternumResult: ScreeningState.Result?
+        get() = (machine.currentState as? ScreeningState.Result)?.takeIf {
+            it.intermediateData.estimationOutput.siteEstimates.keys == setOf(BodySite.STERNUM)
+        }
+
+    /** True when the model has a forehead site, so a forehead photo can be used at all. */
+    private val modelHasForehead: Boolean
+        get() = estimationEngine?.model?.let {
+            BodySite.FOREHEAD in it.sites && BodySite.FOREHEAD in it.multiSiteWeights
+        } == true
+
+    /**
+     * True while the result comes from the sternum photo alone and the worker has not yet chosen: S18 is shown instead of the
+     * result. False when the model has no forehead site, so a photo is never taken that cannot be used.
+     */
+    val shouldOfferForehead: Boolean
+        get() = !saved && !foreheadSettled && modelHasForehead && sternumResult != null
+
+    /** True when another forehead photo may be taken: up to three, as for the sternum photo. */
+    val canAddForehead: Boolean
+        get() = shouldOfferForehead && foreheadAttempts < MAX_FOREHEAD_ATTEMPTS
+
+    /** The worker chose not to add a forehead photo: the result from the sternum photo stands and is shown. */
+    fun skipForehead() {
+        if (!shouldOfferForehead) return
+        foreheadSettled = true
+        awaitingForehead = false
+        decidedAtMs = clock()
+    }
+
+    /** The worker chose to add a forehead photo; the next photo analysed is the forehead's. False when none may be added. */
+    fun startForeheadPhoto(): Boolean {
+        if (!canAddForehead) return false
+        awaitingForehead = true
+        return true
+    }
+
+    /**
+     * Analyses the forehead photo and, if it is good, makes the estimate and the decision again from both sites. The result
+     * from the sternum photo is never made worse by this photo: a refused, failed or slow forehead photo leaves it as it was,
+     * and the worker may try again or go on without it.
+     */
+    suspend fun addForehead(frame: ImageFrame): ForeheadOutcome {
+        val run = foreheadRunFor(frame)
+        if (run == null) {
+            awaitingForehead = false
+            return ForeheadOutcome.NotUsed
+        }
+        foreheadAttempts++
+        val outcome = withTimeLimit { runForehead(run) }
+        awaitingForehead = false // settled; a screen recreated before this point still knows the photo is a forehead's
+        return when (outcome) {
+            is PipelineExecutionResult.Success -> {
+                foreheadProblem = null
+                foreheadSettled = true
+                machine.dispatch(ScreeningEvent.ForeheadAdded(outcome.intermediateData))
+                decidedAtMs = clock()
+                ForeheadOutcome.Added
+            }
+            is PipelineExecutionResult.QualityFailed -> {
+                foreheadProblem = outcome.qualityResult.failureReasons.firstOrNull()
+                ForeheadOutcome.PhotoProblem(foreheadProblem)
+            }
+            is PipelineExecutionResult.Error, null -> {
+                foreheadProblem = null
+                ForeheadOutcome.NotUsed
+            }
+        }
+    }
+
+    /** What to analyse for a forehead photo, or null when none may be added now or an engine is missing. */
+    private fun foreheadRunFor(frame: ImageFrame): ForeheadAnalysis? {
+        val sternum = sternumResult ?: return null
+        val engine = triageEngine ?: return null
+        val model = estimationEngine ?: return null
+        if (!canAddForehead) return null
+        return ForeheadAnalysis(sternum.intermediateData, frame, sternumAttempt, sternum.inputs, model, engine)
     }
 
     private fun finishAnalysis(outcome: PipelineExecutionResult?, frame: ImageFrame, metadata: CaptureMetadata?): ScreeningState =
@@ -274,7 +414,8 @@ class ScreeningFlow(
         deviceProfileId: String?,
         captureAttempts: Int = photosTaken
     ): ScreeningSessionEntity? {
-        if (saved) return null
+        // nothing is written while the worker has still to choose whether to add a forehead photo
+        if (saved || shouldOfferForehead) return null
         val row = machine.currentState.toSessionEntity(
             sessionId = sessionId,
             nowMs = nowMs,
@@ -294,5 +435,8 @@ class ScreeningFlow(
     companion object {
         /** The analysis may take this long before the worker is sent to a blood test (NFR-02: p95 under 10 s). */
         const val ANALYSIS_TIMEOUT_MS = 10_000L
+
+        /** A forehead photo may be tried this many times, then the worker goes on without it. */
+        const val MAX_FOREHEAD_ATTEMPTS = 3
     }
 }

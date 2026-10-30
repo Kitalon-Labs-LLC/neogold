@@ -194,6 +194,8 @@
     <string name="forehead_photo_desc">A second photo of the card on the baby\'s forehead improves estimate consistency.</string>
     <string name="btn_add_forehead">Add forehead photo</string>
     <string name="btn_skip_forehead">Skip forehead photo</string>
+    <string name="forehead_photo_problem">The forehead photo could not be used. Place the card flat on the forehead and try again, or continue without it.</string>
+    <string name="forehead_photo_limit">The forehead photo could not be used after three tries. Continue without it.</string>
 
     <!-- S19 Analyzing -->
     <string name="analyzing_title">Analyzing image...</string>

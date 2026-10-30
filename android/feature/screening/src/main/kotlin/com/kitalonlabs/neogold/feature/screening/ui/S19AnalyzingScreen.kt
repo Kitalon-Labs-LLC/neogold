@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.feature.screening.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -39,7 +40,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun S19AnalyzingScreen(
     onTimeoutFallback: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    @StringRes fallbackLabel: Int = R.string.action_blood_test
 ) {
     var isTakingLong by remember { mutableStateOf(false) }
 
@@ -101,7 +103,7 @@ fun S19AnalyzingScreen(
                     )
                 ) {
                     Text(
-                        text = stringResource(R.string.action_blood_test),
+                        text = stringResource(fallbackLabel),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )

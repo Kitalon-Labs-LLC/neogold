@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Quality -> BloodTestFallback: failed 3 times
  * Quality -> Analysis: passed
  * Analysis -> Result: estimate & triage computed
+ * Result -> Result: the optional forehead photo is added and the decision is made again from both sites (FR-15)
  * Result -> Saved: session logged
  * UrgentReferral -> Saved
  * CannotScreen -> Saved
@@ -67,6 +68,7 @@ class ScreeningStateMachine(
             is ScreeningEvent.FrameCaptured -> handleFrameCaptured(event)
             is ScreeningEvent.AnalysisFinished -> handleAnalysisFinished(event.intermediateData)
             is ScreeningEvent.AnalysisFailed -> handleAnalysisFailed()
+            is ScreeningEvent.ForeheadAdded -> handleForeheadAdded(event.intermediateData)
             is ScreeningEvent.SaveSession -> handleSaveSession(event.sessionId)
             is ScreeningEvent.Reset -> handleReset()
         }
@@ -215,6 +217,15 @@ class ScreeningStateMachine(
             inputs = inputs,
             triageResult = intermediateData.triageResult,
             versions = intermediateData.versions,
+            intermediateData = intermediateData
+        )
+    }
+
+    /** A result made from the sternum photo is replaced by the one made from both sites; any other state is left alone. */
+    private fun handleForeheadAdded(intermediateData: ScreeningIntermediateData): ScreeningState {
+        val current = _state.value as? ScreeningState.Result ?: return _state.value
+        return current.copy(
+            triageResult = intermediateData.triageResult,
             intermediateData = intermediateData
         )
     }

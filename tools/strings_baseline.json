@@ -19,7 +19,6 @@
     "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S14RuleOutcomeScreen.kt": 1,
     "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S15CaptureGuideScreen.kt": 1,
     "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S17PhotoProblemScreen.kt": 1,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S18ForeheadPhotoScreen.kt": 1,
     "android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S24AboutScreen.kt": 2,
     "android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S25DeleteAllDataScreen.kt": 1,
     "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt": 1
