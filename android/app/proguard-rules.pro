@@ -21,3 +21,9 @@
 # can drop the reference. This is exactly the one rule R8 reports as missing for the release build
 # (app/build/outputs/mapping/release/missing_rules.txt); no wildcard, nothing else is silenced.
 -dontwarn com.google.errorprone.annotations.Immutable
+
+# The same kind of annotation, referenced by Tink's secret-key access classes. They became reachable when the research
+# session was wired into the app (C2), which is when R8 first reported them. Exactly the two classes it lists in
+# missing_rules.txt; still no wildcard.
+-dontwarn com.google.errorprone.annotations.CanIgnoreReturnValue
+-dontwarn com.google.errorprone.annotations.CheckReturnValue
