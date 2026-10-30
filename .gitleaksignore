@@ -7,3 +7,10 @@
 # own bundle), and it protected nothing but a test bundle. The next commit replaces the literal with a check that
 # derives the public key from candidates, so the file at HEAD holds no key material; only this history entry remains.
 fe318013c964b2d786c0a239834bde6e5046bd9e:tools/tests/test_sign_bundle_manifest.py:generic-api-key:26
+
+# BUG-2026-083 item 27, triaged 2026-10-30: commit fb91cd1 (Tink 1.24) added the compatibility fixture
+# android/core/security/src/test/resources/export/legacy-tink-1.7.0.properties. It holds a throwaway key pair, a wrapped data key
+# and a short ciphertext that a Tink 1.7.0 build wrote for the test "archive written by Tink 1.7.0 still opens". The file says
+# "synthetic ... Not real data"; the key protects nothing and is used by no study, no build and no server. The fixture has to
+# hold key material for the test to mean anything, so the file stays and only this history entry is accepted.
+fb91cd186fd91e401b17148ab4e9401d94059f25:android/core/security/src/test/resources/export/legacy-tink-1.7.0.properties:generic-api-key:2
