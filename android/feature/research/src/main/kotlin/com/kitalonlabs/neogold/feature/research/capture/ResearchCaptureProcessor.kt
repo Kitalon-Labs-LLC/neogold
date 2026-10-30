@@ -50,8 +50,12 @@ class ResearchCaptureProcessor(
                     site = site,
                     attemptNumber = attemptNumber,
                     imageBytes = clean,
-                    qualityPassed = gate.passed,
-                    qualityFailReasons = gate.failureReasons.map { it.name },
+                    // A photo checked with no card to compare with was not checked for color, so it is not recorded as
+                    // passed, and the record says why (the worker is not stopped: the session record carries the card
+                    // status, and an analyst filtering on PASSED gets only photos that were checked against a card).
+                    qualityPassed = gate.passed && reference != null,
+                    qualityFailReasons = gate.failureReasons.map { it.name } +
+                        listOfNotNull(NO_REFERENCE_CARD.takeIf { reference == null }),
                     // the residual is measured only when the card was found (the gate leaves 0.0 behind when the markers were
                     // seen but the card could not be fitted) and there was a batch to compare it with
                     correctionResidualDe = gate.metrics.meanCorrectionResidualDeltaE.takeIf {
@@ -76,6 +80,9 @@ class ResearchCaptureProcessor(
         colorCorrectionGains?.joinToString(prefix = "[", postfix = "]", separator = ",")
 
     companion object {
+        /** Recorded with a photo that was taken with no card batch to compare its colors with. */
+        const val NO_REFERENCE_CARD = "NO_REFERENCE_CARD"
+
         /**
          * The app's own cap on a research photo. The server's `max_image_bytes` is a per-study policy of up to 20,000,000
          * (doc 7 Section 5.1), so this is the stricter of the two; a study that sets a lower limit than this is not yet
