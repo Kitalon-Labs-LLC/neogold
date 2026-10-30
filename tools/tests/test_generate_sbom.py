@@ -88,8 +88,7 @@ def test_a_configuration_with_no_component_is_an_error_not_an_empty_bill(tmp_pat
     import pytest
 
     lock = tmp_path / "gradle.lockfile"
-    lock.write_text("com.example:lib:1.0=debugRuntimeClasspath
-", encoding="utf-8")
+    lock.write_text("com.example:lib:1.0=debugRuntimeClasspath" + chr(10), encoding="utf-8")
 
     with pytest.raises(ValueError):
         generate_cyclonedx_sbom(lock, tmp_path / "bom.json", configuration="releaseRuntimeClasspath")
