@@ -6,6 +6,7 @@ import com.kitalonlabs.neogold.engine.triage.TriageEngine
 import com.kitalonlabs.neogold.engine.triage.TriageInputs
 import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
 import com.kitalonlabs.neogold.engine.triage.TriageResult
+import com.kitalonlabs.neogold.engine.vision.QualityGateResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,6 +66,7 @@ class ScreeningStateMachine(
             is ScreeningEvent.CardVerified -> handleCardVerified(event.verificationResult)
             is ScreeningEvent.FrameCaptured -> handleFrameCaptured(event)
             is ScreeningEvent.AnalysisFinished -> handleAnalysisFinished(event.intermediateData)
+            is ScreeningEvent.AnalysisFailed -> handleAnalysisFailed()
             is ScreeningEvent.SaveSession -> handleSaveSession(event.sessionId)
             is ScreeningEvent.Reset -> handleReset()
         }
@@ -98,7 +100,8 @@ class ScreeningStateMachine(
         val current = _state.value
         val inputs = when (current) {
             is ScreeningState.RuleCheck -> current.inputs
-            is ScreeningState.Inputs -> current.inputs ?: return current
+            // answers without the guardian's consent never reach the rules, and so never the camera (TC-UI-13)
+            is ScreeningState.Inputs -> current.inputs?.takeIf { it.guardianConsentConfirmed } ?: return current
             else -> return current
         }
 
@@ -196,17 +199,7 @@ class ScreeningStateMachine(
         // and versions that EvaluateRules gave; without them nothing is made up and the state stays as it is.
         val engine = triageEngine ?: return current
         val recordVersions = (event.fallbackVersions ?: versions)?.copy(cardBatchId = cardBatch.batchId) ?: return current
-        return when (
-            val decision = engine.evaluate(inputs.toTriageInputs().copy(qualityFailedAttempts = MAX_CAPTURE_ATTEMPTS))
-        ) {
-            is TriageResult.Unavailable -> ScreeningState.TriageUnavailable(inputs, decision, recordVersions)
-            is TriageResult.Action -> ScreeningState.BloodTestFallback(
-                inputs = inputs,
-                triageResult = decision,
-                versions = recordVersions,
-                lastQualityResult = quality
-            )
-        }
+        return fallbackState(engine, inputs, recordVersions, quality)
     }
 
     private fun handleAnalysisFinished(intermediateData: ScreeningIntermediateData): ScreeningState {
@@ -224,6 +217,32 @@ class ScreeningStateMachine(
             versions = intermediateData.versions,
             intermediateData = intermediateData
         )
+    }
+
+    private fun handleAnalysisFailed(): ScreeningState {
+        val current = _state.value
+        val (inputs, cardBatch, quality) = when (current) {
+            is ScreeningState.Analysis -> Triple(current.inputs, current.cardBatch, current.qualityResult)
+            is ScreeningState.Capture -> Triple(current.inputs, current.cardBatch, null)
+            else -> return current
+        }
+        val engine = triageEngine
+        val recordVersions = versions?.copy(cardBatchId = cardBatch.batchId)
+        if (engine == null || recordVersions == null) return current
+        return fallbackState(engine, inputs, recordVersions, quality)
+    }
+
+    /** The engine's decision when no usable photo exists: a blood test, or "triage unavailable". */
+    private fun fallbackState(
+        engine: TriageEngine,
+        inputs: ScreeningInputs,
+        recordVersions: VersionsRecord,
+        quality: QualityGateResult?
+    ): ScreeningState = when (
+        val decision = engine.evaluate(inputs.toTriageInputs().copy(qualityFailedAttempts = MAX_CAPTURE_ATTEMPTS))
+    ) {
+        is TriageResult.Unavailable -> ScreeningState.TriageUnavailable(inputs, decision, recordVersions)
+        is TriageResult.Action -> ScreeningState.BloodTestFallback(inputs, decision, recordVersions, quality)
     }
 
     private fun handleSaveSession(sessionId: String): ScreeningState {

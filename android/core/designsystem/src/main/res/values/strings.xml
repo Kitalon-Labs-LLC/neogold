@@ -19,6 +19,7 @@
     <string name="danger_arching">Arching of the back or neck</string>
     <string name="q_phototherapy">Has the baby already had phototherapy (light treatment)?</string>
     <string name="birth_time">When was the baby born?</string>
+    <string name="birth_time_not_set">Not set yet. Tap to set the birth time.</string>
     <string name="ga_label">Gestational age (weeks)</string>
     <string name="place_card">Place the card on the baby\'s chest</string>
     <string name="hold_still">Hold the phone steady</string>

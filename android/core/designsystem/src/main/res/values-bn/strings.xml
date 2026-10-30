@@ -19,6 +19,7 @@
     <string name="danger_arching">পিঠ বা ঘাড় পেছনে বেঁকে যাওয়া</string>
     <string name="q_phototherapy">শিশুকে কি আগে ফটোথেরাপি (আলোর চিকিৎসা) দেওয়া হয়েছে?</string>
     <string name="birth_time">শিশুর জন্ম কখন হয়েছে?</string>
+    <string name="birth_time_not_set">এখনো দেওয়া হয়নি। জন্মের সময় দিতে ছুঁয়ে দেখুন।</string>
     <string name="ga_label">গর্ভকাল (সপ্তাহ)</string>
     <string name="place_card">কার্ডটি শিশুর বুকের ওপর রাখুন</string>
     <string name="hold_still">ফোন স্থির রাখুন</string>

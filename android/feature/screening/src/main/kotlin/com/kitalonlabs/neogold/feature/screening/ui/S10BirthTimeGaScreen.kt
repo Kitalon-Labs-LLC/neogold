@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber") // pre-filled birth time default, removed in E1 (A9, FR-02, BUG-2026-044)
+@file:Suppress("MagicNumber") // calendar and clock arithmetic of the pickers
 
 package com.kitalonlabs.neogold.feature.screening.ui
 
@@ -82,10 +82,8 @@ fun S10BirthTimeGaScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Default birth time: 48 hours before phone time if not specified
-    var birthTimeEpochMs by remember {
-        mutableLongStateOf(initialBirthTimeMs ?: (currentPhoneTimeEpochMs - 48 * 3600 * 1000L))
-    }
+    // The birth time has NO pre-filled value: the worker sets it (FR-02, A9, BUG-2026-044). Until then Next stays off.
+    var birthTimeSetMs by remember { mutableStateOf<Long?>(initialBirthTimeMs) }
     // Gestational age stepper: NO pre-filled value by default (H3, TC-UI-11)
     var gestationalAgeWeeks by remember {
         mutableStateOf<Int?>(initialGestationalAgeWeeks)
@@ -93,27 +91,40 @@ fun S10BirthTimeGaScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var pendingDateEpochMs by remember { mutableLongStateOf(birthTimeEpochMs) }
+    // where the pickers open when nothing is set yet: now, which is only a starting point and is never saved
+    val pickerStartMs = birthTimeSetMs ?: currentPhoneTimeEpochMs
+    var pendingDateEpochMs by remember { mutableLongStateOf(pickerStartMs) }
 
     val isClockBeforeBuild = ClockIntegrityValidator.isClockBeforeBuildTime(currentPhoneTimeEpochMs)
-    val isBirthInFuture = ClockIntegrityValidator.isBirthTimeInFuture(birthTimeEpochMs, currentPhoneTimeEpochMs)
-    val ageHours = ClockIntegrityValidator.computeAgeInHours(birthTimeEpochMs, currentPhoneTimeEpochMs)
+    val birthTimeMs = birthTimeSetMs
+    val isBirthInFuture = birthTimeMs != null && ClockIntegrityValidator.isBirthTimeInFuture(birthTimeMs, currentPhoneTimeEpochMs)
+    val ageHours = birthTimeMs?.let { ClockIntegrityValidator.computeAgeInHours(it, currentPhoneTimeEpochMs) }
+    // 30 days or more is not a newborn the app can take (the server's limit is 720 hours): the worker checks the time
+    val isTooOld = ageHours != null && ageHours >= MAX_AGE_HOURS
 
     val phoneTimeFormatted = remember(currentPhoneTimeEpochMs) {
         ClockIntegrityValidator.formatPhoneTimeNow(currentPhoneTimeEpochMs)
     }
 
-    val birthTimeFormatted = remember(birthTimeEpochMs) {
-        val formatter = DateTimeFormatter.ofPattern("d MMM yyyy   hh:mm a", Locale.getDefault())
-            .withZone(ZoneId.systemDefault())
-        formatter.format(Instant.ofEpochMilli(birthTimeEpochMs))
+    val notSet = stringResource(R.string.birth_time_not_set)
+    val birthTimeFormatted = remember(birthTimeMs, notSet) {
+        if (birthTimeMs == null) {
+            notSet
+        } else {
+            val formatter = DateTimeFormatter.ofPattern("d MMM yyyy   hh:mm a", Locale.getDefault())
+                .withZone(ZoneId.systemDefault())
+            formatter.format(Instant.ofEpochMilli(birthTimeMs))
+        }
     }
 
-    // Next is enabled ONLY when gestational age is set, clock is valid, and birth is not future
-    val isNextEnabled = gestationalAgeWeeks != null &&
+    // Next is enabled ONLY when the birth time and the gestational age are both set by the worker, the clock is valid, and
+    // the birth is neither in the future nor 30 days ago or more
+    val isNextEnabled = birthTimeMs != null &&
+        gestationalAgeWeeks != null &&
         !isClockBeforeBuild &&
         !isClockDriftExceeded &&
-        !isBirthInFuture
+        !isBirthInFuture &&
+        !isTooOld
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -200,7 +211,7 @@ fun S10BirthTimeGaScreen(
             // Birth Time Section with Phone Time Now (TC-UI-10, H2)
             NgBirthTimeField(
                 formattedBirthDateTime = birthTimeFormatted,
-                ageInHours = if (isBirthInFuture) null else ageHours.toInt(),
+                ageInHours = if (isBirthInFuture || ageHours == null) null else ageHours.toInt(),
                 currentPhoneTime = phoneTimeFormatted,
                 onEditClicked = { showDatePicker = true },
                 modifier = Modifier.testTag("birth_time_field")
@@ -214,6 +225,16 @@ fun S10BirthTimeGaScreen(
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag("birth_future_error")
+                )
+            }
+
+            if (isTooOld) {
+                Text(
+                    text = stringResource(R.string.birth_time_too_old_error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.testTag("birth_too_old_error")
                 )
             }
 
@@ -257,7 +278,9 @@ fun S10BirthTimeGaScreen(
                 enabled = isNextEnabled,
                 onClick = {
                     val finalWeeks = gestationalAgeWeeks ?: return@NgPrimaryButton
-                    onNext(ageHours, finalWeeks, birthTimeEpochMs)
+                    val finalBirthMs = birthTimeMs ?: return@NgPrimaryButton
+                    val finalAge = ageHours ?: return@NgPrimaryButton
+                    onNext(finalAge, finalWeeks, finalBirthMs)
                 },
                 modifier = Modifier.testTag("btn_next")
             )
@@ -266,7 +289,7 @@ fun S10BirthTimeGaScreen(
         // Date Picker Dialog
         if (showDatePicker) {
             val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = birthTimeEpochMs
+                initialSelectedDateMillis = pickerStartMs
             )
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -297,7 +320,7 @@ fun S10BirthTimeGaScreen(
         // Time Picker Dialog
         if (showTimePicker) {
             val localTime = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(birthTimeEpochMs),
+                Instant.ofEpochMilli(pickerStartMs),
                 ZoneId.systemDefault()
             ).toLocalTime()
             val timePickerState = rememberTimePickerState(
@@ -317,7 +340,7 @@ fun S10BirthTimeGaScreen(
                                 selectedDate,
                                 LocalTime.of(timePickerState.hour, timePickerState.minute)
                             )
-                            birthTimeEpochMs = combined.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                            birthTimeSetMs = combined.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
                             showTimePicker = false
                         }
                     ) {
@@ -337,3 +360,6 @@ fun S10BirthTimeGaScreen(
         }
     }
 }
+
+/** The age at which the app no longer takes the baby: 30 days, the limit of the study server (doc 7). */
+private const val MAX_AGE_HOURS = 720.0

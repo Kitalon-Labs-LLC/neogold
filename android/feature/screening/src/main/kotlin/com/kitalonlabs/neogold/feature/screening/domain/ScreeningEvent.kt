@@ -57,6 +57,12 @@ sealed class ScreeningEvent {
     ) : ScreeningEvent()
 
     /**
+     * The analysis did not finish in time, or failed: the worker is sent to a blood test, decided by the engine like the
+     * quality fallback (NFR-02, doc 4 Section 5.6). No estimate exists, so none is shown.
+     */
+    data object AnalysisFailed : ScreeningEvent()
+
+    /**
      * Save the session record (called on terminal states or user confirmation).
      */
     data class SaveSession(
