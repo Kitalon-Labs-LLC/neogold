@@ -195,32 +195,24 @@ class NeoGoldContainer(private val application: Application) {
     /**
      * What a research photo session needs from the card the phone works with: the camera step that takes and checks the
      * photos, and the signed bytes of the card, which the session record keeps. The card is the one of the active
-     * device profile, else the newest one whose signature was valid; a card that has not expired is preferred over one that
-     * has. Without a card the photos are still taken, with no
-     * color residual measured, and the record says the card was not verified.
+     * device profile, else the newest one whose signature was valid that has not expired (see [chooseResearchCard]).
+     * Without a card the photos are still taken, with no color residual measured, and the record says the card was not
+     * verified.
      */
     class ResearchCaptureSetup(val processor: ResearchCaptureProcessor, val cardSignedBytes: ByteArray?)
 
     suspend fun researchCaptureSetup(database: NeoGoldDatabase): ResearchCaptureSetup = withContext(Dispatchers.IO) {
         val batches = database.cardBatchDao()
         val now = System.currentTimeMillis()
-        val candidates = listOfNotNull(
-            database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let {
-                batches.getBatch(it)
-            }
-        ) +
-            batches.getAllBatches()
-        val batch = chooseResearchCard(candidates, now)
+        val profileCard = database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let { batches.getBatch(it) }
+        val batch = chooseResearchCard(profileCard, batches.getAllBatches(), now)
+        val usableCard = batch?.takeIf { !cardHasExpired(it, now) }
         val limits = assets.triageConfig?.qualityThresholds.orEmpty()
         ResearchCaptureSetup(
             processor = ResearchCaptureProcessor(
                 vision = VisionEngine(thresholds = QualityThresholds.fromMap(limits)),
                 // An expired card still goes into the record (as EXPIRED) but gives the quality gate no reference.
-                reference = batch?.takeIf { it.expiresAt > now }?.let {
-                    CardBatchReference.fromJson(
-                        it.referenceValues
-                    )
-                }
+                reference = usableCard?.let { CardBatchReference.fromJson(it.referenceValues) }
             ),
             cardSignedBytes = batch?.qrPayload
         )
@@ -369,11 +361,25 @@ class NeoGoldContainer(private val application: Application) {
 }
 
 /**
- * The card a research session works with: the first of [candidates] (the active profile's card, then the newest first) whose
- * signature was valid and that has not expired; if every such card has expired, the first of those, which the record keeps as
- * EXPIRED. A card whose signature did not verify is never chosen.
+ * The card a research session works with. The card of the phone's active device profile is the one the health worker was
+ * qualified on, so it is used whatever its date: if it has expired the record says EXPIRED (TC-CARD-05), and a different
+ * card is never named in its place. Without a profile card, the first stored card (newest first) whose signature verified and
+ * that has not expired, else the first whose signature verified. A card whose signature did not verify is never chosen.
  */
-internal fun chooseResearchCard(candidates: List<CardBatchEntity>, now: Long): CardBatchEntity? {
-    val signed = candidates.filter { it.signatureValid == 1 }
-    return signed.firstOrNull { it.expiresAt > now } ?: signed.firstOrNull()
+internal fun chooseResearchCard(
+    profileCard: CardBatchEntity?,
+    others: List<CardBatchEntity>,
+    now: Long
+): CardBatchEntity? {
+    if (profileCard != null && profileCard.signatureValid == 1) return profileCard
+    val signed = others.filter { it.signatureValid == 1 }
+    return signed.firstOrNull { !cardHasExpired(it, now) } ?: signed.firstOrNull()
 }
+
+/**
+ * Whether a stored card has expired. `expiresAt` is the start of the last valid day (UTC), and the card trust verifier
+ * accepts a card through that whole day, so the card has expired once a full day has passed since then.
+ */
+internal fun cardHasExpired(card: CardBatchEntity, now: Long): Boolean = now >= card.expiresAt + MILLIS_PER_DAY
+
+private const val MILLIS_PER_DAY = 86_400_000L

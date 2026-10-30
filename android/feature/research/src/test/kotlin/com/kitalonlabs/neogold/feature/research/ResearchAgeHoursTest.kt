@@ -21,14 +21,22 @@ class ResearchAgeHoursTest {
 
     @Test
     fun theAgeIsAMultipleOfATenthOfAnHour_BUG_2026_081() {
-        val birth = 0L
-        val age = researchAgeHours(birth, 47 * hour + 1_234_567L)
+        val age = researchAgeHours(0L, 47 * hour + 1_234_567L)
 
         assertThat(age * 10.0).isWithin(1e-9).of(kotlin.math.round(age * 10.0))
     }
 
     @Test
-    fun aBirthTimeAfterNowGivesANegativeAgeTheRepositoryRefuses_BUG_2026_081() {
+    fun theAgeIsRoundedDownTowardTheYoungerBand_NeverUpIntoTheNextOne() {
+        // 47.96 hours is 47.9, not 48.0; 23.99 hours is 23.9, not 24.0
+        assertThat(researchAgeHours(0L, (47.96 * hour).toLong())).isEqualTo(47.9)
+        assertThat(researchAgeHours(0L, (23.99 * hour).toLong())).isEqualTo(23.9)
+    }
+
+    @Test
+    fun aBirthTimeAfterNowGivesANegativeAgeTheRepositoryRefuses_EvenByAFewMinutes_BUG_2026_081() {
         assertThat(researchAgeHours(birthTimeMillis = 10 * hour, nowMillis = 9 * hour)).isLessThan(0.0)
+        // three minutes ahead must not round to a zero age
+        assertThat(researchAgeHours(birthTimeMillis = 10 * hour + 180_000L, nowMillis = 10 * hour)).isLessThan(0.0)
     }
 }

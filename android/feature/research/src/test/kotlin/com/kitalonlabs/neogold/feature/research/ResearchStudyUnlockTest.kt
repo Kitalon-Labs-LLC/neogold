@@ -220,6 +220,26 @@ class ResearchStudyUnlockTest {
         assertThat(database.researchStudyDao().getStudyById(study.id)!!.failedPinAttempts).isEqualTo(4)
     }
 
+    /**
+     * TC-RSH-05 (QR unlock): a correct PIN typed with the QR clears the failure count even when the same call stores the
+     * study's export key. The row written back is the one the PIN check has just reset, not the copy read before it.
+     */
+    @Test
+    fun tcRsh05_aCorrectPinWithTheQrClearsEarlierFailuresEvenWhenTheExportKeyIsStored() = runBlocking {
+        val vector = loadVectorJson("card/spec/testvectors/study_profile_valid.json")
+        val payloadBytes = hexToBytes(vector.getString("payload_hex"))
+        val evalDate = LocalDate.of(2026, 10, 17)
+        val study = repository.unlockWithStudyQr(payloadBytes, "839174", evaluationDate = evalDate).getOrThrow()
+        database.researchStudyDao().update(study.copy(failedPinAttempts = 3, exportPublicKey = null))
+
+        val result = repository.unlockWithStudyQr(payloadBytes, "839174", evaluationDate = evalDate)
+
+        assertThat(result.isSuccess).isTrue()
+        val saved = database.researchStudyDao().getStudyById(study.id)!!
+        assertThat(saved.failedPinAttempts).isEqualTo(0)
+        assertThat(saved.exportPublicKey).isNotNull()
+    }
+
     private fun loadVectorJson(path: String): JSONObject {
         val file = findRepoFile(path)
         return JSONObject(file.readText(Charsets.UTF_8))

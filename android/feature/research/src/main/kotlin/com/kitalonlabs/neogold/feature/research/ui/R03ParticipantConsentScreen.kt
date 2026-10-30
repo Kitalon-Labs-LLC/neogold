@@ -73,7 +73,8 @@ fun R03ParticipantConsentScreen(
     val birthTime = birthTimeMillis
     val birthInFuture = birthTime != null && birthTime > now
     val rawAgeHours: Double? = birthTime?.takeIf { !birthInFuture }?.let { (now - it) / MILLIS_PER_HOUR }
-    // The study server takes ages of 0 to 720 hours (doc 7): a birth time further back is a typing mistake.
+    // The study server takes ages of 0 to 720 hours (doc 7). One hour is left for the captures, because the age is worked out
+    // again when the session is saved; a birth time further back than that is a typing mistake.
     val birthTooOld = rawAgeHours != null && rawAgeHours > MAX_AGE_HOURS
     val ageHours: Double? = rawAgeHours?.takeIf { !birthTooOld }
 
@@ -328,4 +329,4 @@ fun R03ParticipantConsentScreen(
 }
 
 private const val MILLIS_PER_HOUR = 3_600_000.0
-private const val MAX_AGE_HOURS = 720.0
+private const val MAX_AGE_HOURS = 719.0

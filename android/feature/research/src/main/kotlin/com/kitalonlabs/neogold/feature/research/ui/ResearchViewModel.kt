@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 data class ResearchClinicalInputs(
     val participantCode: String,
@@ -178,10 +179,10 @@ class ResearchViewModel(
         scope.launch {
             _errorMessage.value = null
             val result = try {
-                withContext(cpu) { repository.unlockWithStudyQr(qrPayload, pin) }
+                guarded { withContext(cpu) { repository.unlockWithStudyQr(qrPayload, pin) } }
             } finally {
                 _isBusy.value = false
-            }
+            } ?: return@launch
             if (epoch != lockEpoch) return@launch
             result.onSuccess { study ->
                 _activeStudy.value = study
@@ -211,10 +212,10 @@ class ResearchViewModel(
         scope.launch {
             _errorMessage.value = null
             val check = try {
-                withContext(cpu) { repository.verifyPin(study.id, pin) }
+                guarded { withContext(cpu) { repository.verifyPin(study.id, pin) } }
             } finally {
                 _isBusy.value = false
-            }
+            } ?: return@launch
             if (epoch != lockEpoch) return@launch
             when (check) {
                 is PinCheckResult.Success -> {
@@ -305,23 +306,28 @@ class ResearchViewModel(
         }
 
         if (!_isBusy.compareAndSet(expect = false, update = true)) return
+        val epoch = lockEpoch
         scope.launch {
             _errorMessage.value = null
             val result = try {
-                repository.saveBlindedResearchSession(
-                    participant = participant,
-                    ageHours = researchAgeHours(inputs.birthTimeMillis, System.currentTimeMillis()),
-                    gestationalAgeWeeks = inputs.gestationalAgeWeeks,
-                    flagEarlyJaundice = inputs.flagEarlyJaundice,
-                    flagDangerSigns = inputs.flagDangerSigns,
-                    flagPriorPhototherapy = inputs.flagPriorPhototherapy,
-                    captures = captures,
-                    cardBatchBytes = cardBatchBytes,
-                    tsbInput = tsbInput
-                )
+                guarded {
+                    repository.saveBlindedResearchSession(
+                        participant = participant,
+                        ageHours = researchAgeHours(inputs.birthTimeMillis, System.currentTimeMillis()),
+                        gestationalAgeWeeks = inputs.gestationalAgeWeeks,
+                        flagEarlyJaundice = inputs.flagEarlyJaundice,
+                        flagDangerSigns = inputs.flagDangerSigns,
+                        flagPriorPhototherapy = inputs.flagPriorPhototherapy,
+                        captures = captures,
+                        cardBatchBytes = cardBatchBytes,
+                        tsbInput = tsbInput
+                    )
+                }
             } finally {
                 _isBusy.value = false
-            }
+            } ?: return@launch
+            // The session locked while it was being saved: the record is kept, but nothing of it is put back in memory or shown.
+            if (epoch != lockEpoch) return@launch
 
             result.onSuccess { sessionResult ->
                 _lastSessionResult.value = sessionResult
@@ -360,6 +366,20 @@ class ResearchViewModel(
         }
     }
 
+    /**
+     * Runs [block] and returns its result. Anything unexpected (a database error, no memory for the PIN hash, a lost key)
+     * becomes a generic message and null, never a crash; a cancellation goes on.
+     */
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+    private suspend fun <T : Any> guarded(block: suspend () -> T): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        _errorMessage.value = "Something went wrong. Try again."
+        null
+    }
+
     fun lockResearchSession() {
         _isUnlocked.value = false
         sessionManager?.lock()
@@ -378,11 +398,13 @@ class ResearchViewModel(
 private const val MILLIS_PER_MINUTE = 60_000L
 
 /**
- * The baby's age in hours at [nowMillis], to a tenth of an hour (the contract takes multiples of 0.1, doc 7). It is worked out
- * when the session is saved, from the birth time that was set, so the minutes spent on the captures are not left out.
+ * The baby's age in hours at [nowMillis], rounded down to a tenth of an hour (the contract takes multiples of 0.1, doc 7;
+ * down is toward the younger age, which is the side of more care). It is worked out when the session is saved, from the
+ * birth time that was set, so the minutes spent on the captures are not left out. A birth time after [nowMillis] gives a
+ * negative age, which the repository refuses.
  */
 internal fun researchAgeHours(birthTimeMillis: Long, nowMillis: Long): Double =
-    kotlin.math.round((nowMillis - birthTimeMillis) / MILLIS_PER_HOUR * TENTHS) / TENTHS
+    kotlin.math.floor((nowMillis - birthTimeMillis) / MILLIS_PER_HOUR * TENTHS) / TENTHS
 
 private const val MILLIS_PER_HOUR = 3_600_000.0
 private const val TENTHS = 10.0

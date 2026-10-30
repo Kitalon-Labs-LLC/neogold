@@ -141,7 +141,10 @@ class ResearchRepository(
             when (val check = pinManager.verifyPin(existingStudy.id, pin, now)) {
                 is PinCheckResult.Success -> {
                     if (existingStudy.exportPublicKey == null || !existingStudy.exportPublicKey.contentEquals(profile.exportPublicKey)) {
-                        val updated = existingStudy.copy(exportPublicKey = profile.exportPublicKey)
+                        // The row as it is now: the PIN check has just reset its failure count and lockout, and writing
+                        // back the copy read before the check would put the old values back.
+                        val current = database.researchStudyDao().getStudyById(existingStudy.id) ?: existingStudy
+                        val updated = current.copy(exportPublicKey = profile.exportPublicKey)
                         database.researchStudyDao().update(updated)
                         Result.success(updated)
                     } else {
@@ -162,12 +165,13 @@ class ResearchRepository(
             }
         } else {
             // A second study is never enrolled over an active one: whoever holds the phone could type a PIN of their own
-            // and get past the first study's PIN. Leaving a study goes through R09 (C4), not through another QR.
+            // and get past the first study's PIN. Nothing marks a study as left or closed yet (R09 and the server's CLOSED
+            // answer are package C4), so for now the only way to a new study is "Delete all data" in Settings.
             val active = database.researchStudyDao().getActiveStudy()
             if (active != null) {
                 return Result.failure(
                     SecurityException(
-                        "Another study is already set up on this phone. Leave it before enrolling in a new one."
+                        "Another study is already set up on this phone. To set up a new one, delete all data in Settings."
                     )
                 )
             }
@@ -348,6 +352,7 @@ class ResearchRepository(
         val sessionId = UUID.randomUUID().toString()
         val ran = provenance()
         val writtenFiles = mutableListOf<String>()
+        var committed = false
 
         return try {
             database.withTransaction {
@@ -499,6 +504,9 @@ class ResearchRepository(
                     )
                 )
 
+                // Last statement of the transaction: from here the rows name the files, and a cancellation that arrives
+                // as the block returns must not remove them.
+                committed = true
                 Result.success(
                     ResearchSessionResult(
                         sessionId = sessionId,
@@ -511,8 +519,9 @@ class ResearchRepository(
                 )
             }
         } catch (e: CancellationException) {
-            // The save was cancelled: the database rolled back, so remove the files and let the cancellation go on.
-            writtenFiles.forEach { runCatching { encryptedFileStore.delete(it) } }
+            // The save was cancelled. If the database rolled back, remove the files; if the transaction had already
+            // finished, the rows name them and they stay. Then let the cancellation go on.
+            if (!committed) writtenFiles.forEach { runCatching { encryptedFileStore.delete(it) } }
             throw e
         } catch (e: Exception) {
             // Only the type is logged: the message of a database error can carry values (doc 8 Section 6.6).
