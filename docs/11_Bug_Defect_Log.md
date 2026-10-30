@@ -1548,7 +1548,9 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Needs a lost or shared phone and a photographed QR of another study. How much of the first study's data the second PIN would show was not traced, because the fix removes the second study.
 
-**Fix** Package C2 (follow-up to d303597). Enrollment is refused while any study is ACTIVE; leaving a study goes through R09 (package C4). `getActiveStudy` now orders by `enrolled_at DESC`. Test: `ResearchStudyUnlockTest.tcRsh01_aSecondStudyIsNotEnrolledOverAnActiveOne`. Open: the message is English only (BUG-2026-083).
+**Fix** Package C2 (follow-up to d303597). Enrollment is refused while any study is ACTIVE; `getActiveStudy` now orders by `enrolled_at DESC, id`. Test: `ResearchStudyUnlockTest.tcRsh01_aSecondStudyIsNotEnrolledOverAnActiveOne`.
+
+**Known cost, until package C4** Nothing ever sets a study's status to anything but ACTIVE (`leaveStudy` and the revocation handler only clear the device id and key; a server answer of CLOSED is only returned to the worker), and no screen calls `leaveStudy`. So a phone whose study ended, was revoked or lost its PIN key cannot enroll in the next study except through Settings, Delete all data, which also removes unsent research sessions (S25 warns with a count). The refusal says so. Package C4 must ship R09 so that leaving sets the status in the same transaction that clears the device ids, record CLOSED when the server reports it, and give a lost verifier key a way back (the message "Enroll in the study again" loops today for the same study code). This is why BUG-2026-083 item 14 exists.
 
 #### BUG-2026-079: Two PIN checks that overlap each read the same failure count, so parallel guesses count once
 
@@ -1584,7 +1586,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The session record itself was right (the status comes from the bytes at save time). The photo verdict and residual were not.
 
-**Fix** Package C2 (follow-up to d303597). `chooseResearchCard` prefers a card whose signature verified and that has not expired, then the first signed one (kept so the record says EXPIRED); the quality gate gets a reference only from a card that has not expired. `signatureValid` keeps its meaning (the signature checked). Tests: `ChooseResearchCardTest` (5 cases). Decided here: an expired card gives no reference.
+**Fix** Package C2 (follow-up to d303597; changed after the second safety review). `chooseResearchCard` names the card of the active device profile whatever its date, so the record never names a different card than the one the phone works with (the TC-CARD-05 case reads EXPIRED); without a profile card it takes the newest signed card that has not expired, else the newest signed one. The quality gate gets a reference only from a card that has not expired. One expiry rule is shared with the card verifier: a card is valid through the whole day it expires on (`cardHasExpired`; the first version treated it as expired from the start of that day, so on the last valid day the record said VERIFIED while the color check had no reference). `signatureValid` keeps its meaning (the signature checked). Tests: `ChooseResearchCardTest` (6 cases, with the day boundary). Decided here: an expired card gives no reference. Not done: the card named is the one the phone holds, not the card in the photo (BUG-2026-083 item 15).
 
 #### BUG-2026-081: R03 accepts a birth time of any age, but the server takes 0 to 720 hours in steps of 0.1
 
@@ -1602,7 +1604,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The H2 clock controls (a clock earlier than the build time, a large offset from the server) are not applied in R03 (BUG-2026-083).
 
-**Fix** Package C2 (follow-up to d303597). R03 does not enable Start for an age over 720 hours and says why (`birth_time_too_old_error`, English and Bangla draft); `saveBlindedResearchSession` refuses an age outside 0 to 720; the age is rounded to a tenth (`researchAgeHours`). Tests: `ResearchSessionRecordTest` (age range), `ResearchAgeHoursTest`.
+**Fix** Package C2 (follow-up to d303597). R03 does not enable Start for an age over 719 hours (one hour is left for the captures, because the age is worked out again at save) and says why (`birth_time_too_old_error`, English and Bangla draft); `saveBlindedResearchSession` refuses an age outside 0 to 720; the age is a multiple of 0.1 (`researchAgeHours`, rounded down). Tests: `ResearchSessionRecordTest` (age range, 2 cases), `ResearchAgeHoursTest`.
 
 #### BUG-2026-082: The research age is worked out when R03 opens, but saved after the captures and the TSB step
 
@@ -1620,7 +1622,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The birth time was already kept in memory (`ResearchClinicalInputs.birthTimeMillis`), so nothing new is stored.
 
-**Fix** Package C2 (follow-up to d303597). `completeSessionWithTsb` works the age out from the birth time at the moment of saving (`researchAgeHours`). R03 still shows the age as of now for confirmation. Test: `ResearchAgeHoursTest`.
+**Fix** Package C2 (follow-up to d303597). `completeSessionWithTsb` works the age out from the birth time at the moment of saving (`researchAgeHours`), rounded down to a tenth of an hour: down is toward the younger age, the side of more care, so 47.96 hours is stored as 47.9 and never as 48.0. A birth time after the save time always gives a negative age and is refused (rounding to nearest turned three minutes ahead into 0.0 and accepted it, found in the second safety review). R03 still shows the age as of now for confirmation. Tests: `ResearchAgeHoursTest` (4 cases).
 
 #### BUG-2026-083: Findings from the C2 part 1 reviews that are left open for later packages
 
@@ -1645,6 +1647,11 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 11. The lockout compares the wall clock, so a phone with its clock set back shortens a lockout (design, doc 8 Section 6.2; a monotonic anchor would harden it). (Later.)
 12. The S19 placeholder on the hidden screening path still sets `NO_FURTHER_ACTION`, 8.2 to 10.1 and a threshold of 12.0 (BUG-2026-001). (E1.)
 13. R05: whether the participant-code field is editable while a session is in progress was not checked; the TSB attaches to the session's participant either way. (C2.)
+14. The one-study refusal has no exit except Delete all data until R09 exists, and nothing sets a study's status to LEFT or CLOSED (BUG-2026-078). Also: the check-then-insert in `unlockWithStudyQr` is not atomic (only the view model's busy flag serializes it); `StudyEnrollmentManager` has no one-study guard and stores an empty `pinHash` for a new study; `ResearchPinManager.setPin` is outside the mutex (its only caller is a test). (C4.)
+15. The card the record names is the one the phone holds (the active profile's), not the card in the photo; a worker holding a different card gets the profile card's status. Binding the batch to the scanned card needs a card scan in the research session. (C2 or C4; doc 6 says so.)
+16. A save that finishes after a lock now keeps the rows and shows nothing; the save is not cancelled when the session locks. A cancellation that arrives while the transaction commits is covered by a `committed` flag, but the Room version's behaviour was not checked. (C2.)
+17. The screening save path in `MainActivity` clamps an age with `coerceIn(0.0, 720.0)` instead of refusing it (a birth time in the future becomes age 0, a very old one becomes 720). It matters only when screening is switched on. (E1, with BUG-2026-001.)
+18. The age shown on R03 is the whole hours (`toInt`, rounded down) and the record is rounded down to a tenth: the two agree to within a tenth of an hour. (None.)
 
 **Expected fix** Per item, in the package named.
 
