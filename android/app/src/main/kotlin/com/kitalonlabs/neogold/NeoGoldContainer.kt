@@ -12,6 +12,7 @@ import com.kitalonlabs.neogold.core.data.purge.DataWiper
 import com.kitalonlabs.neogold.core.data.purge.DefaultDataPurgeManager
 import com.kitalonlabs.neogold.core.data.purge.PurgeResult
 import com.kitalonlabs.neogold.core.data.retention.BackgroundWork
+import com.kitalonlabs.neogold.core.data.retention.NoOpResearchRetentionServerConfirmationHook
 import com.kitalonlabs.neogold.core.data.retention.RetentionManager
 import com.kitalonlabs.neogold.core.security.AndroidMasterKeyProvider
 import com.kitalonlabs.neogold.core.security.DatabaseKeyProvider
@@ -45,10 +46,13 @@ import com.kitalonlabs.neogold.feature.research.data.ResearchProvenance
 import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
 import com.kitalonlabs.neogold.feature.research.export.ResearchExportManager
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
+import com.kitalonlabs.neogold.feature.research.ui.StudyServerViewModel
 import com.kitalonlabs.neogold.integrity.VerifiedAssets
 import com.kitalonlabs.neogold.onboarding.OnboardingServices
 import com.kitalonlabs.neogold.storage.StorageCoordinator
 import com.kitalonlabs.neogold.storage.StorageState
+import com.kitalonlabs.neogold.sync.research.ResearchSyncGraph
+import com.kitalonlabs.neogold.sync.research.outbox.OutboxProcessor
 import com.kitalonlabs.neogold.wipe.DirectoryWiper
 import com.kitalonlabs.neogold.wipe.KeystoreAliasWiper
 import com.kitalonlabs.neogold.wipe.PinKeyWiper
@@ -193,7 +197,73 @@ class NeoGoldContainer(private val application: Application) {
                 )
             }
         )
-        return ResearchViewModel(repository, researchSession).also { research = database to it }
+        return ResearchViewModel(
+            repository = repository,
+            sessionManager = researchSession,
+            // A saved session or TSB value is queued for the study server right away, if the phone is set up on one.
+            onDataQueued = { studyServer(database)?.scheduleUploads() }
+        ).also { research = database to it }
+    }
+
+    @Volatile
+    private var sync: Pair<NeoGoldDatabase, ResearchSyncGraph>? = null
+
+    /**
+     * The one set of objects that talk to the study server, over the open [database] and the keys the app holds. Null while
+     * the trust list is not verified: without it a study QR cannot be checked, so nothing is sent (BUG-2026-007). The
+     * upload worker, the enrollment screens and the retention job all use this graph and build nothing of their own.
+     */
+    @Synchronized
+    fun syncGraph(database: NeoGoldDatabase): ResearchSyncGraph? {
+        sync?.takeIf { it.first === database }?.let { return it.second }
+        val trustList = assets.trustList ?: return null
+        return ResearchSyncGraph(
+            database = database,
+            encryptedFiles = encryptedFiles,
+            cardTrustVerifier = CardTrustVerifier(trustList),
+            appVersion = BuildConfig.VERSION_NAME
+        ).also { sync = database to it }
+    }
+
+    /** The upload processor for the worker, or null while storage cannot be read or the bundle check failed. */
+    suspend fun outboxProcessor(): OutboxProcessor? =
+        storage.awaitDatabase()?.let { syncGraph(it)?.outboxProcessor }
+
+    @Volatile
+    private var studyServerSync: Pair<NeoGoldDatabase, StudyServerSync>? = null
+
+    /** Joining, leaving and uploading, for the research screens (R07 to R09). Null while [syncGraph] is. */
+    @Synchronized
+    fun studyServer(database: NeoGoldDatabase): StudyServerSync? {
+        studyServerSync?.takeIf { it.first === database }?.let { return it.second }
+        val graph = syncGraph(database) ?: return null
+        return StudyServerSync(application, database, graph, applicationScope).also { studyServerSync = database to it }
+    }
+
+    @Volatile
+    private var studyServerViewModel: Pair<NeoGoldDatabase, StudyServerViewModel>? = null
+
+    /**
+     * The server side of research mode over the open [database]. One per database, so a scanned QR and a running join survive
+     * a recomposition. It needs the research session (for the lock) and the graph, so it is null when either is.
+     */
+    @Synchronized
+    fun studyServerViewModel(database: NeoGoldDatabase): StudyServerViewModel? {
+        studyServerViewModel?.takeIf { it.first === database }?.let { return it.second }
+        val research = researchViewModel(database)
+        val server = studyServer(database)
+        if (research == null || server == null) return null
+        return StudyServerViewModel(
+            repository = research.repository,
+            server = server,
+            sessionManager = researchSession,
+            onStudyChanged = research::loadActiveStudy
+        ).also { studyServerViewModel = database to it }
+    }
+
+    /** Starts the background upload if the phone is set up on a server and rows are waiting; called at app start. */
+    suspend fun scheduleUploads() {
+        storage.awaitDatabase()?.let { studyServer(it)?.scheduleUploads() }
     }
 
     /**
@@ -271,7 +341,10 @@ class NeoGoldContainer(private val application: Application) {
     private fun retentionManagerFor(database: NeoGoldDatabase) = RetentionManager(
         database = database,
         dataStore = dataStore,
-        encryptedFileStore = encryptedFiles
+        encryptedFileStore = encryptedFiles,
+        // Research photos and rows are purged only after the study server says it has them (doc 5 Section 2.5). With no
+        // graph (the bundle did not verify) the default does what is safe: it confirms nothing, so nothing is purged.
+        serverConfirmationHook = syncGraph(database)?.retentionHook ?: NoOpResearchRetentionServerConfirmationHook()
     )
 
     /** The retention jobs over the open database, or null while storage cannot be read. */

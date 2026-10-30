@@ -248,6 +248,8 @@ flowchart LR
 - The signed study profile replaces the typed study code of FR-25. It carries the study name, partner, server host (absent for export-only studies), timestamp precision, export public key (K10), and expiry.
 - Staff see the study name, partner, and host before confirming. A forged QR fails signature verification; a genuine QR for the wrong study is caught by the name on screen.
 - Enrollment code properties (60 bits, single use, 72 hours, site-bound, HMAC-stored) are in doc 7 Section 4.1.
+- On the phone, joining a server is allowed only into the study already set up on it (same study code), only once, and never with a device fact the phone did not measure. A QR of another study is refused without a PIN try and without a request. R01 shows the study's name before the PIN; this is intended (decided 30 October 2026, BUG-2026-083 item 23): the name comes from a signed QR the worker holds, it is not a secret, and a worker with two sites needs to see which study the phone is on.
+- The upload worker uses the app's one database and key set, and does nothing while storage is unreadable or the bundle check failed (BUG-2026-083 item 33). It and the enrollment code path log the kind of a failure, never a message that could carry a host, a code or a server's words.
 
 ### 7.2 Request signing
 
@@ -258,9 +260,9 @@ Per-request ES256 tokens from the Keystore key, bound to method, URL, and body h
 | Event | Who acts | Steps |
 |---|---|---|
 | Phone lost or stolen | Coordinator | `neogold-admin device revoke <id> --reason LOST`; check `status` for uploads after the loss time; record in incident log (Section 12) |
-| Phone reassigned | Health worker or coordinator | Leave study in the app (`DELETE /device`), or revoke with `REASSIGNED`. Leaving deletes only the device key; local research data is wiped (FR-33) only once the outbox is empty or exported |
+| Phone reassigned | Health worker or coordinator | Leave study in the app (`DELETE /device`), or revoke with `REASSIGNED`. Leaving (R09, PIN asked again) deletes only the device key and device ID; the study stays on the phone and local research data is wiped (FR-33) only once the outbox is empty or exported |
 | Staff member leaves | Coordinator | Change the research PIN on that phone; the device key itself is not personal |
-| Study ends | Coordinator | `study close`; phones show `STUDY_CLOSED` and offer USB export of anything not yet uploaded |
+| Study ends | Coordinator | `study close`; phones that reach the server see it, clear their device key and device ID, stop retrying and keep everything for USB export (audit event `DEVICE_DISCONNECTED`, reason only) |
 
 ### 7.4 Admin access
 

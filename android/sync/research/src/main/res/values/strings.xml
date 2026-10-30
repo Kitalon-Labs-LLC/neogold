@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The notification shown while research data is sent to the study server (a foreground service of type dataSync). -->
+    <string name="research_sync_channel_name">Research sync</string>
+    <string name="research_sync_channel_description">Shows progress while study data is sent to the study server.</string>
+    <string name="research_sync_title">NeoGold study sync</string>
+    <string name="research_sync_text">Sending study data to the study server...</string>
+</resources>

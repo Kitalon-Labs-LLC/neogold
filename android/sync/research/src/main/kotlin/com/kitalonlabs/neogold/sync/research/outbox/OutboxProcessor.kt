@@ -32,6 +32,9 @@ sealed class OutboxResult {
     object Paused : OutboxResult()
     object Closed : OutboxResult()
     object Revoked : OutboxResult()
+
+    /** The phone has no device ID (it left, was revoked, or the study closed): there is nothing to send and nothing to retry. */
+    object NotEnrolled : OutboxResult()
     data class AppVersionUnsupported(val minVersion: String) : OutboxResult()
     data class Error(val message: String, val cause: Throwable? = null) : OutboxResult()
 }
@@ -63,7 +66,7 @@ class OutboxProcessor(
     suspend fun process(): OutboxResult {
         val study = studyDao.getActiveStudy() ?: return OutboxResult.Error("No active research study found")
         val baseUrl = study.serverUrl ?: return OutboxResult.Error("No server URL configured for study")
-        val deviceId = study.serverDeviceId ?: return OutboxResult.Error("Device not enrolled")
+        val deviceId = study.serverDeviceId ?: return OutboxResult.NotEnrolled
         val keyAlias = study.deviceKeyAlias ?: return OutboxResult.Error("Device key alias missing")
 
         // 1. GET /device first (doc 7 Section 3)
@@ -79,9 +82,10 @@ class OutboxProcessor(
                 revocationManager.handleDeviceRevoked(study)
                 return OutboxResult.Revoked
             }
-            return OutboxResult.Error("Failed to check device status: ${e.message}", e)
+            // the HTTP status only: the code and the text are the server's own strings, and a log is not the place for them
+            return OutboxResult.Error("Failed to check device status: HTTP ${e.statusCode}", e)
         } catch (e: Exception) {
-            return OutboxResult.Error("Failed to connect to server: ${e.message}", e)
+            return OutboxResult.Error("Failed to connect to server: ${e.javaClass.simpleName}", e)
         }
 
         // Check revocation
@@ -95,6 +99,8 @@ class OutboxProcessor(
             // Keep outbox; stop early before any image is sent (TC-SYNC-02)
             return OutboxResult.Paused
         } else if (deviceStatus.study_status == "CLOSED") {
+            // Nothing more will be accepted: the phone disconnects (the data stays for export) instead of asking again forever.
+            revocationManager.handleStudyClosed(study)
             return OutboxResult.Closed
         }
 
@@ -161,7 +167,8 @@ class OutboxProcessor(
             return false
         } catch (e: Exception) {
             // Network failure / timeout: keep key, retry with backoff (TC-SYNC-03)
-            outboxDao.recordAttempt(item.id, e.message?.take(100), System.currentTimeMillis())
+            // the kind of failure, not its message: an I/O message names the host
+            outboxDao.recordAttempt(item.id, e.javaClass.simpleName, System.currentTimeMillis())
             outboxDao.updateState(item.id, "PENDING", System.currentTimeMillis())
             return false
         }

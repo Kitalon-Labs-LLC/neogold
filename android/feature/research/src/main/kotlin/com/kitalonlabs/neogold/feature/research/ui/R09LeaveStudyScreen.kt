@@ -1,5 +1,3 @@
-@file:Suppress("MaxLineLength") // hardcoded UI text moves to string resources in the localization package (F1)
-
 package com.kitalonlabs.neogold.feature.research.ui
 
 import androidx.compose.foundation.background
@@ -13,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -21,6 +20,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,29 +33,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
+import com.kitalonlabs.neogold.feature.research.data.ResearchError
+import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 /**
  * R09: Leave Study Screen (doc 6 Section 5, doc 7 Section 4.3, TC-SYNC-16).
- * Confirms leaving the study server. Deletes only the hardware device key and server_device_id.
- * All local sessions, captures, and outbox rows are preserved for USB export.
+ * Disconnects this phone from the study server after the research PIN is typed again. Deletes only the hardware device key
+ * and the server device ID; the study, every session, photo and outbox row stay encrypted on the phone for export.
  */
 @Composable
 fun R09LeaveStudyScreen(
     studyName: String,
     serverDeviceId: String,
     serverHost: String,
+    unsentItems: Int,
     isLeaving: Boolean,
-    errorMessage: String?,
-    onLeaveConfirmed: () -> Unit,
+    error: ResearchError?,
+    onLeaveConfirmed: (pin: String) -> Unit,
     onCancelClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var pin by remember { mutableStateOf("") }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -71,14 +76,14 @@ fun R09LeaveStudyScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             NgBadge(
-                text = "LEAVE STUDY",
+                text = stringResource(ResearchR.string.r09_badge),
                 containerColor = MaterialTheme.colorScheme.error,
                 contentColor = MaterialTheme.colorScheme.onError,
                 modifier = Modifier.testTag("leave_study_badge")
             )
             Icon(
                 imageVector = Icons.Default.Warning,
-                contentDescription = "Warning",
+                contentDescription = stringResource(ResearchR.string.r09_cd_warning),
                 tint = MaterialTheme.colorScheme.error
             )
         }
@@ -86,7 +91,7 @@ fun R09LeaveStudyScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Leave Study Server",
+            text = stringResource(ResearchR.string.r09_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -95,14 +100,14 @@ fun R09LeaveStudyScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Disconnect this phone from the study server. This will stop automatic cloud syncing.",
+            text = stringResource(ResearchR.string.r09_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Warning Info Card
+        // What stays on the phone, and what is not yet on the server
         Card(
             shape = RoundedCornerShape(CardCornerRadius),
             colors = CardDefaults.cardColors(
@@ -117,39 +122,64 @@ fun R09LeaveStudyScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Local Data is Preserved",
+                    text = stringResource(ResearchR.string.r09_kept_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
                 Text(
-                    text = stringResource(R.string.upload_removed),
+                    text = stringResource(ResearchR.string.r09_kept_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
+                if (unsentItems > 0) {
+                    Text(
+                        text = stringResource(ResearchR.string.r09_unsent, unsentItems),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.testTag("leave_unsent_text")
+                    )
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Study: $studyName",
+                    text = stringResource(ResearchR.string.r09_study, studyName),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
                 Text(
-                    text = "Device ID: $serverDeviceId",
+                    text = stringResource(ResearchR.string.r09_device, serverDeviceId),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
                 Text(
-                    text = "Server: $serverHost",
+                    text = stringResource(ResearchR.string.r09_server, serverHost),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
             }
         }
 
-        if (errorMessage != null) {
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // The PIN again: the phone may have been left unlocked, and leaving cannot be undone without a new code.
+        OutlinedTextField(
+            value = pin,
+            onValueChange = { pin = it.filter(Char::isDigit) },
+            label = { Text(stringResource(ResearchR.string.r09_pin_label)) },
+            singleLine = true,
+            isError = error != null,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("leave_pin_input")
+        )
+
+        if (error != null) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = errorMessage,
+                text = error.text(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.testTag("leave_error_text")
@@ -159,16 +189,16 @@ fun R09LeaveStudyScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         NgPrimaryButton(
-            text = if (isLeaving) "Leaving Study..." else "Confirm Leave Study",
+            text = stringResource(if (isLeaving) ResearchR.string.r09_leaving else ResearchR.string.r09_leave),
             onClick = { showConfirmDialog = true },
-            enabled = !isLeaving,
+            enabled = pin.isNotBlank() && !isLeaving,
             modifier = Modifier.testTag("leave_confirm_button")
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         NgSecondaryButton(
-            text = "Cancel",
+            text = stringResource(ResearchR.string.r09_cancel),
             onClick = onCancelClicked,
             enabled = !isLeaving,
             modifier = Modifier.testTag("leave_cancel_button")
@@ -180,25 +210,23 @@ fun R09LeaveStudyScreen(
             onDismissRequest = { showConfirmDialog = false },
             title = {
                 Text(
-                    text = "Leave Study?",
+                    text = stringResource(ResearchR.string.r09_dialog_title),
                     fontWeight = FontWeight.Bold
                 )
             },
-            text = {
-                Text(
-                    "Are you sure you want to leave $studyName? Cloud sync will be disconnected. Un-uploaded data can still be exported via USB."
-                )
-            },
+            text = { Text(stringResource(ResearchR.string.r09_dialog_body, serverHost)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showConfirmDialog = false
-                        onLeaveConfirmed()
+                        val typed = pin
+                        pin = "" // not kept on the screen after it is handed over
+                        onLeaveConfirmed(typed)
                     },
                     modifier = Modifier.testTag("leave_dialog_confirm")
                 ) {
                     Text(
-                        text = "Leave Study",
+                        text = stringResource(ResearchR.string.r09_leave),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -208,7 +236,7 @@ fun R09LeaveStudyScreen(
                     onClick = { showConfirmDialog = false },
                     modifier = Modifier.testTag("leave_dialog_cancel")
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(ResearchR.string.r09_cancel))
                 }
             }
         )

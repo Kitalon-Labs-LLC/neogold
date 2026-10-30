@@ -7,10 +7,12 @@ import com.kitalonlabs.neogold.core.data.retention.RetentionManager
 import com.kitalonlabs.neogold.core.data.retention.RetentionWorker
 import com.kitalonlabs.neogold.core.security.crash.InHouseCrashHandler
 import com.kitalonlabs.neogold.core.security.logging.TimberReleaseTree
+import com.kitalonlabs.neogold.sync.research.ResearchSyncComponent
+import com.kitalonlabs.neogold.sync.research.outbox.OutboxProcessor
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-open class NeoGoldApplication : Application(), RetentionComponent {
+open class NeoGoldApplication : Application(), RetentionComponent, ResearchSyncComponent {
 
     /** The app's one object graph (ADR-017). Built in [onCreate]; workers and the activity read it from here. */
     lateinit var container: NeoGoldContainer
@@ -48,8 +50,15 @@ open class NeoGoldApplication : Application(), RetentionComponent {
         RetentionWorker.scheduleDaily(this)
 
         // 5. Check the keys and open the database off the main thread.
-        container.applicationScope.launch { container.storage.open() }
+        container.applicationScope.launch {
+            container.storage.open()
+            // 6. Rows saved before the app was closed, or while the phone had no Wi-Fi, go out now if the phone is set up on
+            // a study server (BUG-2026-027). It queues nothing for a phone that is not, or when nothing is waiting.
+            container.scheduleUploads()
+        }
     }
 
     override suspend fun retentionManager(): RetentionManager? = container.retentionManager()
+
+    override suspend fun outboxProcessor(): OutboxProcessor? = container.outboxProcessor()
 }

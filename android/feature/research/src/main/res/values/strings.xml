@@ -140,6 +140,8 @@
     <string name="r_err_code_rejected">The server did not accept this code. It may be wrong, already used or out of date. Ask your coordinator for a new one.</string>
     <string name="r_err_other_study">This QR belongs to a different study than the one on this phone.</string>
     <string name="r_err_settings_mismatch">The server\'s settings do not match the study QR. Contact your coordinator.</string>
+    <string name="r_err_no_device_profile">This phone has not been set up for the camera check yet, so it cannot join the study server. Finish the first-run set-up first.</string>
+    <string name="r_err_no_server">This study has no study server. Data is moved by export only.</string>
     <string name="r_err_unreachable">The study server could not be reached. Check the Wi-Fi and try again.</string>
     <string name="r_err_refused">The study server refused this request. Contact your coordinator.</string>
     <string name="r_err_not_enrolled">This phone is not set up on a study server.</string>

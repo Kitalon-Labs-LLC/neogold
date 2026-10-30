@@ -75,6 +75,7 @@ import com.kitalonlabs.neogold.feature.research.export.PendingPick
 import com.kitalonlabs.neogold.feature.research.export.ResearchExportManager
 import com.kitalonlabs.neogold.feature.research.export.exportFileName
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
+import com.kitalonlabs.neogold.feature.research.ui.StudyServerViewModel
 import com.kitalonlabs.neogold.feature.result.S20ResultScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S09HomeScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S10BirthTimeGaScreen
@@ -246,6 +247,7 @@ class MainActivity : FragmentActivity() {
                                             modifier = content,
                                             firstRun = firstRun,
                                             research = container.researchViewModel(state.database),
+                                            studyServer = container.studyServerViewModel(state.database),
                                             researchCaptureSetup = { container.researchCaptureSetup(state.database) },
                                             researchCardStatus = { container.researchCardStatus(state.database) },
                                             researchExport = container.researchExportManager(state.database),
@@ -394,6 +396,8 @@ private fun AppLockScreen(onUnlock: () -> Unit) {
  * @param unsentResearchItems asks how many research items the study has not acknowledged, for S25's warning
  * @param research the research session over this database; null when the bundle did not verify, and then no research
  * screen opens
+ * @param studyServer joining, leaving and uploading to the study server (R07 to R09); null when [research] is, and when
+ * the bundle did not verify
  * @param researchCaptureSetup the camera step and the signed card bytes for one research photo session (R04)
  */
 @Composable
@@ -412,6 +416,7 @@ fun NeoGoldNavHost(
     onboarding: OnboardingServices,
     firstRun: FirstRunState,
     research: ResearchViewModel?,
+    studyServer: StudyServerViewModel?,
     researchCaptureSetup: suspend () -> NeoGoldContainer.ResearchCaptureSetup,
     researchCardStatus: suspend () -> CardTrustStatus,
     researchExport: ResearchExportManager,
@@ -439,6 +444,7 @@ fun NeoGoldNavHost(
         val insideSession = route != null && route.startsWith("r0") && route != Destinations.R01_RESEARCH_UNLOCK
         if (!researchUnlocked && insideSession) {
             research?.clearSessionState()
+            studyServer?.clearScan()
             researchCardBytes = null
             researchTsbEntered = null
             navController.navigate(Destinations.R01_RESEARCH_UNLOCK) {
@@ -1209,9 +1215,14 @@ fun NeoGoldNavHost(
             }
         }
 
-        // Export is wired in package C3; until then this screen only shows the study it belongs to.
+        // R07: the encrypted export to a drive (C3) and, below it, the study server card (C4).
         researchSessionComposable(Destinations.R07_EXPORT_SYNC) { session ->
             val study by session.activeStudy.collectAsState()
+            val server = studyServer
+            val serverStudy = server?.study?.collectAsState()?.value
+            val serverPending = server?.pendingUploads?.collectAsState()?.value ?: 0
+            // read again whenever the screen opens: the study may have been joined or left, and uploads change the count
+            androidx.compose.runtime.LaunchedEffect(Unit) { server?.refresh() }
             var exportProgress by remember { mutableStateOf<ExportProgress?>(null) }
             var isExporting by remember { mutableStateOf(false) }
             var exportCompleted by remember { mutableStateOf(false) }
@@ -1259,8 +1270,12 @@ fun NeoGoldNavHost(
                     exportCompleted = exportCompleted,
                     exportFailed = exportFailed,
                     exportFileRemains = exportFileRemains,
-                    // the server side (enrollment, upload now, leave study) is wired in package C4
-                    showCloudSync = false,
+                    showCloudSync = server != null,
+                    pendingUploadsCount = serverPending,
+                    serverDeviceId = serverStudy?.serverDeviceId,
+                    onUploadNowClicked = { server?.uploadNow() },
+                    onEnrollClicked = { navController.navigate(Destinations.R08_ENROLLMENT) },
+                    onLeaveStudyClicked = { navController.navigate(Destinations.R09_LEAVE_STUDY) },
                     onChooseDestinationClicked = {
                         exportPicker.pending.expect(::startExport)
                         exportPicker.launch(exportFileName(it.studyCode, java.time.Instant.now()))
@@ -1269,20 +1284,71 @@ fun NeoGoldNavHost(
                 )
             }
         }
-        researchComposable(Destinations.R08_ENROLLMENT) { PlaceholderScreen("R08: Study Enrollment") }
-        researchComposable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }
+        // R08 and R09 need the study server's view model as well as the research session; without both (the bundle did
+        // not verify) the block screen shows, like every research screen.
+        fun NavGraphBuilder.studyServerComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(StudyServerViewModel) -> Unit
+        ) = researchSessionComposable(route) { _ ->
+            val server = studyServer
+            if (server != null) content(server) else IntegrityBlockedScreen(integrity)
+        }
+
+        studyServerComposable(Destinations.R08_ENROLLMENT) { server ->
+            val scanned by server.scannedProfile.collectAsState()
+            val error by server.error.collectAsState()
+            val busy by server.isBusy.collectAsState()
+            // a scan or a message from the last visit is not shown again
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                server.clearScan()
+                server.clearError()
+                server.refresh()
+            }
+            com.kitalonlabs.neogold.feature.research.ui.R08EnrollmentScreen(
+                scannedProfile = scanned,
+                isEnrolling = busy,
+                error = error,
+                onQrScanned = server::onQrScanned,
+                onEnrollConfirmed = { code -> server.enroll(code) { navController.popBackStack() } },
+                onCancelClicked = {
+                    server.clearScan()
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        studyServerComposable(Destinations.R09_LEAVE_STUDY) { server ->
+            val study by server.study.collectAsState()
+            val pending by server.pendingUploads.collectAsState()
+            val error by server.error.collectAsState()
+            val busy by server.isBusy.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                server.clearError()
+                server.refresh()
+            }
+            // The device ID is gone once the phone has left: nothing to show but the way back.
+            val deviceId = study?.serverDeviceId
+            if (deviceId == null) {
+                androidx.compose.runtime.LaunchedEffect(Unit) { navController.popBackStack() }
+            } else {
+                com.kitalonlabs.neogold.feature.research.ui.R09LeaveStudyScreen(
+                    studyName = study?.displayName.orEmpty(),
+                    serverDeviceId = deviceId,
+                    serverHost = serverHostOf(study?.serverUrl),
+                    unsentItems = pending,
+                    isLeaving = busy,
+                    error = error,
+                    onLeaveConfirmed = { pin -> server.leave(pin) { navController.popBackStack() } },
+                    onCancelClicked = { navController.popBackStack() }
+                )
+            }
+        }
     }
 }
 
 /** The activity's "save the export" picker: ask for a place with [launch], answers go through [pending]. */
 class ExportPicker(val pending: PendingPick<Uri>, val launch: (String) -> Unit)
 
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = title)
-    }
-}
+/** The host of a study server's API address, for display: "https://intake.example.bd/v1/" shows as "intake.example.bd". */
+internal fun serverHostOf(serverUrl: String?): String =
+    serverUrl.orEmpty().substringAfter("://").substringBefore("/")

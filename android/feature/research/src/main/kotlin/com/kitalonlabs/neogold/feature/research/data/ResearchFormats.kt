@@ -18,6 +18,16 @@ object ResearchFormats {
      */
     val CONSENT_FORM_ID_REGEX = Regex("^[A-Z]{2,5}-[A-Z0-9-]{2,26}$")
 
+    /**
+     * One-time study server enrollment code: Crockford base32 (no I, L, O, U), three groups of four (doc 7 Section 4.2).
+     * The sync layer checks the same format again before it sends anything (`StudyEnrollmentManager`).
+     */
+    val ENROLLMENT_CODE_REGEX = Regex("^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$")
+
+    fun isValidEnrollmentCode(code: String): Boolean {
+        return ENROLLMENT_CODE_REGEX.matches(code.trim().uppercase())
+    }
+
     fun isValidParticipantCode(code: String): Boolean {
         return PARTICIPANT_CODE_REGEX.matches(code.trim())
     }

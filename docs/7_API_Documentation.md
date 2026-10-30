@@ -436,6 +436,9 @@ The study QR (Section 4.1) is signed off the server, on Kitalon Labs' offline si
 - Network security config: cleartext disallowed, system CAs only, user-installed CAs not trusted (the default for apps targeting API 24 and up [Certain]). No certificate pinning in v1; reasons in doc 8 Section 5.3.
 - The outbox worker is one unique WorkManager work, foreground when the backlog is long (Section 5.3); background runs and **Upload now** call the same `OutboxProcessor`, so there is one code path to test.
 - Dates are formatted in the study time zone from `upload_policy.time_zone`, never with the phone's default zone or UTC.
+- **Enrollment checks on the phone (package C4).** Before the request, the client refuses if the phone has no study, the study QR is of another study, the phone already has a device ID, or the study names no host. The `device` block carries the camera hardware level and qualification of the phone's active device profile; the client has no default for either. After the response, the client deletes the new key and refuses if `upload_policy.timestamp_precision` differs from the signed profile or `upload_policy.max_image_bytes` is below 5,000,000 (the largest research photo the app keeps; the contract's maximum is 20,000,000, so a lower value would refuse photos already kept) (TC-API-07).
+- When the server answers `study_status: CLOSED` or `DEVICE_REVOKED`, the client clears the device key and device ID and stops retrying; research data stays on the phone for export (Section 4.5, TC-SYNC-16).
+- Errors reach the screens as kinds, not text: a server's `title`, `detail` and the host never appear on a screen or in a log (doc 8 Section 6.6).
 
 ---
 

@@ -150,6 +150,7 @@ class SyncFullDaySimulationTest {
             apiClient = apiClient,
             keyManager = keyManager,
             studyDao = database.researchStudyDao(),
+            auditDao = database.auditEventDao(),
             appVersion = appVersion
         )
 

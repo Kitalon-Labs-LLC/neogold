@@ -41,6 +41,7 @@ class SecureScreenHelperTest {
     fun pinEntryAndEnrollment_areSecure_becauseThePinAndTheEnrollmentCodeAreTypedThere_TC_PRIV_02() {
         assertThat(SecureScreenHelper.isDestinationSecure("r01_research_unlock")).isTrue()
         assertThat(SecureScreenHelper.isDestinationSecure("r08_enrollment")).isTrue()
+        assertThat(SecureScreenHelper.isDestinationSecure("r09_leave_study")).isTrue() // the PIN is typed again here
     }
 
     @Test

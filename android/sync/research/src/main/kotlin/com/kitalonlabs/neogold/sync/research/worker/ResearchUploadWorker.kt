@@ -9,133 +9,84 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
-import com.kitalonlabs.neogold.core.security.AndroidMasterKeyProvider
-import com.kitalonlabs.neogold.core.security.DefaultDatabaseKeyProvider
-import com.kitalonlabs.neogold.core.security.DefaultEncryptedFileStore
-import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
-import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
-import com.kitalonlabs.neogold.sync.research.crypto.AndroidDeviceKeyManager
-import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
-import com.kitalonlabs.neogold.sync.research.enrollment.StudyRevocationManager
+import com.kitalonlabs.neogold.sync.research.R
+import com.kitalonlabs.neogold.sync.research.ResearchSyncComponent
 import com.kitalonlabs.neogold.sync.research.outbox.OutboxProcessor
 import com.kitalonlabs.neogold.sync.research.outbox.OutboxResult
-import com.kitalonlabs.neogold.sync.research.outbox.ReconciliationManager
 import timber.log.Timber
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Foreground worker responsible for processing outbox items (FR-31, NFR-12, TC-SYNC-10..12).
  * Operates as a foreground worker with dataSync type on API 34+ to allow processing
  * long backlogs over throttled networks past the standard 10-minute worker limit.
+ *
+ * It builds nothing itself: the processor comes from the application ([ResearchSyncComponent]), over the one open database
+ * and the one set of keys. While the application has none (storage cannot be read, the bundle check failed) the worker
+ * does nothing and tries again later.
  */
 open class ResearchUploadWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
-    protected open fun createOutboxProcessor(): OutboxProcessor {
-        val masterKeyProvider = AndroidMasterKeyProvider(applicationContext)
-        val databaseKeyProvider = DefaultDatabaseKeyProvider(applicationContext, masterKeyProvider)
-        val fileKeysetProvider = DefaultFileKeysetProvider(applicationContext, masterKeyProvider)
-        val encryptedFileStore = DefaultEncryptedFileStore(applicationContext, fileKeysetProvider)
-        val database = NeoGoldDatabase.buildDatabase(applicationContext, databaseKeyProvider)
-
-        val deviceKeyManager = AndroidDeviceKeyManager()
-        val clockManager = ClockManager()
-        // A redirect would send the request body, and the device assertion's claims, to a server the study never named.
-        val okHttpClient = okhttp3.OkHttpClient.Builder().followRedirects(false).followSslRedirects(false).build()
-        val apiClient = ResearchApiClient(
-            okHttpClient = okHttpClient,
-            clockManager = clockManager,
-            keyManager = deviceKeyManager
-        )
-
-        val packageInfo = try {
-            applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0)
-        } catch (_: Exception) {
-            null
-        }
-        val appVersion = packageInfo?.versionName ?: "1.0.0"
-
-        val revocationManager = StudyRevocationManager(
-            apiClient = apiClient,
-            keyManager = deviceKeyManager,
-            studyDao = database.researchStudyDao(),
-            appVersion = appVersion
-        )
-
-        val reconciliationManager = ReconciliationManager(
-            apiClient = apiClient,
-            outboxDao = database.outboxDao(),
-            studyDao = database.researchStudyDao(),
-            sessionDao = database.screeningSessionDao(),
-            captureDao = database.captureDao(),
-            batchDao = database.cardBatchDao(),
-            participantDao = database.researchParticipantDao(),
-            tsbDao = database.tsbMeasurementDao(),
-            appVersion = appVersion
-        )
-
-        return OutboxProcessor(
-            apiClient = apiClient,
-            outboxDao = database.outboxDao(),
-            studyDao = database.researchStudyDao(),
-            batchDao = database.cardBatchDao(),
-            participantDao = database.researchParticipantDao(),
-            sessionDao = database.screeningSessionDao(),
-            captureDao = database.captureDao(),
-            tsbDao = database.tsbMeasurementDao(),
-            encryptedFileStore = encryptedFileStore,
-            revocationManager = revocationManager,
-            reconciliationManager = reconciliationManager,
-            appVersion = appVersion
-        )
-    }
+    protected open suspend fun outboxProcessor(): OutboxProcessor? =
+        (applicationContext as? ResearchSyncComponent)?.outboxProcessor()
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         return createForegroundInfo(
-            title = "NeoGold Study Sync",
-            content = "Uploading research data..."
+            title = applicationContext.getString(R.string.research_sync_title),
+            content = applicationContext.getString(R.string.research_sync_text)
         )
     }
 
+    // Only the kind of exception is logged: its message can carry a host or a server's own words (doc 8 Section 6.6).
     @Suppress("TooGenericExceptionCaught") // a worker must never crash the process; retry instead
     override suspend fun doWork(): Result {
-        val outboxProcessor = createOutboxProcessor()
+        val processor = outboxProcessor()
+        if (processor == null) {
+            Timber.d("Upload skipped: storage or the bundle check is not ready")
+            return Result.retry()
+        }
 
-        // 1. Reset any IN_FLIGHT rows to PENDING (killed run recovers, doc 7 Section 5.3, TC-SYNC-11)
-        // Note: process() will also reset in-flight, but we also ensure it before promoting foreground
         try {
             setForeground(getForegroundInfo())
         } catch (e: Exception) {
-            Timber.w(e, "Could not set foreground info")
+            Timber.w("Could not set foreground info: %s", e.javaClass.simpleName)
         }
 
         return try {
-            when (val outcome = outboxProcessor.process()) {
+            when (val outcome = processor.process()) {
                 is OutboxResult.Success -> {
-                    Timber.i("Outbox processor processed ${outcome.itemsProcessed} items successfully")
+                    Timber.i("Outbox processor processed %d items", outcome.itemsProcessed)
                     Result.success()
                 }
                 is OutboxResult.Paused -> {
                     Timber.d("Study is paused; retrying later")
                     Result.retry()
                 }
+                is OutboxResult.NotEnrolled -> {
+                    Timber.d("Upload skipped: the phone is not set up on a study server")
+                    Result.success()
+                }
                 is OutboxResult.Closed, is OutboxResult.Revoked -> {
-                    Timber.w("Study closed or device revoked: $outcome")
+                    Timber.w("Study closed or device revoked: %s", outcome.javaClass.simpleName)
                     Result.failure()
                 }
                 is OutboxResult.AppVersionUnsupported -> {
-                    Timber.e("App version unsupported: min is ${outcome.minVersion}")
+                    // the minimum version is the server's string: not logged
+                    Timber.e("App version unsupported")
                     Result.failure()
                 }
                 is OutboxResult.Error -> {
-                    Timber.w(outcome.cause, "Outbox processing failed: ${outcome.message}")
+                    Timber.w("Outbox processing failed: %s", outcome.message)
                     Result.retry()
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            Timber.e(e, "Unexpected error in ResearchUploadWorker")
+            Timber.e("Unexpected error in ResearchUploadWorker: %s", e.javaClass.simpleName)
             Result.retry()
         }
     }
@@ -147,10 +98,10 @@ open class ResearchUploadWorker(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
-                "Research Sync",
+                applicationContext.getString(R.string.research_sync_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Shows upload status when synchronizing research study data"
+                description = applicationContext.getString(R.string.research_sync_channel_description)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -160,6 +111,7 @@ open class ResearchUploadWorker(
             .setContentText(content)
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setOngoing(true)
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 

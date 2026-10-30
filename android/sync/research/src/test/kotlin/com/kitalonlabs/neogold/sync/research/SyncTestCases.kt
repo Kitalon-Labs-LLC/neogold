@@ -25,6 +25,7 @@ import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
 import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
 import com.kitalonlabs.neogold.sync.research.crypto.SoftwareDeviceKeyManager
+import com.kitalonlabs.neogold.sync.research.enrollment.EnrollingDevice
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyEnrollmentManager
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyProfileVerifier
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyRevocationManager
@@ -73,6 +74,7 @@ class SyncTestCases {
     private val deviceId = "d-8f2a1b9c"
     private val keyAlias = "test-device-key"
     private val appVersion = "1.0.0"
+    private val testDevice = EnrollingDevice(cameraHardwareLevel = "FULL", qualification = "QUALIFIED")
 
     @Before
     fun setup() {
@@ -103,6 +105,7 @@ class SyncTestCases {
             apiClient = apiClient,
             keyManager = keyManager,
             studyDao = database.researchStudyDao(),
+            auditDao = database.auditEventDao(),
             appVersion = appVersion
         )
 
@@ -1094,6 +1097,10 @@ class SyncTestCases {
      */
     @Test
     fun tcApi07_settingsMismatchRefused() = runBlocking {
+        // The seeded study is already set up on the server; enrollment is for a phone that is not (see the guards test).
+        database.researchStudyDao().getStudyById(studyId)!!.let {
+            database.researchStudyDao().update(it.copy(serverDeviceId = null, deviceKeyAlias = null))
+        }
         val enrollmentManager = StudyEnrollmentManager(
             apiClient = apiClient,
             keyManager = keyManager,
@@ -1125,7 +1132,8 @@ class SyncTestCases {
         try {
             enrollmentManager.enroll(
                 qrPayload = qrBytes,
-                enrollmentCode = "7K2X-M49P-3ABC"
+                enrollmentCode = "7K2X-M49P-3ABC",
+                device = testDevice
             )
             fail("Expected StudySettingsMismatchException")
         } catch (e: StudySettingsMismatchException) {
@@ -1166,7 +1174,7 @@ class SyncTestCases {
         )
 
         try {
-            manager.enroll(qrPayload = qrBytes, enrollmentCode = "7K2X-M49P-3ABC")
+            manager.enroll(qrPayload = qrBytes, enrollmentCode = "7K2X-M49P-3ABC", device = testDevice)
             fail("Expected IllegalArgumentException")
         } catch (e: IllegalArgumentException) {
             assertThat(e.message).doesNotContain("7K2X")
@@ -1196,7 +1204,7 @@ class SyncTestCases {
         )
 
         try {
-            manager.enroll(qrPayload = qrBytes, enrollmentCode = "secret-code-123")
+            manager.enroll(qrPayload = qrBytes, enrollmentCode = "secret-code-123", device = testDevice)
             fail("Expected IllegalArgumentException")
         } catch (e: IllegalArgumentException) {
             assertThat(e.message).doesNotContain("secret-code-123")

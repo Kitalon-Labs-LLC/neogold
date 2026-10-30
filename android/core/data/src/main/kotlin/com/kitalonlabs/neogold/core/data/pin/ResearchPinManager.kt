@@ -8,8 +8,6 @@ import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
 import com.kitalonlabs.neogold.core.security.KeystoreLossException
 import com.kitalonlabs.neogold.core.security.pin.Argon2PinHasher
-import com.kitalonlabs.neogold.core.security.pin.PinPolicyValidator
-import com.kitalonlabs.neogold.core.security.pin.PinValidationResult
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
@@ -165,33 +163,5 @@ class ResearchPinManager(
         pinHasher.hasVerifierKey()
     } catch (expected: KeystoreLossException) {
         false // a Keystore that cannot be reached is a lost key, for the purpose of this check
-    }
-
-    /**
-     * Sets or updates the PIN for a study after validating against PIN policy.
-     */
-    suspend fun setPin(
-        studyId: String,
-        pin: String
-    ): Result<ResearchStudyEntity> {
-        val validation = PinPolicyValidator.validate(pin)
-        if (validation is PinValidationResult.Invalid) {
-            return Result.failure(IllegalArgumentException("PIN does not satisfy security policy: ${validation.error}"))
-        }
-
-        val study = studyDao.getStudyById(studyId)
-            ?: return Result.failure(IllegalArgumentException("Study $studyId not found"))
-
-        val salt = pinHasher.generateSalt()
-        val hash = pinHasher.hashPin(pin, salt)
-
-        val updatedStudy = study.copy(
-            pinHash = hash,
-            pinSalt = salt,
-            failedPinAttempts = 0,
-            lockedUntil = null
-        )
-        studyDao.update(updatedStudy)
-        return Result.success(updatedStudy)
     }
 }

@@ -26,7 +26,8 @@ object SecureScreenHelper {
         "r05_tsb_entry",
         "r06_session_complete",
         "r07_export_sync",
-        "r08_enrollment" // shows the one-time enrollment code
+        "r08_enrollment", // shows the one-time enrollment code
+        "r09_leave_study" // the PIN is typed here
     )
 
     /**

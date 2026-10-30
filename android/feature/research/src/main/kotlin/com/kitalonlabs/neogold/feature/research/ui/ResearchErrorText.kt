@@ -24,6 +24,8 @@ fun ResearchError.text(): String = when (message) {
     ResearchMessage.ENROLL_CODE_REJECTED -> stringResource(R.string.r_err_code_rejected)
     ResearchMessage.ENROLL_OTHER_STUDY -> stringResource(R.string.r_err_other_study)
     ResearchMessage.ENROLL_SETTINGS_MISMATCH -> stringResource(R.string.r_err_settings_mismatch)
+    ResearchMessage.ENROLL_NO_DEVICE_PROFILE -> stringResource(R.string.r_err_no_device_profile)
+    ResearchMessage.ENROLL_NO_SERVER -> stringResource(R.string.r_err_no_server)
     ResearchMessage.SERVER_UNREACHABLE -> stringResource(R.string.r_err_unreachable)
     ResearchMessage.SERVER_REFUSED -> stringResource(R.string.r_err_refused)
     ResearchMessage.NOT_ENROLLED -> stringResource(R.string.r_err_not_enrolled)

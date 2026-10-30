@@ -39,11 +39,14 @@ data class ResearchClinicalInputs(
  * State holder orchestrating research mode UI state, session security lifecycle,
  * participant registration, blinded capture protocol, and paired TSB records.
  */
-// One state holder for the whole research flow, R01 to R06; it is split when R08 and R09 are wired (C4).
+// One state holder for the unlock and session flow, R01 to R06. The study server side (R07 cloud card, R08, R09) is in
+// StudyServerViewModel.
 @Suppress("TooManyFunctions")
 class ResearchViewModel(
-    private val repository: ResearchRepository,
+    val repository: ResearchRepository,
     private val sessionManager: ResearchSessionManager? = null,
+    /** Told after a session or a TSB value was saved, so the app can queue the upload (it does nothing without a server). */
+    private val onDataQueued: () -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
     /** Where the PIN hashing runs: Argon2 uses 19 MiB and about a second, which must not happen on the main thread. */
     private val cpu: CoroutineDispatcher = Dispatchers.Default
@@ -363,6 +366,7 @@ class ResearchViewModel(
                 _lastSessionResult.value = sessionResult
                 _cardTrustStatus.value = sessionResult.cardStatus
                 refreshPendingUploads()
+                onDataQueued()
                 sessionManager?.recordUserActivity()
                 onCompleted(sessionResult)
             }.onFailure { err ->
@@ -393,6 +397,7 @@ class ResearchViewModel(
             if (epoch != lockEpoch) return@launch
             result.onSuccess {
                 refreshPendingUploads()
+                onDataQueued()
                 sessionManager?.recordUserActivity()
                 onSuccess()
             }.onFailure { err ->

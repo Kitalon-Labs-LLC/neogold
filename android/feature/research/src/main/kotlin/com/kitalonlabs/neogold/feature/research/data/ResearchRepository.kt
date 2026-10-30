@@ -173,17 +173,10 @@ class ResearchRepository(
             }
         } else {
             // A second study is never enrolled over an active one: whoever holds the phone could type a PIN of their own
-            // and get past the first study's PIN. Nothing marks a study as left or closed yet (R09 and the server's CLOSED
-            // answer are package C4), so for now the only way to a new study is "Delete all data" in Settings.
-            val active = database.researchStudyDao().getActiveStudy()
-            if (active != null) {
-                return Result.failure(
-                    ResearchRefusal(
-                        ResearchError(ResearchMessage.ANOTHER_STUDY),
-                        "Another study is already set up on this phone. To set up a new one, delete all data in Settings."
-                    )
-                )
-            }
+            // and get past the first study's PIN. Leaving the server (R09) and a closed study do not end the study on the
+            // phone, because export and retention find it through the active row, so the only way to a new study is
+            // Export, then "Delete all data" in Settings. The check is made again inside the insert's transaction below.
+            if (database.researchStudyDao().getActiveStudy() != null) return Result.failure(anotherStudyRefusal())
             // New study: Validate PIN policy
             val validation = PinPolicyValidator.validate(pin)
             if (validation is PinValidationResult.Invalid) {
@@ -216,20 +209,31 @@ class ResearchRepository(
                 enrolledAt = now
             )
 
-            database.researchStudyDao().insert(newStudy)
-
-            database.auditEventDao().insert(
-                AuditEventEntity(
-                    id = UUID.randomUUID().toString(),
-                    eventType = "STUDY_UNLOCKED",
-                    occurredAt = now,
-                    details = "{\"study_code\":\"${profile.studyCode}\"}"
-                )
-            )
-
-            Result.success(newStudy)
+            // The check and the insert are one transaction (BUG-2026-083 item 14): two scans of different studies that
+            // reach this point together cannot both insert.
+            database.withTransaction {
+                if (database.researchStudyDao().getActiveStudy() != null) {
+                    Result.failure(anotherStudyRefusal())
+                } else {
+                    database.researchStudyDao().insert(newStudy)
+                    database.auditEventDao().insert(
+                        AuditEventEntity(
+                            id = UUID.randomUUID().toString(),
+                            eventType = "STUDY_UNLOCKED",
+                            occurredAt = now,
+                            details = "{\"study_code\":\"${profile.studyCode}\"}"
+                        )
+                    )
+                    Result.success(newStudy)
+                }
+            }
         }
     }
+
+    private fun anotherStudyRefusal() = ResearchRefusal(
+        ResearchError(ResearchMessage.ANOTHER_STUDY),
+        "Another study is already set up on this phone. To set up a new one, export, then delete all data in Settings."
+    )
 
     /**
      * Enrolls or retrieves a participant with format validation (FR-26, TC-RSH-08, TC-RSH-09).
@@ -702,7 +706,8 @@ class ResearchRepository(
     }
 
     suspend fun getPendingUploadsCount(): Int {
-        return database.outboxDao().getPendingItems().size
+        // everything the server has not acknowledged (waiting, in flight, given up on), as Delete all data counts it
+        return database.outboxDao().countUnsent()
     }
 
     suspend fun verifyPin(studyId: String, pin: String, now: Long = System.currentTimeMillis()): PinCheckResult {

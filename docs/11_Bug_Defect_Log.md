@@ -100,8 +100,8 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-023 | Gestational age has a hidden default of 38 weeks | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
 | BUG-2026-024 | Research mode has no entry point | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-01 | |
 | BUG-2026-025 | Research export screen never writes a file | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | EXP | S2 | No | - | P2 | Fixed | Unassigned | TC-EXP-01 | |
-| BUG-2026-026 | Study enrollment (R08) and Leave study (R09) are placeholder screens | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | New | Unassigned | TC-API-07 | |
-| BUG-2026-027 | Upload is never started by the app | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | New | Unassigned | TC-SYNC-10 | |
+| BUG-2026-026 | Study enrollment (R08) and Leave study (R09) are placeholder screens | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
+| BUG-2026-027 | Upload is never started by the app | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-SYNC-10 | |
 | BUG-2026-028 | No Play In-App Updates implementation | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | ONB | S2 | No | - | P2 | New | Unassigned | TC-OPS-03 | |
 | BUG-2026-029 | About 150 hardcoded English UI strings; string lint does not check Kotlin | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | A11Y | S2 | No | - | P2 | New | Unassigned | TC-A11Y-01 | |
 | BUG-2026-030 | Hazard log is missing | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | none (add to doc 10) | |
@@ -159,6 +159,10 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-082 | The research age is worked out when R03 opens, but saved after the captures and the TSB step | 2026-10-30 | Review | commit d303597 | n/a | RSH | S2 | No | H2 | P2 | Fixed | Unassigned | TC-UI-11 | |
 | BUG-2026-083 | Findings from the C2 part 1 reviews that are left open for later packages | 2026-10-30 | Review | commit d303597 | n/a | RSH | S3 | No | H2, H4 | P3 | New | Unassigned | TC-RSH-07, TC-RSH-14, TC-API-20 | |
 | BUG-2026-084 | The API does not send X-Content-Type-Options when it is reached on its own port (the proxy sets it in production) | 2026-10-30 | Test | commit 1f32e1b | n/a | SEC | S4 | No | - | P3 | Fixed | Unassigned | n/a (`test_health.py`) | |
+| BUG-2026-085 | Enrollment sent a made-up camera level (LIMITED) and qualification (QUALIFIED) to the study server | 2026-10-30 | Review | commit f4e0907 | n/a | SYNC | S3 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
+| BUG-2026-086 | Enrollment could add a second study with no PIN, or replace the device key of a phone already enrolled | 2026-10-30 | Review | commit f4e0907 | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-API-07, TC-SYNC-16 | |
+| BUG-2026-087 | The upload worker built its own database, keys and HTTP client, and logged exception messages | 2026-10-30 | Review | commit f4e0907 | n/a | SEC | S2 | No | - | P2 | Fixed | Unassigned | TC-SYNC-11, TC-PRIV-04 | |
+| BUG-2026-088 | A closed study made the worker fail on every run and nothing disconnected the phone; R09 would have shown the PIN in recents | 2026-10-30 | Review | commit f4e0907 | n/a | SYNC | S3 | No | - | P3 | Fixed | Unassigned | TC-SYNC-16, TC-PRIV-02 | |
 
 ### 4.1 Entries
 
@@ -379,6 +383,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `MainActivity.kt:766-771`.
 
 **Notes** Fix package R3.
+
+**Fix** Package C4 (30 October 2026). R08 and R09 are the real screens behind `StudyServerViewModel`: R08 scans the signed study QR again, refuses a QR of another study, checks the code format, asks for a confirmation that names the study, partner and server, and joins; R09 asks for the research PIN again and leaves. R07 shows the study server card. Tests: `StudyServerViewModelTest` (16), `StudyEnrollmentGuardsTest` (9), `StudyServerWiringGuardTest`. Not run: a real enrollment against a staging server over HTTPS (bench task); the full-day simulation still runs against a mock server.
 
 **Fix** Package C2 part 1 (commit d303597). R01 calls `ResearchViewModel.unlockWithPin` and `enrollWithScannedProfile`, which check the PIN through `ResearchPinManager` (Argon2id plus the Keystore HMAC, run off the main thread) and show the lockout; R02 opens only after a successful check. `ResearchViewModelTest` now covers a wrong PIN, the lockout and the session lock (BUG-2026-083 item 10); it is not Verified until the device run.
 
@@ -624,7 +630,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-026: Study enrollment (R08) and Leave study (R09) are placeholder screens
 
 - Area: SYNC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-API-07 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-07 | Fix version:
 
 **Steps**
 1. Navigate to R08 or R09.
@@ -640,7 +646,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-027: Upload is never started by the app
 
 - Area: SYNC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-SYNC-01, TC-SYNC-10 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-SYNC-01, TC-SYNC-10 | Fix version:
 
 **Steps**
 1. Search the app for calls to `ResearchWorkScheduler`.
@@ -652,6 +658,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/worker/ResearchWorkScheduler.kt`.
 
 **Notes** The sync client passes its MockWebServer tests (34 in the local run) but cannot run in the app. Fix package R3.
+
+**Fix** Package C4 (30 October 2026). The app queues the upload after a session or a TSB value is saved, after enrollment and at every app start (only when the phone has a device ID and rows are waiting); R07's **Upload now** replaces a waiting run with an expedited one. `ResearchUploadWorker` takes its processor from the application, so it uses the one database and key set. Tests: `ResearchUploadWorkerTest` (the scheduling policy and the worker), `StudyServerViewModelTest` (upload now), `StudyServerWiringGuardTest`. Not verified on a phone: the Wi-Fi constraint, the expedited quota, a foreground run past 10 minutes.
 
 **Note from B1**: `ResearchUploadWorker` builds its own clients and keys instead of taking them from `NeoGoldContainer`, so it bypasses the storage coordinator and the integrity check. A worker that wakes while saved data is unreadable, or after the start-up check failed, would still try to upload. Package C4 makes the worker take everything from the container and stop when storage is not ready or the check did not pass.
 
@@ -1650,27 +1658,28 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 5. The first tap on the gestational-age stepper commits 38 weeks (`NgControls`, noted for E1). (E1, with BUG-2026-023.)
 6. The H2 clock controls are not applied in R03: a clock earlier than the build time, a large offset from the last server time, automatic time off, the 14-day rule. (C4, with enrollment.)
 7. `researchCaptureSetup` falls back to code defaults when `qualityThresholds` is missing; it should fail closed (BUG-2026-071 item 1). (E1.)
-8. The 5,000,000 byte cap is the app's own; the study's `max_image_bytes` policy is not followed. (C4.)
+8. RESOLVED in package C4 (30 October 2026): the app's cap stays 5,000,000 and enrollment is refused, with the device key deleted, when the server's `max_image_bytes` is below it (`StudyEnrollmentGuardsTest`; the contract's maximum is 20,000,000, so a lower value is the only conflict). `StudyServerWiringGuardTest` checks the two 5,000,000 constants agree.
 9. RESOLVED: every message on R01, R03 and R05 is a typed error that the screen writes in English or Bangla (Bangla draft), and 53 more literals on R01, R02, R03, R05 and R06 moved to resources (the literal baseline fell from 157 to 100). The Bangla texts are a draft for the nurse panel. Still hardcoded: R04 and the R07 to R09 placeholders (C3 and C4).
 10. PARTLY RESOLVED: `ResearchViewModelTest` (15 cases: scan, confirm, enroll, two PINs that differ, a weak PIN, a wrong PIN, five wrong PINs and the lockout, the right PIN again, the lock clearing session state and a scanned QR, a PIN check that finishes after a lock, the save, an age after the save time, a double tap, and a log capture of the whole flow), `ResearchCaptureProcessorTest` (6, including a photo over 5,000,000 bytes) and `ResearchBlindingGuardTest` (3) are written. Still open: the second-study refusal through the view model (it needs a second signed study vector; the repository test covers it), and a lock while on Settings.
 11. The lockout compares the wall clock, so a phone with its clock set back shortens a lockout (design, doc 8 Section 6.2; a monotonic anchor would harden it). (Later.)
 12. The S19 placeholder on the hidden screening path still sets `NO_FURTHER_ACTION`, 8.2 to 10.1 and a threshold of 12.0 (BUG-2026-001). (E1.)
 13. R05: whether the participant-code field is editable while a session is in progress was not checked; the TSB attaches to the session's participant either way. (C2.)
-14. The one-study refusal has no exit except Delete all data until R09 exists, and nothing sets a study's status to LEFT or CLOSED (BUG-2026-078). Also: the check-then-insert in `unlockWithStudyQr` is not atomic (only the view model's busy flag serializes it); `StudyEnrollmentManager` has no one-study guard and stores an empty `pinHash` for a new study; `ResearchPinManager.setPin` is outside the mutex (its only caller is a test). (C4.)
+14. RESOLVED in package C4 (30 October 2026), by decision: leaving, a revoked device and a closed study clear the device key and device ID and leave the study ACTIVE, because export and retention find the study through the active row; the exit to a different study is Export, then Delete all data (said on the refusal). The check-then-insert in `unlockWithStudyQr` is one transaction. `StudyEnrollmentManager` enrolls only into the existing study of the same code, so it stores no empty `pinHash`, and refuses a second enrollment of a phone that already has a device ID. `ResearchPinManager.setPin` had no caller and is deleted. Tests: `StudyEnrollmentGuardsTest`, `ResearchStudyUnlockTest`. Not solved: a lost PIN verifier key still needs Export (if the data can be read) and Delete all data.
 15. The card the record names is the one the phone holds (the active profile's), not the card in the photo; a worker holding a different card gets the profile card's status. Binding the batch to the scanned card needs a card scan in the research session. (C2 or C4; doc 6 says so.)
 16. A save that finishes after a lock now keeps the rows and shows nothing; the save is not cancelled when the session locks. A cancellation that arrives while the transaction commits is covered by a `committed` flag, but the Room version's behaviour was not checked. (C2.)
 17. The screening save path in `MainActivity` clamps an age with `coerceIn(0.0, 720.0)` instead of refusing it (a birth time in the future becomes age 0, a very old one becomes 720). It matters only when screening is switched on. (E1, with BUG-2026-001.)
 20. Not written, and why: the emulator offline-session test (TC-RSH-01 to 16 on a real Keystore and SQLCipher). There is no emulator in the build container (no KVM), and the app's bundled trust list holds only production keys, so a test study QR cannot be scanned on a device without a test trust list or a debug-only fixture. It needs both, then a run on the device matrix. (D1.)
 21. Not written: the accessibility-tree check of the drawn screens (nothing the screens expose to TalkBack contains an estimate). It needs the Compose UI test dependency the owner has approved (`ui-test-junit4`, package D1); until then `ResearchBlindingGuardTest` holds the structural guarantee. (D1.)
 22. Found in the C2 test-round reviews and FIXED in the same package: registering a participant and entering a TSB later had no lock check, so a lock that landed during the database call let the late result put the participant and inputs back in memory; a lock that came before the view model had collected it was not seen by any action (every action now refuses unless the session manager itself says unlocked); the repository imported the error types from the UI package (moved to `data`); R02 showed VERIFIED from the stored flag without asking the card verifier again, so a card whose issuer key was revoked after the scan still looked fine (`researchCardStatus` now verifies the stored bytes against the trust list, as a save does, and falls back to UNVERIFIED on a storage error); stale messages from R05 could show on R03 (cleared on entry); the Bangla unit read "ডেসিলি" (now "ডেসিলিটার", for the nurse panel to confirm); the card badges on R02 and R06 and the R05 method names were English only (localized). Tests: `ResearchViewModelTest` registration, deferred TSB, save and enrollment against a lock (the registration and deferred-TSB tests fail without their guard; the save test depends on timing).
-23. Open (low): R01 shows the enrolled study's name before the PIN, and the "another study is set up" message tells a holder of any validly signed study QR that the phone is enrolled elsewhere, without costing a PIN try. Decide with doc 8 whether the name should wait for the PIN. (C4.)
+23. DECIDED (30 October 2026, doc 8 Section 7.1): R01 keeps showing the enrolled study's name before the PIN. It comes from a signed QR the worker holds, it is not a secret, and hiding it hurts a worker with two sites more than it protects. The refusal for a QR of another study costs no PIN try and sends nothing.
 24. Open (low): `ResearchBlindingGuardTest` checks the module's own build file, the screen and capture code, and the displayed strings; it does not check `export/` (the CSV has estimate and triage columns, always empty for research rows) or the dependency graph through other modules. Add a test that the export columns are empty for research rows, and a graph check in `tools/check_dependencies.py`. (D1.)
 25. RESOLVED in package C3: the export failure shows a fixed message in both languages; no exception text reaches the screen (`ExportWiringGuardTest`, `ResearchExportCleanupTest`).
 29. RESOLVED (30 October 2026, with item 27): `ExportCryptoEngine` is encrypt-only. `generateDataKeysetHandle`, `wrapDataKey`, `getStreamingAead`, `encryptStream` and `encryptBytes` are `internal`; the only public entry points are `createSession`, `sha256Hex` and `CONTEXT_INFO`, and `ExportSession` offers `encryptBytes`, `encryptStream` and `wrapDataKey` only. `wrapDataKey` zeroes the serialized data key after the wrap (and `FileKeysetProvider` does the same for the image keyset). `unwrapDataKey`, `decryptStream`, the HPKE private-key handling and `generateKeyPair` are gone from the app; the app's tests now decrypt with the offline tool (`DecryptEngine`, made public for that), so a passing test means the tool opens what the app writes. `ExportCryptoEngineTest.tcExp01_onlyEncryptingEntryPointsArePublic` fails if a public function is added (mutation-checked: making `wrapDataKey` public fails it).
 30. PARTLY RESOLVED (30 October 2026): the save picker belongs to the activity (`PendingPick`), not to the R07 screen. A result that arrives after the screen was left or after a lock is deleted with `DocumentsContract.deleteDocument` instead of leaving an empty file on the drive (`PendingPickTest`, 7 cases, mutation-checked; `ExportWiringGuardTest` checks the wiring). Still open: if the provider refuses the delete, the empty file stays and nobody can be told, because the screen is gone; and the lock reaches the export screen through the navigation effect, so with the screen off the cancellation can wait for the next frame (the export itself also asks `canContinue` between files). Neither is verified on a device. Rotation while the picker is open deletes the picked file and the worker picks again (fails closed). The activity-level launcher needs a lint suppression (`InvalidFragmentVersionForActivityResult`): the app resolves androidx.fragment 1.2.5 through the biometric library and lint wants 1.3.0; raising it is a dependency change that waits for the owner. (C3 bench task.)
 31. PARTLY RESOLVED (30 October 2026): `tcExp01_theDataKeyIsNeverOnTheDiskWhileAnExportRuns` now learns the data key from the finished archive (unwrapping it with the study key) and looks for the raw key and the serialized keyset by their bytes in every file written during the test under the app cache and files directories, the code cache, the test folder and the JVM temp directory, at every export step and at the end. `tcExp01_theKeyScanFindsAKeyThatWasWrittenToDisk` proves the scan finds a planted key in each place. Mutation-checked: writing the key to the JVM temp directory fails it. Still open: `ExportWiringGuardTest` is a source check, not proof of the scope binding, and a process killed in the middle of an export is not tested (what is left is ciphertext only, by design). (D1.)
 32. PARTLY VERIFIED (30 October 2026), NOT on a device. The real release build (`:app:minifyReleaseWithR8`) failed on the first try with Tink 1.24: R8 reported two missing classes, `android.crypto.hpke.Hpke` and `android.crypto.hpke.Message` (Android's own HPKE API, referenced from Tink's X-Wing code, which the export never uses). They are now exact `-dontwarn` rules in `app/proguard-rules.pro`, like the four before them, and the build passes. `tools/r8_export_check/run.sh` shrinks and renames Tink plus the app's export package with the app's own rules and Tink's consumer rule, runs the export and a stored-keyset parse round trip on a JVM, and opens the result with the unshrunk decrypt tool: it passes (3.4 MB of Tink became 640 KB). The check is weaker than it looks: it also passes with Tink's protobuf keep rule left out, so it does not prove that rule is applied; and it is not the app's dex. Still open: run the export on a minified release APK on a phone (D1 release smoke test).
-33. C4 STARTED, NOT DONE (30 October 2026, state at hand-over): groundwork only. Added `StudyServer` (the interface `:feature:research` uses for enroll, leave, upload now and schedule uploads; `:app` will implement it over `:sync:research`), seven typed messages (`ENROLL_CODE_FORMAT`, `ENROLL_CODE_REJECTED`, `ENROLL_OTHER_STUDY`, `ENROLL_SETTINGS_MISMATCH`, `SERVER_UNREACHABLE`, `SERVER_REFUSED`, `NOT_ENROLLED`) and 38 English and Bangla strings for R08, R09 and those errors (unused until the screens are changed). Nothing is wired: R08 and R09 are still placeholders in `MainActivity`, `showCloudSync` is still false, nothing schedules uploads, `ResearchRetentionConfirmationHook` is not injected. Planned shape: a `StudyServerViewModel` (scan the study QR again in R08, refuse a QR of another study, check the code format, PIN re-entry for R09 through `verifyPin`), `StudyServerSync` in `:app`, R08 and R09 rewritten with the new strings, upload scheduled after a save, after enrollment and at app start. Decision taken for R09: leaving only disconnects the server (key and device ID), the study stays ACTIVE locally, because export and retention find the study through `getActiveStudy()` and a LEFT or CLOSED row would strand its data (TC-SYNC-16). Moving to a different study stays Export, then Delete all data; items 8, 14 and 23 and BUG-026 and BUG-027 are still open. The full-day simulation runs against a mock server (`SyncFullDaySimulationTest`), not the real backend.
+33. RESOLVED in package C4 (30 October 2026; see BUG-2026-026, 027 and 085 to 088). The text below is the hand-over state and is kept for the record. C4 STARTED, NOT DONE (state at hand-over): groundwork only. Added `StudyServer` (the interface `:feature:research` uses for enroll, leave, upload now and schedule uploads; `:app` will implement it over `:sync:research`), seven typed messages (`ENROLL_CODE_FORMAT`, `ENROLL_CODE_REJECTED`, `ENROLL_OTHER_STUDY`, `ENROLL_SETTINGS_MISMATCH`, `SERVER_UNREACHABLE`, `SERVER_REFUSED`, `NOT_ENROLLED`) and 38 English and Bangla strings for R08, R09 and those errors (unused until the screens are changed). Nothing is wired: R08 and R09 are still placeholders in `MainActivity`, `showCloudSync` is still false, nothing schedules uploads, `ResearchRetentionConfirmationHook` is not injected. Planned shape: a `StudyServerViewModel` (scan the study QR again in R08, refuse a QR of another study, check the code format, PIN re-entry for R09 through `verifyPin`), `StudyServerSync` in `:app`, R08 and R09 rewritten with the new strings, upload scheduled after a save, after enrollment and at app start. Decision taken for R09: leaving only disconnects the server (key and device ID), the study stays ACTIVE locally, because export and retention find the study through `getActiveStudy()` and a LEFT or CLOSED row would strand its data (TC-SYNC-16). Moving to a different study stays Export, then Delete all data; items 8, 14 and 23 and BUG-026 and BUG-027 are still open. The full-day simulation runs against a mock server (`SyncFullDaySimulationTest`), not the real backend.
+34. Found in the C4 privacy-security review (30 October 2026). FIXED in the same package: a disconnect and an enrollment wrote back a copy of the study row read before the network call, which could undo a PIN failure count (both now re-read the row); the worker logged the server's error code and minimum version, and the outbox kept an exception message (now the HTTP status, nothing, and the exception class); a phone with no device ID got an error and a retry with a notification each time (now a quiet success, and leaving cancels the queued run); R07 and R09 counted only waiting rows (now every row the server has not acknowledged); a phone on a closed study could not leave (DEVICE_UNKNOWN and STUDY_CLOSED now clean up locally); a throw after the device key was made left it in the Keystore (the key is made inside the guarded block); the enrollment code field turned autocorrect off and uses a password keyboard; the sync notification is hidden on the lock screen. Tests: `StudyEnrollmentGuardsTest`, `ResearchUploadWorkerTest`. OPEN: (a) after a leave, a close or a revoke, retention has no device to ask, so research data on a reassigned phone is never purged automatically; the only path is Export, then Delete all data (doc 4 Section 4.8) - decide whether a verified export or full acknowledgement should also wipe (C3/D1). (b) If the enrollment response is lost, or the row update fails after the server accepted, the key is deleted but the server holds the device and the code is spent; the coordinator reissues a code. A retry with the same idempotency key would need it stored (F3). (c) `ResearchApiClient` reads a response body with no size cap (`body.string()`); a hostile server could exhaust memory on a 2 GB phone (F3). (d) Not checked: `ResearchApiClient.handleErrorResponse` and `DeviceAssertionMinter` retry behaviour; Android 14 and 15 foreground-service start limits on a device.
 27. RESOLVED (30 October 2026, approved by the owner): Tink moved from `com.google.crypto.tink:tink` 1.7.0 to `tink-android` 1.24.0 in every module and the decrypt tool (ADR-019). The export engine uses the typed key API (`HpkeParameters`, `HpkePublicKey`, `PredefinedStreamingAeadParameters`, `TinkProtoKeysetFormat` with `InsecureSecretKeyAccess`) instead of `CleartextKeysetHandle`, protobuf messages and a deprecated template. The wire format did not change, and `ExportCryptoEngineTest.tcExp01_archiveWrittenByTink170StillOpens` opens a fixture written by the 1.7.0 build with the 1.24 decryptor (synthetic key, `core/security/src/test/resources/export/`). protobuf-java 3.19.3 is in no classpath any more and its three Trivy exceptions are removed. New transitive libraries: gson 2.13.2, error_prone_annotations 2.41.0, jsr305 3.0.2, androidx.annotation-jvm 1.8.2. Verification hashes: the jar hashes of tink-android, gson and error_prone_annotations were checked against Maven Central directly; the tink-android pom hash was not (Central answered 429), so check it once the CI run has resolved it. Lockfiles were edited from the committed ones, not regenerated, because `gradle dependencies --write-locks` also locks the detekt configurations.
 28. Not run: an export to a real USB drive through the Storage Access Framework, and a decrypt on the coordinator's computer of a file the phone made (bench task). The unit tests decrypt the archive with `DecryptEngine`, but not through a content provider.
 26. Note: `lockEpoch` is 0 when there is no session manager, so the in-flight protection is off in that configuration; production always passes the manager, so this is only a trap for a future caller.
@@ -1696,6 +1705,70 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Notes** Behind Caddy the header was already present, so no study server was affected. What the scan did not test: every route except `/health` and `/enrollments` needs a device assertion signed by a phone's hardware key, which a scanner cannot make, so the scan got 401 on them. Authorization logic (a device reading another device's participants or sessions) has not had a DAST pass; see BUG-2026-083 item 19.
 
 **Fix** `SecurityHeadersMiddleware` sets the header on every response, including 401s from the auth layer (it is the outermost middleware). Test: `test_responses_carry_x_content_type_options_nosniff`. The backend suite passes (80 tests).
+
+---
+
+#### BUG-2026-085: Enrollment sent a made-up camera level and qualification to the study server
+
+- Area: SYNC | Severity: S3 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-07 | Fix version:
+
+**Steps**
+1. Read `StudyEnrollmentManager.enroll`.
+
+**Expected** The `device` block of `POST /enrollments` names what the phone measured about itself (doc 7 `DeviceInfo`).
+
+**Actual** `cameraHardwareLevel` defaulted to `"LIMITED"` and `qualification` to `"QUALIFIED"` for every phone, whatever its device profile said. A phone that qualified as RESEARCH_ONLY would have been recorded on the server as QUALIFIED.
+
+**Fix** Package C4. The two values have no default; `StudyServerSync` reads them from the active device profile, and a phone without one cannot join (`ENROLL_NO_DEVICE_PROFILE`). Tests: `StudyEnrollmentGuardsTest.theServerIsToldTheDeviceFactsItWasGiven_notMadeUpOnes`, `StudyServerWiringGuardTest`.
+
+---
+
+#### BUG-2026-086: Enrollment could add a second study with no PIN, or replace the device key of a phone already enrolled
+
+- Area: SYNC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-07, TC-SYNC-16 | Fix version:
+
+**Steps**
+1. Read `StudyEnrollmentManager.enroll` (found while planning package C4; BUG-2026-083 item 14).
+
+**Expected** A phone has one study (BUG-2026-078), protected by the PIN set at R01; a phone that already has a device ID is not enrolled twice.
+
+**Actual** `enroll` looked the study up by the QR's code and inserted a new row with an empty PIN hash and salt when there was none, so a signed QR of another study could add a second study that no PIN protected. A phone that already had a device ID generated a new key under the same alias and replaced the row, so the server's device and the phone's key could disagree.
+
+**Fix** Package C4. `enroll` works only on the active study of the same code, refuses before any key or request otherwise (`StudyEnrollmentRefused`: NO_STUDY, OTHER_STUDY, ALREADY_ENROLLED, NO_SERVER), keeps the PIN and its counters, and deletes the key on every failure after it was made. `unlockWithStudyQr` inserts the first study in one transaction with its check. Tests: `StudyEnrollmentGuardsTest` (9).
+
+---
+
+#### BUG-2026-087: The upload worker built its own database, keys and HTTP client, and logged exception messages
+
+- Area: SEC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-SYNC-11, TC-PRIV-04 | Fix version:
+
+**Steps**
+1. Read `ResearchUploadWorker.createOutboxProcessor` (noted in B1, BUG-2026-083 item 33).
+
+**Expected** One database and one key set (the container's), and no personal or server text in a log (doc 8 Section 6.6).
+
+**Actual** The worker opened its own `NeoGoldDatabase` with its own key providers, so it bypassed the storage check and the bundle integrity check: a worker that woke while saved data was unreadable would have tried to upload. It logged `Timber.w(e, ...)` with the exception and, in `OutboxProcessor`, put `e.message` (which can carry a host or a server's words) into the result it logged.
+
+**Fix** Package C4. The worker asks the application for its processor (`ResearchSyncComponent`, built from `ResearchSyncGraph` over the open database) and retries later while there is none. It logs the kind of an exception only; `OutboxProcessor` puts the server's error code or the exception's class in its result. Tests: `ResearchUploadWorkerTest`, `StudyServerWiringGuardTest`.
+
+---
+
+#### BUG-2026-088: A closed study made the worker fail on every run; R09 would have shown the PIN in recents
+
+- Area: SYNC | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: Fixed | Owner: Unassigned | Test case: TC-SYNC-16, TC-PRIV-02 | Fix version:
+
+**Steps**
+1. Read `OutboxProcessor.process` for `study_status == "CLOSED"`; list `SecureScreenHelper.SECURE_DESTINATIONS`.
+
+**Expected** A phone told its study is closed stops asking and keeps its data for export; every screen where the PIN is typed is hidden from recents (doc 8 Section 6.1).
+
+**Actual** A closed study returned `Closed` and the worker failed, but the phone kept its key and device ID, so the next save scheduled another run that failed the same way. R09, where the PIN is now typed again, was not in the secure list.
+
+**Fix** Package C4. `StudyRevocationManager.handleStudyClosed` clears the device key and ID like a revocation or a leave, with an audit event `DEVICE_DISCONNECTED` (reason only); the study stays ACTIVE. `r09_leave_study` is in `SECURE_DESTINATIONS` (`SecureScreenHelperTest`). Tests: `ResearchUploadWorkerTest.aClosedStudy_stopsTheWorker_andDisconnectsThePhone_withTheDataKept`, `StudyEnrollmentGuardsTest.disconnecting_keepsTheStudyActive_clearsKeyAndDeviceId_andIsAudited`.
 
 ---
 
