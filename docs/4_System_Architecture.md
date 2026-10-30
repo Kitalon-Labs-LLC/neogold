@@ -164,6 +164,7 @@ Production dependencies the diagram does not draw, approved in the 2026-10-26 di
 | Camera | CameraX with `Camera2Interop` | Needed to turn off scene modes and effects, lock AE and AWB where available, and read `CaptureResult` metadata; this is the reason Flutter was rejected (doc 1, Section 10) |
 | Computer vision | OpenCV Android from Maven Central (`org.opencv:opencv` 4.14.0, Apache 2.0) with ArUco 4x4 markers in `objdetect`, used in `:engine:vision` only (ADR-018). The pure Kotlin detector stays as the JVM-testable reference; it runs in the app only when the native library is missing, and says so | Measured on a release App Bundle on 27 October 2026 (MiB): OpenCV adds 9.9 to the arm64-v8a download (13.96 in all, budget 25) and 8.1 to the armeabi-v7a download (11.82), and 25.3 to the arm64-v8a install (34.28 in all, budget 40). The 64-bit libraries are 16 KB aligned. The install budget is the tight one |
 | ABIs | `arm64-v8a` and `armeabi-v7a` | Some low-end and Android Go phones run 32-bit Android [Likely] (the 2026-10-26 spike, docs/spikes/2026-10-26-dual-abi-armeabi-v7a.md, only inspected the build configuration, so it does not confirm what phones run); App Bundle splits deliver one ABI per phone |
+| QR scanning | ZXing core (`com.google.zxing:core` 3.5.4, Apache 2.0), used in `:engine:camera` only, reads the card and study-sheet QR as raw bytes from the camera's brightness plane | Pure Java, no network, no native code. The payloads are packed binary in byte mode, so the bytes are taken from ZXing's byte segments and never from its text (card/spec/qr-formats.md). Signatures are checked by `:engine:cardtrust`, not by the scanner (C1) |
 | Estimation | Pure Kotlin linear model from JSON | v1 model is ridge regression on engineered color features; no ML runtime needed, fully auditable. LiteRT reserved for the v2 sclera model |
 | Local DB | Room on SQLCipher | Encrypted at rest for both screening log and research data |
 | File encryption | Tink streaming AEAD, keyset wrapped by an Android Keystore key | `androidx.security:security-crypto` is deprecated [Likely]; Tink is the maintained path |
@@ -193,6 +194,7 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `io.gitlab.arturbosch.detekt:*` | any | all | P01 allowed list |
 | `androidx.camera:*` | `:engine:camera` | all | Section 4.3 Camera |
 | `org.opencv:opencv` | `:engine:vision` | all | ADR-018; Section 4.3 Computer vision |
+| `com.google.zxing:core` | `:engine:camera` | all | Section 4.3 QR scanning (C1); approved by the owner on 2026-10-27 |
 | `androidx.room:room-runtime`, `androidx.room:room-ktx`, `androidx.room:room-compiler` | any | all | Section 4.3 Local DB; ADR-008 |
 | `androidx.room:room-testing` | any | test | doc 9 Section 3 (`MigrationTestHelper`) |
 | `net.zetetic:sqlcipher-android` | `:core:data` | all | Section 4.3 Local DB; ADR-008 |

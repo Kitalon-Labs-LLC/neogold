@@ -208,6 +208,7 @@ gradle:com.google.jimfs:jimfs
 gradle:com.google.protobuf:protobuf-java
 gradle:com.google.testparameterinjector:test-parameter-injector
 gradle:com.google.truth:truth
+gradle:com.google.zxing:core
 gradle:com.ibm.icu:icu4j
 gradle:com.intellij:annotations
 gradle:com.jakewharton.timber:timber

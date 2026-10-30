@@ -30,6 +30,7 @@ bouncycastle = "1.86"
 okhttp = "4.12.0"
 kotlinxSerialization = "1.6.3"
 opencv = "4.14.0"
+zxing = "3.5.4"
 androidxTestRunner = "1.6.2"
 
 [libraries]
@@ -98,6 +99,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # Computer vision (ADR-018)
 opencv = { group = "org.opencv", name = "opencv", version.ref = "opencv" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
