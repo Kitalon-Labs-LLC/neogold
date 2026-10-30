@@ -49,6 +49,7 @@ from app.models.db import (
     Session as DbSession,
 )
 from app.security.jwk import base64url_decode, compute_bsh, verify_es256_signature
+from app.study_time import study_today
 
 logger = logging.getLogger("neogold")
 
@@ -491,7 +492,10 @@ class DeviceAuthMiddleware:
 
             # Update last_seen_on on success
             if 200 <= captured_status < 300:
-                today = datetime.datetime.now(datetime.UTC).date()
+                zone = db.execute(
+                    select(Study.time_zone).join(Site, Site.study_id == Study.id).where(Site.id == device.site_id)
+                ).scalar_one()
+                today = study_today(zone)
                 db.execute(
                     update(Device)
                     .where(Device.id == device.id)

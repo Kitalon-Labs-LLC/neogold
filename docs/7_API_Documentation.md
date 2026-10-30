@@ -91,7 +91,7 @@ sequenceDiagram
 3. A manifest before its images (`404 SESSION_UNKNOWN`).
 4. A session before a TSB value that references it (`422 SESSION_UNKNOWN`).
 
-When the server reports a missing dependency, the outbox re-queues that dependency first and retries; this heals a phone whose local outbox lost order after a crash. Each item may trigger at most 3 dependency re-queues; after that it is held as `FAILED_PERMANENT` with the code shown to the coordinator, so a broken dependency cannot loop forever.
+When the server reports a missing dependency, the outbox re-queues that dependency first and retries; this heals a phone whose local outbox lost order after a crash. An item that receives a dependency error three times is held as `FAILED_PERMANENT` with the code shown to the coordinator, so a broken dependency cannot loop forever: the first two errors re-queue the dependency and retry the item, the third ends it (`TC-SYNC-05`).
 
 **Same baby, two phones.** A recheck may happen on a different phone. Each phone creates its own participant UUID; when the second phone registers the same `participant_code` with the same `consent_form_id`, the server stores its UUID as an alias of the first and returns `canonical_participant_id`. Sessions and TSB values from either phone resolve to one participant. A matching code with a different consent form ID is a genuine conflict (`409 PARTICIPANT_CODE_TAKEN`).
 

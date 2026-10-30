@@ -278,7 +278,7 @@ Every item waiting to go to the Study Intake Service.
 | `entity_id` | TEXT | No | ID of the row being sent |
 | `idempotency_key` | TEXT | No | Unique; reused on every retry; replaced only when the row is re-queued as a new revision |
 | `revision` | INTEGER | No | Default 0; incremented when a TSB value is linked, or a client-bug failure is re-queued after an app update (doc 7 Section 5.2) |
-| `dependency_requeues` | INTEGER | No | Default 0; at 3 the row becomes `FAILED_PERMANENT` |
+| `dependency_requeues` | INTEGER | No | Default 0; counts the re-queues done (at most 2). The third dependency error makes the row `FAILED_PERMANENT` |
 | `payload_sha256` | TEXT | No | |
 | `state` | TEXT | No | `PENDING`, `IN_FLIGHT`, `ACKED`, `FAILED_PERMANENT`; `IN_FLIGHT` rows are reset to `PENDING` when the worker starts |
 | `attempts` | INTEGER | No | Default 0 |

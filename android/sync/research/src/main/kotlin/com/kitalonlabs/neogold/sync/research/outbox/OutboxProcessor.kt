@@ -432,7 +432,7 @@ class OutboxProcessor(
         val now = System.currentTimeMillis()
         val code = error.errorCode
 
-        // 1. Dependency errors: re-queue dependency first, cap at 3 (doc 7 Section 3, Section 5.2, TC-SYNC-05)
+        // 1. Dependency errors: re-queue the dependency first; the third error ends the item (two re-queues, doc 7 Section 3, TC-SYNC-05)
         if (code == ErrorCode.PARTICIPANT_UNKNOWN || code == ErrorCode.SESSION_UNKNOWN || code == ErrorCode.CARD_BATCH_UNKNOWN) {
             val currentRequeues = item.dependencyRequeues
             if (currentRequeues + 1 >= 3) {

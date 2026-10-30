@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from app.config import (
-    MIN_ENROLLMENT_SECRET_CHARS,
     RETIRED_ENROLLMENT_SECRETS,
     ConfigurationError,
     Settings,

@@ -168,6 +168,10 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-091 | The About screen claimed validation-study data for a synthetic model, said "diagnostic", showed made-up version defaults, and the banned-word lint missed inflected forms and Kotlin literals | 2026-10-26 | Review | audit A11 | n/a | UI | S2 | Yes | H1 | P2 | Fixed | Unassigned | TC-UI-04, TC-ONB-05 | |
 | BUG-2026-092 | The Play publisher printed a success for an upload that did not happen | 2026-10-31 | Review | audit (doc-12-3-upload) | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-OPS-02 | |
 | BUG-2026-093 | The SBOM listed every locked configuration, build and test tools included, and no hashes | 2026-10-31 | Review | audit | n/a | OPS | S3 | No | - | P3 | Fixed | Unassigned | TC-SEC-05 | |
+| BUG-2026-094 | Server-assigned dates were the UTC day, not the study's calendar day | 2026-10-31 | Review | audit (doc7-1-dates-tz) | n/a | API | S3 | No | - | P3 | Fixed | Unassigned | TC-API-26 | |
+| BUG-2026-095 | A TSB value naming a session not yet received answered 404, not 422 | 2026-10-31 | Review | audit (doc7-3-order-4) | n/a | API | S4 | No | - | P4 | Fixed | Unassigned | TC-API-24 | |
+| BUG-2026-096 | The application database role could change the audit log and could not delete its own idempotency rows | 2026-10-31 | Review | audit (doc5-3.4, 3.5) | n/a | API | S2 | No | - | P2 | Fixed | Unassigned | TC-SEC-04 | |
+| BUG-2026-097 | The dependency re-queue cap was documented as 3 re-queues and built as 2 | 2026-10-31 | Review | audit (doc7-3-requeue-cap) | n/a | SYNC | S4 | No | - | P4 | Fixed | Unassigned | TC-SYNC-05 | |
 
 ### 4.1 Entries
 
@@ -1826,6 +1830,53 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Fix** `handleEvaluateRules` takes answers from the `Inputs` state only when consent is confirmed. Tests: `ScreeningFlowRunTest.withoutGuardianConsentTheCameraNeverOpens`.
 
 ---
+
+#### BUG-2026-094: Server-assigned dates were the UTC day
+
+- Area: API | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-26 | Fix version:
+
+**Steps**
+1. Create a participant at 01:00 in Dhaka (19:00 UTC the day before).
+
+**Expected** `created_on`, `received_on`, `completed_on`, `linked_on` and `last_seen_on` are the calendar date in the study's time zone (`upload_policy.time_zone`, Asia/Dhaka by default; doc 7 Section 1).
+
+**Actual** The server used the UTC date, so a record made after midnight in Dhaka carried the previous day. `study.time_zone` was never read.
+
+**Fix** `app/study_time.py` gives the study's calendar day; the participant, session, image, TSB and device routes and the authentication middleware use it. `handle_study_create` refuses an unknown zone name. Tests: `tests/test_study_time.py`.
+
+#### BUG-2026-095: A TSB value naming a session not yet received answered 404
+
+- Area: API | Severity: S4 | Clinical: No | Hazard: - | Priority: P4
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-24 | Fix version:
+
+**Expected** `422 SESSION_UNKNOWN` (doc 7 Section 3, order 4; the OpenAPI response for `PUT /tsb-measurements` lists 422 and no 404).
+
+**Actual** 404. The phone re-queued either way because it matches on the code.
+
+**Fix** The TSB route raises the error with status 422. Test: `test_doc7_order4_a_tsb_value_naming_an_unknown_session_is_422_session_unknown`.
+
+#### BUG-2026-096: The application database role could change the audit log
+
+- Area: API | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-04 | Fix version:
+
+**Expected** `audit_log` is append-only for the application role: INSERT and SELECT only. The role may DELETE `auth_nonce` and `idempotency_record` (doc 5 Sections 3.4 and 3.5).
+
+**Actual** The bootstrap gave the role SELECT, INSERT and UPDATE on every table; no migration revoked UPDATE on `audit_log` or granted the two DELETE privileges. A flaw in the service could rewrite the audit trail, and the middleware's cleanup of an in-progress idempotency row after a transient error would have failed with a permission error on a deployed server.
+
+**Fix** Migration `0002_app_role_privileges` revokes UPDATE, DELETE and TRUNCATE on `audit_log` and grants DELETE on the two tables, only where the role exists (a deployed server). It changes privileges, not table shape, so it is expand-only. Tests: `tests/test_app_role_privileges.py` creates the role, applies the bootstrap's default grant and runs the migration SQL.
+
+**Notes** The migration runs on the first deploy after this change. Before it, check on the staging server that `neogold_app` has the privileges the tests assert (`\dp audit_log`).
+
+#### BUG-2026-097: The dependency re-queue cap was documented as 3 and built as 2
+
+- Area: SYNC | Severity: S4 | Clinical: No | Hazard: - | Priority: P4
+- Status: Fixed | Owner: Unassigned | Test case: TC-SYNC-05 | Fix version:
+
+**Expected / Actual** Docs 5, 7 and 10 said each item may trigger 3 re-queues. The outbox re-queues the dependency after the first and second dependency errors and ends the item (`FAILED_PERMANENT`) at the third.
+
+**Fix** The documents were changed to what the code and `TC-SYNC-05` do (`SyncTestCases.tcSync05_dependencyRequeueLimit` asserts the third error is permanent). The audit's proposed alternative, changing the code to allow a third re-queue, would have changed that test's expected result; no test was touched.
 
 #### BUG-2026-092: The Play publisher printed a success for an upload that did not happen
 

@@ -37,6 +37,7 @@ from app.models.db import (
 from app.models.db import (
     Session as DbSession,
 )
+from app.study_time import study_today
 
 CROCKFORD_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
@@ -102,6 +103,8 @@ def handle_study_create(args: argparse.Namespace) -> int:
     db = SessionLocal()
     try:
         retention_date = datetime.date.fromisoformat(args.retention_until)
+        # an unknown zone name would fail every request that assigns a date, so it is refused when the study is created
+        study_today(args.time_zone or "Asia/Dhaka")
         study = Study(
             id=uuid4(),
             study_code=args.code,

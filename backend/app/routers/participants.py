@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, Path, Request, Response, status
@@ -14,7 +13,8 @@ from app.errors import (
     ParticipantWithdrawnError,
 )
 from app.models.api import ParticipantReceipt, ParticipantUpload, Problem
-from app.models.db import Device, Participant, ParticipantAlias, Site
+from app.models.db import Device, Participant, ParticipantAlias, Site, Study
+from app.study_time import study_today
 
 router = APIRouter(tags=["Participants"])
 
@@ -53,7 +53,8 @@ def put_participant(
     device = db.execute(select(Device).where(Device.id == device_id)).scalar_one()
     site = db.execute(select(Site).where(Site.id == device.site_id)).scalar_one()
 
-    today = datetime.datetime.now(datetime.UTC).date()
+    study = db.execute(select(Study).where(Study.id == site.study_id)).scalar_one()
+    today = study_today(study.time_zone)
 
     # Case A: participant_id exists as a Participant
     existing_p = db.execute(select(Participant).where(Participant.id == participant_id)).scalar_one_or_none()

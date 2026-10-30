@@ -1,4 +1,3 @@
-import datetime
 import hashlib
 import os
 from pathlib import Path
@@ -40,6 +39,7 @@ from app.models.db import (
     Session as DbSession,
 )
 from app.security.jpeg import validate_jpeg
+from app.study_time import study_today
 
 router = APIRouter(tags=["Sessions"])
 
@@ -83,7 +83,7 @@ def put_session_manifest(
     site = db.execute(select(Site).where(Site.id == device.site_id)).scalar_one()
     study = db.execute(select(Study).where(Study.id == site.study_id)).scalar_one()
 
-    today = datetime.datetime.now(datetime.UTC).date()
+    today = study_today(study.time_zone)
 
     # 1. Resolve participant (directly or via alias)
     canonical_participant = None
@@ -393,7 +393,7 @@ async def put_capture_image(
         )
     ).scalar_one()
 
-    today = datetime.datetime.now(datetime.UTC).date()
+    today = study_today(study.time_zone)
     if missing_count == 0:
         session_row.status = "COMPLETE"
         session_row.completed_on = today
