@@ -78,8 +78,8 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-001 | S19 shows a hardcoded result; no engine runs | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S1 | Yes | H1 | P1 | New | Unassigned | TC-EST-04 | |
 | BUG-2026-002 | S16 never opens the camera; capture returns a synthetic frame | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CAP | S1 | Yes | H1 | P1 | New | Unassigned | TC-CAP-01 | |
 | BUG-2026-003 | Screening captures skip the quality gate; retake and fallback unreachable | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CAP | S1 | Yes | H4, H5, H6 | P1 | New | Unassigned | TC-CAP-14 | |
-| BUG-2026-004 | S07 qualification always returns QUALIFIED without measuring | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | DEV | S1 | Yes | H5 | P1 | New | Unassigned | TC-DEV-05 | |
-| BUG-2026-005 | S06 card scan shows VERIFIED without reading or checking a QR code | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CARD | S1 | Yes | H4 | P1 | New | Unassigned | TC-CARD-02 | |
+| BUG-2026-004 | S07 qualification always returns QUALIFIED without measuring | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | DEV | S1 | Yes | H5 | P1 | Fixed | Unassigned | TC-DEV-05 | |
+| BUG-2026-005 | S06 card scan shows VERIFIED without reading or checking a QR code | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CARD | S1 | Yes | H4 | P1 | Fixed | Unassigned | TC-CARD-02 | |
 | BUG-2026-006 | Result next-step wording differs from doc 6 and drops the danger-signs reminder | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S1 | Yes | H1, H11 | P1 | New | Unassigned | TC-UI-01 | |
 | BUG-2026-007 | Startup integrity result is never used; modified assets do not disable screening | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | Fixed | Unassigned | TC-SEC-09 | |
 | BUG-2026-008 | App trusts a test manifest key whose private half is in the repository | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | Fixed | Unassigned | TC-SEC-09 | |
@@ -106,12 +106,12 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-029 | About 150 hardcoded English UI strings; string lint does not check Kotlin | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | A11Y | S2 | No | - | P2 | New | Unassigned | TC-A11Y-01 | |
 | BUG-2026-030 | Hazard log is missing | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | none (add to doc 10) | |
 | BUG-2026-031 | Release notes file for v1.0.0 is missing | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-OPS-02 | |
-| BUG-2026-032 | BurstCaptureController reads capture metadata through CameraX internal APIs | 2026-10-26 | CI | commit f1e01e6 | n/a | CAP | S2 | No | - | P2 | In progress | Unassigned | TC-CAP-01 | |
+| BUG-2026-032 | BurstCaptureController reads capture metadata through CameraX internal APIs | 2026-10-26 | CI | commit f1e01e6 | n/a | CAP | S2 | No | - | P2 | Fixed | Unassigned | TC-CAP-01 | |
 | BUG-2026-033 | Foreground service type is declared only in :app, so :sync:research and :app lint fail | 2026-10-27 | CI | commit a0b6da2 | n/a | SYNC | S3 | No | - | P2 | Verified | Unassigned | TC-SYNC-10 | |
 | BUG-2026-034 | Recheck notification is posted without checking the notification permission | 2026-10-27 | CI | commit a0b6da2 | n/a | LOG | S3 | No | - | P2 | Verified | Unassigned | TC-LOG-09 | |
 | BUG-2026-035 | ScreeningPipelineBenchmarkTest asserts phone time budgets on a shared build machine | 2026-10-27 | Test | commit a0b6da2 | n/a | PERF | S3 | No | - | P3 | New | Unassigned | TC-PERF-01 | |
 | BUG-2026-036 | Trivy gate S2 fails: Bouncy Castle 1.78.1 (CRITICAL) and protobuf-java 3.19.3 (HIGH) ship in the app | 2026-10-27 | CI | commit 8c13d2a | n/a | SEC | S2 | No | - | P2 | In progress | Unassigned | TC-SEC-05 | |
-| BUG-2026-037 | TC-CAP-01 builds a LiveCardAnalyzer and never calls it, so the test asserts on objects it constructed itself | 2026-10-27 | Review | commit a0b6da2 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-01 | |
+| BUG-2026-037 | TC-CAP-01 builds a LiveCardAnalyzer and never calls it, so the test asserts on objects it constructed itself | 2026-10-27 | Review | commit a0b6da2 | n/a | CAP | S3 | No | - | P3 | Fixed | Unassigned | TC-CAP-01 | |
 | BUG-2026-038 | The export checkpoint keeps the data keyset in clear next to the staged ciphertext, and a failed export leaves both behind | 2026-10-27 | Review | commit 93a2f9f | n/a | EXP | S2 | No | - | P2 | New | Unassigned | TC-EXP-01 | |
 | BUG-2026-039 | ResearchJpegSanitizer is never called outside tests, and extractOrientation reads the wrong bytes | 2026-10-27 | Review | commit 93a2f9f | n/a | PRIV | S2 | No | - | P2 | New | Unassigned | TC-API-20 | |
 | BUG-2026-040 | StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message | 2026-10-27 | Review | commit 93a2f9f | n/a | SYNC | S3 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
@@ -141,6 +141,11 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-064 | The device assertion names the study host as its audience, but the server checks the `/v1` base URL | 2026-10-30 | Review | commit 64eee0e | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
 | BUG-2026-065 | The problem detail for a taken participant code repeats the code, and the response is stored for replay | 2026-10-30 | Review | commit 64eee0e | n/a | PRIV | S3 | No | - | P3 | Fixed | Unassigned | TC-API-21 | |
 | BUG-2026-066 | Findings from the B2 privacy review that are not fixed yet: concurrent registration of one participant code, case-insensitive path comparison for `htu`, the key alias in key-manager messages, and no test for a bad signature from a trusted issuer | 2026-10-30 | Review | commit 64eee0e | n/a | SYNC | S3 | No | - | P3 | New | Unassigned | TC-API-21, TC-API-07 | |
+| BUG-2026-067 | Three screens crash when drawn, because a String is passed to a number placeholder: S05 device check, S07 photo count and the S23 retention label | 2026-10-30 | Review | commit cde614b | n/a | UI | S1 | No | - | P1 | Fixed | Unassigned | TC-DEV-01 | |
+| BUG-2026-068 | The app opens on the language screen at every launch, whatever onboarding was finished | 2026-10-30 | Review | commit cde614b | n/a | UI | S2 | No | - | P2 | Fixed | Unassigned | TC-ONB-01, TC-ONB-03 | |
+| BUG-2026-069 | Qualification photos fail the skin check on the card's window, because the card is on a table: every real phone would have been research-only | 2026-10-30 | Review | commit ea47755 | n/a | DEV | S1 | Yes | H5 | P1 | Fixed | Unassigned | TC-DEV-02 | |
+| BUG-2026-070 | Nothing stops a research-only or unqualified phone from being offered screening, and the re-qualification check fails open in three places | 2026-10-30 | Review | commit ea47755 | n/a | DEV | S1 | Yes | H5 | P1 | Fixed | Unassigned | TC-DEV-05, TC-DEV-07 | |
+| BUG-2026-071 | Findings from the C1 reviews that are left open for later packages: partial config limits, no clock floor on S06, AE and AWB never locked, secure screens for the baby-photo preview | 2026-10-30 | Review | commit ea47755 | n/a | CAP | S3 | Yes | H5 | P3 | New | Unassigned | TC-DEV-06, TC-CAP-04 | |
 
 ### 4.1 Entries
 
@@ -180,6 +185,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Even with BUG-2026-001 fixed, the estimate would describe a synthetic image, not the baby. Fix package R1.
 
+**Note from C1.** The camera host (`CameraHost`, `CameraPreviewHost`, `CameraSession`) now exists and is used by S06 and S07, so the camera opens, shows a preview and returns real photos with their capture results. S16 still returns the synthetic frame; it takes the host in package E1, which also replaces `createDefaultCaptureFrame`. The status stays New.
+
 #### BUG-2026-003: Screening captures skip the quality gate; retake and fallback are unreachable
 
 - Area: CAP | Severity: S1 | Clinical: Yes | Hazard: H4, H5, H6 | Priority: P1
@@ -199,7 +206,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-004: S07 camera qualification always returns QUALIFIED without measuring
 
 - Area: DEV | Severity: S1 | Clinical: Yes | Hazard: H5 | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-DEV-02, TC-DEV-03, TC-DEV-04, TC-DEV-05 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-DEV-02, TC-DEV-03, TC-DEV-04, TC-DEV-05 | Fix version:
 
 **Steps**
 1. Run onboarding to S07 and take the three photos.
@@ -212,10 +219,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Every phone, including ones whose cameras tone-map locally, is marked fit to screen. Fix package R2.
 
+**Fix** Package C1. S07 takes three photos with the phone's camera (`CameraHost`, one photo per tap). Each photo goes through the quality gate first: a photo without the card, blurred or with glare is asked for again with the reason, and is not held against the phone. Three good photos are judged by `CameraQualifier` against the reference colors of the batch that S06 verified, with the limits from the signed config; the profile, the audit event (`DEVICE_QUALIFIED` or `DEVICE_RESEARCH_ONLY`) and the OS build the camera was qualified on are stored, and the earlier profile is superseded. The fabricated `QUALIFIED` result is gone, and so is the card reference that came from the card design and not from the scanned batch. Re-qualification after 30 days or an OS build change is checked at start (TC-DEV-07). Tests: `OnboardingDomainTest`, `OnboardingStateTest` (TC-DEV-01, TC-DEV-02 to TC-DEV-05, TC-DEV-07, TC-DEV-08). Not verified: a real phone against a printed card (bench task D1, D2, D4).
+
 #### BUG-2026-005: S06 card scan shows VERIFIED without reading or checking a QR code
 
 - Area: CARD | Severity: S1 | Clinical: Yes | Hazard: H4 | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-CARD-01, TC-CARD-02 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-CARD-01, TC-CARD-02 | Fix version:
 
 **Steps**
 1. Run onboarding to S06 and tap continue.
@@ -227,6 +236,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S06CardScanScreen.kt:127,142-144`.
 
 **Notes** The card trust engine passes its tests (TC-CARD-01 to 06; 22 tests in the local run) but is never reached from the UI. Fix package R2.
+
+**Fix** Package C1. S06 reads the QR with the camera (`CameraPreviewHost` and `QrScanAnalyzer` over ZXing, which returns the payload as the exact bytes of its byte-mode segments) and `CardScanService` checks it against the signed trust list (`CardTrustVerifier`: signature, issuer, purpose, expiry, revocation). Only then does S06 show the batch as verified and enable Continue, and only then is the batch stored. A card that fails says why (`card_invalid`, expired, withdrawn, not a NeoGold card), stores nothing and writes a `CARD_REJECTED` audit event with the reason and no payload. The screen's built-in batch `NG-2026-001` and its fixed "VERIFIED" badge are gone. Tests: `QrDecoderTest` (every card and study vector read back byte for byte), `OnboardingDomainTest` and `OnboardingStateTest` (valid, tampered, unknown issuer, wrong purpose, expired, revoked, unreadable; one check per card however often the camera reads it), TC-CARD-01 to TC-CARD-06. Not verified: a real printed card on a phone (bench task D1, D2, D4); on the emulator S06 opens the virtual camera and waits for a code.
 
 #### BUG-2026-006: Result next-step wording differs from doc 6 and drops the danger-signs reminder
 
@@ -688,7 +699,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-032: BurstCaptureController reads capture metadata through CameraX internal APIs
 
 - Area: CAP | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: In progress | Owner: Unassigned | Test case: TC-CAP-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-CAP-01 | Fix version:
 
 **Steps**
 1. Run `./gradlew :engine:camera:lintRelease` on a clean checkout.
@@ -700,6 +711,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/BurstCaptureController.kt`, `extractCaptureResult`. The first real android-ci run needs a clean Gradle cache to show it, which is why it surfaced only on 26 October 2026.
 
 **Notes** Nothing calls `BurstCaptureController`, not the app and not any test, so there is no runtime effect today. That also means its metadata path has never been exercised. A narrow `@SuppressLint("RestrictedApi")` makes the violation visible and lets lint pass until the camera host (work package C1) replaces it with a `Camera2Interop` session callback installed when the `ImageCapture` is built, correlated to frames by sensor timestamp. The suppression and this entry are removed then. Status becomes Fixed in that change.
+
+**Fix** Package C1. `CameraHost` installs a Camera2 interop session callback when it builds the still capture; it records each still capture's result in `CaptureResultRegistry` by sensor timestamp, and `BurstCaptureController` waits briefly for the one that belongs to the photo. The code that read CameraX internals, and its `RestrictedApi` suppression, are removed. A photo whose result does not arrive is kept with metadata that says nothing is known; the old fallback recorded the AE and AWB locks as on, which was a guess, and now records off. Tests: `CameraHostTest`; `CameraHostInstrumentedTest` on the API 37 x86_64 emulator's virtual camera (a photo carries ISO and exposure from the capture result, and a burst records each photo). Not verified on an ARM phone or a real lens.
 
 #### BUG-2026-033: Foreground service type is declared only in :app, so :sync:research and :app lint fail
 
@@ -773,7 +786,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-037: TC-CAP-01 builds a LiveCardAnalyzer and never calls it, so the test asserts on objects it constructed itself
 
 - Area: CAP | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
-- Status: New | Owner: Unassigned | Test case: TC-CAP-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-CAP-01 | Fix version:
 
 **Steps**
 1. Read `tcCap01_liveCardDetectionAndAutoCaptureGating` in `android/engine/camera/src/test/kotlin/com/kitalonlabs/neogold/engine/camera/CameraCaptureTest.kt`.
@@ -785,6 +798,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** Found by detekt `UnusedPrivateProperty` when the rule was switched on (A17). Same class of weakness as the tautological tests in the audit (TC-TRI-26, TC-UI-14, TC-UI-01).
 
 **Notes** The unused variable carries a `@Suppress` that points at this entry, so the gap stays visible. The fix is a real analyzer test with synthetic frames (the 25 vision tests already render synthetic cards), planned with the camera host in C1. It strengthens the test, so it is allowed under the test-protection hook.
+
+**Fix** Package C1. The test that never called its analyzer is replaced by `LiveCardAnalyzerTest` (6), which drives the analyzer with YUV frames of a rendered card and a controlled clock: no card gives no capture; four markers without a steady card give none; a card steady for the required time gives exactly one; a moving card restarts the wait; losing the card and resetting allows a second capture; every frame is closed. TC-CAP-01.
 
 #### BUG-2026-038: The export checkpoint keeps the data keyset in clear next to the staged ciphertext, and a failed export leaves both behind
 
@@ -819,6 +834,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/research/ResearchJpegSanitizer.kt` (`extractOrientation`); no caller outside `src/test`. Found by the privacy-security-reviewer on 27 October 2026. It did not trace whether research images reach storage through a bitmap re-encode that already drops Exif.
 
 **Notes** Fix in packages C1/C2: send research images through the sanitizer, use `.slice()` in `extractOrientation`, and add a test that does not pass `forcedOrientation`. The server also rejects metadata (`IMAGE_METADATA_NOT_ALLOWED`), so uploads would fail rather than leak.
+
+**Partly fixed in C1.** `extractOrientation` read the EXIF block at offsets counted from the start of the file instead of from the TIFF header (the validator used `slice()`, this did not), so the orientation of a real photo was read from the wrong bytes; it is fixed and bounds-checked, with tests that read orientations 1 to 8 in both byte orders and sanitize a photo without forcing an orientation. Still open: nothing outside tests calls `ResearchJpegSanitizer`; research images go through it when the research session saves them (package C2). The status stays In progress until then.
 
 #### BUG-2026-040: StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message
 
@@ -1291,6 +1308,102 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Fix** Item 1 with package F3 (backend contract), which owns the participant endpoints; items 2 and 3 with package F3 and C4; item 4 with package C4 (enrollment screen), where the verifier is built from the real trust list.
 
+#### BUG-2026-067: Three screens crash when drawn, because a String is passed to a number placeholder
+
+- Area: UI | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
+- Status: Fixed | Owner: Unassigned | Test case: TC-DEV-01 | Fix version:
+
+**Steps**
+1. Install the debug build on the emulator, choose a language, acknowledge the safety notice and reach S05 (device check).
+
+**Expected** The device check shows the phone's memory and camera level.
+
+**Actual** The app closes. `java.util.IllegalFormatConversionException: d != java.lang.String` from `S05DeviceCheckScreen`: the string `s05_ram` is `Memory: %d MB` and the screen passed it the text `4,096 MB`. The same mistake is in S07 (`s07_instruction`, the photo number, passed through `ClinicalNumberFormatter.formatInteger`) and in S23 (`settings_retention_days`, the retention label). The first-run flow could not get past S05 on any phone, and Settings could not be opened.
+
+**Evidence** The first emulator walk through onboarding, 30 October 2026, with the fatal exception in `logcat -b crash`; `S05DeviceCheckScreen.kt` (the `ramText` argument), `S07QualificationScreen.kt`, `S23SettingsScreen.kt`.
+
+**Notes** No unit test could see it: the logic is tested without drawing the screen, and Kotlin does not check `stringResource` arguments against the placeholders. It is the second defect that only a run on a device found (BUG-2026-062 was the first). Both would have shown on the first real install of the study build.
+
+**Fix** Package C1. The three calls pass the number itself. `tools/check_strings.py` has a new check (section 5, tests in `tools/tests/test_check_strings_formats.py`) that reads every `stringResource` and `getString` call and fails when a String-looking argument (a formatted value, a quoted text, `toString()`, a name ending in `Text`) is given to a `%d` or `%f` placeholder; it runs in Gradle's `verifyStrings` and in repo-ci. Digits follow the phone's language for these non-clinical numbers; clinical numbers still use `ClinicalNumberFormatter`. Still missing: a Compose UI test of each screen, which needs the `ui-test-junit4` dependency the owner has approved (package D1).
+
+#### BUG-2026-068: The app opens on the language screen at every launch, whatever onboarding was finished
+
+- Area: UI | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-ONB-01, TC-ONB-03 | Fix version:
+
+**Steps**
+1. Finish onboarding, close the app, open it again.
+
+**Expected** The app opens on Home (TC-ONB-02), or on the safety notice if the acknowledged version is old (TC-ONB-03), or on the card scan if the camera qualification is due (TC-DEV-07).
+
+**Actual** `NeoGoldNavHost` was never given a start destination, so it used its default, `S01_LANGUAGE`, at every launch. A user had to click through language, the notice, the device check, a card scan and a qualification each time, and each pass wrote a new profile.
+
+**Evidence** `MainActivity.kt` (the call to `NeoGoldNavHost` passed no `startDestination`).
+
+**Notes** Hidden until now because S06 and S07 were fakes that took one tap each.
+
+**Fix** Package C1. `OnboardingServices.startDestination()` reads the saved onboarding state and the qualification clock, and `chooseStartDestination` (a pure function with `StartDestinationTest`, 6 cases) picks the screen; the graph is built only after it is known. After a re-qualification the flow ends on Home with the back stack cleared.
+
+#### BUG-2026-069: Qualification photos fail the skin check on the card's window, because the card is on a table
+
+- Area: DEV | Severity: S1 | Clinical: Yes | Hazard: H5 | Priority: P1
+- Status: Fixed | Owner: Unassigned | Test case: TC-DEV-02 | Fix version:
+
+**Steps**
+1. Qualify a phone with three photos of the card laid on a table (S07 tells the user to do so).
+
+**Expected** The phone's colors are measured on the card's patches.
+
+**Actual** The quality gate ran in full, including `WINDOW_NOT_SKIN`, which checks that the card's punched window shows skin. On a table the window shows the table, so every photo was refused: S07 could not be finished, and `CameraQualifier` counted the same reason as a failed photo and gave `RESEARCH_ONLY`. Every synthetic test photo has skin in the window, so no test could show it.
+
+**Evidence** The C1 safety review of 30 October 2026 (`checkPhoto`, and the loop in `CameraQualifier.qualifyCamera`); `VisionQualityGate` item 10.
+
+**Notes** Found by reading, not by a device. It failed closed (no phone could be wrongly qualified), but staff would have worked around it, and a valid qualification test could not be run on a bench.
+
+**Fix** Package C1. The skin check is left out of the qualification photos, both in `QualificationService.checkPhoto` and in `CameraQualifier.qualifyCamera` (it stays in the screening gate, where the window is on a baby). Tests: `CameraQualifierTest.tcDev02_aCardOnATableWithNoSkinInItsWindowQualifiesLikeAnyOther`, and `OnboardingDomainTest.theCardOnATableIsNotHeldAgainstThePhoneForHavingNoSkinInItsWindow_TC_DEV_02` (which also shows the gate itself still flags the window). Not verified on a real card and phone (bench task D1, D2, D4).
+
+#### BUG-2026-070: Nothing stops a research-only or unqualified phone from being offered screening, and the re-qualification check fails open in three places
+
+- Area: DEV | Severity: S1 | Clinical: Yes | Hazard: H5 | Priority: P1
+- Status: Fixed | Owner: Unassigned | Test case: TC-DEV-05, TC-DEV-07 | Fix version:
+
+**Steps**
+1. Qualify a phone that comes out `RESEARCH_ONLY` (TC-DEV-05); after the screening pipeline is switched on, look at Home.
+
+**Expected** Screening is not offered: "a phone that fails qualification never opens the camera for screening" (doc 6 Section 9, rule 6).
+
+**Actual** `screeningAvailable` and the screening routes never looked at the device profile; only the config switch and `SCREENING_PIPELINE_WIRED` held screening back. S08's "Get started" also finished onboarding for a research-only phone. Separately: no stored profile took the app to Home (a save that failed halfway, or a phone that finished the old fake onboarding); a clock set back to before the qualification made its age negative so the 30-day rule never fired; a profile with no remembered OS build was taken as "same build"; and replacing the profile was two statements with a gap between them.
+
+**Evidence** The C1 safety review of 30 October 2026; `NeoGoldContainer.screeningAvailable`, `OnboardingServices`, `QualificationService.requalificationReason` and `qualify`.
+
+**Notes** Latent in v1.0: screening is hidden by `triageEnabled: false` and `SCREENING_PIPELINE_WIRED = false`. It would have been the first thing to fail when package E1 switches screening on.
+
+**Fix** Package C1. Screening is offered only when the config allows it AND the active profile is `QUALIFIED` and not due (`QualificationService.screeningEligible`, `FirstRunState.screeningEligible`, applied in the navigation graph and refreshed when S08 finishes). A finished onboarding with no active profile starts at S06. An age below zero counts as expired, a missing remembered build counts as changed, and a new profile is inserted before the old ones are retired (`supersedeOtherProfiles`; the active profile is the newest). S06 says why the camera is being checked again. A batch ID that is scanned again with different signed content is refused (the server refuses it too), and a batch that was not verified is never used as a reference. Tests: `OnboardingDomainTest` (TC-DEV-05, TC-DEV-07), `StartDestinationTest`.
+
+#### BUG-2026-071: Findings from the C1 reviews that are left open for later packages
+
+- Area: CAP | Severity: S3 | Clinical: Yes | Hazard: H5 | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-DEV-06, TC-CAP-04 | Fix version:
+
+**Steps** Read the safety-reviewer and privacy-security-reviewer reports on package C1 (30 October 2026); these findings are not fixed in C1.
+
+**Expected** Each is fixed or recorded with the package that fixes it.
+
+**Actual**
+1. Only some quality limits come from the signed config. `maxRepeatabilityDeltaE` and the skin limits exist only as code defaults, so they are outside the clinical sign-off hook; a missing or garbled key falls back silently, and the text "NaN" parses and turns a check off. The schema leaves `qualityThresholds` free-form. (Package E1: the config schema and the quality gate.)
+2. S06 judges a card's dates against the phone's own clock with no build-time floor (the floor from H2 exists only on S10), so a phone with its clock set back accepts an expired card. (E1.)
+3. `CameraHost` never locks AE and AWB and does not wait for them to converge (doc 4 steps 3 and 4); it records what the camera did. It fails closed for repeatability (TC-DEV-06). (E1, with S16.)
+4. The test that an unknown lock is recorded as off builds the controller with no camera characteristics, so it passed before the fix too; a case with an AE-lock-capable `CameraCharacteristics` is needed. (D1.)
+5. `SecureScreenHelper.SECURE_DESTINATIONS` lacks S16 to S18 and R04, and the recents thumbnail is only switched off on API 33 and up, so on API 26 to 32 a preview showing a baby could be written to disk by the system. C1 uses the preview only on S06 and S07 (the card). (E1 and C2, when they open the camera on a baby.)
+6. TC-CARD-02 and TC-CARD-05 describe research capture continuing with an invalid or expired card; S06 blocks onboarding on any card that fails. That is stricter and is a decision recorded in doc 6 Section 5.0: a phone is qualified only on a verified card. The research session's handling of an unverified card is package C2.
+7. The Maestro device flow lost its battery-guidance assertion (TC-DEV-09): the ids it used never existed, and S05 has no tag for the card yet. (D1.)
+
+**Evidence** The two C1 review reports.
+
+**Notes** None of these is reachable in v1.0 (screening is hidden; R04 and S16 do not open the camera yet).
+
+**Fix** Per item, in the package named.
+
 ---
 
 ## 5. Closed Defects
@@ -1308,9 +1421,9 @@ Updated with each test summary report (doc 9 Section 15).
 
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
-| S1 | 15 | 8 | 0 |
-| S2 | 26 | 0 | 0 |
-| S3 | 19 | 0 | 0 |
+| S1 | 18 | 10 | 0 |
+| S2 | 27 | 0 | 0 |
+| S3 | 20 | 1 | 0 |
 | S4 | 0 | 0 | 0 |
 
 As of 30 October 2026, counted from the table in Section 4: a defect is open until it is Verified, so Fixed ones still count. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.

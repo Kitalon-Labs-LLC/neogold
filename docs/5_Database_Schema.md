@@ -320,6 +320,7 @@ Local, append-only trail of security- and integrity-relevant actions.
 | `safety_ack_version` | Int | 0 (forces notice on first launch and after major model updates) |
 | `onboarding_complete` | Boolean | false |
 | `active_device_profile_id` | String | none |
+| `qualification_build_fingerprint` | String | none (the OS build fingerprint the camera was qualified on; a different build means qualify again, NG-044. It is not a `device_profile` column because the schema stays at version 2) |
 | `screening_retention_days` | Int | 180 (allowed 30 to 365), PRD D7 |
 | `register_number_retention_days` | Int | 60 (allowed 14 to 90), PRD D7 |
 | `keep_screening_log` | Boolean | true (a facility can switch the log off entirely) |

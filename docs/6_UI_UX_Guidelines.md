@@ -227,6 +227,17 @@ Components live in `:core:designsystem` (atoms, molecules) and the feature modul
 | R08 | Study server enrollment (scan signed study QR, enter one-time code, confirm study name and server) | Join study | NG-042 |
 | R09 | Leave study (confirm) | Leave study | NG-042 |
 
+### 5.0 First-run screens S05 to S08 (package C1)
+
+- **S05** shows what the device check found: memory, camera level, and whether the model is on the tested list.
+- **S06** opens the camera and reads the QR on the card. While it looks it says so and Continue is off. Once a card is read it is checked once, against the signed trust list: signature, issuer, purpose, expiry and revocation. A card that passes shows "Card verified: Batch ..." and Continue turns on; a card that fails shows why (`card_invalid`, expired, withdrawn, not a NeoGold card), stores nothing, and "Scan again" returns to looking. Nothing on this screen is a placeholder: no batch is shown that was not read.
+- **S07** takes three photos of the card with the camera, one per tap. After each photo the quality gate runs; a photo without the card, or blurred, glared or badly lit, shows the reason and is asked for again, and it does not count against the phone. Only three good photos are judged, against the colors of the batch S06 verified, and the verdict is the measured one.
+- **S08** shows the measured result. A phone qualified more than 30 days ago, on another OS build, or with no stored qualification starts at S06 again, which says why (TC-DEV-07). Screening is offered only on a phone whose active qualification is `QUALIFIED` and not due; a research-only phone never gets it (TC-DEV-05).
+- **The photos** leave out the skin check on the card's window: they show the card on a table, not a baby.
+- **A card that fails stops onboarding** (decision for v1.0): a phone is qualified only against a verified card, so an invalid or expired card cannot be used to start. What a research session does with an unverified or expired card (TC-CARD-02, TC-CARD-05) is package C2.
+- **Camera access.** If the camera permission is missing, S06 and S07 show "Camera access is needed" with Allow camera and Open settings; if the camera cannot be opened they show "The camera could not be opened" with Try again.
+- Their text is in `feature/onboarding/src/main/res` and `engine/camera/src/main/res` (EN and BN; Bangla is a draft for the nurse panel).
+
 ### 5.1 System screens
 
 These stand in for the app when something underneath it cannot be trusted. They show no clinical content, no result and no register number. Their text is in the app module's own strings (`app/src/main/res/values` and `values-bn`; Bangla is a draft for the nurse panel, like the rest) and `tools/check_strings.py` checks it.
