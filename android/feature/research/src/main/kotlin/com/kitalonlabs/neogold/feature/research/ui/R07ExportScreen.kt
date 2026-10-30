@@ -55,6 +55,7 @@ fun R07ExportScreen(
     onChooseDestinationClicked: () -> Unit,
     onDoneClicked: () -> Unit,
     exportFailed: Boolean = false,
+    exportFileRemains: Boolean = false,
     showCloudSync: Boolean = true,
     pendingUploadsCount: Int = 0,
     serverDeviceId: String? = null,
@@ -246,9 +247,12 @@ fun R07ExportScreen(
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Text(
-                        text = stringResource(ResearchR.string.r07_failed_body),
+                        text = stringResource(
+                            if (exportFileRemains) ResearchR.string.r07_failed_remains else ResearchR.string.r07_failed_body
+                        ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.testTag("export_failed_text")
                     )
                 }
             }

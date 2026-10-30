@@ -97,6 +97,9 @@ class ResearchViewModel(
      */
     private val lockEpoch: Int get() = sessionManager?.lockCount ?: 0
 
+    /** Asked by a long job (the export) between steps: false once the session has been locked. */
+    fun isSessionOpen(): Boolean = sessionIsOpen
+
     /**
      * Whether research mode is unlocked right now, read from the session manager itself: this view model's own copy
      * (`isUnlocked`) trails a lock by one collection, and an action must not start in that gap. With no session manager
@@ -113,8 +116,9 @@ class ResearchViewModel(
 
         // Observe session lock state
         if (sessionManager != null) {
+            // read here, not in the coroutine: a lock that lands before the collector starts must still be seen
+            var clearedAt = sessionManager.lockCount
             scope.launch {
-                var clearedAt = sessionManager.lockCount
                 sessionManager.isUnlocked.collect { unlocked ->
                     // A real lock (the count moved), whatever caused it (timeout, screen off, button): nothing of the session
                     // stays in memory. The first "locked" that every new collector receives is not a lock: it must not wipe

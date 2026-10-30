@@ -34,6 +34,8 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -56,12 +58,16 @@ class ResearchExportCleanupTest {
     private val publicKey = ExportCryptoEngine.generateKeyPair().second
 
     /** Opens the image of the capture whose number is [failOn] with an IOException that names a path. */
-    private class FlakyStore(private val real: EncryptedFileStore, var failOn: Int = 0) : EncryptedFileStore by real {
+    private class FlakyStore(private val real: EncryptedFileStore, var failOn: Int = 0, var asError: Boolean = false) :
+        EncryptedFileStore by real {
         private var opened = 0
 
         override fun openDecryptedStream(fileName: String, associatedData: ByteArray): InputStream {
             opened++
-            if (opened == failOn) throw IOException("cannot read /data/user/0/secret-path/$fileName")
+            if (opened == failOn) {
+                if (asError) throw LinkageError("a native library failed")
+                throw IOException("cannot read /data/user/0/secret-path/$fileName")
+            }
             return real.openDecryptedStream(fileName, associatedData)
         }
     }
@@ -185,6 +191,16 @@ class ResearchExportCleanupTest {
 
     private fun archive() = tempFolder.newFile()
 
+    /** A discard that records that it ran and says the file is gone. */
+    private fun discarding(flag: AtomicBoolean): () -> Boolean = {
+        flag.set(true)
+        true
+    }
+
+    private fun exportLogged() = runBlocking {
+        database.auditEventDao().getAllEvents().any { it.eventType == "EXPORT_CREATED" }
+    }
+
     @Test
     fun tcExp01_theDataKeyIsNeverOnTheDiskWhileAnExportRuns_BUG_2026_038() = runBlocking {
         val seen = mutableSetOf<String>()
@@ -260,34 +276,34 @@ class ResearchExportCleanupTest {
     fun tcExp01_aFailedExportDiscardsTheFileItWasWriting() = runBlocking {
         flaky.failOn = 1
         val written = ByteArrayOutputStream()
-        var discarded = false
+        val discarded = AtomicBoolean(false)
 
-        val result = manager.exportToDestination(ExportDestination({ written }, { discarded = true }), staging)
+        val result = manager.exportToDestination(ExportDestination({ written }, discarding(discarded)), staging)
 
         assertThat(result.isFailure).isTrue()
-        assertThat(discarded).isTrue()
+        assertThat(discarded.get()).isTrue()
     }
 
     @Test
     fun tcExp01_aFinishedExportKeepsItsFile() = runBlocking {
         val written = ByteArrayOutputStream()
-        var discarded = false
+        val discarded = AtomicBoolean(false)
 
-        val result = manager.exportToDestination(ExportDestination({ written }, { discarded = true }), staging)
+        val result = manager.exportToDestination(ExportDestination({ written }, discarding(discarded)), staging)
 
         assertThat(result.isSuccess).isTrue()
-        assertThat(discarded).isFalse()
+        assertThat(discarded.get()).isFalse()
         assertThat(written.size()).isGreaterThan(0)
     }
 
     @Test
     fun tcExp01_aDestinationThatCannotBeOpenedIsAFailureAndIsDiscarded() = runBlocking {
-        var discarded = false
+        val discarded = AtomicBoolean(false)
 
-        val result = manager.exportToDestination(ExportDestination({ null }, { discarded = true }), staging)
+        val result = manager.exportToDestination(ExportDestination({ null }, discarding(discarded)), staging)
 
         assertThat(result.isFailure).isTrue()
-        assertThat(discarded).isTrue()
+        assertThat(discarded.get()).isTrue()
     }
 
     @Test
@@ -298,7 +314,7 @@ class ResearchExportCleanupTest {
         val scope = CoroutineScope(Dispatchers.Default + Job())
 
         val job = scope.async {
-            manager.exportToDestination(ExportDestination({ written }, { discarded.set(true) }), staging) {
+            manager.exportToDestination(ExportDestination({ written }, discarding(discarded)), staging) {
                 if (it.stage == ExportStage.ENCRYPTING_IMAGES && it.message.startsWith("Encrypted image")) {
                     if (imagesDone.incrementAndGet() == 1) scope.cancel() // the screen was left after the first image
                 }
@@ -309,6 +325,127 @@ class ResearchExportCleanupTest {
         assertThat(outcome).isInstanceOf(CancellationException::class.java)
         assertThat(imagesDone.get()).isLessThan(IMAGES) // it stopped, it did not run to the end
         assertThat(discarded.get()).isTrue()
+        assertThat(stagingIsEmpty()).isTrue()
+    }
+
+    @Test
+    fun tcExp01_anErrorMidExportStillRemovesStagingAndDiscardsTheFileBeforeItGoesOn() {
+        flaky.failOn = 2
+        flaky.asError = true
+        val discarded = AtomicBoolean(false)
+
+        val thrown = runCatching {
+            runBlocking {
+                val destination = ExportDestination({ ByteArrayOutputStream() }, discarding(discarded))
+                manager.exportToDestination(destination, staging)
+            }
+        }.exceptionOrNull()
+
+        assertThat(thrown).isInstanceOf(LinkageError::class.java)
+        assertThat(discarded.get()).isTrue()
+        assertThat(stagingIsEmpty()).isTrue()
+    }
+
+    @Test
+    fun tcExp01_whenTheFileCannotBeDiscardedTheFailureSaysTheFileRemains() = runBlocking {
+        flaky.failOn = 1
+
+        val result = manager.exportToDestination(ExportDestination({ ByteArrayOutputStream() }, { false }), staging)
+
+        assertThat(result.exceptionOrNull()).isInstanceOf(ExportFileRemains::class.java)
+        assertThat(stagingIsEmpty()).isTrue()
+    }
+
+    @Test
+    fun tcExp01_aLockBetweenFilesCancelsTheExportDiscardsTheFileAndLogsNoExport() {
+        val locked = AtomicBoolean(false)
+        val discarded = AtomicBoolean(false)
+
+        val thrown = runCatching {
+            runBlocking {
+                manager.exportToDestination(
+                    ExportDestination({ ByteArrayOutputStream() }, discarding(discarded)),
+                    staging,
+                    canContinue = { !locked.get() }
+                ) { if (it.message.startsWith("Encrypted image")) locked.set(true) }
+            }
+        }.exceptionOrNull()
+
+        assertThat(thrown).isInstanceOf(CancellationException::class.java)
+        assertThat(discarded.get()).isTrue()
+        assertThat(stagingIsEmpty()).isTrue()
+        assertThat(exportLogged()).isFalse()
+    }
+
+    @Test
+    fun tcExp01_aLockWhileTheArchiveIsBeingPackedAlsoCancelsIt() {
+        val locked = AtomicBoolean(false)
+        val discarded = AtomicBoolean(false)
+
+        val thrown = runCatching {
+            runBlocking {
+                manager.exportToDestination(
+                    ExportDestination({ ByteArrayOutputStream() }, discarding(discarded)),
+                    staging,
+                    canContinue = { !locked.get() }
+                ) { if (it.stage == ExportStage.PACKAGING_ZIP) locked.set(true) }
+            }
+        }.exceptionOrNull()
+
+        assertThat(thrown).isInstanceOf(CancellationException::class.java)
+        assertThat(discarded.get()).isTrue()
+        assertThat(exportLogged()).isFalse()
+    }
+
+    @Test
+    fun tcExp01_aFinishedExportIsLoggedOnce() = runBlocking {
+        manager.exportToStream(archive().outputStream(), staging)
+
+        val events = database.auditEventDao().getAllEvents()
+        assertThat(events.count { it.eventType == "EXPORT_CREATED" }).isEqualTo(1)
+    }
+
+    @Test
+    fun tcExp01_aStudyCodeMadeOfPathPiecesDoesNotWriteOutsideTheStagingDirectory() = runBlocking {
+        val study = database.researchStudyDao().getStudyById("STUDY-1")!!
+        database.researchStudyDao().update(study.copy(studyCode = "../../escape"))
+
+        val result = manager.exportToStream(archive().outputStream(), staging)
+
+        assertThat(result.isSuccess).isTrue()
+        assertThat(tempFolder.root.walkTopDown().none { it.name == "escape" }).isTrue()
+        assertThat(tempFolder.root.parentFile!!.listFiles().orEmpty().none { it.name == "escape" }).isTrue()
+    }
+
+    @Test
+    fun tcExp01_aSecondExportWaitsForTheFirstAndThenBothFinish() = runBlocking {
+        val firstIsBusy = CountDownLatch(1)
+        val letFirstGo = CountDownLatch(1)
+        val secondStarted = AtomicBoolean(false)
+
+        val first = async(Dispatchers.Default) {
+            manager.exportToStream(archive().outputStream(), staging) {
+                if (it.stage == ExportStage.ENCRYPTING_IMAGES && firstIsBusy.count > 0) {
+                    firstIsBusy.countDown()
+                    letFirstGo.await(
+                        LATCH_SECONDS,
+                        TimeUnit.SECONDS
+                    ) // the first export is held in the middle of its work
+                }
+            }
+        }
+        assertThat(firstIsBusy.await(LATCH_SECONDS, TimeUnit.SECONDS)).isTrue()
+        val second = async(Dispatchers.Default) {
+            manager.exportToStream(archive().outputStream(), staging) { secondStarted.set(true) }
+        }
+        Thread.sleep(WAIT_MILLIS)
+
+        assertThat(
+            secondStarted.get()
+        ).isFalse() // it waits its turn: it did not empty the first one's staging directory
+        letFirstGo.countDown()
+        assertThat(first.await().isSuccess).isTrue()
+        assertThat(second.await().isSuccess).isTrue()
         assertThat(stagingIsEmpty()).isTrue()
     }
 
@@ -332,6 +469,8 @@ class ResearchExportCleanupTest {
 
     private companion object {
         const val IMAGES = 3
+        const val LATCH_SECONDS = 20L
+        const val WAIT_MILLIS = 700L
         const val BREAK_AFTER = 40
     }
 }

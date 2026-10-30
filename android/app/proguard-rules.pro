@@ -27,3 +27,7 @@
 # missing_rules.txt; still no wildcard.
 -dontwarn com.google.errorprone.annotations.CanIgnoreReturnValue
 -dontwarn com.google.errorprone.annotations.CheckReturnValue
+
+# One more of the same kind, referenced by Tink's MAC key classes. They became reachable when the research export was wired
+# into the app (C3, R07), which is when R8 first reported it. Exactly the class it lists in missing_rules.txt; no wildcard.
+-dontwarn com.google.errorprone.annotations.RestrictedApi

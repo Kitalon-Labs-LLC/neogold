@@ -19,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.File
@@ -67,23 +69,37 @@ class ResearchExportManager(
     private val encryptedFileStore: EncryptedFileStore
 ) {
 
+    private companion object {
+        /** Shared by every instance: the app makes a new manager when the screen is redrawn. */
+        val exportLock = Mutex()
+    }
+
     /** Writes the export to a document chosen with the Storage Access Framework (see [exportToDestination]). */
     suspend fun exportToUri(
         contentResolver: ContentResolver,
         destinationUri: Uri,
         stagingDir: File = File(context.cacheDir, "export_staging"),
+        canContinue: () -> Boolean = { true },
         onProgress: ((ExportProgress) -> Unit)? = null
-    ): Result<ExportSummary> =
-        exportToDestination(ExportDestination.forUri(contentResolver, destinationUri), stagingDir, onProgress)
+    ): Result<ExportSummary> = exportToDestination(
+        ExportDestination.forUri(contentResolver, destinationUri),
+        stagingDir,
+        canContinue,
+        onProgress
+    )
 
     /**
      * Writes the export to [destination]. If the export fails or is cancelled, the destination is discarded: a half-written
-     * archive that looks like an export is worse than none.
+     * archive that looks like an export is worse than none. If the discard itself does not work (a provider that refuses to
+     * delete), the failure is an [ExportFileRemains], so the screen can tell the worker to delete the file.
+     *
+     * [canContinue] is asked between files: when it says no (the research session was locked), the export is cancelled.
      */
-    @Suppress("TooGenericExceptionCaught") // any failure goes back through Result, never a crash
+    @Suppress("TooGenericExceptionCaught") // any failure goes back through Result, or is rethrown after the discard
     suspend fun exportToDestination(
         destination: ExportDestination,
         stagingDir: File = File(context.cacheDir, "export_staging"),
+        canContinue: () -> Boolean = { true },
         onProgress: ((ExportProgress) -> Unit)? = null
     ): Result<ExportSummary> = withContext(Dispatchers.IO) {
         val result = try {
@@ -91,15 +107,23 @@ class ResearchExportManager(
             if (out == null) {
                 Result.failure(IllegalStateException("The export destination could not be opened"))
             } else {
-                out.use { exportToStream(it, stagingDir, onProgress) }
+                out.use { exportToStream(it, stagingDir, canContinue, onProgress) }
             }
         } catch (e: CancellationException) {
             withContext(NonCancellable) { destination.discard() }
             throw e
         } catch (e: Exception) {
             Result.failure(e)
+        } catch (e: Throwable) {
+            // an Error (no memory, a native library failing): the staging directory is removed by `finally`, and the file
+            // that was being written is discarded here before the error goes on
+            withContext(NonCancellable) { destination.discard() }
+            throw e
         }
-        if (result.isFailure) withContext(NonCancellable) { destination.discard() }
+        if (result.isFailure) {
+            val discarded = withContext(NonCancellable) { destination.discard() }
+            if (!discarded) return@withContext Result.failure(ExportFileRemains(result.exceptionOrNull()))
+        }
         result
     }
 
@@ -110,252 +134,267 @@ class ResearchExportManager(
     suspend fun exportToStream(
         outputStream: OutputStream,
         stagingDir: File = File(context.cacheDir, "export_staging"),
+        canContinue: () -> Boolean = { true },
         onProgress: ((ExportProgress) -> Unit)? = null
     ): Result<ExportSummary> = withContext(Dispatchers.IO) {
-        try {
-            // Always start clean. Nothing is resumed, so nothing left by an earlier run is trusted or reused.
-            stagingDir.deleteRecursively()
-            onProgress?.invoke(ExportProgress(0, 0, 0L, ExportStage.PREPARING, "Loading study data..."))
+        // One export at a time, for the whole app: two runs that overlap would empty each other's staging directory.
+        exportLock.withLock {
+            try {
+                // Always start clean. Nothing is resumed, so nothing left by an earlier run is trusted or reused.
+                stagingDir.deleteRecursively()
+                onProgress?.invoke(ExportProgress(0, 0, 0L, ExportStage.PREPARING, "Loading study data..."))
 
-            // 1. Verify active study and export public key
-            val study = database.researchStudyDao().getActiveStudy()
-                ?: return@withContext Result.failure(IllegalStateException("No active research study enrolled on this device"))
+                // 1. Verify active study and export public key
+                val study = database.researchStudyDao().getActiveStudy()
+                    ?: return@withContext Result.failure(IllegalStateException("No active research study enrolled on this device"))
 
-            val exportPublicKey = study.exportPublicKey
-                ?: return@withContext Result.failure(
-                    IllegalStateException("Active study '${study.studyCode}' has no export public key configured in its profile")
-                )
+                val exportPublicKey = study.exportPublicKey
+                    ?: return@withContext Result.failure(
+                        IllegalStateException("Active study '${study.studyCode}' has no export public key configured in its profile")
+                    )
 
-            // 2. Fetch all research records
-            val participants = database.researchParticipantDao().getParticipantsForStudy(study.id)
-            val participantMap = participants.associateBy { it.id }
+                // 2. Fetch all research records
+                val participants = database.researchParticipantDao().getParticipantsForStudy(study.id)
+                val participantMap = participants.associateBy { it.id }
 
-            val sessions = mutableListOf<ScreeningSessionEntity>()
-            for (p in participants) {
-                sessions.addAll(database.screeningSessionDao().getSessionsForParticipant(p.id))
-            }
+                val sessions = mutableListOf<ScreeningSessionEntity>()
+                for (p in participants) {
+                    sessions.addAll(database.screeningSessionDao().getSessionsForParticipant(p.id))
+                }
 
-            val captures = mutableListOf<CaptureEntity>()
-            for (s in sessions) {
-                captures.addAll(database.captureDao().getCapturesForSession(s.id))
-            }
-            val imageCaptures = captures.filter { it.imageFile != null }
+                val captures = mutableListOf<CaptureEntity>()
+                for (s in sessions) {
+                    captures.addAll(database.captureDao().getCapturesForSession(s.id))
+                }
+                val imageCaptures = captures.filter { it.imageFile != null }
 
-            val tsbMeasurements = mutableListOf<TsbMeasurementEntity>()
-            for (p in participants) {
-                tsbMeasurements.addAll(database.tsbMeasurementDao().getTsbForParticipant(p.id))
-            }
+                val tsbMeasurements = mutableListOf<TsbMeasurementEntity>()
+                for (p in participants) {
+                    tsbMeasurements.addAll(database.tsbMeasurementDao().getTsbForParticipant(p.id))
+                }
 
-            val totalExpectedFiles = 4 + imageCaptures.size // 4 CSVs + images
-            val studyStaging = File(stagingDir, study.studyCode).apply { mkdirs() }
+                val totalExpectedFiles = 4 + imageCaptures.size // 4 CSVs + images
+                // Named by a random ID, never by the study code: the code comes from a signed profile, but a path made of it could
+                // lead outside the staging directory, where nothing would clean it up.
+                val studyStaging = File(stagingDir, UUID.randomUUID().toString()).apply { mkdirs() }
 
-            // 3. A new data key for this export, in memory only (BUG-2026-038): it is never written to the staging
-            // directory, and leaves the phone only inside the HPKE wrap addressed to the offline study key.
-            val exportSession = ExportCryptoEngine.createSession()
-            val completedFilesMap = linkedMapOf<String, String>()
+                // 3. A new data key for this export, in memory only (BUG-2026-038): it is never written to the staging
+                // directory, and leaves the phone only inside the HPKE wrap addressed to the offline study key.
+                val exportSession = ExportCryptoEngine.createSession()
+                val completedFilesMap = linkedMapOf<String, String>()
 
-            var completedCount = 0
-            var totalBytesProcessed = 0L
+                var completedCount = 0
+                var totalBytesProcessed = 0L
 
-            onProgress?.invoke(
-                ExportProgress(
-                    completedFiles = completedCount,
-                    totalFiles = totalExpectedFiles,
-                    bytesProcessed = totalBytesProcessed,
-                    stage = ExportStage.ENCRYPTING_DATA,
-                    message = "Encrypting data tables..."
-                )
-            )
-
-            // 4. Encrypt CSV tables (Sessions, Captures, TSB, Participants)
-            val csvFiles = listOf(
-                "data/sessions.csv.enc" to generateSessionsCsv(sessions, participantMap),
-                "data/captures.csv.enc" to generateCapturesCsv(captures),
-                "data/tsb_measurements.csv.enc" to generateTsbCsv(tsbMeasurements, participantMap),
-                "data/participants.csv.enc" to generateParticipantsCsv(participants)
-            )
-
-            for ((relPath, csvText) in csvFiles) {
-                currentCoroutineContext().ensureActive() // leaving the screen cancels the export at the next file
-                val targetFile = File(studyStaging, relPath).apply { parentFile?.mkdirs() }
-                val cipherBytes = exportSession.encryptBytes(csvText.toByteArray(StandardCharsets.UTF_8))
-                targetFile.writeBytes(cipherBytes)
-                completedFilesMap[relPath] = ExportCryptoEngine.sha256Hex(cipherBytes)
-                completedCount = completedFilesMap.size
-                totalBytesProcessed += targetFile.length()
                 onProgress?.invoke(
                     ExportProgress(
                         completedFiles = completedCount,
                         totalFiles = totalExpectedFiles,
                         bytesProcessed = totalBytesProcessed,
                         stage = ExportStage.ENCRYPTING_DATA,
-                        message = "Encrypted $relPath"
+                        message = "Encrypting data tables..."
                     )
                 )
-            }
 
-            // 5. Encrypt research images with progress & resume
-            onProgress?.invoke(
-                ExportProgress(
-                    completedFiles = completedCount,
-                    totalFiles = totalExpectedFiles,
-                    bytesProcessed = totalBytesProcessed,
-                    stage = ExportStage.ENCRYPTING_IMAGES,
-                    message = "Encrypting ${imageCaptures.size} research images..."
+                // 4. Encrypt CSV tables (Sessions, Captures, TSB, Participants)
+                val csvFiles = listOf(
+                    "data/sessions.csv.enc" to generateSessionsCsv(sessions, participantMap),
+                    "data/captures.csv.enc" to generateCapturesCsv(captures),
+                    "data/tsb_measurements.csv.enc" to generateTsbCsv(tsbMeasurements, participantMap),
+                    "data/participants.csv.enc" to generateParticipantsCsv(participants)
                 )
-            )
 
-            for ((index, cap) in imageCaptures.withIndex()) {
-                currentCoroutineContext().ensureActive()
-                val relPath = "images/${cap.id}.jpg.enc"
-                val targetFile = File(studyStaging, relPath).apply { parentFile?.mkdirs() }
-
-                val imgFile = cap.imageFile!!
-                encryptedFileStore.openDecryptedStream(imgFile).use { imageInStream ->
-                    FileOutputStream(targetFile).use { fileOut ->
-                        exportSession.encryptStream(imageInStream, fileOut)
-                    }
+                for ((relPath, csvText) in csvFiles) {
+                    checkpoint(canContinue) // leaving the screen, or a lock, cancels the export at the next file
+                    val targetFile = File(studyStaging, relPath).apply { parentFile?.mkdirs() }
+                    val cipherBytes = exportSession.encryptBytes(csvText.toByteArray(StandardCharsets.UTF_8))
+                    targetFile.writeBytes(cipherBytes)
+                    completedFilesMap[relPath] = ExportCryptoEngine.sha256Hex(cipherBytes)
+                    completedCount = completedFilesMap.size
+                    totalBytesProcessed += targetFile.length()
+                    onProgress?.invoke(
+                        ExportProgress(
+                            completedFiles = completedCount,
+                            totalFiles = totalExpectedFiles,
+                            bytesProcessed = totalBytesProcessed,
+                            stage = ExportStage.ENCRYPTING_DATA,
+                            message = "Encrypted $relPath"
+                        )
+                    )
                 }
-                completedFilesMap[relPath] = ExportCryptoEngine.sha256Hex(targetFile)
 
-                completedCount = completedFilesMap.size
-                totalBytesProcessed += targetFile.length()
+                // 5. Encrypt research images with progress & resume
                 onProgress?.invoke(
                     ExportProgress(
                         completedFiles = completedCount,
                         totalFiles = totalExpectedFiles,
                         bytesProcessed = totalBytesProcessed,
                         stage = ExportStage.ENCRYPTING_IMAGES,
-                        message = "Encrypted image ${index + 1}/${imageCaptures.size}"
+                        message = "Encrypting ${imageCaptures.size} research images..."
                     )
                 )
-            }
 
-            // 6. Generate manifest.sha256
-            onProgress?.invoke(
-                ExportProgress(
-                    completedFiles = completedCount,
-                    totalFiles = totalExpectedFiles,
-                    bytesProcessed = totalBytesProcessed,
-                    stage = ExportStage.PACKAGING_ZIP,
-                    message = "Building manifest and archive..."
-                )
-            )
+                for ((index, cap) in imageCaptures.withIndex()) {
+                    checkpoint(canContinue)
+                    val relPath = "images/${cap.id}.jpg.enc"
+                    val targetFile = File(studyStaging, relPath).apply { parentFile?.mkdirs() }
 
-            val manifestEntries = completedFilesMap.entries
-                .sortedBy { it.key }
-                .map { ManifestEntry(it.value, it.key) }
-            val manifestContent = ManifestParser.format(manifestEntries)
-            val manifestBytes = manifestContent.toByteArray(StandardCharsets.UTF_8)
-            val manifestSha256 = ExportCryptoEngine.sha256Hex(manifestBytes)
-
-            // 7. Wrap data key with Tink HPKE
-            val wrappedDataKeyB64 = exportSession.wrapDataKey(exportPublicKey)
-            val exportedAtIso = Instant.now().toString()
-
-            val header = ExportHeader(
-                exportFormatVersion = 1,
-                csvSchemaVersion = 1,
-                studyCode = study.studyCode,
-                exportedAt = exportedAtIso,
-                totalParticipants = participants.size,
-                totalSessions = sessions.size,
-                totalImages = imageCaptures.size,
-                wrappedDataKeyB64 = wrappedDataKeyB64,
-                manifestSha256 = manifestSha256
-            )
-            val headerBytes = header.toJsonString().toByteArray(StandardCharsets.UTF_8)
-
-            // 8. Stream everything into ZIP
-            var totalZipBytes = 0L
-            val countingOutStream = object : OutputStream() {
-                override fun write(b: Int) {
-                    outputStream.write(b)
-                    totalZipBytes++
-                }
-
-                override fun write(b: ByteArray, off: Int, len: Int) {
-                    outputStream.write(b, off, len)
-                    totalZipBytes += len
-                }
-
-                override fun flush() {
-                    outputStream.flush()
-                }
-            }
-
-            ZipOutputStream(BufferedOutputStream(countingOutStream)).use { zipOut ->
-                // Write header.json
-                zipOut.putNextEntry(ZipEntry("header.json"))
-                zipOut.write(headerBytes)
-                zipOut.closeEntry()
-
-                // Write manifest.sha256
-                zipOut.putNextEntry(ZipEntry("manifest.sha256"))
-                zipOut.write(manifestBytes)
-                zipOut.closeEntry()
-
-                // Write all ciphertext files
-                val buffer = ByteArray(8192)
-                for (entry in manifestEntries) {
-                    val file = File(studyStaging, entry.relativePath)
-                    zipOut.putNextEntry(ZipEntry(entry.relativePath))
-                    FileInputStream(file).use { fis ->
-                        var n: Int
-                        while (fis.read(buffer).also { n = it } != -1) {
-                            zipOut.write(buffer, 0, n)
+                    val imgFile = cap.imageFile!!
+                    encryptedFileStore.openDecryptedStream(imgFile).use { imageInStream ->
+                        FileOutputStream(targetFile).use { fileOut ->
+                            exportSession.encryptStream(imageInStream, fileOut)
                         }
                     }
-                    zipOut.closeEntry()
+                    completedFilesMap[relPath] = ExportCryptoEngine.sha256Hex(targetFile)
+
+                    completedCount = completedFilesMap.size
+                    totalBytesProcessed += targetFile.length()
+                    onProgress?.invoke(
+                        ExportProgress(
+                            completedFiles = completedCount,
+                            totalFiles = totalExpectedFiles,
+                            bytesProcessed = totalBytesProcessed,
+                            stage = ExportStage.ENCRYPTING_IMAGES,
+                            message = "Encrypted image ${index + 1}/${imageCaptures.size}"
+                        )
+                    )
                 }
-                zipOut.finish()
-                zipOut.flush()
+
+                // 6. Generate manifest.sha256
+                onProgress?.invoke(
+                    ExportProgress(
+                        completedFiles = completedCount,
+                        totalFiles = totalExpectedFiles,
+                        bytesProcessed = totalBytesProcessed,
+                        stage = ExportStage.PACKAGING_ZIP,
+                        message = "Building manifest and archive..."
+                    )
+                )
+
+                val manifestEntries = completedFilesMap.entries
+                    .sortedBy { it.key }
+                    .map { ManifestEntry(it.value, it.key) }
+                val manifestContent = ManifestParser.format(manifestEntries)
+                val manifestBytes = manifestContent.toByteArray(StandardCharsets.UTF_8)
+                val manifestSha256 = ExportCryptoEngine.sha256Hex(manifestBytes)
+
+                // 7. Wrap data key with Tink HPKE
+                val wrappedDataKeyB64 = exportSession.wrapDataKey(exportPublicKey)
+                val exportedAtIso = Instant.now().toString()
+
+                val header = ExportHeader(
+                    exportFormatVersion = 1,
+                    csvSchemaVersion = 1,
+                    studyCode = study.studyCode,
+                    exportedAt = exportedAtIso,
+                    totalParticipants = participants.size,
+                    totalSessions = sessions.size,
+                    totalImages = imageCaptures.size,
+                    wrappedDataKeyB64 = wrappedDataKeyB64,
+                    manifestSha256 = manifestSha256
+                )
+                val headerBytes = header.toJsonString().toByteArray(StandardCharsets.UTF_8)
+
+                // 8. Stream everything into ZIP
+                var totalZipBytes = 0L
+                val countingOutStream = object : OutputStream() {
+                    override fun write(b: Int) {
+                        outputStream.write(b)
+                        totalZipBytes++
+                    }
+
+                    override fun write(b: ByteArray, off: Int, len: Int) {
+                        outputStream.write(b, off, len)
+                        totalZipBytes += len
+                    }
+
+                    override fun flush() {
+                        outputStream.flush()
+                    }
+                }
+
+                ZipOutputStream(BufferedOutputStream(countingOutStream)).use { zipOut ->
+                    // Write header.json
+                    zipOut.putNextEntry(ZipEntry("header.json"))
+                    zipOut.write(headerBytes)
+                    zipOut.closeEntry()
+
+                    // Write manifest.sha256
+                    zipOut.putNextEntry(ZipEntry("manifest.sha256"))
+                    zipOut.write(manifestBytes)
+                    zipOut.closeEntry()
+
+                    // Write all ciphertext files
+                    val buffer = ByteArray(8192)
+                    for (entry in manifestEntries) {
+                        checkpoint(canContinue)
+                        val file = File(studyStaging, entry.relativePath)
+                        zipOut.putNextEntry(ZipEntry(entry.relativePath))
+                        FileInputStream(file).use { fis ->
+                            var n: Int
+                            while (fis.read(buffer).also { n = it } != -1) {
+                                zipOut.write(buffer, 0, n)
+                            }
+                        }
+                        zipOut.closeEntry()
+                    }
+                    zipOut.finish()
+                    zipOut.flush()
+                }
+
+                // 9. Record audit event
+                val summary = ExportSummary(
+                    studyCode = study.studyCode,
+                    totalParticipants = participants.size,
+                    totalSessions = sessions.size,
+                    totalCaptures = captures.size,
+                    totalImages = imageCaptures.size,
+                    totalZipBytes = totalZipBytes,
+                    manifestSha256 = manifestSha256,
+                    exportedAt = exportedAtIso
+                )
+
+                // A cancelled export (and its discarded file) is not logged as created.
+                currentCoroutineContext().ensureActive()
+                database.auditEventDao().insert(
+                    AuditEventEntity(
+                        id = UUID.randomUUID().toString(),
+                        eventType = "EXPORT_CREATED",
+                        occurredAt = System.currentTimeMillis(),
+                        details = "Exported study ${study.studyCode}: ${summary.totalParticipants} participants, " +
+                            "${summary.totalSessions} sessions, ${summary.totalImages} images (${summary.totalZipBytes} bytes)"
+                    )
+                )
+
+                // 10. The staging directory is removed in `finally`, on success, failure and cancel alike.
+
+                onProgress?.invoke(
+                    ExportProgress(
+                        completedFiles = totalExpectedFiles,
+                        totalFiles = totalExpectedFiles,
+                        bytesProcessed = totalZipBytes,
+                        stage = ExportStage.COMPLETED,
+                        message = "Export complete (${summary.totalZipBytes} bytes)"
+                    )
+                )
+
+                Result.success(summary)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The message of an exception can carry a path or other values, so the screen is never given it.
+                onProgress?.invoke(ExportProgress(0, 0, 0L, ExportStage.FAILED, "Export failed"))
+                Result.failure(e)
+            } finally {
+                withContext(NonCancellable) { stagingDir.deleteRecursively() }
             }
-
-            // 9. Record audit event
-            val summary = ExportSummary(
-                studyCode = study.studyCode,
-                totalParticipants = participants.size,
-                totalSessions = sessions.size,
-                totalCaptures = captures.size,
-                totalImages = imageCaptures.size,
-                totalZipBytes = totalZipBytes,
-                manifestSha256 = manifestSha256,
-                exportedAt = exportedAtIso
-            )
-
-            database.auditEventDao().insert(
-                AuditEventEntity(
-                    id = UUID.randomUUID().toString(),
-                    eventType = "EXPORT_CREATED",
-                    occurredAt = System.currentTimeMillis(),
-                    details = "Exported study ${study.studyCode}: ${summary.totalParticipants} participants, " +
-                        "${summary.totalSessions} sessions, ${summary.totalImages} images (${summary.totalZipBytes} bytes)"
-                )
-            )
-
-            // 10. The staging directory is removed in `finally`, on success, failure and cancel alike.
-
-            onProgress?.invoke(
-                ExportProgress(
-                    completedFiles = totalExpectedFiles,
-                    totalFiles = totalExpectedFiles,
-                    bytesProcessed = totalZipBytes,
-                    stage = ExportStage.COMPLETED,
-                    message = "Export complete (${summary.totalZipBytes} bytes)"
-                )
-            )
-
-            Result.success(summary)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // The message of an exception can carry a path or other values, so the screen is never given it.
-            onProgress?.invoke(ExportProgress(0, 0, 0L, ExportStage.FAILED, "Export failed"))
-            Result.failure(e)
-        } finally {
-            withContext(NonCancellable) { stagingDir.deleteRecursively() }
         }
+    }
+
+    /** Cancels the export between files: the screen was left, or the research session was locked. */
+    private suspend fun checkpoint(canContinue: () -> Boolean) {
+        currentCoroutineContext().ensureActive()
+        if (!canContinue()) throw CancellationException("The research session was locked")
     }
 
     // CSV Generators enforcing data minimization
@@ -474,7 +513,8 @@ class ResearchExportManager(
 /** Where an export is written: the stream to write to, and how to remove what was written when the export fails. */
 class ExportDestination(
     val open: () -> OutputStream?,
-    val discard: () -> Unit
+    /** Removes what was written; true when it is gone (or there was nothing), false when it may still be there. */
+    val discard: () -> Boolean
 ) {
     companion object {
         /** A document chosen with the Storage Access Framework; a failed export deletes the partly written document. */
@@ -484,7 +524,7 @@ class ExportDestination(
                 try {
                     DocumentsContract.deleteDocument(contentResolver, uri)
                 } catch (_: Exception) {
-                    // the document may already be gone, or the provider may not allow deletion: nothing more to do
+                    false // the provider refused or failed: the file may still be on the drive
                 }
             }
         )
@@ -507,3 +547,7 @@ fun exportFileName(studyCode: String, at: Instant): String {
 }
 
 private const val ASCII_LIMIT = 128
+
+/** The export failed, and the file it was writing could not be removed: the worker is told to delete it. */
+class ExportFileRemains(cause: Throwable?) :
+    Exception("The export failed and the partly written file may remain", cause)

@@ -106,11 +106,11 @@
     <string name="r05_method_other">Other Clinical Method</string>
     <string name="r07_cd_encrypted">Encrypted export</string>
     <string name="r07_title">Export study data</string>
-    <string name="r07_intro">Creates an encrypted export archive (.zip) with de-identified data tables and research photos.</string>
-    <string name="r07_point_encrypt">• Encrypted on this phone: every file is encrypted before it leaves (AES-256-GCM).</string>
+    <string name="r07_intro">Creates an encrypted export archive (.zip) with the study data and research photos. It holds participant codes and dates, with no names, birth dates or register numbers.</string>
+    <string name="r07_point_encrypt">• Encrypted on this phone: all study data and photos are encrypted before they leave (AES-256-GCM). The archive header lists the study code and the counts.</string>
     <string name="r07_point_wrap">• Only the study coordinator can open it: the key is wrapped to the coordinator\'s offline key (HPKE, X25519).</string>
     <string name="r07_point_lost">• If the drive is lost, the records cannot be read without the coordinator\'s offline private key.</string>
-    <string name="r07_point_deid">• De-identified: only participant codes are included. No names, birth dates or facility register numbers.</string>
+    <string name="r07_point_deid">• Pseudonymised: only participant codes and dates are included. No names, birth dates or facility register numbers.</string>
     <string name="r07_cd_missing_key">Missing key</string>
     <string name="r07_no_key">The export key is missing from the study profile. An encrypted export cannot be made.</string>
     <string name="r07_cd_cloud">Cloud sync</string>
@@ -134,4 +134,5 @@
     <string name="r07_button_exporting">Exporting...</string>
     <string name="r07_done">Done</string>
     <string name="r07_back">Back to study home</string>
+    <string name="r07_failed_remains">A partly written file may still be on the drive. Delete it before you use the drive.</string>
 </resources>
