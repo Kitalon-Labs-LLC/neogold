@@ -89,7 +89,7 @@ fun S21LogScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.btn_back)
                         )
                     }
                 },
@@ -271,7 +271,7 @@ private fun ScreeningSessionListItem(
                 )
 
                 Text(
-                    text = "GA ${session.gestationalAgeWeeks} wk • ${session.ageHours.toInt()} h",
+                    text = stringResource(R.string.log_ga_age, session.gestationalAgeWeeks, session.ageHours.toInt()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

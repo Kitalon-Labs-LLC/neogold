@@ -255,7 +255,7 @@ private fun SupportedDevicesDialog(onDismiss: () -> Unit) {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Tested Matrix Models (doc 1 Section 13.5):",
+                    text = stringResource(R.string.device_check_tested_models),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )

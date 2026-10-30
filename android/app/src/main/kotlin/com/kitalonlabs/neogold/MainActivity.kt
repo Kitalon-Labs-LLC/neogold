@@ -348,10 +348,10 @@ private fun testIds(debuggable: Boolean): Modifier =
 private fun CrashReportDialog(onShare: () -> Unit, onFinished: () -> Unit) {
     AlertDialog(
         onDismissRequest = onFinished,
-        title = { Text("Share Crash Report?") },
+        title = { Text(stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_title)) },
         text = {
             Text(
-                "NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report."
+                stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_body)
             )
         },
         confirmButton = {
@@ -361,10 +361,14 @@ private fun CrashReportDialog(onShare: () -> Unit, onFinished: () -> Unit) {
                     onFinished()
                 }
             ) {
-                Text("Share")
+                Text(stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_share))
             }
         },
-        dismissButton = { TextButton(onClick = onFinished) { Text("Dismiss") } }
+        dismissButton = {
+            TextButton(onClick = onFinished) {
+                Text(stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_dismiss))
+            }
+        }
     )
 }
 
@@ -380,17 +384,17 @@ private fun AppLockScreen(onUnlock: () -> Unit) {
             modifier = Modifier.padding(24.dp)
         ) {
             Text(
-                text = "NeoGold is Locked",
+                text = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.lock_title),
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Device authentication is required to access patient screening and records.",
+                text = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.lock_body),
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onUnlock) {
-                Text(text = "Unlock")
+                Text(text = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.lock_unlock))
             }
         }
     }
@@ -1051,7 +1055,13 @@ fun NeoGoldNavHost(
         }
 
         composable(Destinations.S24_ABOUT) {
+            val summary = assets.estimationEngine?.model?.trainingDataSummary
             com.kitalonlabs.neogold.feature.settings.S24AboutScreen(
+                appVersion = appVersion,
+                modelVersion = assets.modelVersion.orEmpty(),
+                configVersion = assets.triageConfig?.configVersion.orEmpty(),
+                dataSources = summary?.populations?.joinToString(", "),
+                sampleCount = summary?.sampleCount,
                 onBack = { navController.popBackStack() }
             )
         }

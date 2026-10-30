@@ -103,9 +103,9 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-026 | Study enrollment (R08) and Leave study (R09) are placeholder screens | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
 | BUG-2026-027 | Upload is never started by the app | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-SYNC-10 | |
 | BUG-2026-028 | No Play In-App Updates implementation | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | ONB | S2 | No | - | P2 | New | Unassigned | TC-OPS-03 | |
-| BUG-2026-029 | About 150 hardcoded English UI strings; string lint does not check Kotlin | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | A11Y | S2 | No | - | P2 | New | Unassigned | TC-A11Y-01 | |
-| BUG-2026-030 | Hazard log is missing | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | none (add to doc 10) | |
-| BUG-2026-031 | Release notes file for v1.0.0 is missing | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-OPS-02 | |
+| BUG-2026-029 | About 150 hardcoded English UI strings; string lint does not check Kotlin | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | A11Y | S2 | No | - | P2 | Fixed | Unassigned | TC-A11Y-01 | |
+| BUG-2026-030 | Hazard log is missing | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | none (add to doc 10) | |
+| BUG-2026-031 | Release notes file for v1.0.0 is missing | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-OPS-02 | |
 | BUG-2026-032 | BurstCaptureController reads capture metadata through CameraX internal APIs | 2026-10-26 | CI | commit f1e01e6 | n/a | CAP | S2 | No | - | P2 | Fixed | Unassigned | TC-CAP-01 | |
 | BUG-2026-033 | Foreground service type is declared only in :app, so :sync:research and :app lint fail | 2026-10-27 | CI | commit a0b6da2 | n/a | SYNC | S3 | No | - | P2 | Verified | Unassigned | TC-SYNC-10 | |
 | BUG-2026-034 | Recheck notification is posted without checking the notification permission | 2026-10-27 | CI | commit a0b6da2 | n/a | LOG | S3 | No | - | P2 | Verified | Unassigned | TC-LOG-09 | |
@@ -125,7 +125,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-048 | The quality gate's residual check passes when fewer than three reference patches match | 2026-10-27 | Review | commit 3c60999 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-09 | |
 | BUG-2026-049 | ScreeningOfflineTest asserts a network-call count that nothing increments | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S3 | No | - | P3 | New | Unassigned | TC-EST-04 | |
 | BUG-2026-050 | The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | Fixed | Unassigned | TC-UI-01, TC-A11Y-05 | |
-| BUG-2026-051 | The session detail screen formats clinical numbers with the default locale | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-A11Y-03 | |
+| BUG-2026-051 | The session detail screen formats clinical numbers with the default locale | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | Fixed | Unassigned | TC-A11Y-03 | |
 | BUG-2026-052 | The release bundle cannot be built, because ABI splits are on and the Android Gradle plugin 9 refuses `bundleRelease` | 2026-10-27 | Review | commit ea82b0a | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-OPS-01, TC-OPS-02 | |
 | BUG-2026-053 | No workflow checks the app size, and the script never checks install size | 2026-10-27 | Review | commit 3556b25 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-PERF-04 | |
 | BUG-2026-054 | TC-CAP-17 rendered the AprilTag artwork, which the printed card does not use | 2026-10-27 | Review | commit 3556b25 | n/a | CAP | S3 | No | - | P3 | In progress | Unassigned | TC-CAP-17 | |
@@ -165,6 +165,9 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-088 | A closed study made the worker fail on every run and nothing disconnected the phone; R09 would have shown the PIN in recents | 2026-10-30 | Review | commit f4e0907 | n/a | SYNC | S3 | No | - | P3 | Fixed | Unassigned | TC-SYNC-16, TC-PRIV-02 | |
 | BUG-2026-089 | Answers without the guardian's consent still reached the rules and the camera | 2026-10-30 | Test | commit 4b28544 | n/a | CAP | S2 | Yes | H3 | P1 | Fixed | Unassigned | TC-UI-13 | |
 | BUG-2026-090 | The screening flow has no optional forehead photo (S18 left out) | 2026-10-30 | Review | commit 4b28544 | n/a | CAP | S3 | No | - | P3 | Fixed | Unassigned | TC-CAP-16 | |
+| BUG-2026-091 | The About screen claimed validation-study data for a synthetic model, said "diagnostic", showed made-up version defaults, and the banned-word lint missed inflected forms and Kotlin literals | 2026-10-26 | Review | audit A11 | n/a | UI | S2 | Yes | H1 | P2 | Fixed | Unassigned | TC-UI-04, TC-ONB-05 | |
+| BUG-2026-092 | The Play publisher printed a success for an upload that did not happen | 2026-10-31 | Review | audit (doc-12-3-upload) | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-OPS-02 | |
+| BUG-2026-093 | The SBOM listed every locked configuration, build and test tools included, and no hashes | 2026-10-31 | Review | audit | n/a | OPS | S3 | No | - | P3 | Fixed | Unassigned | TC-SEC-05 | |
 
 ### 4.1 Entries
 
@@ -492,6 +495,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R6.
 
+**Fix** `docs/safety/HAZARD_LOG.md` was seeded in package F2 from doc 8 Section 14, with the controls that are built, what is tested and what is not on a phone, and the open items by bug reference. Severity, likelihood and acceptance are left blank for the clinical lead.
+
 **Fix** The configuration was added to the `kotlin-stdlib-common:2.2.10` lock line by hand: `debugUnitTestRuntimeClasspath`, and later `releaseRuntimeClasspath`, which a strict clean-cache run also demanded. **Maintainers:** Gradle's lock writer never writes that line for those two configurations although its validator requires it, and `--write-locks` removes it again. After regenerating locks, restore it, then run `./gradlew :core:data:test lintRelease` without `--write-locks`. Gradle also persists lock state only when the whole build succeeds, so fix every other failure first.
 
 **Verified** 27 October 2026 by CI: android-ci (build-test and scan) and repo-ci are green on `4335ae4` (android-ci run 40483478982).
@@ -700,7 +705,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-029: About 150 hardcoded English UI strings; the string lint does not check Kotlin
 
 - Area: A11Y | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-A11Y-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-A11Y-01 | Fix version:
 
 **Steps**
 1. Search the `android/app` and `android/feature` main sources for `Text("...")` and `text = "..."` literals.
@@ -713,10 +718,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The research build is meant for Bangla-first study nurses. One literal also uses a banned word: "Lost USB safe" (`R07ExportScreen.kt:137`). Fix package R5.
 
+**Fix** The ratchet (`tools/check_strings.py`, `tools/strings_baseline.json`) was added in C2; package F1 moved the last 52 literals (app lock, crash dialog, log and detail screens, research header, recheck notification, S10a, S24, shared components) to `values/` and `values-bn/` (Bangla marked draft in `BANGLA_STRINGS_REVIEW.md`). The baseline is empty. The checker now also tests every remaining UI literal in Kotlin for banned words (BUG-2026-091). Not done: bundling Noto Sans and Noto Sans Bengali (see BUG-2026-091 notes).
+
 #### BUG-2026-030: The hazard log is missing
 
 - Area: OPS | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: none yet (add one to doc 10) | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: none yet (add one to doc 10) | Fix version:
 
 **Steps**
 1. Look for `docs/safety/HAZARD_LOG.md`.
@@ -732,7 +739,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-031: The release notes file for v1.0.0 is missing
 
 - Area: OPS | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-OPS-02 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-OPS-02 | Fix version:
 
 **Steps**
 1. Push tag `v1.0.0`, once BUG-2026-014 is fixed.
@@ -742,6 +749,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Actual** Only `docs/release-notes/v0.5.0.md` exists, so `gh release create --notes-file` fails after the bundle has already gone to the Play internal track.
 
 **Evidence** The GitHub release step in `.github/workflows/android-release.yml`; the contents of `docs/release-notes/`.
+
+**Fix** `docs/release-notes/v1.0.0.md` exists as a draft that says what the build does, what is verified and how, and what is not verified on a phone. It is not for publication until the owner signs the release gates (doc 13 Section 6 says the same).
 
 **Notes** The text already exists in doc 13 Section 6. Fix package R6.
 
@@ -1088,7 +1097,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-051: The session detail screen formats clinical numbers with the default locale
 
 - Area: UI | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
-- Status: New | Owner: Unassigned | Test case: TC-A11Y-03 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-A11Y-03 | Fix version:
 
 **Steps**
 1. Set the phone language to Bangla and open S22 for a saved session.
@@ -1100,6 +1109,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `S22SessionDetailScreen.kt:244,246,254` in `:feature:log`. Found by the safety-reviewer on 27 October 2026.
 
 **Notes** Fix in package F1 (localization), with the other number and string work: use `ClinicalNumberFormatter` and add a test that renders S22 under a Bangla locale.
+
+**Fix** S22 now formats the estimate, its interval, the threshold, the gestational age and the age with `ClinicalNumberFormatter` (Western digits, `Locale.US`) and every label comes from `strings.xml`. The date still follows the phone's language (it is not a clinical number). A test that renders S22 under a Bangla locale needs a Compose UI test library that is not approved (ask first); the S22 source is checked by `S22SessionDetailNumbersTest`.
 
 #### BUG-2026-052: The release bundle cannot be built, because ABI splits are on and the Android Gradle plugin 9 refuses `bundleRelease`
 
@@ -1815,6 +1826,52 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Fix** `handleEvaluateRules` takes answers from the `Inputs` state only when consent is confirmed. Tests: `ScreeningFlowRunTest.withoutGuardianConsentTheCameraNeverOpens`.
 
 ---
+
+#### BUG-2026-092: The Play publisher printed a success for an upload that did not happen
+
+- Area: OPS | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-OPS-02 | Fix version:
+
+**Steps**
+1. Run `tools/play_publisher.py` with no credentials, or without the Google client library installed.
+
+**Expected** A release job that cannot publish fails (doc 12 Section 3).
+
+**Actual** With no credentials the script validated the bundle and exited 0; with credentials but no client library it printed "SUCCESS (Simulated)" and exited 0. A release workflow could report a publish that never happened.
+
+**Fix** No credentials is exit code 2 unless `--dry-run` is given; credentials without the client library is exit code 3; neither prints a success. Tests: `tools/tests/test_play_publisher.py`.
+
+**Notes** The release job still has to install `google-api-python-client` and `google-auth` from a hash-locked requirements file before the first real upload (package G; adding them is a dependency decision for the owner, and the workflow is a guarded file).
+
+#### BUG-2026-093: The SBOM listed every locked configuration and carried no hashes
+
+- Area: OPS | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: Fixed | Owner: Unassigned | Test case: TC-SEC-05 | Fix version:
+
+**Steps**
+1. Run `tools/generate_sbom.py` on `android/app/gradle.lockfile` and read the components.
+
+**Expected** The bill of materials lists what ships in the release app, with a hash per component.
+
+**Actual** Every dependency in the lockfile was listed, including Kotlin compiler, lint and test libraries that are not in the app, and no component had a hash.
+
+**Fix** The generator keeps the lines that are on `releaseRuntimeClasspath` (a different configuration can be asked for, or none for all) and adds the SHA-256 of each component's main artifact from `gradle/verification-metadata.xml`. Tests: `tools/tests/test_generate_sbom.py`.
+
+#### BUG-2026-091: The About screen overclaimed the evidence, and the banned-word lint was too narrow
+
+- Area: UI | Severity: S2 | Clinical: Yes | Hazard: H1 | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-04, TC-ONB-05 | Fix version:
+
+**Steps**
+1. Open Settings, About.
+
+**Expected** The screen names the model and the data it was built on as they are (doc 6 principle 8, "Honest about limits"), and uses none of the banned words of doc 6 Section 10.2 (audit items A11 and 6).
+
+**Actual** S24 said the model came from "Multicenter prospective observational validation study data" while the shipped model is a synthetic bench model (`MODEL_CARD.md`); it showed default versions ("1.0.0", config "2026.10.0", card batch "NG-2026-001") that were not the loaded ones; the intended-use line said "not a diagnostic device" (doc 6 allows that sentence only in the store listing); the colour-qualification screen (S08) labelled a colour difference "Accuracy". The lint missed all of these: it matched whole words only ("diagnostic" and "accuracy" passed) and read `strings.xml` only. The licence list left out SQLCipher (BSD notice), Tink, Bouncy Castle, OkHttp and ZXing, and named fonts that are not bundled.
+
+**Fix** S24 takes its versions and data sources from the loaded model and config (`trainingDataSummary`: populations and sample count) and shows "not available" when there are none; no default is left. The intended-use line reads "NeoGold suggests a next step; the health worker decides" (EN and Bangla). S08 says "Colour difference". The licence card lists the libraries the app ships with their licences and notices. `tools/check_strings.py` matches inflections (diagnos*, accura*, precis*, safe/safely/safer, normal/normally) and checks banned words in the Kotlin UI literals. Tests: `tools/tests/test_check_strings_stems.py`.
+
+**Notes** The shipped fonts are the phone's own: bundling Noto Sans and Noto Sans Bengali (doc 6 Section 4) needs font files fetched from the official repository, with their checksums recorded, and a size measurement; it is left open for the owner (it adds a binary asset, not a dependency). The two changed wording lines (intended use, S08 label) are not clinical results, but the clinical lead should read them with the rest of the E1 wording.
 
 #### BUG-2026-090: The screening flow has no optional forehead photo
 

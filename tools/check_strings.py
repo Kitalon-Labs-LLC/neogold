@@ -21,16 +21,18 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+# Doc 6 Section 10.2. The patterns match the word and its inflections (diagnosed, accuracy, normally, safely), not only the
+# whole word (BUG-2026-091): "Accuracy" and "diagnostic" overclaim just as "accurate" and "diagnose" do. "Safety" and "health"
+# stay allowed: they are not the banned claims.
 BANNED_ENGLISH = [
-    r"\bsafe\b",
-    r"\bnormal\b",
+    r"\bsafe(?:r|st|ly)?\b",
+    r"\bnormal(?:ly)?\b",
     r"\bhealthy\b",
     r"\bfine\b",
     r"\bno jaundice\b",
-    r"\bdiagnosis\b",
-    r"\bdiagnose\b",
-    r"\baccurate\b",
-    r"\bprecise\b",
+    r"\bdiagnos\w*",
+    r"\baccura\w*",
+    r"\bprecis\w*",
     r"\bai\b",
     r"\bartificial intelligence\b",
 ]
@@ -130,9 +132,9 @@ def _read_literal(source, start):
     return None
 
 
-def count_literals_in_source(source):
-    """Count hardcoded, translatable-looking literals passed to UI and notification APIs."""
-    count = 0
+def ui_literals_in_source(source):
+    """The hardcoded, translatable-looking literals passed to UI and notification APIs, as (line number, text)."""
+    found = []
     for match in LITERAL_START.finditer(source):
         line_start = source.rfind("\n", 0, match.start()) + 1
         if source[line_start:match.start()].lstrip().startswith(("//", "/*", "*")):
@@ -142,8 +144,42 @@ def count_literals_in_source(source):
             continue
         text = INTERPOLATION.sub("", literal)
         if any(ch.isalpha() for ch in text):  # symbols, digits and pure interpolation are not text
-            count += 1
-    return count
+            found.append((source.count("\n", 0, match.start()) + 1, literal))
+    return found
+
+
+def count_literals_in_source(source):
+    """Count hardcoded, translatable-looking literals passed to UI and notification APIs."""
+    return len(ui_literals_in_source(source))
+
+
+def banned_words_in_literals(source, label="<source>"):
+    """Errors for each UI literal in Kotlin that holds a banned word: the ratchet allows a literal to stay, never a banned one."""
+    errors = []
+    for line, literal in ui_literals_in_source(source):
+        for pat in BANNED_ENGLISH:
+            if re.search(pat, literal, re.IGNORECASE):
+                errors.append(f"{label}:{line}: UI literal contains banned pattern '{pat}': \"{literal}\"")
+        for pat in BANNED_BANGLA:
+            if re.search(pat, literal):
+                errors.append(f"{label}:{line}: UI literal contains banned pattern '{pat}': \"{literal}\"")
+    return errors
+
+
+def check_literals_banned(repo_root):
+    """Banned words in every UI literal of every module's main sources (TC-UI-04 over Kotlin, not only strings.xml)."""
+    errors = []
+    android_root = os.path.join(str(repo_root), "android")
+    for dirpath, dirnames, filenames in os.walk(android_root):
+        dirnames[:] = [d for d in dirnames if d not in SKIPPED_DIRS]
+        for name in filenames:
+            full = os.path.join(dirpath, name)
+            rel = os.path.relpath(full, str(repo_root)).replace(os.sep, "/")
+            if not name.endswith(".kt") or "/src/main/" not in rel:
+                continue
+            with open(full, encoding="utf-8", errors="replace") as f:
+                errors.extend(banned_words_in_literals(f.read(), rel))
+    return errors
 
 
 def scan_kotlin_literals(repo_root):
@@ -347,6 +383,9 @@ def main():
 
     # 5. A String given to a number placeholder (BUG-2026-067)
     all_errors.extend(check_format_arguments(repo_root, res_dirs))
+
+    # 2b. Banned words in the UI literals still in Kotlin (BUG-2026-091)
+    all_errors.extend(check_literals_banned(repo_root))
 
     # 4. Hardcoded UI literals in Kotlin (BUG-2026-029): a ratchet that can only shrink
     literal_counts = scan_kotlin_literals(repo_root)

@@ -1,26 +1,5 @@
 {
   "schema": 1,
   "note": "Hardcoded UI string literals per Kotlin file (tools/check_strings.py). May only shrink. Regenerate with: python3 tools/check_strings.py --update-baseline",
-  "files": {
-    "android/app/src/main/kotlin/com/kitalonlabs/neogold/MainActivity.kt": 7,
-    "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/molecules/NgFeedback.kt": 3,
-    "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/molecules/NgFields.kt": 2,
-    "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgParticipantHeader.kt": 3,
-    "android/core/designsystem/src/main/kotlin/com/kitalonlabs/neogold/core/designsystem/components/organisms/NgSessionRow.kt": 2,
-    "android/engine/camera/src/main/kotlin/com/kitalonlabs/neogold/engine/camera/ui/CardDetectionOverlay.kt": 2,
-    "android/feature/log/src/main/kotlin/com/kitalonlabs/neogold/feature/log/S21LogScreen.kt": 2,
-    "android/feature/log/src/main/kotlin/com/kitalonlabs/neogold/feature/log/S22SessionDetailScreen.kt": 15,
-    "android/feature/onboarding/src/main/kotlin/com/kitalonlabs/neogold/feature/onboarding/S05DeviceCheckScreen.kt": 1,
-    "android/feature/result/src/main/kotlin/com/kitalonlabs/neogold/feature/result/S20ResultScreen.kt": 1,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/notification/RecheckNotificationHelper.kt": 2,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S09HomeScreen.kt": 2,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10BirthTimeGaScreen.kt": 1,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S10aGuardianConsentScreen.kt": 2,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S14RuleOutcomeScreen.kt": 1,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S15CaptureGuideScreen.kt": 1,
-    "android/feature/screening/src/main/kotlin/com/kitalonlabs/neogold/feature/screening/ui/S17PhotoProblemScreen.kt": 1,
-    "android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S24AboutScreen.kt": 2,
-    "android/feature/settings/src/main/kotlin/com/kitalonlabs/neogold/feature/settings/S25DeleteAllDataScreen.kt": 1,
-    "android/sync/research/src/main/kotlin/com/kitalonlabs/neogold/sync/research/api/ResearchApiClient.kt": 1
-  }
+  "files": {}
 }

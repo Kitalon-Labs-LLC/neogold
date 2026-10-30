@@ -30,9 +30,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.engine.camera.LiveCardState
 
 // Neutral dark gray tokens per doc 6 Section 9 (no colored chrome near the baby)
@@ -58,7 +60,7 @@ fun CardDetectionOverlay(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = state.steadyFraction,
-        label = "steadyProgress"
+        label = STEADY_PROGRESS_LABEL
     )
 
     Box(
@@ -182,7 +184,7 @@ fun CardDetectionOverlay(
                         contentColor = NeutralTextPrimary
                     )
                 ) {
-                    Text("Manual capture", fontSize = 14.sp)
+                    Text(stringResource(R.string.manual_capture), fontSize = 14.sp)
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -199,3 +201,5 @@ fun CardDetectionOverlay(
         }
     }
 }
+
+private const val STEADY_PROGRESS_LABEL = "steadyProgress"

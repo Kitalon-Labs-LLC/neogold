@@ -39,6 +39,7 @@ import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.theme.LocalTriageColors
+import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -105,7 +106,7 @@ fun S22SessionDetailScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.btn_back)
                         )
                     }
                 },
@@ -227,7 +228,7 @@ fun S22SessionDetailScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Clinical Information",
+                        text = stringResource(R.string.detail_clinical_info),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -235,28 +236,58 @@ fun S22SessionDetailScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    DetailRow(label = "Date & Time", value = formattedDate)
-                    DetailRow(label = "Register No.", value = session.registerNumber ?: "None")
-                    DetailRow(label = "Gestational Age", value = "${session.gestationalAgeWeeks} weeks")
-                    DetailRow(label = "Age at Screening", value = "${session.ageHours.toInt()} hours")
+                    DetailRow(label = stringResource(R.string.detail_date_time), value = formattedDate)
+                    DetailRow(
+                        label = stringResource(R.string.detail_register_no),
+                        value = session.registerNumber ?: stringResource(R.string.detail_none)
+                    )
+                    DetailRow(
+                        label = stringResource(R.string.detail_gestational_age),
+                        value = stringResource(
+                            R.string.detail_weeks,
+                            ClinicalNumberFormatter.formatClinicalInteger(session.gestationalAgeWeeks)
+                        )
+                    )
+                    DetailRow(
+                        label = stringResource(R.string.detail_age_at_screening),
+                        value = stringResource(
+                            R.string.detail_hours,
+                            ClinicalNumberFormatter.formatClinicalInteger(session.ageHours.toInt())
+                        )
+                    )
 
-                    if (session.estimateMgDl != null) {
-                        val est = "%.1f mg/dL".format(session.estimateMgDl)
-                        val range = if (session.estimateLowMgDl != null && session.estimateHighMgDl != null) {
-                            " (%.1f – %.1f)".format(session.estimateLowMgDl, session.estimateHighMgDl)
+                    // clinical numbers are always in Western digits, whatever the phone's language (BUG-2026-051)
+                    val estimate = session.estimateMgDl
+                    val low = session.estimateLowMgDl
+                    val high = session.estimateHighMgDl
+                    if (estimate != null) {
+                        val est = stringResource(
+                            R.string.detail_mgdl,
+                            ClinicalNumberFormatter.formatClinicalDecimal(estimate)
+                        )
+                        val range = if (low != null && high != null) {
+                            " (${ClinicalNumberFormatter.formatClinicalDecimal(low)} – " +
+                                "${ClinicalNumberFormatter.formatClinicalDecimal(high)})"
                         } else {
                             ""
                         }
-                        DetailRow(label = "Estimated Bilirubin", value = "$est$range")
+                        DetailRow(label = stringResource(R.string.detail_estimated_bilirubin), value = "$est$range")
                     }
 
-                    if (session.thresholdMgDl != null) {
-                        DetailRow(label = "Treatment Threshold", value = "%.1f mg/dL".format(session.thresholdMgDl))
+                    val threshold = session.thresholdMgDl
+                    if (threshold != null) {
+                        DetailRow(
+                            label = stringResource(R.string.detail_treatment_threshold),
+                            value = stringResource(
+                                R.string.detail_mgdl,
+                                ClinicalNumberFormatter.formatClinicalDecimal(threshold)
+                            )
+                        )
                     }
 
                     val reasons = session.reasonCodes
                     if (!reasons.isNullOrEmpty()) {
-                        DetailRow(label = "Reason Codes", value = reasons)
+                        DetailRow(label = stringResource(R.string.detail_reason_codes), value = reasons)
                     }
                 }
             }
@@ -277,7 +308,7 @@ fun S22SessionDetailScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Traceability & Versions",
+                        text = stringResource(R.string.detail_traceability),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -285,11 +316,18 @@ fun S22SessionDetailScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    DetailRow(label = "App Version", value = session.appVersion)
-                    DetailRow(label = "Model Version", value = session.modelVersion ?: "N/A")
-                    DetailRow(label = "Config Version", value = session.configVersion)
-                    DetailRow(label = "Card Batch ID", value = session.cardBatchId ?: "N/A")
-                    DetailRow(label = "Session ID", value = session.id)
+                    val notAvailable = stringResource(R.string.detail_not_available)
+                    DetailRow(label = stringResource(R.string.detail_app_version), value = session.appVersion)
+                    DetailRow(
+                        label = stringResource(R.string.detail_model_version),
+                        value = session.modelVersion ?: notAvailable
+                    )
+                    DetailRow(label = stringResource(R.string.detail_config_version), value = session.configVersion)
+                    DetailRow(
+                        label = stringResource(R.string.detail_card_batch),
+                        value = session.cardBatchId ?: notAvailable
+                    )
+                    DetailRow(label = stringResource(R.string.detail_session_id), value = session.id)
                 }
             }
 

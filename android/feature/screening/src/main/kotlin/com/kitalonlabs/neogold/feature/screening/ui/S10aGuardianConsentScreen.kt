@@ -91,7 +91,7 @@ fun S10aGuardianConsentScreen(
             )
 
             Text(
-                text = "Screening requires explicit agreement from the parent or caregiver. No names or personal identifiers are recorded.",
+                text = stringResource(R.string.consent_explanation),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -141,7 +141,7 @@ fun S10aGuardianConsentScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         NgPrimaryButton(
-                            text = "Return to Home",
+                            text = stringResource(R.string.btn_return_home),
                             height = PrimaryButtonHeight,
                             onClick = onBack,
                             modifier = Modifier.testTag("btn_return_home")

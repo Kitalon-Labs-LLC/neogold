@@ -89,7 +89,7 @@ fun S09HomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
+                        contentDescription = stringResource(R.string.settings_title),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -185,13 +185,14 @@ fun S09HomeScreen(
                                         .clickable { onRecheckClicked(session.id) }
                                         .padding(vertical = 4.dp)
                                 ) {
-                                    val regPart = if (!session.registerNumber.isNullOrBlank()) {
-                                        "Reg ${session.registerNumber}"
-                                    } else {
-                                        "Session"
-                                    }
+                                    val age = session.ageHours.toInt()
+                                    val register = session.registerNumber
                                     Text(
-                                        text = "$regPart • Age ${session.ageHours.toInt()}h",
+                                        text = if (!register.isNullOrBlank()) {
+                                            stringResource(R.string.home_recent_reg, register, age)
+                                        } else {
+                                            stringResource(R.string.home_recent_session, age)
+                                        },
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )

@@ -240,7 +240,7 @@ fun S10BirthTimeGaScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Select completed weeks (22 to 44)",
+                    text = stringResource(R.string.ga_select_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

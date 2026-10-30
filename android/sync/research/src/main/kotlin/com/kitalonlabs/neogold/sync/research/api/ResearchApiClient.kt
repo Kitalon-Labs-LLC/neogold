@@ -486,13 +486,15 @@ class ResearchApiClient(
         throw ApiException(response.code, problem, response.headers)
     }
 
+    private fun httpTitle(statusCode: Int): String = "HTTP $statusCode"
+
     private fun tryParseProblem(bodyStr: String, statusCode: Int): Problem {
         return try {
             json.decodeFromString(Problem.serializer(), bodyStr)
         } catch (_: Exception) {
             Problem(
                 type = "https://neogold.example/problems/server-error",
-                title = "HTTP $statusCode",
+                title = httpTitle(statusCode),
                 status = statusCode,
                 code = if (statusCode >= 500) ErrorCode.SERVER_ERROR else "HTTP_$statusCode",
                 retryable = statusCode >= 500,

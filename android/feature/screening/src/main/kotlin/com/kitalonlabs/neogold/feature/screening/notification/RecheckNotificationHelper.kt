@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.kitalonlabs.neogold.core.designsystem.R
 
 /**
  * Handles scheduling and displaying local recheck notifications (NG-048, FR-36, NFR-13, TC-LOG-09).
@@ -49,8 +50,8 @@ object RecheckNotificationHelper {
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("NeoGold")
-            .setContentText("A recheck is due")
+            .setContentTitle(context.getString(R.string.notification_title))
+            .setContentText(context.getString(R.string.recheck_notification_text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)

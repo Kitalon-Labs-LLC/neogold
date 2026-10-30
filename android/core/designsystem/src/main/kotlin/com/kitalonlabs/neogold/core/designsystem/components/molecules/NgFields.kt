@@ -42,7 +42,7 @@ fun NgStepIndicator(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = "Step $currentStep of $totalSteps",
+            text = stringResource(R.string.step_of, currentStep, totalSteps),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -107,7 +107,10 @@ fun NgBirthTimeField(
             Spacer(modifier = Modifier.height(8.dp))
             if (ageInHours != null) {
                 Text(
-                    text = "Age now: ${ClinicalNumberFormatter.formatClinicalInteger(ageInHours)} hours",
+                    text = stringResource(
+                        R.string.age_now_hours,
+                        ClinicalNumberFormatter.formatClinicalInteger(ageInHours)
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold

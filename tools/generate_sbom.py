@@ -4,6 +4,10 @@
 Usage:
     python tools/generate_sbom.py --lockfile android/app/gradle.lockfile --output android/app/build/reports/bom.json [--app-version 0.5.0]
 
+The components are the libraries of the release runtime classpath (what ships in the app), not every configuration in the
+lockfile: build tools, lint and test libraries are not in the app and do not belong in its bill of materials (BUG-2026-093).
+Each component carries the SHA-256 of its main artifact from gradle/verification-metadata.xml when that file lists it.
+
 Gate S3, doc 8 Section 10, TC-SEC-05.
 """
 import argparse
@@ -12,15 +16,47 @@ import json
 from pathlib import Path
 import sys
 import uuid
+import xml.etree.ElementTree as ET
+
+RELEASE_CONFIGURATION = "releaseRuntimeClasspath"
+VERIFICATION_METADATA = Path(__file__).resolve().parent.parent / "android" / "gradle" / "verification-metadata.xml"
+_MAIN_ARTIFACT_SUFFIXES = (".aar", ".jar")
 
 # Re-use license mapping from check_licenses
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_licenses import resolve_dependency_license
 
 
-def generate_cyclonedx_sbom(lockfile_path: Path, output_path: Path, app_version: str = "1.0.0") -> dict:
+def load_artifact_hashes(metadata_path: Path) -> dict:
+    """Map "group:name:version" to the SHA-256 of its .aar or .jar from Gradle's verification metadata."""
+    if not metadata_path.is_file():
+        return {}
+    hashes = {}
+    for component in ET.parse(metadata_path).getroot().iter():
+        if not component.tag.endswith("component"):
+            continue
+        coord = f"{component.get('group')}:{component.get('name')}:{component.get('version')}"
+        for artifact in component:
+            name = artifact.get("name") or ""
+            if not name.endswith(_MAIN_ARTIFACT_SUFFIXES) or "-sources" in name:
+                continue
+            for digest in artifact:
+                if digest.tag.endswith("sha256") and digest.get("value"):
+                    hashes.setdefault(coord, digest.get("value"))
+    return hashes
+
+
+def generate_cyclonedx_sbom(
+    lockfile_path: Path,
+    output_path: Path,
+    app_version: str = "1.0.0",
+    configuration: str | None = RELEASE_CONFIGURATION,
+    verification_metadata: Path | None = None,
+) -> dict:
+    """[configuration] limits the components to one Gradle configuration; None lists every locked dependency."""
     if not lockfile_path.is_file():
         raise FileNotFoundError(f"Lockfile not found at {lockfile_path}")
+    artifact_hashes = load_artifact_hashes(verification_metadata or VERIFICATION_METADATA)
 
     now_iso = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     serial_uuid = str(uuid.uuid4())
@@ -34,8 +70,11 @@ def generate_cyclonedx_sbom(lockfile_path: Path, output_path: Path, app_version:
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
-        coord = line.split("=")[0].strip()
+        coord, _, configurations = line.partition("=")
+        coord = coord.strip()
         if ":" not in coord:
+            continue
+        if configuration is not None and configuration not in configurations.split(","):
             continue
 
         parts = coord.split(":")
@@ -62,6 +101,9 @@ def generate_cyclonedx_sbom(lockfile_path: Path, output_path: Path, app_version:
                 }
             ],
         }
+        digest = artifact_hashes.get(f"{group}:{name}:{version}")
+        if digest:
+            component_entry["hashes"] = [{"alg": "SHA-256", "content": digest}]
         components.append(component_entry)
         dep_refs.append(purl)
 

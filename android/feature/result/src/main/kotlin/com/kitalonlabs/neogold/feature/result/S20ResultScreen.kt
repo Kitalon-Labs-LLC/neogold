@@ -139,7 +139,7 @@ fun S20ResultScreen(
                         }
                     },
                     label = { Text(stringResource(R.string.register_label)) },
-                    placeholder = { Text("e.g. 12/345 or OPD-2027-15") },
+                    placeholder = { Text(stringResource(R.string.register_example)) },
                     isError = registerError != null,
                     supportingText = {
                         Text(

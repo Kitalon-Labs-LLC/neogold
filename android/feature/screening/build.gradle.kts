@@ -5,6 +5,11 @@ plugins {
 
 android {
     namespace = "com.kitalonlabs.neogold.feature.screening"
+
+    // The recheck notification reads its text from the design system's resources (package F1), so its Robolectric test needs them
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")

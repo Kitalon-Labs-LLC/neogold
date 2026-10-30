@@ -129,7 +129,7 @@ fun NgEstimateRangeBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Estimated range",
+                text = stringResource(R.string.result_estimated_range),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -172,7 +172,11 @@ fun NgEstimateRangeBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Threshold: ${ClinicalNumberFormatter.formatClinicalDecimal(threshold)} $unit",
+                text = stringResource(
+                    R.string.result_threshold,
+                    ClinicalNumberFormatter.formatClinicalDecimal(threshold),
+                    unit
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -192,9 +196,12 @@ fun NgVersionFooter(
     cardBatchId: String?,
     modifier: Modifier = Modifier
 ) {
-    val batchPart = if (!cardBatchId.isNullOrBlank()) " • Card $cardBatchId" else ""
     Text(
-        text = "App $appVersion • Model $modelVersion • Config $configVersion$batchPart",
+        text = if (!cardBatchId.isNullOrBlank()) {
+            stringResource(R.string.version_line_card, appVersion, modelVersion, configVersion, cardBatchId)
+        } else {
+            stringResource(R.string.about_version, appVersion, modelVersion, configVersion)
+        },
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier

@@ -91,7 +91,7 @@ fun S25DeleteAllDataScreen(
                         )
                         Spacer(modifier = Modifier.width(Dimens.SpacingSm))
                         Text(
-                            text = "Permanent Deletion",
+                            text = stringResource(R.string.delete_permanent_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = triageColors.urgentSolid

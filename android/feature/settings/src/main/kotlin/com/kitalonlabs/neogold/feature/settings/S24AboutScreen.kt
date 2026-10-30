@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgTextButton
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
+import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 
 /**
  * S24: About and model card (FR-32, NG-027, NG-033, TC-ONB-05, doc 6 Section 5).
@@ -36,15 +37,20 @@ import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
  * - App version, model version, config version, card batch
  * - Model card summary (intended use, target population, limitations, data sources)
  * - Open source license list
+ *
+ * Every version and the data sources come from what the app actually loaded (the verified model and config), never from a
+ * default: a model that is not the one the screen names would be a false statement about the evidence (BUG-2026-091).
  */
 @Composable
 fun S24AboutScreen(
-    appVersion: String = "1.0.0",
-    modelVersion: String = "1.0.0",
-    configVersion: String = "2026.10.0",
-    cardBatchId: String = "NG-2026-001",
-    onBack: () -> Unit = {},
-    modifier: Modifier = Modifier
+    appVersion: String,
+    modelVersion: String,
+    configVersion: String,
+    dataSources: String?,
+    sampleCount: Int?,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    cardBatchId: String? = null
 ) {
     Column(
         modifier = modifier
@@ -76,7 +82,11 @@ fun S24AboutScreen(
         Spacer(modifier = Modifier.height(Dimens.SpacingSm))
 
         Text(
-            text = "App $appVersion • Model $modelVersion • Config $configVersion • Card $cardBatchId",
+            text = if (cardBatchId.isNullOrBlank()) {
+                stringResource(R.string.about_version, appVersion, modelVersion, configVersion)
+            } else {
+                stringResource(R.string.version_line_card, appVersion, modelVersion, configVersion, cardBatchId)
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag("about_version_info")
@@ -121,7 +131,15 @@ fun S24AboutScreen(
                 Spacer(modifier = Modifier.height(Dimens.SpacingSm))
 
                 Text(
-                    text = "Data sources: Multicenter prospective observational validation study data.",
+                    text = if (dataSources.isNullOrBlank() || sampleCount == null) {
+                        stringResource(R.string.about_data_sources_unknown)
+                    } else {
+                        stringResource(
+                            R.string.about_data_sources,
+                            dataSources,
+                            ClinicalNumberFormatter.formatClinicalInteger(sampleCount)
+                        )
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -166,25 +184,46 @@ fun S24AboutScreen(
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.SpacingSm))
 
-                LicenseItem(
-                    name = "Noto Sans & Noto Sans Bengali",
-                    license = "SIL Open Font License 1.1",
-                    copyright = "Copyright 2012 Google Inc."
-                )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.SpacingSm))
-
-                LicenseItem(
-                    name = "Material Symbols & OpenCV Android",
-                    license = "Apache License 2.0",
-                    copyright = "The Android Open Source Project / OpenCV team"
-                )
+                // The libraries the app is built from. The fonts are the phone's own: Noto is not bundled yet (BUG-2026-091).
+                THIRD_PARTY_LICENSES.forEachIndexed { index, item ->
+                    if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.SpacingSm))
+                    LicenseItem(name = item.name, license = item.license, copyright = item.copyright)
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
+
+private class ThirdPartyLicense(val name: String, val license: String, val copyright: String)
+
+private val THIRD_PARTY_LICENSES = listOf(
+    ThirdPartyLicense(
+        "AndroidX (Compose, Material icons, CameraX, Room, WorkManager, DataStore, Navigation, Biometric)",
+        "Apache License 2.0",
+        "Copyright The Android Open Source Project"
+    ),
+    ThirdPartyLicense(
+        "Kotlin and kotlinx (coroutines, serialization)",
+        "Apache License 2.0",
+        "Copyright JetBrains s.r.o. and Kotlin contributors"
+    ),
+    ThirdPartyLicense("OpenCV", "Apache License 2.0", "Copyright OpenCV team"),
+    ThirdPartyLicense("ZXing", "Apache License 2.0", "Copyright ZXing authors"),
+    ThirdPartyLicense("OkHttp and Okio", "Apache License 2.0", "Copyright Square, Inc."),
+    ThirdPartyLicense("Tink", "Apache License 2.0", "Copyright Google LLC"),
+    ThirdPartyLicense(
+        "SQLCipher for Android",
+        "BSD-3-Clause license",
+        "Copyright Zetetic LLC. This product includes software developed by Zetetic LLC."
+    ),
+    ThirdPartyLicense(
+        "Bouncy Castle",
+        "Bouncy Castle License (MIT)",
+        "Copyright The Legion of the Bouncy Castle Inc."
+    )
+)
 
 @Composable
 private fun LicenseItem(name: String, license: String, copyright: String) {

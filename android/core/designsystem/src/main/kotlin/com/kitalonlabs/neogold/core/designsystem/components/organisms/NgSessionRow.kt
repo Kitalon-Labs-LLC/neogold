@@ -18,8 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 
@@ -67,14 +69,18 @@ fun NgSessionRow(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Age: ${ClinicalNumberFormatter.formatClinicalInteger(ageInHours)}h • $timestampFormatted",
+                    text = stringResource(
+                        R.string.log_row_age,
+                        ClinicalNumberFormatter.formatClinicalInteger(ageInHours),
+                        timestampFormatted
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (!registerNumber.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Register: $registerNumber",
+                        text = stringResource(R.string.log_row_register, registerNumber),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
