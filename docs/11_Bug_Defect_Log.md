@@ -380,7 +380,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R3.
 
-**Fix** Package C2 part 1 (commit d303597). R01 calls `ResearchViewModel.unlockWithPin` and `enrollWithScannedProfile`, which check the PIN through `ResearchPinManager` (Argon2id plus the Keystore HMAC, run off the main thread) and show the lockout; R02 opens only after a successful check. The ViewModel tests for a wrong PIN, lockout and session lock are not written yet, so this is not Verified; `ResearchPinSecurityTest` covers the manager.
+**Fix** Package C2 part 1 (commit d303597). R01 calls `ResearchViewModel.unlockWithPin` and `enrollWithScannedProfile`, which check the PIN through `ResearchPinManager` (Argon2id plus the Keystore HMAC, run off the main thread) and show the lockout; R02 opens only after a successful check. `ResearchViewModelTest` now covers a wrong PIN, the lockout and the session lock (BUG-2026-083 item 10); it is not Verified until the device run.
 
 #### BUG-2026-013: Research sessions are never saved or queued
 
@@ -1571,7 +1571,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** It weakens the lockout, not the hash. An attacker taps by hand, so the gain is small, but the lockout is the control that makes a 6-digit PIN adequate.
 
-**Fix** Package C2 (follow-up to d303597). `verifyPin` runs under a `Mutex`, so checks run one at a time; `ResearchViewModel` ignores a second unlock, enroll or save while one is running (`isBusy`). Test: `ResearchStudyUnlockTest.tcRsh05_wrongPinsTriedAtTheSameTimeAreEachCounted` (it fails only some of the time without the lock). Open: the buttons are not drawn disabled while a check runs (BUG-2026-083).
+**Fix** Package C2 (follow-up to d303597; the lock-count change is in BUG-2026-083 item 16). `verifyPin` runs under a `Mutex`, so checks run one at a time; `ResearchViewModel` ignores a second unlock, enroll or save while one is running (`isBusy`). Test: `ResearchStudyUnlockTest.tcRsh05_wrongPinsTriedAtTheSameTimeAreEachCounted` (it fails only some of the time without the lock). Open: the buttons are not drawn disabled while a check runs (BUG-2026-083).
 
 #### BUG-2026-080: An expired research card is chosen as the quality reference ahead of a valid older card
 
@@ -1645,8 +1645,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 6. The H2 clock controls are not applied in R03: a clock earlier than the build time, a large offset from the last server time, automatic time off, the 14-day rule. (C4, with enrollment.)
 7. `researchCaptureSetup` falls back to code defaults when `qualityThresholds` is missing; it should fail closed (BUG-2026-071 item 1). (E1.)
 8. The 5,000,000 byte cap is the app's own; the study's `max_image_bytes` policy is not followed. (C4.)
-9. The research view model's error messages are English only. (C2.)
-10. A second study's refusal and the lockout message are not tested through the view model; no test covers `ResearchCaptureProcessor` with a fake `CameraSession`, the blinding checks on the wired screens, or a lock while on Settings. (C2.)
+9. RESOLVED: every message on R01, R03 and R05 is a typed error that the screen writes in English or Bangla (Bangla draft), and 53 more literals on R01, R02, R03, R05 and R06 moved to resources (the literal baseline fell from 157 to 100). The Bangla texts are a draft for the nurse panel. Still hardcoded: R04 and the R07 to R09 placeholders (C3 and C4).
+10. PARTLY RESOLVED: `ResearchViewModelTest` (15 cases: scan, confirm, enroll, two PINs that differ, a weak PIN, a wrong PIN, five wrong PINs and the lockout, the right PIN again, the lock clearing session state and a scanned QR, a PIN check that finishes after a lock, the save, an age after the save time, a double tap, and a log capture of the whole flow), `ResearchCaptureProcessorTest` (6, including a photo over 5,000,000 bytes) and `ResearchBlindingGuardTest` (3) are written. Still open: the second-study refusal through the view model (it needs a second signed study vector; the repository test covers it), and a lock while on Settings.
 11. The lockout compares the wall clock, so a phone with its clock set back shortens a lockout (design, doc 8 Section 6.2; a monotonic anchor would harden it). (Later.)
 12. The S19 placeholder on the hidden screening path still sets `NO_FURTHER_ACTION`, 8.2 to 10.1 and a threshold of 12.0 (BUG-2026-001). (E1.)
 13. R05: whether the participant-code field is editable while a session is in progress was not checked; the TSB attaches to the session's participant either way. (C2.)
@@ -1654,6 +1654,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 15. The card the record names is the one the phone holds (the active profile's), not the card in the photo; a worker holding a different card gets the profile card's status. Binding the batch to the scanned card needs a card scan in the research session. (C2 or C4; doc 6 says so.)
 16. A save that finishes after a lock now keeps the rows and shows nothing; the save is not cancelled when the session locks. A cancellation that arrives while the transaction commits is covered by a `committed` flag, but the Room version's behaviour was not checked. (C2.)
 17. The screening save path in `MainActivity` clamps an age with `coerceIn(0.0, 720.0)` instead of refusing it (a birth time in the future becomes age 0, a very old one becomes 720). It matters only when screening is switched on. (E1, with BUG-2026-001.)
+20. Not written, and why: the emulator offline-session test (TC-RSH-01 to 16 on a real Keystore and SQLCipher). There is no emulator in the build container (no KVM), and the app's bundled trust list holds only production keys, so a test study QR cannot be scanned on a device without a test trust list or a debug-only fixture. It needs both, then a run on the device matrix. (D1.)
+21. Not written: the accessibility-tree check of the drawn screens (nothing the screens expose to TalkBack contains an estimate). It needs the Compose UI test dependency the owner has approved (`ui-test-junit4`, package D1); until then `ResearchBlindingGuardTest` holds the structural guarantee. (D1.)
 19. No DAST pass has reached the authenticated routes: StackHawk cannot make a device assertion, so it got 401 on every route except `/health` and `/enrollments` (BUG-2026-084). A test-only issuer key and a helper that signs assertions for the scanner would let it exercise participants, sessions, captures and TSB, and the cross-device checks. (F3, with the Schemathesis work.)
 18. The age shown on R03 is the whole hours (`toInt`, rounded down) and the record is rounded down to a tenth: the two agree to within a tenth of an hour. (None.)
 

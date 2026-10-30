@@ -262,6 +262,15 @@ Design consequences:
 
 `Onboarding (language → safety notice → device check → card scan → calibration)` → `Home` → `Screening (inputs → safety questions → rule outcome → capture guide → camera → analysis)` → `Result` → `Log`. Research mode is a separate graph behind the study PIN. Full screen inventory is in `6_UI_UX_Guidelines.md`.
 
+### 4.7 Research session wiring (package C2)
+
+- **One state holder.** `NeoGoldContainer.researchViewModel(database)` builds the `ResearchRepository` (database, encrypted files, trust list, `ResearchPinManager`, the PIN hasher, and a provenance provider that names the app, model, config and device profile at save time) and the `ResearchViewModel` that R01 to R06 share. It is null when the bundle has no trust list.
+- **Session lock.** `ResearchSessionManager` locks on a button, after 5 minutes in the background, and when the screen turns off, and it counts its locks (`lockCount`). The view model records the count before any slow work (a PIN check, a save) and compares afterwards, so work started before a lock never writes into state the lock cleared. Every research route returns to R01 when the session locks.
+- **PIN checks run one at a time** (a mutex in `ResearchPinManager`), so overlapping guesses each count against the lockout.
+- **Errors are typed.** The view model exposes a `ResearchError` (a reason and the numbers it needs); each screen turns it into text in the language it shows. Repository refusals are `ResearchRefusal` (the old message text plus the typed reason).
+- **The card.** A session names the card of the phone's active device profile (`chooseResearchCard`), whatever its date; one expiry rule (`cardHasExpired`) is shared with the card verifier. The quality gate gets reference colors only from a card that has not expired; a photo checked with no card is recorded as not passed, with the reason `NO_REFERENCE_CARD`.
+- **Blinding is structural.** `:feature:research` does not depend on `:engine:estimation` or `:engine:triage`, so research code cannot make an estimate; `ResearchBlindingGuardTest` fails if that dependency returns or if a screen names an estimate or triage field.
+
 ---
 
 ## 5. Capture and Measurement Pipeline
