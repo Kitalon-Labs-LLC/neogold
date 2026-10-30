@@ -1,33 +1,36 @@
 package com.kitalonlabs.neogold.engine.camera
 
-import android.annotation.SuppressLint
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CaptureResult
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
+import com.kitalonlabs.neogold.engine.camera.host.CaptureResultRegistry
+import com.kitalonlabs.neogold.engine.camera.host.ImageCaptureStillSource
+import com.kitalonlabs.neogold.engine.camera.host.Still
+import com.kitalonlabs.neogold.engine.camera.host.StillSource
 import com.kitalonlabs.neogold.engine.camera.model.BurstCaptureResult
 import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
 import com.kitalonlabs.neogold.engine.camera.model.CaptureMetadata
 import com.kitalonlabs.neogold.engine.camera.model.LaplacianEstimator
 import com.kitalonlabs.neogold.engine.vision.ImageFrame
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.ByteBuffer
 import java.util.concurrent.Executor
 
 /**
  * Controller executing short burst captures (3 frames, or 2 frames on low-RAM devices).
  * Enforces in-memory processing: zero image files written to disk during screening.
  * Doc 4 Section 5.1/5.6, NFR-02, NFR-04b, TC-CAP-15.
+ *
+ * @param captureResults how each photo was taken, recorded by the camera session; without it (or when a result does
+ * not arrive in time) the photo is kept with metadata that says what is not known
  */
 class BurstCaptureController(
     private val isLowRamDevice: Boolean = false,
     private val characteristics: CameraCharacteristics? = null,
     private val acceptedControls: Map<String, Any?> = characteristics?.let {
         CameraControlHelper.inspectAvailableControls(it)
-    } ?: emptyMap()
+    } ?: emptyMap(),
+    private val captureResults: CaptureResultRegistry<CaptureResult>? = null
 ) {
 
     /**
@@ -35,104 +38,51 @@ class BurstCaptureController(
      */
     val burstFrameCount: Int = if (isLowRamDevice) 2 else 3
 
+    /** Takes the burst with a CameraX [ImageCapture]. */
+    suspend fun executeBurst(imageCapture: ImageCapture, executor: Executor): BurstCaptureResult =
+        executeBurst(ImageCaptureStillSource(imageCapture, executor))
+
     /**
-     * Executes the burst capture using CameraX [ImageCapture].
-     * Frames are captured sequentially into memory, decoded downsampled, and evaluated.
+     * Takes the burst from [source]. Frames are captured one after another into memory, decoded downsampled, and the
+     * sharpest is selected.
      */
-    suspend fun executeBurst(
-        imageCapture: ImageCapture,
-        executor: Executor
-    ): BurstCaptureResult = withContext(Dispatchers.Default) {
+    suspend fun executeBurst(source: StillSource): BurstCaptureResult = withContext(Dispatchers.Default) {
         val frames = mutableListOf<ImageFrame>()
         val metadataList = mutableListOf<CaptureMetadata>()
 
         repeat(burstFrameCount) {
-            val (frame, metadata) = captureSingleFrame(imageCapture, executor)
-            frames.add(frame)
-            metadataList.add(metadata)
+            val captured = captureFrame(source)
+            frames.add(captured.frame)
+            metadataList.add(captured.metadata)
         }
 
-        val sharpestIndex = LaplacianEstimator.selectSharpestIndex(frames)
         BurstCaptureResult(
             frames = frames,
             metadata = metadataList,
-            sharpestIndex = sharpestIndex
+            sharpestIndex = LaplacianEstimator.selectSharpestIndex(frames)
         )
     }
 
-    /**
-     * Captures a single frame purely in-memory using ImageCapture.takePicture.
-     */
-    private suspend fun captureSingleFrame(
-        imageCapture: ImageCapture,
-        executor: Executor
-    ): Pair<ImageFrame, CaptureMetadata> {
-        val deferred = CompletableDeferred<Pair<ImageFrame, CaptureMetadata>>()
-
-        imageCapture.takePicture(
-            executor,
-            object : ImageCapture.OnImageCapturedCallback() {
-                @Suppress("TooGenericExceptionCaught") // pass any capture failure to the awaiting caller
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    try {
-                        val buffer: ByteBuffer = image.planes[0].buffer
-                        val bytes = ByteArray(buffer.remaining())
-                        buffer.get(bytes)
-
-                        // In-memory downsampled decode to ~1600 px long edge
-                        val frame = DownsampledImageDecoder.decodeDownsampled(bytes)
-
-                        // Extract CaptureResult metadata if available
-                        val captureResult: CaptureResult? = extractCaptureResult(image)
-                        val metadata = if (captureResult != null && characteristics != null) {
-                            CameraControlHelper.extractMetadata(
-                                result = captureResult,
-                                characteristics = characteristics,
-                                acceptedControls = acceptedControls
-                            )
-                        } else {
-                            createFallbackMetadata()
-                        }
-
-                        deferred.complete(Pair(frame, metadata))
-                    } catch (e: Throwable) {
-                        deferred.completeExceptionally(e)
-                    } finally {
-                        image.close()
-                    }
-                }
-
-                override fun onError(exception: ImageCaptureException) {
-                    deferred.completeExceptionally(exception)
-                }
-            }
-        )
-
-        return deferred.await()
+    /** One photo from [source], decoded in memory to about 1600 px on the long edge, with how it was taken. */
+    suspend fun captureFrame(source: StillSource): CapturedFrame = withContext(Dispatchers.Default) {
+        val still = source.takeStill()
+        CapturedFrame(DownsampledImageDecoder.decodeDownsampled(still.jpeg), metadataFor(still))
     }
 
-    // BUG-2026-032: reads CameraX internal types, which lint reports as RestrictedApi. Nothing calls
-    // this class yet. The camera host (work package C1) replaces it with a Camera2Interop session
-    // callback installed when the ImageCapture is built, and this suppression goes with it.
-    @SuppressLint("RestrictedApi")
-    private fun extractCaptureResult(image: ImageProxy): CaptureResult? {
-        val info = image.imageInfo
-        if (info is androidx.camera.core.internal.CameraCaptureResultImageInfo) {
-            val captureResult = info.cameraCaptureResult
-            if (captureResult is androidx.camera.camera2.internal.Camera2CameraCaptureResult) {
-                return captureResult.captureResult
-            }
-        }
-        return try {
-            val method = info.javaClass.getMethod("getCameraCaptureResult")
-            val internalResult = method.invoke(info)
-            val getCaptureResultMethod = internalResult?.javaClass?.getMethod("getCaptureResult")
-            getCaptureResultMethod?.invoke(internalResult) as? CaptureResult
-        } catch (_: Exception) {
-            null
+    private suspend fun metadataFor(still: Still): CaptureMetadata {
+        val result = captureResults?.await(still.sensorTimestampNs, RESULT_WAIT_MS)
+        return if (result != null && characteristics != null) {
+            CameraControlHelper.extractMetadata(
+                result = result,
+                characteristics = characteristics,
+                acceptedControls = acceptedControls
+            )
+        } else {
+            createFallbackMetadata()
         }
     }
 
+    /** What is known without a capture result: the camera's abilities, and nothing about this photo. */
     private fun createFallbackMetadata(): CaptureMetadata {
         val hwLevel = characteristics?.let { CameraControlHelper.getHardwareLevel(it) }
             ?: CameraHardwareLevel.UNKNOWN
@@ -144,8 +94,9 @@ class BurstCaptureController(
             exposureTimeNs = null,
             aeLockSupported = aeLock,
             awbLockSupported = awbLock,
-            aeLocked = aeLock,
-            awbLocked = awbLock,
+            // Without the result nobody knows whether the locks were on, and an unknown is not recorded as a yes.
+            aeLocked = false,
+            awbLocked = false,
             aeState = null,
             awbState = null,
             colorCorrectionGains = null,
@@ -153,4 +104,12 @@ class BurstCaptureController(
             acceptedControls = acceptedControls
         )
     }
+
+    private companion object {
+        /** How long a photo waits for its capture result before it is kept without one. */
+        const val RESULT_WAIT_MS = 750L
+    }
 }
+
+/** A decoded photo and the camera's record of how it was taken. */
+class CapturedFrame(val frame: ImageFrame, val metadata: CaptureMetadata)

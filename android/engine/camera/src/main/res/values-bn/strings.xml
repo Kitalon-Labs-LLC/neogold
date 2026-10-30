@@ -1,0 +1,10 @@
+<resources>
+    <!-- Draft for the nurse wording panel, like the rest of the Bangla text (doc 6 Section 10.4) -->
+    <string name="camera_permission_title">ক্যামেরার অনুমতি প্রয়োজন</string>
+    <string name="camera_permission_body">কার্ড পড়তে এবং কার্ডের ছবি তুলতে নিওগোল্ড ক্যামেরা ব্যবহার করে। চালিয়ে যেতে ক্যামেরার অনুমতি দিন।</string>
+    <string name="camera_permission_allow">ক্যামেরার অনুমতি দিন</string>
+    <string name="camera_permission_settings">সেটিংস খুলুন</string>
+    <string name="camera_unavailable_title">ক্যামেরা চালু করা যায়নি</string>
+    <string name="camera_unavailable_body">ক্যামেরা ব্যবহার করে এমন অন্য অ্যাপ বন্ধ করে আবার চেষ্টা করুন।</string>
+    <string name="camera_unavailable_retry">আবার চেষ্টা করুন</string>
+</resources>

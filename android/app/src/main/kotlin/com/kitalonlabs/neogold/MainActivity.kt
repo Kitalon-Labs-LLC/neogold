@@ -5,9 +5,14 @@
 
 package com.kitalonlabs.neogold
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
@@ -47,6 +54,8 @@ import com.kitalonlabs.neogold.core.designsystem.theme.NeoGoldTheme
 import com.kitalonlabs.neogold.core.security.applock.AppLockManager
 import com.kitalonlabs.neogold.core.security.crash.CrashReportManager
 import com.kitalonlabs.neogold.core.security.privacy.SecureScreenHelper
+import com.kitalonlabs.neogold.engine.camera.ui.CameraPermissionState
+import com.kitalonlabs.neogold.engine.camera.ui.LocalCameraPermission
 import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
 import com.kitalonlabs.neogold.feature.log.S21LogScreen
 import com.kitalonlabs.neogold.feature.log.S22SessionDetailScreen
@@ -77,9 +86,29 @@ class MainActivity : FragmentActivity() {
     private val container: NeoGoldContainer
         get() = (application as NeoGoldApplication).container
 
+    /** Whether the camera may be used. The screens that open it read this through [LocalCameraPermission]. */
+    private var cameraGranted by mutableStateOf(false)
+
+    private val cameraPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> cameraGranted = granted }
+
+    private fun cameraPermissionState() = CameraPermissionState(
+        granted = cameraGranted,
+        request = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
+        openSettings = {
+            startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+            )
+        }
+    )
+
+    private fun hasCameraPermission() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         dataStore = container.dataStore
+        cameraGranted = hasCameraPermission()
 
         // Privacy controls: Prevent recents snapshot on API 33+ (TC-PRIV-02, doc 8 Section 6.1)
         SecureScreenHelper.setRecentsScreenshotEnabled(this, false)
@@ -94,102 +123,105 @@ class MainActivity : FragmentActivity() {
         }
 
         setContent {
-            NeoGoldTheme {
-                val navController = rememberNavController()
-                val isLocked by appLockManager.isLocked.collectAsState()
-                var showCrashDialog by remember {
-                    mutableStateOf<Boolean>(CrashReportManager.hasPendingReport(this@MainActivity))
-                }
-
-                DisposableEffect(navController) {
-                    val listener = androidx.navigation.NavController.OnDestinationChangedListener { _, destination, _ ->
-                        val secure = SecureScreenHelper.isDestinationSecure(destination.route)
-                        SecureScreenHelper.setSecureScreen(window, secure)
+            val cameraPermission = remember(cameraGranted) { cameraPermissionState() }
+            CompositionLocalProvider(LocalCameraPermission provides cameraPermission) {
+                NeoGoldTheme {
+                    val navController = rememberNavController()
+                    val isLocked by appLockManager.isLocked.collectAsState()
+                    var showCrashDialog by remember {
+                        mutableStateOf<Boolean>(CrashReportManager.hasPendingReport(this@MainActivity))
                     }
-                    navController.addOnDestinationChangedListener(listener)
-                    onDispose {
-                        navController.removeOnDestinationChangedListener(listener)
+
+                    DisposableEffect(navController) {
+                        val listener = androidx.navigation.NavController.OnDestinationChangedListener { _, destination, _ ->
+                            val secure = SecureScreenHelper.isDestinationSecure(destination.route)
+                            SecureScreenHelper.setSecureScreen(window, secure)
+                        }
+                        navController.addOnDestinationChangedListener(listener)
+                        onDispose {
+                            navController.removeOnDestinationChangedListener(listener)
+                        }
                     }
-                }
 
-                if (showCrashDialog) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            CrashReportManager.clearReport(this@MainActivity)
-                            showCrashDialog = false
-                        },
-                        title = { Text("Share Crash Report?") },
-                        text = {
-                            Text(
-                                "NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report."
-                            )
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    CrashReportManager.shareReport(this@MainActivity)
-                                    CrashReportManager.clearReport(this@MainActivity)
-                                    showCrashDialog = false
+                    if (showCrashDialog) {
+                        AlertDialog(
+                            onDismissRequest = {
+                                CrashReportManager.clearReport(this@MainActivity)
+                                showCrashDialog = false
+                            },
+                            title = { Text("Share Crash Report?") },
+                            text = {
+                                Text(
+                                    "NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report."
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        CrashReportManager.shareReport(this@MainActivity)
+                                        CrashReportManager.clearReport(this@MainActivity)
+                                        showCrashDialog = false
+                                    }
+                                ) {
+                                    Text("Share")
                                 }
-                            ) {
-                                Text("Share")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    CrashReportManager.clearReport(this@MainActivity)
-                                    showCrashDialog = false
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = {
+                                        CrashReportManager.clearReport(this@MainActivity)
+                                        showCrashDialog = false
+                                    }
+                                ) {
+                                    Text("Dismiss")
                                 }
-                            ) {
-                                Text("Dismiss")
                             }
-                        }
-                    )
-                }
+                        )
+                    }
 
-                if (isLocked) {
-                    AppLockScreen(
-                        onUnlock = {
-                            appLockManager.authenticate(
-                                activity = this@MainActivity,
-                                onSuccess = {},
-                                onError = { _, _ -> }
-                            )
-                        }
-                    )
-                } else {
-                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        val storageState by container.storage.state.collectAsState()
-                        val deleteState by container.deleteState.collectAsState()
-                        val content = Modifier.padding(innerPadding)
+                    if (isLocked) {
+                        AppLockScreen(
+                            onUnlock = {
+                                appLockManager.authenticate(
+                                    activity = this@MainActivity,
+                                    onSuccess = {},
+                                    onError = { _, _ -> }
+                                )
+                            }
+                        )
+                    } else {
+                        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                            val storageState by container.storage.state.collectAsState()
+                            val deleteState by container.deleteState.collectAsState()
+                            val content = Modifier.padding(innerPadding)
 
-                        when {
-                            deleteState is DeleteState.Deleting -> DeletingAllDataScreen(content)
-                            deleteState is DeleteState.Incomplete -> DeleteIncompleteScreen(
-                                incomplete = (deleteState as DeleteState.Incomplete).items,
-                                onRetry = container::startDeleteAll,
-                                onClose = container::restartAfterIncompleteDelete,
-                                modifier = content
-                            )
-                            else -> when (val state = storageState) {
-                                StorageState.Opening -> StorageOpeningScreen(content)
-                                StorageState.Unreadable -> StorageUnreadableScreen(
-                                    onTryAgain = { container.applicationScope.launch { container.storage.open() } },
-                                    onReset = { container.applicationScope.launch { container.storage.resetAndOpen() } },
+                            when {
+                                deleteState is DeleteState.Deleting -> DeletingAllDataScreen(content)
+                                deleteState is DeleteState.Incomplete -> DeleteIncompleteScreen(
+                                    incomplete = (deleteState as DeleteState.Incomplete).items,
+                                    onRetry = container::startDeleteAll,
+                                    onClose = container::restartAfterIncompleteDelete,
                                     modifier = content
                                 )
-                                is StorageState.Ready -> NeoGoldNavHost(
-                                    navController = navController,
-                                    dataStore = dataStore,
-                                    database = state.database,
-                                    assets = container.assets,
-                                    appVersion = BuildConfig.VERSION_NAME,
-                                    triageEnabled = container.screeningAvailable(),
-                                    unsentResearchItems = container::unsentResearchItems,
-                                    onDeleteAllData = container::startDeleteAll,
-                                    modifier = content
-                                )
+                                else -> when (val state = storageState) {
+                                    StorageState.Opening -> StorageOpeningScreen(content)
+                                    StorageState.Unreadable -> StorageUnreadableScreen(
+                                        onTryAgain = { container.applicationScope.launch { container.storage.open() } },
+                                        onReset = { container.applicationScope.launch { container.storage.resetAndOpen() } },
+                                        modifier = content
+                                    )
+                                    is StorageState.Ready -> NeoGoldNavHost(
+                                        navController = navController,
+                                        dataStore = dataStore,
+                                        database = state.database,
+                                        assets = container.assets,
+                                        appVersion = BuildConfig.VERSION_NAME,
+                                        triageEnabled = container.screeningAvailable(),
+                                        unsentResearchItems = container::unsentResearchItems,
+                                        onDeleteAllData = container::startDeleteAll,
+                                        modifier = content
+                                    )
+                                }
                             }
                         }
                     }
@@ -200,6 +232,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        cameraGranted = hasCameraPermission() // the user may have changed it in the system settings
         appLockManager.onAppForegrounded()
         if (appLockManager.isLocked.value) {
             appLockManager.authenticate(
