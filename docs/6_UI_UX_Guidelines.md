@@ -290,6 +290,8 @@ Gestational age is collected on S10, so the gestational age check needs no extra
 
 `R01 Unlock` → `R02 Study home` → `R03 Participant code + consent ID` → `S10 to S13 inputs` → `R04 Captures: sternum, forehead, sclera flash, sclera no-flash (estimate hidden)` → `R05 TSB value and draw time (now or later)` → `R06 Complete` → outbox.
 
+R03 starts with no birth time and no age. The age on the record is worked out from the birth time when the session is saved, to a tenth of an hour, and an age over 720 hours (the limit in doc 7) is refused on the form with a message. A research card that has expired is recorded as `EXPIRED` and gives the quality check no reference colors.
+
 ---
 
 ## 7. Wireframes

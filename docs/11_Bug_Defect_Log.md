@@ -152,6 +152,12 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-075 | R04 "captures" a text string as the image and shows a drawn viewfinder; nothing checks that a kept photo is a JPEG | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S1 | No | - | P1 | Fixed | Unassigned | TC-API-20 | |
 | BUG-2026-076 | The research session never locks: its background timer, screen-off receiver and return to R01 are not wired | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-07 | |
 | BUG-2026-077 | Saving a research session names a card batch the phone never stored, so the insert is refused | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-CARD-02, TC-CARD-05 | |
+| BUG-2026-078 | A second study's signed QR enrolls over an active study with a PIN typed by whoever holds the phone | 2026-10-30 | Review | commit d303597 | n/a | SEC | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-01 | |
+| BUG-2026-079 | Two PIN checks that overlap each read the same failure count, so parallel guesses count once | 2026-10-30 | Review | commit d303597 | n/a | SEC | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-05 | |
+| BUG-2026-080 | An expired research card is chosen as the quality reference ahead of a valid older card | 2026-10-30 | Review | commit d303597 | n/a | RSH | S2 | No | H4 | P2 | Fixed | Unassigned | TC-CARD-05 | |
+| BUG-2026-081 | R03 accepts a birth time of any age, but the server takes 0 to 720 hours in steps of 0.1 | 2026-10-30 | Review | commit d303597 | n/a | RSH | S2 | No | H2 | P2 | Fixed | Unassigned | TC-UI-11 | |
+| BUG-2026-082 | The research age is worked out when R03 opens, but saved after the captures and the TSB step | 2026-10-30 | Review | commit d303597 | n/a | RSH | S2 | No | H2 | P2 | Fixed | Unassigned | TC-UI-11 | |
+| BUG-2026-083 | Findings from the C2 part 1 reviews that are left open for later packages | 2026-10-30 | Review | commit d303597 | n/a | RSH | S3 | No | H2, H4 | P3 | New | Unassigned | TC-RSH-07, TC-RSH-14, TC-API-20 | |
 
 ### 4.1 Entries
 
@@ -1526,6 +1532,122 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Fix** Package C2 part 1 (commit d303597). `storeCardBatch` inserts the batch inside the same transaction before the session row; a batch already on the phone is not replaced, and a session never names a batch whose stored bytes differ from the payload. A payload that cannot be read is not kept and the session names no batch. Tests: `ResearchSessionRecordTest` (`theCardBatchIsStoredBeforeTheSessionNamesIt_BUG_2026_060`, `anExpiredCardIsRecordedAsExpiredWithItsSignatureValid_TC_CARD_05`, `aCardFromAnIssuerNotOnTheTrustListIsKeptButNotTrusted_TC_CARD_03`, `aCardThatCannotBeReadIsNotKeptAndTheSessionNamesNoBatch_TC_CARD_02`, `aDifferentCardUnderAnIdAlreadyOnThePhoneIsNotTaken_TC_CARD_02`).
 
+#### BUG-2026-078: A second study's signed QR enrolls over an active study with a PIN typed by whoever holds the phone
+
+- Area: SEC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-RSH-01 | Fix version:
+
+**Steps**
+1. Enroll in study A with a PIN. Scan the signed QR of a different study B (any QR whose issuer is on the trust list) and type a new PIN.
+
+**Expected** A phone holds one study; opening research mode needs that study's PIN (FR-25).
+
+**Actual** `ResearchRepository.unlockWithStudyQr` took the "new study" branch for any study code it had not stored, and inserted a second ACTIVE study with the typed PIN, with no check of the first PIN and no shared lockout. `getActiveStudy()` had no `ORDER BY`, so R02, the export, the outbox and retention could resolve either study.
+
+**Evidence** The C2 part 1 privacy review of 30 October 2026 (`ResearchRepository.kt`, the else branch of `unlockWithStudyQr`; `ResearchStudyDao.getActiveStudy`). R02, `ResearchExportManager`, `OutboxProcessor`, `ResearchRetentionConfirmationHook` and `RetentionManager` all read the study through `getActiveStudy()`.
+
+**Notes** Needs a lost or shared phone and a photographed QR of another study. How much of the first study's data the second PIN would show was not traced, because the fix removes the second study.
+
+**Fix** Package C2 (follow-up to d303597). Enrollment is refused while any study is ACTIVE; leaving a study goes through R09 (package C4). `getActiveStudy` now orders by `enrolled_at DESC`. Test: `ResearchStudyUnlockTest.tcRsh01_aSecondStudyIsNotEnrolledOverAnActiveOne`. Open: the message is English only (BUG-2026-083).
+
+#### BUG-2026-079: Two PIN checks that overlap each read the same failure count, so parallel guesses count once
+
+- Area: SEC | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-RSH-05 | Fix version:
+
+**Steps**
+1. On R01, tap Unlock several times quickly with wrong PINs.
+
+**Expected** Each wrong PIN counts; five of them lock the study for a minute (doc 8 Section 6.2, TC-RSH-05).
+
+**Actual** `ResearchPinManager.verifyPin` read the study row, then wrote `failedPinAttempts + 1` from that copy. C2 part 1 moved the Argon2 hashing off the main thread and left the Unlock button enabled, so checks could overlap; N of them advance the counter once.
+
+**Evidence** The C2 part 1 privacy review of 30 October 2026 (`ResearchPinManager.verifyPin`, `judgePin`; `ResearchViewModel.unlockWithPin`). Before d303597 the check ran on the main thread, which kept them in order.
+
+**Notes** It weakens the lockout, not the hash. An attacker taps by hand, so the gain is small, but the lockout is the control that makes a 6-digit PIN adequate.
+
+**Fix** Package C2 (follow-up to d303597). `verifyPin` runs under a `Mutex`, so checks run one at a time; `ResearchViewModel` ignores a second unlock, enroll or save while one is running (`isBusy`). Test: `ResearchStudyUnlockTest.tcRsh05_wrongPinsTriedAtTheSameTimeAreEachCounted` (it fails only some of the time without the lock). Open: the buttons are not drawn disabled while a check runs (BUG-2026-083).
+
+#### BUG-2026-080: An expired research card is chosen as the quality reference ahead of a valid older card
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: H4 | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-CARD-05 | Fix version:
+
+**Steps**
+1. Save a research session with the QR of an expired card (its signature is valid, so the batch is stored). Start another session.
+
+**Expected** The quality gate's color check uses a card that has not expired; an expired card is recorded as EXPIRED and nothing more (TC-CARD-05).
+
+**Actual** `researchCaptureSetup` took the active profile's batch, else the newest batch with `signatureValid == 1`, and never looked at `expiresAt`. A research save stores an expired card with `signatureValid = 1` (the signature does verify), so the expired card was the newest and became the reference of every later session; photos were judged against it.
+
+**Evidence** The C2 part 1 safety review of 30 October 2026 (`NeoGoldContainer.researchCaptureSetup`; `ResearchRepository.storeCardBatch`). Device qualification checks the same column (`QualificationService.referenceOf`) but is handed a batch that S06 has just verified, so it is not reached this way.
+
+**Notes** The session record itself was right (the status comes from the bytes at save time). The photo verdict and residual were not.
+
+**Fix** Package C2 (follow-up to d303597). `chooseResearchCard` prefers a card whose signature verified and that has not expired, then the first signed one (kept so the record says EXPIRED); the quality gate gets a reference only from a card that has not expired. `signatureValid` keeps its meaning (the signature checked). Tests: `ChooseResearchCardTest` (5 cases). Decided here: an expired card gives no reference.
+
+#### BUG-2026-081: R03 accepts a birth time of any age, but the server takes 0 to 720 hours in steps of 0.1
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: H2 | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-11 | Fix version:
+
+**Steps**
+1. In R03, pick a birth time 40 days back and finish the session.
+
+**Expected** The age is refused on the form, because the contract limits `age_hours` to 0 to 720 in multiples of 0.1 (doc 7, `openapi.yaml`).
+
+**Actual** R03 refused only a birth time in the future. A birth time 40 days back saved an age of about 960 hours, which the server rejects, so the session would sit in the outbox for good. The age was a raw double, never rounded to a tenth.
+
+**Evidence** The C2 part 1 safety review of 30 October 2026 (`R03ParticipantConsentScreen.kt`, the `ageHours` line; `ResearchRepository.saveBlindedResearchSession`; `docs/api/openapi.yaml`, `age_hours`).
+
+**Notes** The H2 clock controls (a clock earlier than the build time, a large offset from the server) are not applied in R03 (BUG-2026-083).
+
+**Fix** Package C2 (follow-up to d303597). R03 does not enable Start for an age over 720 hours and says why (`birth_time_too_old_error`, English and Bangla draft); `saveBlindedResearchSession` refuses an age outside 0 to 720; the age is rounded to a tenth (`researchAgeHours`). Tests: `ResearchSessionRecordTest` (age range), `ResearchAgeHoursTest`.
+
+#### BUG-2026-082: The research age is worked out when R03 opens, but saved after the captures and the TSB step
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: H2 | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-11 | Fix version:
+
+**Steps**
+1. Set a birth time in R03, spend ten minutes on the captures, save.
+
+**Expected** The age on the record is the age at the session time (`created_at`).
+
+**Actual** R03 computed the age from the time the screen was composed and the view model kept it. The session row got `created_at = now` at save, with an age that was behind it by the time spent on the captures and the TSB step. A baby near 24 or 48 hours could be put in the wrong age band.
+
+**Evidence** The C2 part 1 safety review of 30 October 2026 (`R03ParticipantConsentScreen.kt`; `ResearchViewModel.completeSessionWithTsb`).
+
+**Notes** The birth time was already kept in memory (`ResearchClinicalInputs.birthTimeMillis`), so nothing new is stored.
+
+**Fix** Package C2 (follow-up to d303597). `completeSessionWithTsb` works the age out from the birth time at the moment of saving (`researchAgeHours`). R03 still shows the age as of now for confirmation. Test: `ResearchAgeHoursTest`.
+
+#### BUG-2026-083: Findings from the C2 part 1 reviews that are left open for later packages
+
+- Area: RSH | Severity: S3 | Clinical: No | Hazard: H2, H4 | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-RSH-07, TC-RSH-14, TC-API-20 | Fix version:
+
+**Steps** Read the safety-reviewer and privacy-security-reviewer reports on commit d303597 (30 October 2026); these findings are not fixed.
+
+**Expected** Each is fixed or recorded with the package that fixes it.
+
+**Actual**
+1. With no reference card (none stored, or the stored one has expired), the gate checks against nominal patch colors and a photo can be stored as PASSED; only the residual is left empty. Decide whether the verdict should say "not checked against a card". (C2 or E1.)
+2. A process kill after an encrypted photo is written and before the database commits leaves a `cap_*.enc` file with no row. `EncryptedFileStore` cannot list files; it needs a `listFiles` and a start-up sweep that deletes files no capture row names. (C2, privacy review.)
+3. `ResearchJpegSanitizer.validateAllowList` accepts a longer APP0 or APP1 segment, a missing EOI and stray bytes between segments. `sanitize()` rewrites every photo first, so this is depth only; the repository now treats an exception from it as a refusal. (D1.)
+4. The unlock and save buttons are not drawn disabled while a check or save runs; the view model ignores the extra tap. Photo bytes are not zeroed after a lock; the state is cleared. (C2.)
+5. The first tap on the gestational-age stepper commits 38 weeks (`NgControls`, noted for E1). (E1, with BUG-2026-023.)
+6. The H2 clock controls are not applied in R03: a clock earlier than the build time, a large offset from the last server time, automatic time off, the 14-day rule. (C4, with enrollment.)
+7. `researchCaptureSetup` falls back to code defaults when `qualityThresholds` is missing; it should fail closed (BUG-2026-071 item 1). (E1.)
+8. The 5,000,000 byte cap is the app's own; the study's `max_image_bytes` policy is not followed. (C4.)
+9. The research view model's error messages are English only. (C2.)
+10. A second study's refusal and the lockout message are not tested through the view model; no test covers `ResearchCaptureProcessor` with a fake `CameraSession`, the blinding checks on the wired screens, or a lock while on Settings. (C2.)
+11. The lockout compares the wall clock, so a phone with its clock set back shortens a lockout (design, doc 8 Section 6.2; a monotonic anchor would harden it). (Later.)
+12. The S19 placeholder on the hidden screening path still sets `NO_FURTHER_ACTION`, 8.2 to 10.1 and a threshold of 12.0 (BUG-2026-001). (E1.)
+13. R05: whether the participant-code field is editable while a session is in progress was not checked; the TSB attaches to the session's participant either way. (C2.)
+
+**Expected fix** Per item, in the package named.
+
 ---
 
 ## 5. Closed Defects
@@ -1544,8 +1666,8 @@ Updated with each test summary report (doc 9 Section 15).
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
 | S1 | 19 | 10 | 0 |
-| S2 | 32 | 0 | 0 |
-| S3 | 20 | 1 | 0 |
+| S2 | 37 | 0 | 0 |
+| S3 | 21 | 1 | 0 |
 | S4 | 0 | 0 | 0 |
 
 As of 30 October 2026, counted from the table in Section 4: a defect is open until it is Verified, so Fixed ones still count. The audit's S3 observations (report Section 4.3) are not logged yet; log each one when it is triaged.
