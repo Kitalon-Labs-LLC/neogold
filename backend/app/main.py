@@ -18,6 +18,7 @@ from app.errors import (
     problem_response,
 )
 from app.middleware.auth import DeviceAuthMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.timing import TimingMiddleware
 from app.routers import (
     card_batches,
@@ -94,6 +95,8 @@ app.include_router(tsb.router, prefix="/v1", include_in_schema=False)
 # Timing first (outermost) so t0 is recorded at header arrival
 app.add_middleware(DeviceAuthMiddleware)
 app.add_middleware(TimingMiddleware)
+# Outermost, so that error responses from the layers inside carry the header too.
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.exception_handler(NeoGoldError)
