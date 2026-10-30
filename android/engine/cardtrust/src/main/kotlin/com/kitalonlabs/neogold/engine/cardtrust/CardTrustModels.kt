@@ -28,6 +28,9 @@ data class PatchReference(
     val bStar: Double
 )
 
+/** The patches on a NeoGold card (card/spec/card-v1.json). */
+const val CARD_PATCH_COUNT = 23
+
 /**
  * Decoded Card Batch payload (payload_type = 0x01).
  */
@@ -44,6 +47,21 @@ data class CardBatchPayload(
     val signedBytes: ByteArray,
     val signature: ByteArray
 ) {
+    /**
+     * The measured colors as the `card_batch.reference_values` column keeps them (doc 5 Section 2.2): a JSON array with one
+     * `[L, a, b]` entry per patch in the card's canonical patch order. Null unless the batch gives a value for every
+     * patch (`0 until` [CARD_PATCH_COUNT]) exactly once.
+     */
+    fun referenceValuesJson(): String? {
+        val ordered = patches.sortedBy { it.index }
+        if (ordered.map { it.index } != (0 until CARD_PATCH_COUNT).toList()) return null
+        return ordered.joinToString(
+            prefix = "[",
+            postfix = "]",
+            separator = ","
+        ) { "[${it.lStar},${it.aStar},${it.bStar}]" }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is CardBatchPayload) return false

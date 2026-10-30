@@ -31,6 +31,7 @@ open class NeoGoldApplication : Application(), RetentionComponent {
 
         // The object graph. Nothing in it touches the Keystore until the storage check asks for it.
         container = NeoGoldContainer(this)
+        container.researchSession.registerScreenOffReceiver(this) // screen off locks research at once (TC-RSH-07)
 
         // 3. Verify the bundle first: nothing may read the model, the triage config or the trust list before this
         // (BUG-2026-007). The result is held by the container and gates screening, research and the triage switch.

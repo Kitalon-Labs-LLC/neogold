@@ -4,4 +4,5 @@
         <item quantity="one">%d research item has not been sent to the study yet. It will be deleted too.</item>
         <item quantity="other">%d research items have not been sent to the study yet. They will be deleted too.</item>
     </plurals>
+    <string name="settings_research_mode">Research mode</string>
 </resources>

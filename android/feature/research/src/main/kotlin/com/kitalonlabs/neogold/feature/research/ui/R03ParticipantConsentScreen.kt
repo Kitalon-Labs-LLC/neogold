@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber") // pre-filled age default, removed in C2 (A9, FR-02, BUG-2026-044)
-
 package com.kitalonlabs.neogold.feature.research.ui
 
 import androidx.compose.foundation.background
@@ -28,14 +26,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgNumberStepper
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgYesNoButtons
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimeField
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimePicker
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 
@@ -47,6 +48,8 @@ import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 @Composable
 fun R03ParticipantConsentScreen(
     studyName: String,
+    /** Why the participant could not be registered (a code already used in this study, for example). */
+    errorMessage: String? = null,
     onContinueToCapture: (
         participantCode: String,
         consentFormId: String,
@@ -62,9 +65,14 @@ fun R03ParticipantConsentScreen(
     var participantCode by remember { mutableStateOf("") }
     var consentFormId by remember { mutableStateOf("") }
 
+    // No birth time and no age until the health worker chooses them: a pre-filled 48 hours would be recorded as the
+    // baby's age whenever nobody looked (A9, FR-02, H2, BUG-2026-044).
     val now = System.currentTimeMillis()
-    var birthTimeMillis by remember { mutableStateOf(now - 48 * 3600 * 1000L) } // default 48h
-    var calculatedAgeHours by remember { mutableStateOf(48.0) }
+    var birthTimeMillis by remember { mutableStateOf<Long?>(null) }
+    var showBirthPicker by remember { mutableStateOf(false) }
+    val birthTime = birthTimeMillis
+    val birthInFuture = birthTime != null && birthTime > now
+    val ageHours: Double? = birthTime?.takeIf { !birthInFuture }?.let { (now - it) / MILLIS_PER_HOUR }
 
     var gestationalAgeWeeks by remember { mutableStateOf<Int?>(null) } // No silent default (H3)
     var earlyJaundiceAnswer by remember { mutableStateOf<Boolean?>(null) }
@@ -75,6 +83,7 @@ fun R03ParticipantConsentScreen(
     val isConsentFormIdValid = ResearchFormats.isValidConsentFormId(consentFormId)
     val areInputsComplete = isParticipantCodeValid &&
         isConsentFormIdValid &&
+        ageHours != null &&
         gestationalAgeWeeks != null &&
         earlyJaundiceAnswer != null &&
         dangerSignsAnswer != null &&
@@ -106,6 +115,16 @@ fun R03ParticipantConsentScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.testTag("r03_error_message")
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Identification Card
         Card(
@@ -179,20 +198,41 @@ fun R03ParticipantConsentScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                val formattedBirth = java.time.Instant.ofEpochMilli(birthTimeMillis)
-                    .atZone(java.time.ZoneId.systemDefault())
-                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                val formattedBirth = birthTime?.let {
+                    java.time.Instant.ofEpochMilli(it)
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                } ?: "\u2014" // an em dash: not set yet
                 val phoneTimeNow = java.time.Instant.ofEpochMilli(System.currentTimeMillis())
                     .atZone(java.time.ZoneId.systemDefault())
                     .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
 
                 NgBirthTimeField(
                     formattedBirthDateTime = formattedBirth,
-                    ageInHours = calculatedAgeHours.toInt(),
+                    ageInHours = ageHours?.toInt(),
                     currentPhoneTime = phoneTimeNow,
-                    onEditClicked = { },
+                    onEditClicked = { showBirthPicker = true },
                     modifier = Modifier.testTag("birth_time_field")
                 )
+                if (birthInFuture) {
+                    Text(
+                        text = stringResource(R.string.birth_time_future_error),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("birth_time_future_error")
+                    )
+                }
+                if (showBirthPicker) {
+                    NgBirthTimePicker(
+                        nowEpochMs = now,
+                        initialEpochMs = birthTime,
+                        onDismiss = { showBirthPicker = false },
+                        onPicked = {
+                            birthTimeMillis = it
+                            showBirthPicker = false
+                        }
+                    )
+                }
 
                 Column {
                     Text(
@@ -263,8 +303,8 @@ fun R03ParticipantConsentScreen(
                 onContinueToCapture(
                     participantCode.trim(),
                     consentFormId.trim(),
-                    birthTimeMillis,
-                    calculatedAgeHours,
+                    birthTime!!,
+                    ageHours!!,
                     gestationalAgeWeeks!!,
                     earlyJaundiceAnswer!!,
                     dangerSignsAnswer!!,
@@ -275,3 +315,5 @@ fun R03ParticipantConsentScreen(
         )
     }
 }
+
+private const val MILLIS_PER_HOUR = 3_600_000.0

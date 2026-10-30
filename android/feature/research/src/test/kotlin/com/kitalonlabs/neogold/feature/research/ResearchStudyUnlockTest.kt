@@ -69,7 +69,9 @@ class ResearchStudyUnlockTest {
             trustList = trustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(trustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
     }
 

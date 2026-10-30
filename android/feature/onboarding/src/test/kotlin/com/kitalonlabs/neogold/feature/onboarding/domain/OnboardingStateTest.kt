@@ -7,6 +7,7 @@ import com.kitalonlabs.neogold.core.data.local.dao.CardBatchDao
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
 import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.engine.camera.CapturedFrame
+import com.kitalonlabs.neogold.engine.camera.CapturedStill
 import com.kitalonlabs.neogold.engine.camera.device.DeviceCapabilities
 import com.kitalonlabs.neogold.engine.camera.host.CameraSession
 import com.kitalonlabs.neogold.engine.camera.model.BurstCaptureResult
@@ -149,6 +150,7 @@ class OnboardingStateTest {
                 CaptureMetadata(null, null, false, false, false, false, null, null, null, CameraHardwareLevel.FULL)
             )
         }
+        override suspend fun captureStill(flash: Boolean): CapturedStill = error("not used in qualification")
         override suspend fun captureBurst(): BurstCaptureResult = error("not used in qualification")
         override fun close() = Unit
     }

@@ -66,6 +66,7 @@ import com.kitalonlabs.neogold.feature.log.S22SessionDetailScreen
 import com.kitalonlabs.neogold.feature.log.ScreeningLogExportManager
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanState
 import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationState
+import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
 import com.kitalonlabs.neogold.feature.result.S20ResultScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S09HomeScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S10BirthTimeGaScreen
@@ -153,37 +154,11 @@ class MainActivity : FragmentActivity() {
                     }
 
                     if (showCrashDialog) {
-                        AlertDialog(
-                            onDismissRequest = {
+                        CrashReportDialog(
+                            onShare = { CrashReportManager.shareReport(this@MainActivity) },
+                            onFinished = {
                                 CrashReportManager.clearReport(this@MainActivity)
                                 showCrashDialog = false
-                            },
-                            title = { Text("Share Crash Report?") },
-                            text = {
-                                Text(
-                                    "NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report."
-                                )
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        CrashReportManager.shareReport(this@MainActivity)
-                                        CrashReportManager.clearReport(this@MainActivity)
-                                        showCrashDialog = false
-                                    }
-                                ) {
-                                    Text("Share")
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(
-                                    onClick = {
-                                        CrashReportManager.clearReport(this@MainActivity)
-                                        showCrashDialog = false
-                                    }
-                                ) {
-                                    Text("Dismiss")
-                                }
                             }
                         )
                     }
@@ -236,7 +211,9 @@ class MainActivity : FragmentActivity() {
                                             onDeleteAllData = container::startDeleteAll,
                                             onboarding = onboarding,
                                             modifier = content,
-                                            firstRun = firstRun
+                                            firstRun = firstRun,
+                                            research = container.researchViewModel(state.database),
+                                            researchCaptureSetup = { container.researchCaptureSetup(state.database) }
                                         )
                                     }
                                 }
@@ -250,6 +227,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        container.researchSession.onAppForegrounded() // the research session asks for the PIN again after 5 minutes away
         cameraGranted = hasCameraPermission() // the user may have changed it in the system settings
         appLockManager.onAppForegrounded()
         if (appLockManager.isLocked.value) {
@@ -263,6 +241,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStop() {
         super.onStop()
+        container.researchSession.onAppBackgrounded()
         appLockManager.onAppBackgrounded()
     }
 
@@ -314,6 +293,31 @@ private fun OpenWhenOnboardingIsKnown(
 private fun testIds(debuggable: Boolean): Modifier =
     if (debuggable) Modifier.semantics { testTagsAsResourceId = true } else Modifier
 
+/** Asks whether to share the report of the previous crash (no personal data or exception messages are in it). */
+@Composable
+private fun CrashReportDialog(onShare: () -> Unit, onFinished: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onFinished,
+        title = { Text("Share Crash Report?") },
+        text = {
+            Text(
+                "NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report."
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onShare()
+                    onFinished()
+                }
+            ) {
+                Text("Share")
+            }
+        },
+        dismissButton = { TextButton(onClick = onFinished) { Text("Dismiss") } }
+    )
+}
+
 @Composable
 private fun AppLockScreen(onUnlock: () -> Unit) {
     Box(
@@ -352,6 +356,9 @@ private fun AppLockScreen(onUnlock: () -> Unit) {
  * and the app really computes a result (`NeoGoldContainer.screeningAvailable`). The screening screens are not
  * reachable otherwise.
  * @param unsentResearchItems asks how many research items the study has not acknowledged, for S25's warning
+ * @param research the research session over this database; null when the bundle did not verify, and then no research
+ * screen opens
+ * @param researchCaptureSetup the camera step and the signed card bytes for one research photo session (R04)
  */
 @Composable
 @Suppress(
@@ -368,6 +375,8 @@ fun NeoGoldNavHost(
     onDeleteAllData: () -> Unit,
     onboarding: OnboardingServices,
     firstRun: FirstRunState,
+    research: ResearchViewModel?,
+    researchCaptureSetup: suspend () -> NeoGoldContainer.ResearchCaptureSetup,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
@@ -378,6 +387,26 @@ fun NeoGoldNavHost(
     // (H5, TC-DEV-05). A phone that is research-only, or has no profile, never gets it.
     var qualifiedForScreening by remember { mutableStateOf(firstRun.screeningEligible) }
     val triageEnabled = configAllowsScreening && qualifiedForScreening
+    // A research session in progress: the signed bytes of the card the photos were taken with, and the blood test
+    // value entered with them (R04 to R06). Neither is kept after R06.
+    var researchCardBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var researchTsbEntered by remember { mutableStateOf<Pair<Double, String>?>(null) }
+    val researchUnlocked by (research?.isUnlocked ?: remember { kotlinx.coroutines.flow.MutableStateFlow(false) })
+        .collectAsState()
+    // The research session locks itself (5 minutes away, screen off, Lock): whichever research screen is open, the
+    // next one is R01 and nothing of the session in progress is kept.
+    androidx.compose.runtime.LaunchedEffect(researchUnlocked) {
+        val route = navController.currentDestination?.route
+        val insideSession = route != null && route.startsWith("r0") && route != Destinations.R01_RESEARCH_UNLOCK
+        if (!researchUnlocked && insideSession) {
+            research?.clearSessionState()
+            researchCardBytes = null
+            researchTsbEntered = null
+            navController.navigate(Destinations.R01_RESEARCH_UNLOCK) {
+                popUpTo(Destinations.R02_STUDY_HOME) { inclusive = true }
+            }
+        }
+    }
     // The card S06 verified, which S07 qualifies the camera against.
     var scannedBatchId by remember { mutableStateOf<String?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -947,7 +976,8 @@ fun NeoGoldNavHost(
                 },
                 onNavigateToDeleteData = {
                     navController.navigate(Destinations.S25_DELETE_DATA)
-                }
+                },
+                onNavigateToResearch = { navController.navigate(Destinations.R01_RESEARCH_UNLOCK) }
             )
         }
 
@@ -971,103 +1001,169 @@ fun NeoGoldNavHost(
             )
         }
 
-        // R01 to R09 Research Mode
-        researchComposable(Destinations.R01_RESEARCH_UNLOCK) {
-            var isLockedOut by remember { mutableStateOf(false) }
-            var lockoutMinutes by remember { androidx.compose.runtime.mutableIntStateOf(0) }
-            var unlockErrorMessage by remember { mutableStateOf<String?>(null) }
+        // R01 to R09 Research Mode. Research needs the verified bundle and a research session over the open database
+        // (BUG-2026-007); the session locks itself after 5 minutes away or when the screen goes off, and every research
+        // screen then returns to R01.
+        fun NavGraphBuilder.researchSessionComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(ResearchViewModel) -> Unit
+        ) = researchComposable(route) { _ ->
+            val session = research
+            if (session != null) content(session) else IntegrityBlockedScreen(integrity)
+        }
+
+        researchSessionComposable(Destinations.R01_RESEARCH_UNLOCK) { session ->
+            val study by session.activeStudy.collectAsState()
+            val scanned by session.scannedProfile.collectAsState()
+            val lockedOut by session.isLockedOut.collectAsState()
+            val lockoutMinutes by session.lockoutMinutes.collectAsState()
+            val error by session.errorMessage.collectAsState()
+            val unlocked by session.isUnlocked.collectAsState()
+            val openHome = {
+                navController.navigate(Destinations.R02_STUDY_HOME) {
+                    popUpTo(Destinations.R01_RESEARCH_UNLOCK) { inclusive = true }
+                }
+            }
+            // Already unlocked (Settings was opened again within the session): no second PIN.
+            androidx.compose.runtime.LaunchedEffect(unlocked) { if (unlocked) openHome() }
 
             com.kitalonlabs.neogold.feature.research.ui.R01ResearchUnlockScreen(
-                scannedProfile = null,
-                existingStudyName = null,
-                isLockedOut = isLockedOut,
+                scannedProfile = scanned,
+                existingStudyName = study?.displayName,
+                isLockedOut = lockedOut,
                 lockoutMinutes = lockoutMinutes,
-                errorMessage = unlockErrorMessage,
-                onScanQrClicked = { /* QR scan integration */ },
-                onUnlockWithPin = { _ ->
-                    navController.navigate(Destinations.R02_STUDY_HOME)
-                },
-                onEnrollWithPin = { _, _ ->
-                    navController.navigate(Destinations.R02_STUDY_HOME)
+                errorMessage = error,
+                onQrScanned = session::onStudyQrScanned,
+                onUnlockWithPin = { pin -> session.unlockWithPin(pin) { openHome() } },
+                onEnrollWithPin = { pin, confirmPin ->
+                    session.enrollWithScannedProfile(pin, confirmPin) { openHome() }
                 }
             )
         }
 
-        researchComposable(Destinations.R02_STUDY_HOME) {
-            com.kitalonlabs.neogold.feature.research.ui.R02StudyHomeScreen(
-                studyName = "NeoGold Clinical Validation Study",
-                studyCode = "DHK-01",
-                siteCode = "DMCH",
-                cardStatus = com.kitalonlabs.neogold.feature.research.data.CardTrustStatus.VERIFIED,
-                pendingUploadsCount = 0,
-                onNewParticipantSession = {
-                    navController.navigate(Destinations.R03_PARTICIPANT_CONSENT)
-                },
-                onEnterTsbClicked = {
-                    navController.navigate(Destinations.R05_TSB_ENTRY)
-                },
-                onLockSession = {
-                    navController.navigate(Destinations.R01_RESEARCH_UNLOCK) {
-                        popUpTo(Destinations.R02_STUDY_HOME) { inclusive = true }
-                    }
-                },
-                onExportClicked = {
-                    navController.navigate(Destinations.R07_EXPORT_SYNC)
-                }
-            )
+        researchSessionComposable(Destinations.R02_STUDY_HOME) { session ->
+            val study by session.activeStudy.collectAsState()
+            val pending by session.pendingUploadsCount.collectAsState()
+            val cardStatus by session.cardTrustStatus.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.refreshPendingUploads() }
+
+            study?.let {
+                com.kitalonlabs.neogold.feature.research.ui.R02StudyHomeScreen(
+                    studyName = it.displayName,
+                    studyCode = it.studyCode,
+                    siteCode = it.siteCode,
+                    cardStatus = cardStatus,
+                    pendingUploadsCount = pending,
+                    onNewParticipantSession = { navController.navigate(Destinations.R03_PARTICIPANT_CONSENT) },
+                    onEnterTsbClicked = { navController.navigate(Destinations.R05_TSB_ENTRY) },
+                    // locking turns the session state off, which sends every research screen back to R01
+                    onLockSession = session::lockResearchSession,
+                    onExportClicked = { navController.navigate(Destinations.R07_EXPORT_SYNC) }
+                )
+            }
         }
 
-        researchComposable(Destinations.R03_PARTICIPANT_CONSENT) {
+        researchSessionComposable(Destinations.R03_PARTICIPANT_CONSENT) { session ->
+            val study by session.activeStudy.collectAsState()
+            val error by session.errorMessage.collectAsState()
             com.kitalonlabs.neogold.feature.research.ui.R03ParticipantConsentScreen(
-                studyName = "NeoGold Study",
-                onContinueToCapture = { code, _, _, _, _, _, _, _ ->
-                    navController.navigate(Destinations.R04_CAPTURE_PROTOCOL)
+                studyName = study?.displayName.orEmpty(),
+                errorMessage = error,
+                onContinueToCapture = { code, consentFormId, birthTime, ageHours, gestationalWeeks, early, danger, prior ->
+                    session.registerParticipantAndInputs(
+                        participantCode = code,
+                        consentFormId = consentFormId,
+                        birthTimeMillis = birthTime,
+                        ageHours = ageHours,
+                        gestationalAgeWeeks = gestationalWeeks,
+                        flagEarlyJaundice = early,
+                        flagDangerSigns = danger,
+                        flagPriorPhototherapy = prior,
+                        onSuccess = { navController.navigate(Destinations.R04_CAPTURE_PROTOCOL) }
+                    )
                 }
             )
         }
 
-        researchComposable(Destinations.R04_CAPTURE_PROTOCOL) {
-            com.kitalonlabs.neogold.feature.research.ui.R04ResearchCaptureScreen(
-                participantCode = "SKP-0142",
-                onProtocolCompleted = { _ ->
-                    navController.navigate(Destinations.R05_TSB_ENTRY)
-                },
-                onCancel = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        researchComposable(Destinations.R05_TSB_ENTRY) {
-            com.kitalonlabs.neogold.feature.research.ui.R05TsbEntryScreen(
-                initialParticipantCode = "SKP-0142",
-                isDeferredEntry = false,
-                onSaveTsb = { _, _, _, _ ->
-                    navController.navigate(Destinations.R06_SESSION_COMPLETE)
-                },
-                onSkipTsb = {
-                    navController.navigate(Destinations.R06_SESSION_COMPLETE)
-                }
-            )
-        }
-
-        researchComposable(Destinations.R06_SESSION_COMPLETE) {
-            com.kitalonlabs.neogold.feature.research.ui.R06SessionCompleteScreen(
-                participantCode = "SKP-0142",
-                capturesCount = 4,
-                cardStatus = com.kitalonlabs.neogold.feature.research.data.CardTrustStatus.VERIFIED,
-                tsbEntered = true,
-                tsbMgDl = 14.2,
-                tsbMethod = "LAB",
-                onDoneClicked = {
-                    navController.navigate(Destinations.R02_STUDY_HOME) {
-                        popUpTo(Destinations.R02_STUDY_HOME) { inclusive = false }
+        researchSessionComposable(Destinations.R04_CAPTURE_PROTOCOL) { session ->
+            val participant by session.currentParticipant.collectAsState()
+            val setup by androidx.compose.runtime.produceState<NeoGoldContainer.ResearchCaptureSetup?>(null) {
+                value = researchCaptureSetup()
+            }
+            val current = participant
+            val ready = setup
+            if (current != null && ready != null) {
+                com.kitalonlabs.neogold.feature.research.ui.R04ResearchCaptureScreen(
+                    participantCode = current.participantCode,
+                    processor = ready.processor,
+                    onProtocolCompleted = { captures ->
+                        researchCardBytes = ready.cardSignedBytes
+                        session.onCapturesCompleted(captures) { navController.navigate(Destinations.R05_TSB_ENTRY) }
+                    },
+                    onCancel = {
+                        session.clearSessionState()
+                        navController.popBackStack(Destinations.R02_STUDY_HOME, inclusive = false)
                     }
+                )
+            }
+        }
+
+        researchSessionComposable(Destinations.R05_TSB_ENTRY) { session ->
+            val participant by session.currentParticipant.collectAsState()
+            val error by session.errorMessage.collectAsState()
+            val current = participant
+            val finish = { researchTsb: Pair<Double, String>? ->
+                researchTsbEntered = researchTsb
+                navController.navigate(Destinations.R06_SESSION_COMPLETE)
+            }
+            // With a session in progress this closes it. Opened from R02 there is none: the value is added to an earlier
+            // participant by their code (TC-RSH-11).
+            com.kitalonlabs.neogold.feature.research.ui.R05TsbEntryScreen(
+                initialParticipantCode = current?.participantCode,
+                isDeferredEntry = current == null,
+                saveError = error,
+                onSaveTsb = { code, tsbMgDl, drawTime, method ->
+                    if (current != null) {
+                        session.completeSessionWithTsb(tsbMgDl, drawTime, method, researchCardBytes) {
+                            finish(tsbMgDl to method)
+                        }
+                    } else {
+                        session.recordDeferredTsb(code, tsbMgDl, drawTime, method) {
+                            navController.popBackStack(Destinations.R02_STUDY_HOME, inclusive = false)
+                        }
+                    }
+                },
+                onSkipTsb = if (current != null) {
+                    { session.completeSessionWithTsb(null, null, null, researchCardBytes) { finish(null) } }
+                } else {
+                    null
                 }
             )
         }
 
-        researchComposable(Destinations.R07_EXPORT_SYNC) {
+        researchSessionComposable(Destinations.R06_SESSION_COMPLETE) { session ->
+            val result by session.lastSessionResult.collectAsState()
+            result?.let {
+                com.kitalonlabs.neogold.feature.research.ui.R06SessionCompleteScreen(
+                    participantCode = it.participantCode,
+                    capturesCount = it.capturesCount,
+                    cardStatus = it.cardStatus,
+                    tsbEntered = it.tsbEntered,
+                    tsbMgDl = researchTsbEntered?.first,
+                    tsbMethod = researchTsbEntered?.second,
+                    onDoneClicked = {
+                        session.clearSessionState()
+                        researchCardBytes = null
+                        researchTsbEntered = null
+                        navController.popBackStack(Destinations.R02_STUDY_HOME, inclusive = false)
+                    }
+                )
+            }
+        }
+
+        // Export is wired in package C3; until then this screen only shows the study it belongs to.
+        researchSessionComposable(Destinations.R07_EXPORT_SYNC) { session ->
+            val study by session.activeStudy.collectAsState()
             var exportProgress by remember {
                 mutableStateOf<com.kitalonlabs.neogold.feature.research.export.ExportProgress?>(
                     null
@@ -1093,20 +1189,18 @@ fun NeoGoldNavHost(
                 }
             }
 
-            com.kitalonlabs.neogold.feature.research.ui.R07ExportScreen(
-                studyCode = "DHK-01",
-                displayName = "NeoGold Clinical Validation Study",
-                hasExportKey = true,
-                exportProgress = exportProgress,
-                isExporting = isExporting,
-                exportCompleted = exportCompleted,
-                onChooseDestinationClicked = {
-                    exportLauncher.launch("neogold-export-DHK-01.zip")
-                },
-                onDoneClicked = {
-                    navController.popBackStack()
-                }
-            )
+            study?.let {
+                com.kitalonlabs.neogold.feature.research.ui.R07ExportScreen(
+                    studyCode = it.studyCode,
+                    displayName = it.displayName,
+                    hasExportKey = it.exportPublicKey != null,
+                    exportProgress = exportProgress,
+                    isExporting = isExporting,
+                    exportCompleted = exportCompleted,
+                    onChooseDestinationClicked = { exportLauncher.launch("neogold-export-${it.studyCode}.zip") },
+                    onDoneClicked = { navController.popBackStack() }
+                )
+            }
         }
         researchComposable(Destinations.R08_ENROLLMENT) { PlaceholderScreen("R08: Study Enrollment") }
         researchComposable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }

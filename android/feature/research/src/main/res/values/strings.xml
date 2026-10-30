@@ -1,0 +1,30 @@
+<resources>
+    <string name="research_badge">RESEARCH MODE</string>
+
+    <!-- R04 Research capture protocol (C2). Research is blinded: nothing here shows an estimate. -->
+    <string name="r04_title">4-site research protocol</string>
+    <string name="r04_step_of">Step %1$d of %2$d</string>
+    <string name="r04_site_sternum">Sternum</string>
+    <string name="r04_site_forehead">Forehead</string>
+    <string name="r04_site_sclera_flash">Sclera (flash)</string>
+    <string name="r04_site_sclera_ambient">Sclera (ambient, no flash)</string>
+    <string name="r04_guidance_sternum">Place the NeoGold card flat on the infant\'s sternum with the skin window clear. Hold the phone 15 to 20 cm above the card, parallel to the surface.</string>
+    <string name="r04_guidance_forehead">Place the card gently on the infant\'s forehead. Keep the camera parallel to the card, in ambient light.</string>
+    <string name="r04_guidance_sclera_flash">Point the camera at the eye with the card next to it. The flash fires for this photo.</string>
+    <string name="r04_guidance_sclera_ambient">Keep the camera at the eye with the card next to it, in ambient light, without flash.</string>
+    <string name="r04_capture_button">Capture %1$s</string>
+    <string name="r04_capturing">Taking the photo…</string>
+    <string name="r04_quality_issue">This photo may not be usable. %1$s</string>
+    <string name="r04_retake">Retake</string>
+    <string name="r04_keep">Keep this photo</string>
+    <string name="r04_capture_failed">The photo could not be taken. Try again.</string>
+    <string name="r04_too_large">The photo is too large to keep. Try again.</string>
+    <string name="r04_complete_title">All 4 photos taken</string>
+    <string name="r04_complete_body">The photos are held in memory until this session is finished. Next, add the blood test result, or skip it and add it later.</string>
+    <string name="r04_continue_tsb">Continue to blood test entry</string>
+    <string name="r04_cancel">Cancel session</string>
+
+    <!-- R01 study QR scanner (C2) -->
+    <string name="r01_scan_hint">Point the camera at the study QR code.</string>
+    <string name="r01_scan_cancel">Cancel scan</string>
+</resources>

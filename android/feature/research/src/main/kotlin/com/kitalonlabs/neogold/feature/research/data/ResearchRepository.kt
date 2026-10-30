@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
 import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
+import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.local.entity.MAX_TSB_MG_DL
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchParticipantEntity
@@ -16,8 +17,11 @@ import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.pin.Argon2PinHasher
 import com.kitalonlabs.neogold.core.security.pin.PinPolicyValidator
 import com.kitalonlabs.neogold.core.security.pin.PinValidationResult
+import com.kitalonlabs.neogold.engine.camera.research.ResearchJpegSanitizer
+import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
 import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
 import com.kitalonlabs.neogold.engine.cardtrust.PayloadParser
+import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
 import com.kitalonlabs.neogold.engine.cardtrust.TrustList
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
 import timber.log.Timber
@@ -31,15 +35,31 @@ enum class CardTrustStatus {
     UNVERIFIED
 }
 
+/**
+ * One research photo and what is known about it. There are no defaults for what the camera and the quality gate say:
+ * a value that was not measured is null, a lock that was not seen is off, and whether the photo passed the gate is
+ * always stated by the caller.
+ */
 data class ResearchCaptureInput(
     val site: String, // STERNUM, FOREHEAD, SCLERA_FLASH, SCLERA_NOFLASH
     val attemptNumber: Int = 1,
     val imageBytes: ByteArray,
-    val iso: Int? = 100,
-    val exposureNs: Long? = 10_000_000L,
-    val aeLocked: Int = 1,
-    val awbLocked: Int = 1,
+    val qualityPassed: Boolean,
+    val qualityFailReasons: List<String> = emptyList(),
+    val correctionResidualDe: Double? = null,
+    val iso: Int? = null,
+    val exposureNs: Long? = null,
+    val aeLocked: Int = 0,
+    val awbLocked: Int = 0,
     val colorGains: String? = null
+)
+
+/** Where a saved session came from: the app, the model and the config that were running, and the phone's profile. */
+data class ResearchProvenance(
+    val appVersion: String,
+    val modelVersion: String?,
+    val configVersion: String,
+    val deviceProfileId: String?
 )
 
 data class TsbInput(
@@ -67,19 +87,21 @@ class ResearchRepository(
     val trustList: TrustList,
     val pinManager: ResearchPinManager,
     private val cardTrustVerifier: CardTrustVerifier = CardTrustVerifier(trustList),
-    private val pinHasher: Argon2PinHasher = Argon2PinHasher()
+    private val pinHasher: Argon2PinHasher = Argon2PinHasher(),
+    /** Read when a session is saved, so the record names the app, model, config and profile that really ran. */
+    private val provenance: suspend () -> ResearchProvenance,
+    /** Whether a photo may be kept: a JPEG that carries nothing but its orientation. Tests of other things pass `{ true }`. */
+    private val isAllowedImage: (ByteArray) -> Boolean = { ResearchJpegSanitizer.validateAllowList(it).isValid }
 ) {
 
     /**
-     * Unlocks or enrolls research mode by verifying the signed study profile QR payload
-     * and checking/setting the PIN (FR-25, NG-028, TC-RSH-01, TC-RSH-02, TC-RSH-03).
+     * Checks a scanned study QR against the trust list, so the screen can show which study it names before a PIN is
+     * asked for (R01).
      */
-    suspend fun unlockWithStudyQr(
+    fun verifyStudyProfile(
         qrPayload: ByteArray,
-        pin: String,
-        evaluationDate: LocalDate = LocalDate.now(),
-        now: Long = System.currentTimeMillis()
-    ): Result<ResearchStudyEntity> {
+        evaluationDate: LocalDate = LocalDate.now()
+    ): Result<StudyProfilePayload> {
         val verification = cardTrustVerifier.verifyStudyProfile(qrPayload, evaluationDate)
         if (verification !is VerificationResult.Verified) {
             val errorMsg = when (verification) {
@@ -92,8 +114,20 @@ class ResearchRepository(
             }
             return Result.failure(SecurityException(errorMsg))
         }
+        return Result.success(verification.payload)
+    }
 
-        val profile = verification.payload
+    /**
+     * Unlocks or enrolls research mode by verifying the signed study profile QR payload
+     * and checking/setting the PIN (FR-25, NG-028, TC-RSH-01, TC-RSH-02, TC-RSH-03).
+     */
+    suspend fun unlockWithStudyQr(
+        qrPayload: ByteArray,
+        pin: String,
+        evaluationDate: LocalDate = LocalDate.now(),
+        now: Long = System.currentTimeMillis()
+    ): Result<ResearchStudyEntity> {
+        val profile = verifyStudyProfile(qrPayload, evaluationDate).getOrElse { return Result.failure(it) }
 
         // Check if study already exists in database
         val existingStudy = database.researchStudyDao().getStudyByCode(profile.studyCode)
@@ -266,35 +300,42 @@ class ResearchRepository(
         if (captures.isEmpty()) {
             return Result.failure(IllegalArgumentException("Research session requires at least one capture"))
         }
+        if (captures.any { !isAllowedImage(it.imageBytes) }) {
+            return Result.failure(IllegalArgumentException("A capture image is not an allowed JPEG"))
+        }
 
-        // Verify card batch status
-        var cardBatchId: String? = null
+        // Verify card batch status (TC-CARD-02, TC-CARD-05: research goes on, and the record says what the card was)
+        var cardBatch: CardBatchPayload? = null
         var cardStatus = CardTrustStatus.UNVERIFIED
 
         if (cardBatchBytes != null) {
-            val batchResult = cardTrustVerifier.verifyCardBatch(cardBatchBytes)
-            when (batchResult) {
+            when (val batchResult = cardTrustVerifier.verifyCardBatch(cardBatchBytes)) {
                 is VerificationResult.Verified -> {
-                    cardBatchId = batchResult.payload.batchId
+                    cardBatch = batchResult.payload
                     cardStatus = CardTrustStatus.VERIFIED
                 }
                 is VerificationResult.Expired -> {
-                    val parsed = PayloadParser.parseCardBatch(cardBatchBytes)
-                    cardBatchId = parsed?.batchId
+                    cardBatch = PayloadParser.parseCardBatch(cardBatchBytes)
                     cardStatus = CardTrustStatus.EXPIRED
                 }
                 else -> {
-                    val parsed = PayloadParser.parseCardBatch(cardBatchBytes)
-                    cardBatchId = parsed?.batchId
+                    cardBatch = PayloadParser.parseCardBatch(cardBatchBytes)
                     cardStatus = CardTrustStatus.UNVERIFIED
                 }
             }
         }
 
         val sessionId = UUID.randomUUID().toString()
+        val ran = provenance()
+        val writtenFiles = mutableListOf<String>()
 
         return try {
             database.withTransaction {
+                // 0. The card batch row goes in before the session row that names it (foreign key, BUG-2026-060). A batch
+                // already on the phone is not replaced, and a session never names a batch whose bytes differ from the
+                // stored one.
+                val cardBatchId = cardBatch?.let { storeCardBatch(it, cardBatchBytes!!, cardStatus, now) }
+
                 // 1. Insert ScreeningSession with mode = RESEARCH, estimateHidden = 1 (BLINDED)
                 val sessionEntity = ScreeningSessionEntity(
                     id = sessionId,
@@ -322,11 +363,11 @@ class ResearchRepository(
                     participantId = participant.id,
                     estimateHidden = 1, // Mandatory blinded flag
                     experimentalLabelShown = 1,
-                    deviceProfileId = null,
+                    deviceProfileId = ran.deviceProfileId,
                     cardBatchId = cardBatchId,
-                    appVersion = "1.0.0",
-                    modelVersion = "1.0.0-synthetic",
-                    configVersion = "2026.10.0"
+                    appVersion = ran.appVersion,
+                    modelVersion = ran.modelVersion,
+                    configVersion = ran.configVersion
                 )
                 database.screeningSessionDao().insert(sessionEntity)
 
@@ -340,6 +381,7 @@ class ResearchRepository(
                     encryptedFileStore.writeEncryptedFile(filename) { outputStream ->
                         outputStream.write(cap.imageBytes)
                     }
+                    writtenFiles.add(filename)
 
                     val captureEntity = CaptureEntity(
                         id = captureId,
@@ -352,9 +394,10 @@ class ResearchRepository(
                         aeLocked = cap.aeLocked,
                         awbLocked = cap.awbLocked,
                         colorGains = cap.colorGains,
-                        qualityStatus = "PASSED",
-                        qualityFailReasons = null,
-                        correctionResidualDe = null,
+                        qualityStatus = if (cap.qualityPassed) "PASSED" else "FAILED",
+                        qualityFailReasons = cap.qualityFailReasons.takeIf { it.isNotEmpty() }
+                            ?.joinToString(prefix = "[", postfix = "]", separator = ",") { "\"$it\"" },
+                        correctionResidualDe = cap.correctionResidualDe,
                         features = null,
                         imageFile = filename,
                         imageSha256 = imageSha256
@@ -447,9 +490,42 @@ class ResearchRepository(
                 )
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error saving research session; rolling back transaction")
+            // Only the type is logged: the message of a database error can carry values (doc 8 Section 6.6).
+            Timber.e("Error saving research session (%s); rolling back transaction", e.javaClass.name)
+            // The database rolled back, so the encrypted files written inside it would be left with no row: remove them.
+            writtenFiles.forEach { runCatching { encryptedFileStore.delete(it) } }
             Result.failure(e)
         }
+    }
+
+    /**
+     * Keeps the card batch a research session used, and returns the ID the session may name, or null if the stored
+     * batch of that ID is not the same card (a different signed payload under the same ID).
+     */
+    private suspend fun storeCardBatch(
+        batch: CardBatchPayload,
+        payload: ByteArray,
+        status: CardTrustStatus,
+        now: Long
+    ): String? {
+        val existing = database.cardBatchDao().getBatch(batch.batchId)
+        if (existing != null) return batch.batchId.takeIf { existing.qrPayload.contentEquals(payload) }
+        val referenceValues = batch.referenceValuesJson() ?: return null
+        database.cardBatchDao().insert(
+            CardBatchEntity(
+                batchId = batch.batchId,
+                issuerId = batch.issuerKeyId,
+                formatVersion = batch.formatVersion,
+                referenceValues = referenceValues,
+                issuedAt = batch.issuedAt.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli(),
+                expiresAt = batch.expiresAt.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli(),
+                signatureValid = if (status == CardTrustStatus.UNVERIFIED) 0 else 1,
+                qrPayload = payload,
+                serverStatus = "NOT_SENT",
+                firstSeenAt = now
+            )
+        )
+        return batch.batchId
     }
 
     /**

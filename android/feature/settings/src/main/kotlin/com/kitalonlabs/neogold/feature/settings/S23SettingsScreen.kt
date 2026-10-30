@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
+import com.kitalonlabs.neogold.feature.settings.R as SettingsR
 
 /**
  * S23: Settings (NG-002, NG-005, NFR-06, TC-ONB-04, doc 6 Section 5).
@@ -61,6 +62,7 @@ fun S23SettingsScreen(
     onCrashReportingChanged: (Boolean) -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToDeleteData: () -> Unit = {},
+    onNavigateToResearch: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var selectedLang by remember(currentLanguage) { mutableStateOf(currentLanguage) }
@@ -297,6 +299,23 @@ fun S23SettingsScreen(
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.SpacingMd))
 
         // Navigation Links
+        if (onNavigateToResearch != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onNavigateToResearch)
+                    .testTag("link_research_mode")
+                    .padding(vertical = Dimens.SpacingMd),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(SettingsR.string.settings_research_mode),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()

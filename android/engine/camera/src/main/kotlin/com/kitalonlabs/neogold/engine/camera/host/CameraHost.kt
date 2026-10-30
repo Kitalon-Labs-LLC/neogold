@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.kitalonlabs.neogold.engine.camera.BurstCaptureController
 import com.kitalonlabs.neogold.engine.camera.CameraControlHelper
 import com.kitalonlabs.neogold.engine.camera.CapturedFrame
+import com.kitalonlabs.neogold.engine.camera.CapturedStill
 import com.kitalonlabs.neogold.engine.camera.LiveCardAnalyzer
 import com.kitalonlabs.neogold.engine.camera.model.BurstCaptureResult
 import com.kitalonlabs.neogold.engine.camera.qr.QrScanAnalyzer
@@ -102,7 +103,8 @@ class CameraHost(private val context: Context) {
             controller,
             ImageCaptureStillSource(imageCapture, workExecutor),
             characteristics,
-            workExecutor
+            workExecutor,
+            imageCapture
         )
     }
 
@@ -114,6 +116,15 @@ class CameraHost(private val context: Context) {
         val builder = ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setFlashMode(ImageCapture.FLASH_MODE_OFF)
+            // A research photo must fit the server's image limit (5 MB, doc 7): about 8 megapixels at quality 90.
+            .setJpegQuality(STILL_JPEG_QUALITY)
+            .setResolutionSelector(
+                ResolutionSelector.Builder()
+                    .setResolutionStrategy(
+                        ResolutionStrategy(STILL_MAX_SIZE, ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER)
+                    )
+                    .build()
+            )
         characteristics?.let { CameraControlHelper.applyCaptureControls(builder, it) }
         Camera2Interop.Extender(builder).setSessionCaptureCallback(
             object : CameraCaptureSession.CaptureCallback() {
@@ -164,9 +175,15 @@ class CameraHost(private val context: Context) {
         private val controller: BurstCaptureController,
         private val stills: StillSource,
         override val characteristics: CameraCharacteristics?,
-        private val workExecutor: ExecutorService
+        private val workExecutor: ExecutorService,
+        private val imageCapture: ImageCapture
     ) : CameraSession {
         override suspend fun captureFrame(): CapturedFrame = controller.captureFrame(stills)
+
+        override suspend fun captureStill(flash: Boolean): CapturedStill {
+            imageCapture.flashMode = if (flash) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF
+            return controller.captureStill(stills)
+        }
 
         override suspend fun captureBurst(): BurstCaptureResult = controller.executeBurst(stills)
 
@@ -177,6 +194,8 @@ class CameraHost(private val context: Context) {
     }
 
     private companion object {
+        const val STILL_JPEG_QUALITY = 90
+        val STILL_MAX_SIZE = Size(3264, 2448)
         val QR_ANALYSIS_SIZE = Size(1280, 720) // a 36 mm symbol on a card held at hand distance needs more than VGA
         val LIVE_ANALYSIS_SIZE = Size(640, 480)
     }

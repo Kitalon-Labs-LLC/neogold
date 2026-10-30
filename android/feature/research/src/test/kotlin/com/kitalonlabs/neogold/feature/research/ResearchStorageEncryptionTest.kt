@@ -72,7 +72,9 @@ class ResearchStorageEncryptionTest {
             trustList = dummyTrustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(dummyTrustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
     }
 
@@ -132,7 +134,7 @@ class ResearchStorageEncryptionTest {
         )
 
         val captures = listOf(
-            ResearchCaptureInput("STERNUM", 1, plaintextJpegBytes)
+            ResearchCaptureInput("STERNUM", 1, plaintextJpegBytes, qualityPassed = true)
         )
 
         val result = repository.saveBlindedResearchSession(
@@ -197,10 +199,10 @@ class ResearchStorageEncryptionTest {
         val scleraNoFlashBytes = "SCLERA_NOFLASH_IMAGE_BYTES".toByteArray()
 
         val protocolCaptures = listOf(
-            ResearchCaptureInput("STERNUM", 1, sternumBytes),
-            ResearchCaptureInput("FOREHEAD", 1, foreheadBytes),
-            ResearchCaptureInput("SCLERA_FLASH", 1, scleraFlashBytes),
-            ResearchCaptureInput("SCLERA_NOFLASH", 1, scleraNoFlashBytes)
+            ResearchCaptureInput("STERNUM", 1, sternumBytes, qualityPassed = true),
+            ResearchCaptureInput("FOREHEAD", 1, foreheadBytes, qualityPassed = true),
+            ResearchCaptureInput("SCLERA_FLASH", 1, scleraFlashBytes, qualityPassed = true),
+            ResearchCaptureInput("SCLERA_NOFLASH", 1, scleraNoFlashBytes, qualityPassed = true)
         )
 
         val result = repository.saveBlindedResearchSession(

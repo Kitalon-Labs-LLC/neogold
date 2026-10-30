@@ -6,6 +6,7 @@ import android.os.Build
 import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
+import com.kitalonlabs.neogold.core.data.pin.ResearchPinManager
 import com.kitalonlabs.neogold.core.data.purge.DataWiper
 import com.kitalonlabs.neogold.core.data.purge.DefaultDataPurgeManager
 import com.kitalonlabs.neogold.core.data.purge.PurgeResult
@@ -24,6 +25,7 @@ import com.kitalonlabs.neogold.core.security.MasterKeyProvider
 import com.kitalonlabs.neogold.core.security.integrity.BundleManifestVerifier
 import com.kitalonlabs.neogold.core.security.integrity.DefaultIntegrityStateManager
 import com.kitalonlabs.neogold.core.security.integrity.IntegrityStateManager
+import com.kitalonlabs.neogold.core.security.pin.Argon2PinHasher
 import com.kitalonlabs.neogold.core.security.pin.KeystorePinHmacKeyProvider
 import com.kitalonlabs.neogold.core.security.pin.PinHmacKeyProvider
 import com.kitalonlabs.neogold.core.security.pin.ResearchSessionManager
@@ -32,8 +34,13 @@ import com.kitalonlabs.neogold.engine.camera.qualification.QualificationThreshol
 import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
 import com.kitalonlabs.neogold.engine.vision.QualityThresholds
 import com.kitalonlabs.neogold.engine.vision.VisionEngine
+import com.kitalonlabs.neogold.feature.onboarding.domain.CardBatchReference
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanService
 import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationService
+import com.kitalonlabs.neogold.feature.research.capture.ResearchCaptureProcessor
+import com.kitalonlabs.neogold.feature.research.data.ResearchProvenance
+import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
+import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
 import com.kitalonlabs.neogold.integrity.VerifiedAssets
 import com.kitalonlabs.neogold.onboarding.OnboardingServices
 import com.kitalonlabs.neogold.storage.StorageCoordinator
@@ -147,6 +154,62 @@ class NeoGoldContainer(private val application: Application) {
             ),
             dataStore = dataStore,
             buildFingerprint = Build.FINGERPRINT
+        )
+    }
+
+    @Volatile
+    private var research: Pair<NeoGoldDatabase, ResearchViewModel>? = null
+
+    /**
+     * The research session over the open [database]. There is one per database, so the unlocked state and the
+     * participant in progress survive a recomposition. Null while the trust list is not verified: without it no study
+     * QR or card can be checked, and research does not run (BUG-2026-007).
+     */
+    @Synchronized
+    fun researchViewModel(database: NeoGoldDatabase): ResearchViewModel? {
+        research?.takeIf { it.first === database }?.let { return it.second }
+        val trustList = assets.trustList
+        val configVersion = assets.triageConfig?.configVersion
+        if (trustList == null || configVersion == null) return null
+        val hasher = Argon2PinHasher(pinHmacKey)
+        val repository = ResearchRepository(
+            database = database,
+            encryptedFileStore = encryptedFiles,
+            trustList = trustList,
+            pinManager = ResearchPinManager(database.researchStudyDao(), database.auditEventDao(), hasher),
+            pinHasher = hasher,
+            // read when a session is saved, so the record names the profile that is active then
+            provenance = {
+                ResearchProvenance(
+                    appVersion = BuildConfig.VERSION_NAME,
+                    modelVersion = assets.modelVersion,
+                    configVersion = configVersion,
+                    deviceProfileId = database.deviceProfileDao().getActiveProfile()?.id
+                )
+            }
+        )
+        return ResearchViewModel(repository, researchSession).also { research = database to it }
+    }
+
+    /**
+     * What a research photo session needs from the card the phone works with: the camera step that takes and checks the
+     * photos, and the signed bytes of the card, which the session record keeps. The card is the one of the active
+     * device profile, else the newest one whose signature was valid. Without a card the photos are still taken, with no
+     * color residual measured, and the record says the card was not verified.
+     */
+    class ResearchCaptureSetup(val processor: ResearchCaptureProcessor, val cardSignedBytes: ByteArray?)
+
+    suspend fun researchCaptureSetup(database: NeoGoldDatabase): ResearchCaptureSetup = withContext(Dispatchers.IO) {
+        val batches = database.cardBatchDao()
+        val batch = database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let { batches.getBatch(it) }
+            ?: batches.getAllBatches().firstOrNull { it.signatureValid == 1 }
+        val limits = assets.triageConfig?.qualityThresholds.orEmpty()
+        ResearchCaptureSetup(
+            processor = ResearchCaptureProcessor(
+                vision = VisionEngine(thresholds = QualityThresholds.fromMap(limits)),
+                reference = batch?.let { CardBatchReference.fromJson(it.referenceValues) }
+            ),
+            cardSignedBytes = batch?.qrPayload
         )
     }
 

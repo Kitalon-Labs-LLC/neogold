@@ -2,6 +2,7 @@ package com.kitalonlabs.neogold.engine.camera.host
 
 import android.hardware.camera2.CameraCharacteristics
 import com.kitalonlabs.neogold.engine.camera.CapturedFrame
+import com.kitalonlabs.neogold.engine.camera.CapturedStill
 import com.kitalonlabs.neogold.engine.camera.LiveCardState
 import com.kitalonlabs.neogold.engine.camera.model.BurstCaptureResult
 
@@ -29,6 +30,12 @@ interface CameraSession {
 
     /** One photo in memory, with how it was taken. Nothing is written to disk. */
     suspend fun captureFrame(): CapturedFrame
+
+    /**
+     * One photo as the JPEG the camera made, for research (which keeps the photo, sanitized and encrypted), with how it
+     * was taken. [flash] fires the flash for this photo only; a phone without one takes it without.
+     */
+    suspend fun captureStill(flash: Boolean = false): CapturedStill
 
     /** The 2 or 3 photos of one screening, with the sharpest marked. */
     suspend fun captureBurst(): BurstCaptureResult

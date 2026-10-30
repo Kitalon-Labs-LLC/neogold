@@ -63,6 +63,12 @@ class BurstCaptureController(
         )
     }
 
+    /** One photo from [source] as the JPEG the camera made, with how it was taken. Nothing is decoded or kept on disk. */
+    suspend fun captureStill(source: StillSource): CapturedStill {
+        val still = source.takeStill()
+        return CapturedStill(still.jpeg, metadataFor(still))
+    }
+
     /** One photo from [source], decoded in memory to about 1600 px on the long edge, with how it was taken. */
     suspend fun captureFrame(source: StillSource): CapturedFrame = withContext(Dispatchers.Default) {
         val still = source.takeStill()
@@ -113,3 +119,6 @@ class BurstCaptureController(
 
 /** A decoded photo and the camera's record of how it was taken. */
 class CapturedFrame(val frame: ImageFrame, val metadata: CaptureMetadata)
+
+/** A photo as the camera made it, JPEG bytes in memory, and the camera's record of how it was taken. */
+class CapturedStill(val jpeg: ByteArray, val metadata: CaptureMetadata)

@@ -75,7 +75,9 @@ class BlindedCaptureAccessibilityTest {
             trustList = dummyTrustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(dummyTrustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
 
         logMessages.clear()
@@ -130,10 +132,10 @@ class BlindedCaptureAccessibilityTest {
         database.researchParticipantDao().insert(participant)
 
         val captures = listOf(
-            ResearchCaptureInput("STERNUM", 1, "TEST_IMAGE_STERNUM".toByteArray()),
-            ResearchCaptureInput("FOREHEAD", 1, "TEST_IMAGE_FOREHEAD".toByteArray()),
-            ResearchCaptureInput("SCLERA_FLASH", 1, "TEST_IMAGE_SCLERA_FLASH".toByteArray()),
-            ResearchCaptureInput("SCLERA_NOFLASH", 1, "TEST_IMAGE_SCLERA_NOFLASH".toByteArray())
+            ResearchCaptureInput("STERNUM", 1, "TEST_IMAGE_STERNUM".toByteArray(), qualityPassed = true),
+            ResearchCaptureInput("FOREHEAD", 1, "TEST_IMAGE_FOREHEAD".toByteArray(), qualityPassed = true),
+            ResearchCaptureInput("SCLERA_FLASH", 1, "TEST_IMAGE_SCLERA_FLASH".toByteArray(), qualityPassed = true),
+            ResearchCaptureInput("SCLERA_NOFLASH", 1, "TEST_IMAGE_SCLERA_NOFLASH".toByteArray(), qualityPassed = true)
         )
 
         // Save session

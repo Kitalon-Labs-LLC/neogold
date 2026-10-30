@@ -14,7 +14,6 @@
     "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R01ResearchUnlockScreen.kt": 15,
     "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R02StudyHomeScreen.kt": 6,
     "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R03ParticipantConsentScreen.kt": 13,
-    "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R04ResearchCaptureScreen.kt": 9,
     "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R05TsbEntryScreen.kt": 10,
     "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R06SessionCompleteScreen.kt": 13,
     "android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/ui/R07ExportScreen.kt": 19,

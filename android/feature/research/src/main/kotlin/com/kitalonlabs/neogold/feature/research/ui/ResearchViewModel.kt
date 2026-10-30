@@ -4,11 +4,13 @@ import com.kitalonlabs.neogold.core.data.local.entity.ResearchParticipantEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
 import com.kitalonlabs.neogold.core.data.pin.PinCheckResult
 import com.kitalonlabs.neogold.core.security.pin.ResearchSessionManager
+import com.kitalonlabs.neogold.engine.cardtrust.StudyProfilePayload
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import com.kitalonlabs.neogold.feature.research.data.ResearchCaptureInput
 import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
 import com.kitalonlabs.neogold.feature.research.data.ResearchSessionResult
 import com.kitalonlabs.neogold.feature.research.data.TsbInput
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class ResearchClinicalInputs(
     val participantCode: String,
@@ -35,7 +38,9 @@ data class ResearchClinicalInputs(
 class ResearchViewModel(
     private val repository: ResearchRepository,
     private val sessionManager: ResearchSessionManager? = null,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
+    /** Where the PIN hashing runs: Argon2 uses 19 MiB and about a second, which must not happen on the main thread. */
+    private val cpu: CoroutineDispatcher = Dispatchers.Default
 ) {
 
     private val _activeStudy = MutableStateFlow<ResearchStudyEntity?>(null)
@@ -67,6 +72,12 @@ class ResearchViewModel(
 
     private val _cardTrustStatus = MutableStateFlow(CardTrustStatus.UNVERIFIED)
     val cardTrustStatus: StateFlow<CardTrustStatus> = _cardTrustStatus.asStateFlow()
+
+    private val _scannedProfile = MutableStateFlow<StudyProfilePayload?>(null)
+
+    /** The study named by the QR that was just scanned and verified, shown before the PIN is asked for. */
+    val scannedProfile: StateFlow<StudyProfilePayload?> = _scannedProfile.asStateFlow()
+    private var scannedProfileBytes: ByteArray? = null
 
     private val _pendingUploadsCount = MutableStateFlow(0)
     val pendingUploadsCount: StateFlow<Int> = _pendingUploadsCount.asStateFlow()
@@ -115,6 +126,35 @@ class ResearchViewModel(
         }
     }
 
+    /** A study QR was scanned: check its signature and show which study it is. A QR that fails says why. */
+    fun onStudyQrScanned(qrPayload: ByteArray) {
+        _errorMessage.value = null
+        repository.verifyStudyProfile(qrPayload)
+            .onSuccess {
+                _scannedProfile.value = it
+                scannedProfileBytes = qrPayload
+            }
+            .onFailure { _errorMessage.value = it.message }
+    }
+
+    fun clearScannedProfile() {
+        _scannedProfile.value = null
+        scannedProfileBytes = null
+    }
+
+    /** Enrolls in the scanned study with a new PIN, typed twice. */
+    fun enrollWithScannedProfile(pin: String, confirmPin: String, onSuccess: (ResearchStudyEntity) -> Unit) {
+        val bytes = scannedProfileBytes ?: return
+        if (pin != confirmPin) {
+            _errorMessage.value = "The two PINs do not match."
+            return
+        }
+        unlockOrEnrollWithQr(bytes, pin) {
+            clearScannedProfile()
+            onSuccess(it)
+        }
+    }
+
     fun unlockOrEnrollWithQr(
         qrPayload: ByteArray,
         pin: String,
@@ -122,7 +162,7 @@ class ResearchViewModel(
     ) {
         scope.launch {
             _errorMessage.value = null
-            val result = repository.unlockWithStudyQr(qrPayload, pin)
+            val result = withContext(cpu) { repository.unlockWithStudyQr(qrPayload, pin) }
             result.onSuccess { study ->
                 _activeStudy.value = study
                 _isUnlocked.value = true
@@ -148,7 +188,7 @@ class ResearchViewModel(
         }
         scope.launch {
             _errorMessage.value = null
-            when (val check = repository.verifyPin(study.id, pin)) {
+            when (val check = withContext(cpu) { repository.verifyPin(study.id, pin) }) {
                 is PinCheckResult.Success -> {
                     _isUnlocked.value = true
                     _isLockedOut.value = false

@@ -50,7 +50,7 @@ class CardScanService(
     }
 
     private suspend fun store(batch: CardBatchPayload, payload: ByteArray): CardScanOutcome {
-        val referenceValues = CardBatchReference.toJson(batch.patches) ?: return reject(CardRejection.UNREADABLE)
+        val referenceValues = CardBatchReference.toJson(batch) ?: return reject(CardRejection.UNREADABLE)
         val existing = cardBatches.getBatch(batch.batchId)
         // The same batch ID with other signed content is not a re-scan: the server refuses it too (CONFLICT_IMMUTABLE),
         // and the colors of a batch already in use must not change under the phone.

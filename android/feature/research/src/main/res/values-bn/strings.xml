@@ -1,0 +1,29 @@
+<resources>
+    <!-- Draft for the nurse wording panel, like the rest of the Bangla text (doc 6 Section 10.4) -->
+    <string name="research_badge">গবেষণা মোড</string>
+
+    <string name="r04_title">৪ স্থানের গবেষণা প্রোটোকল</string>
+    <string name="r04_step_of">ধাপ %1$d / %2$d</string>
+    <string name="r04_site_sternum">বুকের মাঝের হাড় (স্টার্নাম)</string>
+    <string name="r04_site_forehead">কপাল</string>
+    <string name="r04_site_sclera_flash">চোখের সাদা অংশ (ফ্ল্যাশ সহ)</string>
+    <string name="r04_site_sclera_ambient">চোখের সাদা অংশ (চারপাশের আলো, ফ্ল্যাশ ছাড়া)</string>
+    <string name="r04_guidance_sternum">নিওগোল্ড কার্ডটি শিশুর বুকের মাঝের হাড়ের উপর সমতলভাবে রাখুন, ত্বকের জানালা যেন খোলা থাকে। ফোনটি কার্ডের ১৫ থেকে ২০ সেমি উপরে, সমান্তরালে ধরুন।</string>
+    <string name="r04_guidance_forehead">কার্ডটি আলতো করে শিশুর কপালে রাখুন। চারপাশের আলোয় ক্যামেরা কার্ডের সমান্তরালে রাখুন।</string>
+    <string name="r04_guidance_sclera_flash">কার্ডটি চোখের পাশে রেখে ক্যামেরা চোখের দিকে ধরুন। এই ছবিতে ফ্ল্যাশ জ্বলবে।</string>
+    <string name="r04_guidance_sclera_ambient">কার্ডটি চোখের পাশে রেখে চারপাশের আলোয়, ফ্ল্যাশ ছাড়া, ক্যামেরা চোখের দিকে ধরে রাখুন।</string>
+    <string name="r04_capture_button">%1$s-এর ছবি তুলুন</string>
+    <string name="r04_capturing">ছবি তোলা হচ্ছে…</string>
+    <string name="r04_quality_issue">এই ছবিটি ব্যবহারযোগ্য নাও হতে পারে। %1$s</string>
+    <string name="r04_retake">আবার তুলুন</string>
+    <string name="r04_keep">এই ছবি রাখুন</string>
+    <string name="r04_capture_failed">ছবি তোলা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="r04_too_large">ছবিটি রাখার জন্য অনেক বড়। আবার চেষ্টা করুন।</string>
+    <string name="r04_complete_title">৪টি ছবিই তোলা হয়েছে</string>
+    <string name="r04_complete_body">এই সেশন শেষ না হওয়া পর্যন্ত ছবিগুলো মেমরিতে থাকে। এবার রক্ত পরীক্ষার ফলাফল যোগ করুন, অথবা এড়িয়ে পরে যোগ করুন।</string>
+    <string name="r04_continue_tsb">রক্ত পরীক্ষার ফলাফল দিতে এগিয়ে যান</string>
+    <string name="r04_cancel">সেশন বাতিল করুন</string>
+
+    <string name="r01_scan_hint">ক্যামেরা স্টাডির QR কোডের দিকে ধরুন।</string>
+    <string name="r01_scan_cancel">স্ক্যান বাতিল করুন</string>
+</resources>

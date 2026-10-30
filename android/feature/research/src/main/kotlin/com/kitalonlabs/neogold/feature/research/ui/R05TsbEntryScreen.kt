@@ -50,6 +50,8 @@ import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 fun R05TsbEntryScreen(
     initialParticipantCode: String? = null,
     isDeferredEntry: Boolean = false,
+    /** Why the session or the value could not be saved, from the layer below. */
+    saveError: String? = null,
     onSaveTsb: (
         participantCode: String,
         tsbMgDl: Double,
@@ -253,10 +255,11 @@ fun R05TsbEntryScreen(
             }
         }
 
-        if (errorMessage != null) {
+        val shownError = errorMessage ?: saveError
+        if (shownError != null) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = errorMessage!!,
+                text = shownError,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.testTag("r05_error_message")
