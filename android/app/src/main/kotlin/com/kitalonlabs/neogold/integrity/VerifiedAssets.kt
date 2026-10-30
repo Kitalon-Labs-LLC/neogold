@@ -6,6 +6,7 @@ import com.kitalonlabs.neogold.core.security.integrity.BundleManifestVerifier
 import com.kitalonlabs.neogold.core.security.integrity.IntegrityResult
 import com.kitalonlabs.neogold.engine.cardtrust.TrustList
 import com.kitalonlabs.neogold.engine.cardtrust.TrustListParser
+import com.kitalonlabs.neogold.engine.estimation.EstimationEngine
 import com.kitalonlabs.neogold.engine.triage.SignoffStatus
 import com.kitalonlabs.neogold.engine.triage.TriageConfig
 import com.kitalonlabs.neogold.engine.triage.TriageConfigParser
@@ -24,7 +25,9 @@ class VerifiedAssets private constructor(
     val triageConfig: TriageConfig?,
     val modelVersion: String? = null,
     /** The signed trust list the card and study QR checks run against; null unless the whole bundle verified. */
-    val trustList: TrustList? = null
+    val trustList: TrustList? = null,
+    /** The model, parsed from the very bytes that were verified; null when there is none or it cannot be read. */
+    val estimationEngine: EstimationEngine? = null
 ) {
     /** Screening and research may run on these files. */
     val isUsable: Boolean get() = integrity.isScreeningAllowed
@@ -113,7 +116,29 @@ class VerifiedAssets private constructor(
                 }
             }
             val modelVersion = MODEL_VERSION.find(modelText)?.groupValues?.get(1)
-            return VerifiedAssets(IntegrityResult.Valid(manifest), config, modelVersion, trustList)
+            // A model that cannot be read leaves no estimate engine, so screening does not start (the container checks);
+            // research does not need the model, so the rest of the bundle stays usable.
+            return VerifiedAssets(
+                IntegrityResult.Valid(manifest),
+                config,
+                modelVersion,
+                trustList,
+                parseModel(modelText)
+            )
+        }
+
+        /** The model from the verified text, or null when the text is blank or cannot be read. */
+        @Suppress(
+            "TooGenericExceptionCaught"
+        ) // the parser's failures are many; any of them means the model is unusable
+        private fun parseModel(modelText: String): EstimationEngine? = if (modelText.isBlank()) {
+            null
+        } else {
+            try {
+                EstimationEngine.fromJson(modelText)
+            } catch (_: RuntimeException) {
+                null
+            }
         }
     }
 }

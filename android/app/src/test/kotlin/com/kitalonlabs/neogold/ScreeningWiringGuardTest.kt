@@ -5,10 +5,11 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Screening must not be offered while its result is a placeholder (H1 of the package B1 safety review, BUG-2026-001).
- * `MainActivity` still sets a made-up estimate on S19; until package E1 replaces it with the pipeline and the triage
- * engine, `NeoGoldContainer.SCREENING_PIPELINE_WIRED` stays false, so a signed config with `triageEnabled: true` cannot
- * show a baby "no further action".
+ * Screening must not be offered while any of its results is made up (H1 of the package B1 safety review, BUG-2026-001), and
+ * since package E1 it is offered only because every result comes from the pipeline and the triage engine. These tests keep
+ * it that way: `NeoGoldContainer.SCREENING_PIPELINE_WIRED` may be true only while no screen assigns a made-up estimate, takes
+ * a stand-in photo or decides a rule outside the engine. The shipped config still has `triageEnabled: false` for the closed
+ * research build (PRD D10); a build that turns it on needs the clinical lead's review of A1, A2, A3, A8 and A9 first.
  */
 class ScreeningWiringGuardTest {
 
@@ -24,22 +25,52 @@ class ScreeningWiringGuardTest {
         it.isFile && it.extension == "kt"
     }.joinToString("\n") { it.readText() }
 
-    private val placeholderResult = Regex("sessionEstimated(Low|High)\\s*=\\s*[0-9]")
+    private val madeUpEstimate = Regex("sessionEstimated(Low|High)\\s*=\\s*[0-9]")
 
     @Test
-    fun theWiringFlagStaysFalse_whileAnyScreenAssignsAMadeUpEstimate() {
-        val stillAPlaceholder = placeholderResult.containsMatchIn(productionText())
+    fun theWiringFlagIsTrueOnlyWhileNoScreenAssignsAMadeUpEstimate() {
+        val text = productionText()
 
-        if (stillAPlaceholder) {
-            assertThat(NeoGoldContainer.SCREENING_PIPELINE_WIRED).isFalse()
+        if (NeoGoldContainer.SCREENING_PIPELINE_WIRED) {
+            assertThat(madeUpEstimate.containsMatchIn(text)).isFalse()
+            assertThat(text).doesNotContain("createDefaultCaptureFrame")
         }
     }
 
     @Test
-    fun theWiringFlagIsOffWhileThePlaceholderIsThere_soTheGuardAboveHasSomethingToGuard() {
-        // If this fails because the placeholder is gone, package E1 landed: flip the flag and delete both tests.
-        assertThat(placeholderResult.containsMatchIn(productionText())).isTrue()
-        assertThat(NeoGoldContainer.SCREENING_PIPELINE_WIRED).isFalse()
+    fun everyScreeningResultComesFromTheFlowAndTheEngine_notFromNavigationCode() {
+        val activity = File(appSources, "com/kitalonlabs/neogold/MainActivity.kt").readText()
+
+        // the flow decides; the route only asks it
+        assertThat(activity).contains("flow.decide()")
+        assertThat(activity).contains("flow.analyze(")
+        assertThat(activity).contains("newScreening()")
+        // an outcome that is settled is shown at once, and a route that lost its flow goes Home, never to an empty screen
+        assertThat(activity).contains("flow?.decideEarly()")
+        assertThat(activity).contains("screening == null ->")
+        // the screening is held by the app, so rotation and the app lock do not lose it
+        assertThat(activity).contains("var screening by screeningHolder::flow")
+        // nothing in a route sets a rule outcome or a result by hand
+        for (handMade in listOf(
+            "sessionRuleOutcome",
+            "sessionTriageAction",
+            "sessionReasonCodes",
+            "TriageReasonCode.R"
+        )) {
+            assertThat(activity).doesNotContain(handMade)
+        }
+        // an age is stored as it was entered, never clamped into range, and no version is invented for a record
+        assertThat(activity).doesNotContain("coerceIn(0.0, 720.0)")
+        assertThat(activity).doesNotContain("coerceIn(22, 44)")
+    }
+
+    @Test
+    fun theShippedConfigStillHasTriageSwitchedOff_forTheClosedResearchBuild() {
+        // app/src/main/kotlin -> main -> src -> app -> android -> the repository
+        val repository = appSources.parentFile.parentFile.parentFile.parentFile.parentFile
+        val config = File(repository, "config/triage-config.json").readText()
+
+        assertThat(Regex("\"triageEnabled\"\\s*:\\s*false").containsMatchIn(config)).isTrue()
     }
 
     @Test

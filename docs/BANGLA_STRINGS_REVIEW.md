@@ -32,6 +32,8 @@ All Bengali strings below are currently **Draft for nurse panel review**.
 | `next_no_further` | Continue routine care. Watch for danger signs. | নিয়মিত যত্ন চালিয়ে যান। বিপদচিহ্নের দিকে নজর রাখুন। | S20 Next step line for routine care | Draft for nurse panel |
 | `next_blood_test` | Send for a blood test today. | আজই রক্ত পরীক্ষার জন্য পাঠান। | S20 next step line for "Blood test today" (doc 6 Section 3) | Draft for nurse panel |
 | `next_recheck` | Check again at %1$s. Come back sooner if danger signs appear. | %1$s সময়ে আবার দেখুন। বিপদচিহ্ন দেখা দিলে আরও আগে ফিরে আসুন। | S20 next step line for "Screen again in N hours" (doc 6 Section 3) | Draft for nurse panel |
+| `next_use_blood_test` | Use a blood test. | রক্ত পরীক্ষা করান। | S20 and S14 next step line on a "cannot screen" card (doc 6 Section 3) | Draft for nurse panel |
+| `next_doctor_review` | This baby needs a doctor's review. | এই শিশুকে ডাক্তার দেখাতে হবে। | S20 and S14 next step line when the baby is over 14 days (doc 6 Section 3) | Draft for nurse panel |
 | `confirm_blood` | Always confirm with a blood test. | সবসময় রক্ত পরীক্ষা করে নিশ্চিত হোন। | S04, S20 Mandatory safety reminder | Draft for nurse panel |
 | `experimental` | Experimental. Not yet validated in Bangladesh. | পরীক্ষামূলক। বাংলাদেশে এখনো যাচাই করা হয়নি। | S09, S20 Persistent amber banner | Draft for nurse panel |
 | `cannot_screen` | NeoGold cannot screen this baby. Use a blood test. | নিওগোল্ড এই শিশুকে পরীক্ষা করতে পারবে না। রক্ত পরীক্ষা করান। | S14 Cannot screen rule outcome | Draft for nurse panel |

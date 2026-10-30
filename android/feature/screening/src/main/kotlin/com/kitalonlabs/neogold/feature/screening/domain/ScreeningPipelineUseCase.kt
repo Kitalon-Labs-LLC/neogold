@@ -134,7 +134,8 @@ class ScreeningPipelineUseCase(
 
                 // 1. Monotonic gray-ramp linearization
                 val observedGrays = CardGeometry.GRAY_RAMP_PATCH_IDS.map { patchId ->
-                    sampledPatches[patchId] ?: Rgb(0.5, 0.5, 0.5)
+                    // a gray patch that was not sampled is a failed analysis (a blood test), never a made-up gray
+                    sampledPatches[patchId] ?: error("Gray patch $patchId was not sampled")
                 }
                 val linearizer = PerChannelLinearizer.fit(observedGrays, GRAY_RAMP_REFLECTANCES)
 

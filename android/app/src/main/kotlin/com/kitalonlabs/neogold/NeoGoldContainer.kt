@@ -33,8 +33,10 @@ import com.kitalonlabs.neogold.core.security.pin.PinHmacKeyProvider
 import com.kitalonlabs.neogold.core.security.pin.ResearchSessionManager
 import com.kitalonlabs.neogold.engine.camera.qualification.CameraQualifier
 import com.kitalonlabs.neogold.engine.camera.qualification.QualificationThresholds
+import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
 import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
+import com.kitalonlabs.neogold.engine.triage.TriageEngine
 import com.kitalonlabs.neogold.engine.vision.QualityThresholds
 import com.kitalonlabs.neogold.engine.vision.VisionEngine
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardBatchReference
@@ -47,6 +49,10 @@ import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
 import com.kitalonlabs.neogold.feature.research.export.ResearchExportManager
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
 import com.kitalonlabs.neogold.feature.research.ui.StudyServerViewModel
+import com.kitalonlabs.neogold.feature.screening.domain.NO_CARD_SCANNED
+import com.kitalonlabs.neogold.feature.screening.domain.ScreeningFlow
+import com.kitalonlabs.neogold.feature.screening.domain.ScreeningPipelineUseCase
+import com.kitalonlabs.neogold.feature.screening.domain.VersionsRecord
 import com.kitalonlabs.neogold.integrity.VerifiedAssets
 import com.kitalonlabs.neogold.onboarding.OnboardingServices
 import com.kitalonlabs.neogold.storage.StorageCoordinator
@@ -109,6 +115,9 @@ class NeoGoldContainer(private val application: Application) {
     val dataStore: NeoGoldDataStore by lazy { DefaultNeoGoldDataStore(application) }
     val researchSession = ResearchSessionManager()
 
+    /** The screening in progress; cleared by Reset and Delete all data. */
+    val screeningHolder = ScreeningHolder()
+
     // Integrity of the bundled clinical files (BUG-2026-007)
     val integrity: IntegrityStateManager = DefaultIntegrityStateManager()
 
@@ -132,8 +141,8 @@ class NeoGoldContainer(private val application: Application) {
     /**
      * Whether the screening screens are offered today: the verified config turns triage on, is signed for a public
      * build and is not past `validUntil` ([VerifiedAssets.triageAvailable]), AND the screens really compute a result.
-     * Until package E1 replaces the placeholder S19 and S20 save path, the second condition is false whatever the
-     * config says: a signed `triageEnabled: true` would otherwise show every baby a made-up "no further action".
+     * Since package E1 they do (the pipeline and the triage engine decide every result), but the shipped config still has
+     * `triageEnabled: false` for the closed research build, and turning it on needs the clinical lead's review first.
      */
     fun screeningAvailable(today: LocalDate = LocalDate.now()): Boolean =
         SCREENING_PIPELINE_WIRED && assets.triageAvailable(today, isPublicBuild = !isDebuggable)
@@ -265,6 +274,56 @@ class NeoGoldContainer(private val application: Application) {
     suspend fun scheduleUploads() {
         storage.awaitDatabase()?.let { studyServer(it)?.scheduleUploads() }
     }
+
+    /**
+     * A new screening over the verified bundle, or null when there is none to run on: the triage config, the model and the
+     * integrity check must all be good. The engine is told whether this is a public build, so an unsigned config stops a
+     * release build (TC-TRI-26). Every decision in the flow is the engine's (package E1).
+     */
+    fun newScreening(): ScreeningFlow? {
+        // The quality limits come from the signed config only. With none, the code's own defaults would be used silently, so
+        // screening does not start (BUG-2026-071 item 1).
+        val config = assets.triageConfig?.takeIf { assets.isUsable && it.qualityThresholds.isNotEmpty() }
+        val model = assets.estimationEngine
+        val modelVersion = assets.modelVersion
+        if (config == null || model == null || modelVersion == null) return null
+        return ScreeningFlow(
+            integrityChecker = { assets.isUsable },
+            triageEngine = TriageEngine(config, isPublicBuild = !isDebuggable),
+            estimationEngine = model,
+            baseVersions = VersionsRecord(
+                appVersion = BuildConfig.VERSION_NAME,
+                modelVersion = modelVersion,
+                configVersion = config.configVersion,
+                cardBatchId = NO_CARD_SCANNED,
+                deviceModel = Build.MODEL,
+                deviceManufacturer = Build.MANUFACTURER,
+                osVersion = "Android ${Build.VERSION.RELEASE}"
+            ),
+            pipeline = ScreeningPipelineUseCase(
+                integrityChecker = { assets.isUsable },
+                visionEngine = VisionEngine(thresholds = QualityThresholds.fromMap(config.qualityThresholds))
+            )
+        )
+    }
+
+    /**
+     * The card batch a screening is checked against: the same one a research session would name ([chooseResearchCard]),
+     * checked against the trust list now. A card that is missing, expired or not trusted is a failed check, never a pass.
+     */
+    suspend fun screeningCardCheck(database: NeoGoldDatabase): VerificationResult<CardBatchPayload> =
+        withContext(Dispatchers.IO) {
+            val trustList = assets.trustList ?: return@withContext VerificationResult.Malformed
+            val batches = database.cardBatchDao()
+            val profileCard = database.deviceProfileDao().getActiveProfile()?.cardBatchId?.let { batches.getBatch(it) }
+            val card = chooseResearchCard(profileCard, batches.getAllBatches(), System.currentTimeMillis())
+                ?: return@withContext VerificationResult.Malformed
+            CardTrustVerifier(trustList).verifyCardBatch(card.qrPayload)
+        }
+
+    /** The id of the phone's active device profile, for the screening record; null if there is none. */
+    suspend fun activeDeviceProfileId(database: NeoGoldDatabase): String? =
+        withContext(Dispatchers.IO) { database.deviceProfileDao().getActiveProfile()?.id }
 
     /**
      * What a research photo session needs from the card the phone works with: the camera step that takes and checks the
@@ -416,6 +475,7 @@ class NeoGoldContainer(private val application: Application) {
     private suspend fun removeEverythingBesidesTheStores() {
         BackgroundWork.cancelAll(application)
         researchSession.lock()
+        screeningHolder.flow = null
         wipers.forEach { it.wipe() }
         dataStore.clearAll()
     }
@@ -429,6 +489,7 @@ class NeoGoldContainer(private val application: Application) {
     suspend fun deleteAllData(): PurgeResult {
         BackgroundWork.cancelAll(application)
         researchSession.lock()
+        screeningHolder.flow = null
 
         // Storage that cannot be read is reset by StorageCoordinator.resetAndOpen, not deleted from Settings.
         val current = (storage.state.value as? StorageState.Ready)?.database
@@ -446,11 +507,11 @@ class NeoGoldContainer(private val application: Application) {
 
     companion object {
         /**
-         * True only when S19 runs the real pipeline and the triage engine. It is false while the screens show a
-         * placeholder result (BUG-2026-001). `ScreeningWiringGuardTest` fails if this is flipped while the
-         * placeholder is still in `MainActivity`.
+         * True only when every screening result comes from the pipeline and the triage engine (package E1,
+         * BUG-2026-001). `ScreeningWiringGuardTest` fails if it is true while a made-up estimate or a stand-in photo is
+         * still in `MainActivity`. It does not switch screening on: that is the signed config's `triageEnabled`.
          */
-        const val SCREENING_PIPELINE_WIRED = false
+        const val SCREENING_PIPELINE_WIRED = true
 
         const val DEVICE_KEY_ALIAS_PREFIX = "neogold_device_key_"
         const val EXPORT_STAGING_DIR = "export_staging"

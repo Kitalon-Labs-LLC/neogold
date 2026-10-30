@@ -105,7 +105,7 @@ class ScreeningFlowRunTest {
                 pipeline,
                 Dispatchers.Default,
                 timeoutMs,
-                run
+                runPipeline = run
             )
         }
     }
@@ -231,21 +231,26 @@ class ScreeningFlowRunTest {
     }
 
     @Test
-    fun anAnalysisThatTakesTooLongIsABloodTest_notAWait() = runBlocking<Unit> {
+    fun anAnalysisThatTakesTooLongIsABloodTest_andTheWorkerDoesNotWaitForIt() = runBlocking<Unit> {
+        // a computation that never checks for cancellation: only a real time limit gets the worker out
         val f = flow(timeoutMs = 200) { _ ->
-            Thread.sleep(2_000)
+            Thread.sleep(3_000)
             PipelineExecutionResult.Error(IllegalStateException("never reached"))
         }
         answerAllWell(f)
         f.decide()
         f.cardChecked(VerificationResult.Verified(batch))
 
+        val started = System.nanoTime()
         val state = f.analyze(goodFrame, null)
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
 
         val fallback = state as ScreeningState.BloodTestFallback
         assertThat(
             (fallback.triageResult as TriageResult.Action).reasonCode
         ).isEqualTo(TriageReasonCode.QUALITY_FALLBACK)
+        // the answer came at about the limit, not when the 3 second computation ended
+        assertThat(elapsedMs).isLessThan(1_500L)
     }
 
     @Test
@@ -289,5 +294,86 @@ class ScreeningFlowRunTest {
 
         assertThat((state as ScreeningState.Blocked).reason).isEqualTo(CardBlockReason.BATCH_EXPIRED)
         assertThat(f.record("s", 1L, null, null, 0)).isNull()
+    }
+
+    // ---- the outcome is settled as soon as it can be (safety review of package E1) ---------------------------------
+
+    @Test
+    fun aDangerSignIsDecidedAtOnce_withoutTheLaterQuestions() {
+        val f = flow()
+        f.begin(guardianConsentConfirmed = true)
+        f.answerAgeAndGestation(30.0, 39)
+        f.answerEarlyJaundice(false)
+        f.answerDangerSigns(true)
+        // the phototherapy question has not been asked
+
+        assertThat(f.isComplete).isFalse()
+        val state = f.decideEarly() as ScreeningState.UrgentReferral
+
+        assertThat((state.triageResult as TriageResult.Action).reasonCode).isEqualTo(TriageReasonCode.R1)
+        assertThat(f.decidedAtMs).isGreaterThan(0L)
+    }
+
+    @Test
+    fun earlyJaundiceIsDecidedOnceTheDangerSignsAnswerIsIn_butNotBefore() {
+        val f = flow()
+        f.begin(guardianConsentConfirmed = true)
+        f.answerAgeAndGestation(20.0, 39)
+        f.answerEarlyJaundice(true)
+
+        // danger signs (R1) outrank early jaundice (R2) and have not been asked yet
+        assertThat(f.decideEarly()).isNull()
+
+        f.answerDangerSigns(false)
+        val state = f.decideEarly() as ScreeningState.UrgentReferral
+        assertThat((state.triageResult as TriageResult.Action).reasonCode).isEqualTo(TriageReasonCode.R2)
+    }
+
+    @Test
+    fun whenNothingIsSettledNothingIsDecidedEarly() {
+        val f = flow()
+        f.begin(guardianConsentConfirmed = true)
+        f.answerAgeAndGestation(48.0, 38)
+        f.answerEarlyJaundice(false)
+        f.answerDangerSigns(false)
+
+        assertThat(f.decideEarly()).isNull()
+        assertThat(f.currentState).isInstanceOf(ScreeningState.Inputs::class.java)
+    }
+
+    @Test
+    fun aSecondTapOnSaveWritesNoSecondRow() {
+        val f = flow()
+        f.begin(guardianConsentConfirmed = true)
+        f.answerAgeAndGestation(30.0, 39)
+        f.answerEarlyJaundice(false)
+        f.answerDangerSigns(true)
+        f.answerPriorPhototherapy(false)
+        f.decide()
+
+        val first = f.record("a", 1L, null, null)
+        val second = f.record("b", 2L, null, null)
+
+        assertThat(first).isNotNull()
+        assertThat(second).isNull()
+    }
+
+    @Test
+    fun aNewScreeningStartsClean_noAnswerAndNoSavedMarkCarriesOver() {
+        val f = flow()
+        f.begin(guardianConsentConfirmed = true)
+        f.answerAgeAndGestation(30.0, 39)
+        f.answerEarlyJaundice(false)
+        f.answerDangerSigns(true)
+        f.answerPriorPhototherapy(false)
+        f.decide()
+        f.record("a", 1L, null, null)
+
+        f.begin(guardianConsentConfirmed = true)
+
+        assertThat(f.isComplete).isFalse()
+        assertThat(f.currentState).isInstanceOf(ScreeningState.Inputs::class.java)
+        assertThat(f.decidedAtMs).isEqualTo(0L)
+        assertThat(f.record("b", 2L, null, null)).isNull() // nothing ended yet
     }
 }

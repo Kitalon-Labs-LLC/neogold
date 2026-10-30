@@ -9,6 +9,8 @@ import java.io.File
  * Tests for the result screen, on the real resources and the real screen source (package E1 replaced the first versions of
  * these tests, which compared constants written in the test with themselves):
  * - TC-UI-01: the four results have four different titles (the card's other signals are tested in `:core:designsystem`)
+ * - TC-UI-02: the experimental label is the first thing on the screen
+ * - TC-UI-03: the versions footer and the blood test reminder are on every result
  * - TC-UI-09: What to tell the mother card copy and availability
  * - TC-UI-14: Decision-support framing (Suggested next step and You decide)
  * - TC-TRI-26: with triage off the screen shows the blood test message and no result
@@ -47,6 +49,28 @@ class ResultScreenTest {
             val titles = keys.map { key -> all.getValue(key) }
             assertThat(titles.toSet()).hasSize(4)
         }
+    }
+
+    @Test
+    fun tcUi02_theExperimentalLabelComesBeforeTheResultCard() {
+        val screen = source("S20ResultScreen.kt")
+        assertThat(screen.indexOf("NgExperimentalBanner(")).isAtLeast(0)
+        assertThat(screen.indexOf("NgExperimentalBanner(")).isLessThan(screen.indexOf("NgTriageCard("))
+        val english = strings("values")
+        assertThat(english.getValue("experimental")).isEqualTo("Experimental. Not yet validated in Bangladesh.")
+        assertThat(strings("values-bn").getValue("experimental")).isNotEmpty()
+    }
+
+    @Test
+    fun tcUi03_theVersionsFooterAndTheBloodTestReminderAreOnEveryResult() {
+        val screen = source("S20ResultScreen.kt")
+        // the footer names the four things a result can be traced to (NFR-10), and is not inside a branch
+        val footer = screen.substringAfter("NgVersionFooter(").substringBefore(")")
+        for (field in listOf("appVersion", "modelVersion", "configVersion", "cardBatchId")) {
+            assertThat(footer).contains(field)
+        }
+        assertThat(screen).contains("stringResource(R.string.confirm_blood)")
+        assertThat(screen).contains("stringResource(R.string.about_limitations)")
     }
 
     @Test

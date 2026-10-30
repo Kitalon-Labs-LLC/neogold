@@ -6,6 +6,8 @@
     <string name="action_no_further">No further action from this screen</string>
     <string name="next_no_further">Continue routine care. Watch for danger signs.</string>
     <string name="next_blood_test">Send for a blood test today.</string>
+    <string name="next_use_blood_test">Use a blood test.</string>
+    <string name="next_doctor_review">This baby needs a doctor\'s review.</string>
     <string name="next_recheck">Check again at %1$s. Come back sooner if danger signs appear.</string>
     <string name="confirm_blood">Always confirm with a blood test.</string>
     <string name="experimental">Experimental. Not yet validated in Bangladesh.</string>

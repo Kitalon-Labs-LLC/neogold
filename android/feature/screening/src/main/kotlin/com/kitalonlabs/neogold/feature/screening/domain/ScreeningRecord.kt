@@ -19,6 +19,7 @@ private const val MILLIS_PER_HOUR = 3_600_000L
  * @param registerNumber the facility register number the worker typed, or null
  * @param deviceProfileId the phone's active device profile, or null if it has none
  * @param captureAttempts how many photos were taken
+ * @param decidedAtMs when the decision was shown; a recheck is due its hours after this, not after the row was written
  * @return null for a state that is not the end of a session with a decision (a blocked start has none to record)
  */
 fun ScreeningState.toSessionEntity(
@@ -26,7 +27,8 @@ fun ScreeningState.toSessionEntity(
     nowMs: Long,
     registerNumber: String?,
     deviceProfileId: String?,
-    captureAttempts: Int
+    captureAttempts: Int,
+    decidedAtMs: Long = nowMs
 ): ScreeningSessionEntity? {
     val ended = endedSession() ?: return null
     val shown = ended.triageResult.toPresentation()
@@ -51,7 +53,7 @@ fun ScreeningState.toSessionEntity(
         estimateLowMgDl = estimate?.lower,
         estimateHighMgDl = estimate?.upper,
         thresholdMgDl = shown.thresholdMgDl,
-        recheckDueAt = shown.recheckHours?.let { nowMs + it * MILLIS_PER_HOUR },
+        recheckDueAt = shown.recheckHours?.let { decidedAtMs + it * MILLIS_PER_HOUR },
         captureAttempts = captureAttempts,
         registerNumber = registerNumber,
         registerNumberErasedAt = null,

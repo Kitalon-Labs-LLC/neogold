@@ -99,8 +99,6 @@ fun S10BirthTimeGaScreen(
     val birthTimeMs = birthTimeSetMs
     val isBirthInFuture = birthTimeMs != null && ClockIntegrityValidator.isBirthTimeInFuture(birthTimeMs, currentPhoneTimeEpochMs)
     val ageHours = birthTimeMs?.let { ClockIntegrityValidator.computeAgeInHours(it, currentPhoneTimeEpochMs) }
-    // 30 days or more is not a newborn the app can take (the server's limit is 720 hours): the worker checks the time
-    val isTooOld = ageHours != null && ageHours >= MAX_AGE_HOURS
 
     val phoneTimeFormatted = remember(currentPhoneTimeEpochMs) {
         ClockIntegrityValidator.formatPhoneTimeNow(currentPhoneTimeEpochMs)
@@ -118,13 +116,12 @@ fun S10BirthTimeGaScreen(
     }
 
     // Next is enabled ONLY when the birth time and the gestational age are both set by the worker, the clock is valid, and
-    // the birth is neither in the future nor 30 days ago or more
+    // the birth is not in the future (an older baby goes on: the engine's rule R5 sends a baby over 14 days to a doctor's review)
     val isNextEnabled = birthTimeMs != null &&
         gestationalAgeWeeks != null &&
         !isClockBeforeBuild &&
         !isClockDriftExceeded &&
-        !isBirthInFuture &&
-        !isTooOld
+        !isBirthInFuture
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -225,16 +222,6 @@ fun S10BirthTimeGaScreen(
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag("birth_future_error")
-                )
-            }
-
-            if (isTooOld) {
-                Text(
-                    text = stringResource(R.string.birth_time_too_old_error),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.testTag("birth_too_old_error")
                 )
             }
 
@@ -360,6 +347,3 @@ fun S10BirthTimeGaScreen(
         }
     }
 }
-
-/** The age at which the app no longer takes the baby: 30 days, the limit of the study server (doc 7). */
-private const val MAX_AGE_HOURS = 720.0

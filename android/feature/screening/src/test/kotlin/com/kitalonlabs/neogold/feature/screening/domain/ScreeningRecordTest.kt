@@ -124,4 +124,16 @@ class ScreeningRecordTest {
         assertThat(save(ScreeningState.Blocked(null, CardBlockReason.ASSET_INTEGRITY_COMPROMISED))).isNull()
         assertThat(save(ScreeningState.Blocked(inputs, CardBlockReason.BATCH_EXPIRED))).isNull()
     }
+
+    @Test
+    fun aRecheckIsDueItsHoursAfterTheDecisionWasShown_notAfterSaveWasTapped() {
+        val interval = PredictionInterval(10.0, 8.0, 12.0)
+        val recheck = action(TriageAction.RECHECK, "RECHECK_ZONE", interval, 12.5, recheck = 24)
+        val decidedAt = now - 3 * 3_600_000L // the card was shown three hours before Save
+
+        val row = ScreeningState.BloodTestFallback(inputs, recheck, versions)
+            .toSessionEntity("s-1", now, null, null, 1, decidedAtMs = decidedAt)!!
+
+        assertThat(row.recheckDueAt).isEqualTo(decidedAt + 24 * 3_600_000L)
+    }
 }

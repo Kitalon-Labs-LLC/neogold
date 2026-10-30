@@ -75,12 +75,12 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 
 | ID | Title | Found | Source | Build | Device | Area | Severity | Clinical | Hazard | Priority | Status | Owner | Test case | Fix version |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| BUG-2026-001 | S19 shows a hardcoded result; no engine runs | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S1 | Yes | H1 | P1 | New | Unassigned | TC-EST-04 | |
+| BUG-2026-001 | S19 shows a hardcoded result; no engine runs | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S1 | Yes | H1 | P1 | Fixed | Unassigned | TC-EST-04 | |
 | BUG-2026-002 | S16 never opens the camera; capture returns a synthetic frame | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CAP | S1 | Yes | H1 | P1 | New | Unassigned | TC-CAP-01 | |
-| BUG-2026-003 | Screening captures skip the quality gate; retake and fallback unreachable | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CAP | S1 | Yes | H4, H5, H6 | P1 | New | Unassigned | TC-CAP-14 | |
+| BUG-2026-003 | Screening captures skip the quality gate; retake and fallback unreachable | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CAP | S1 | Yes | H4, H5, H6 | P1 | Fixed | Unassigned | TC-CAP-14 | |
 | BUG-2026-004 | S07 qualification always returns QUALIFIED without measuring | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | DEV | S1 | Yes | H5 | P1 | Fixed | Unassigned | TC-DEV-05 | |
 | BUG-2026-005 | S06 card scan shows VERIFIED without reading or checking a QR code | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | CARD | S1 | Yes | H4 | P1 | Fixed | Unassigned | TC-CARD-02 | |
-| BUG-2026-006 | Result next-step wording differs from doc 6 and drops the danger-signs reminder | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S1 | Yes | H1, H11 | P1 | New | Unassigned | TC-UI-01 | |
+| BUG-2026-006 | Result next-step wording differs from doc 6 and drops the danger-signs reminder | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S1 | Yes | H1, H11 | P1 | Fixed | Unassigned | TC-UI-01 | |
 | BUG-2026-007 | Startup integrity result is never used; modified assets do not disable screening | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | Fixed | Unassigned | TC-SEC-09 | |
 | BUG-2026-008 | App trusts a test manifest key whose private half is in the repository | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SEC | S1 | Yes | H7, H9 | P1 | Fixed | Unassigned | TC-SEC-09 | |
 | BUG-2026-009 | Delete all data clears settings only; database, files, and keys remain | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S1 | No | - | P1 | Fixed | Unassigned | TC-LOG-11 | |
@@ -93,11 +93,11 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-016 | Gradle wrapper and two gate scripts lack the executable bit | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | Verified | Unassigned | TC-SEC-04 | |
 | BUG-2026-017 | `:core:data` unit tests cannot run from a clean checkout (stale lock) | 2026-10-26 | Test | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | Verified | Unassigned | TC-LOG-11 | |
 | BUG-2026-018 | Secrets scan reports two findings in history; not triaged | 2026-10-26 | Review | commit 91c1125 | n/a | SEC | S2 | No | - | P2 | Verified | Unassigned | TC-SEC-06 | |
-| BUG-2026-019 | `triageEnabled` is a hardcoded default, not read from the signed config | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S2 | No | - | P2 | New | Unassigned | TC-TRI-26 | |
-| BUG-2026-020 | Hard rules are decided in navigation code, not by the triage engine | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S2 | No | - | P2 | New | Unassigned | TC-TRI-06 | |
-| BUG-2026-021 | Saved sessions record a different action from the one shown | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | New | Unassigned | TC-LOG-12 | |
-| BUG-2026-022 | Session records carry hardcoded versions and card batch | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | New | Unassigned | TC-TRI-22 | |
-| BUG-2026-023 | Gestational age has a hidden default of 38 weeks | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
+| BUG-2026-019 | `triageEnabled` is a hardcoded default, not read from the signed config | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S2 | No | - | P2 | Fixed | Unassigned | TC-TRI-26 | |
+| BUG-2026-020 | Hard rules are decided in navigation code, not by the triage engine | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | TRI | S2 | No | - | P2 | Fixed | Unassigned | TC-TRI-06 | |
+| BUG-2026-021 | Saved sessions record a different action from the one shown | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | Fixed | Unassigned | TC-LOG-12 | |
+| BUG-2026-022 | Session records carry hardcoded versions and card batch | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | Fixed | Unassigned | TC-TRI-22 | |
+| BUG-2026-023 | Gestational age has a hidden default of 38 weeks | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S2 | No | - | P2 | Fixed | Unassigned | TC-UI-11 | |
 | BUG-2026-024 | Research mode has no entry point | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-01 | |
 | BUG-2026-025 | Research export screen never writes a file | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | EXP | S2 | No | - | P2 | Fixed | Unassigned | TC-EXP-01 | |
 | BUG-2026-026 | Study enrollment (R08) and Leave study (R09) are placeholder screens | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
@@ -118,13 +118,13 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-041 | TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it | 2026-10-27 | Review | commit 93a2f9f | n/a | TRI | S3 | No | - | P3 | Fixed | Unassigned | TC-CAP-04 | |
 | BUG-2026-042 | The trust list parser accepts a missing or malformed revocation list and duplicate key ids | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P2 | New | Unassigned | TC-CARD-06 | |
 | BUG-2026-043 | The three bundled-asset JSON parsers have no nesting-depth or size limit | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-SEC-03 | |
-| BUG-2026-044 | S10 and R03 pre-fill the baby's age with 48 hours | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
+| BUG-2026-044 | S10 and R03 pre-fill the baby's age with 48 hours | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S2 | No | - | P2 | Fixed | Unassigned | TC-UI-11 | |
 | BUG-2026-045 | The colour and estimation golden-vector tests rewrite their own expected files | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S2 | No | - | P2 | Fixed | Unassigned | TC-EST-01, TC-EST-07 | |
 | BUG-2026-046 | The tier map does not cover the vision quality gate, its defaults, or the detekt config | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P2 | Fixed | Unassigned | n/a (tools/quality_gate.py) | |
 | BUG-2026-047 | The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P3 | Fixed | Unassigned | TC-EST-07 | |
 | BUG-2026-048 | The quality gate's residual check passes when fewer than three reference patches match | 2026-10-27 | Review | commit 3c60999 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-09 | |
 | BUG-2026-049 | ScreeningOfflineTest asserts a network-call count that nothing increments | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S3 | No | - | P3 | New | Unassigned | TC-EST-04 | |
-| BUG-2026-050 | The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-UI-01, TC-A11Y-05 | |
+| BUG-2026-050 | The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | Fixed | Unassigned | TC-UI-01, TC-A11Y-05 | |
 | BUG-2026-051 | The session detail screen formats clinical numbers with the default locale | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S3 | No | - | P3 | New | Unassigned | TC-A11Y-03 | |
 | BUG-2026-052 | The release bundle cannot be built, because ABI splits are on and the Android Gradle plugin 9 refuses `bundleRelease` | 2026-10-27 | Review | commit ea82b0a | n/a | OPS | S2 | No | - | P2 | Fixed | Unassigned | TC-OPS-01, TC-OPS-02 | |
 | BUG-2026-053 | No workflow checks the app size, and the script never checks install size | 2026-10-27 | Review | commit 3556b25 | n/a | OPS | S2 | No | - | P2 | New | Unassigned | TC-PERF-04 | |
@@ -163,6 +163,8 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-086 | Enrollment could add a second study with no PIN, or replace the device key of a phone already enrolled | 2026-10-30 | Review | commit f4e0907 | n/a | SYNC | S2 | No | - | P2 | Fixed | Unassigned | TC-API-07, TC-SYNC-16 | |
 | BUG-2026-087 | The upload worker built its own database, keys and HTTP client, and logged exception messages | 2026-10-30 | Review | commit f4e0907 | n/a | SEC | S2 | No | - | P2 | Fixed | Unassigned | TC-SYNC-11, TC-PRIV-04 | |
 | BUG-2026-088 | A closed study made the worker fail on every run and nothing disconnected the phone; R09 would have shown the PIN in recents | 2026-10-30 | Review | commit f4e0907 | n/a | SYNC | S3 | No | - | P3 | Fixed | Unassigned | TC-SYNC-16, TC-PRIV-02 | |
+| BUG-2026-089 | Answers without the guardian's consent still reached the rules and the camera | 2026-10-30 | Test | commit 4b28544 | n/a | CAP | S2 | Yes | H3 | P1 | Fixed | Unassigned | TC-UI-13 | |
+| BUG-2026-090 | The screening flow has no optional forehead photo (S18 left out) | 2026-10-30 | Review | commit 4b28544 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-16 | |
 
 ### 4.1 Entries
 
@@ -171,7 +173,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-001: S19 shows a hardcoded result; no engine runs
 
 - Area: TRI | Severity: S1 | Clinical: Yes | Hazard: H1 | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-EST-04, TC-TRI-22 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-EST-04, TC-TRI-22 | Fix version:
 
 **Steps**
 1. Start `NeoGoldNavHost` with `triageEnabled = true` (the only way to enable triage today; BUG-2026-019).
@@ -184,6 +186,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `MainActivity.kt:566-575`. `ScreeningPipelineUseCase`, `ScreeningStateMachine`, and `TriageEngine` have no callers in the app.
 
 **Notes** Hidden in the v1.0 build only because screening is switched off by a hardcoded flag. Any build that enables triage shows a made-up, lowest-care result for every baby. Fix package R1. The 1.0.0 release build also contains none of the engine code: R8 removes `TriageEngine`, `EstimationEngine`, `CardTrustVerifier` and the colour-science classes as unused (`usage.txt` of a local release build, checked 27 October 2026), so the engine tests in CI say nothing about the shipped APK until package E1 wires them.
+
+**Fix** Package E1 (30 October 2026). S19 runs `ScreeningFlow.analyze` (the pipeline and the triage engine) on a worker thread with a 10 second limit; a timeout or a failure is the engine's blood-test decision. Nothing in `MainActivity` assigns an estimate any more. Tests: `ScreeningFlowRunTest` (a whole screening on a synthetic card), `ScreeningWiringGuardTest`. Not verified on a phone.
 
 #### BUG-2026-002: S16 never opens the camera; capture returns a synthetic frame
 
@@ -207,7 +211,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-003: Screening captures skip the quality gate; retake and fallback are unreachable
 
 - Area: CAP | Severity: S1 | Clinical: Yes | Hazard: H4, H5, H6 | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-CAP-11, TC-CAP-13, TC-CAP-14 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-CAP-11, TC-CAP-13, TC-CAP-14 | Fix version:
 
 **Steps**
 1. Reach S16 and capture.
@@ -219,6 +223,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `MainActivity.kt:521-531` (S16 to S18). The S17 destination at `MainActivity.kt:533-549` has no incoming navigation.
 
 **Notes** Fix package R1.
+
+**Fix** Package E1 (30 October 2026). S16 uses the camera host (live card detection, burst) and no stand-in frame; every photo goes through the pipeline's quality gate; a refused photo goes to S17 with the reason, and the third refusal is the engine's `QUALITY_FALLBACK` blood test. Tests: `ScreeningFlowRunTest` (retake, three refusals), `ScreeningTriageRoutingTest`. The camera itself is untested on a device.
 
 #### BUG-2026-004: S07 camera qualification always returns QUALIFIED without measuring
 
@@ -259,7 +265,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-006: Result next-step wording differs from doc 6 and drops the danger-signs reminder
 
 - Area: UI | Severity: S1 | Clinical: Yes | Hazard: H1, H11 | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-UI-01, TC-UI-14 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-01, TC-UI-14 | Fix version:
 
 **Steps**
 1. Show S20 with `triageEnabled = true`, once for each action.
@@ -271,6 +277,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `MainActivity.kt:590-596`.
 
 **Notes** Clinical wording changes need the clinical lead (CLAUDE.md). Fix package R1.
+
+**Fix** Package E1 (30 October 2026). The next-step lines are the doc 6 Section 3 wording from string resources (English and Bangla draft), chosen by `ResultPresentation`; the danger-signs reminder is part of the recheck line. Tests: `ScreeningTriageRoutingTest`, `TriageCardSignalsTest`, `ResultScreenTest`.
 
 #### BUG-2026-007: The startup integrity result is never used, so modified assets do not disable screening
 
@@ -511,7 +519,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-019: `triageEnabled` is a hardcoded default, not read from the signed config
 
 - Area: TRI | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-TRI-26 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-TRI-26 | Fix version:
 
 **Steps**
 1. Read `MainActivity.kt:225`.
@@ -524,10 +532,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** It fails safe today, since no results are shown, but the gate is a code constant rather than the signed config. Fix package R1. Nothing ties the UI flag to the config: Gate G1 (`tools/verify_clinical_signoff.py`) reads `config/triage-config.json` only, so passing it says nothing about the UI, and `S20ResultScreen` defaults to `true` (line 59). Until packages B1 and E1 read the flag from the verified config, a source check that the `NeoGoldNavHost` default stays `false` would close the gap. Found by the safety-reviewer on 27 October 2026.
 
+**Fix** Package E1 (30 October 2026). `triageEnabled`, the sign-off and `validUntil` are read from the verified config by the engine on every path (`TriageEngine.evaluateBeforeCapture` and `evaluate`), and the shipped config's `false` is checked by `ScreeningWiringGuardTest`. Tests: `TriageBeforeCaptureTest`, `ScreeningTriageRoutingTest`.
+
 #### BUG-2026-020: Hard rules are decided in navigation code, not by the triage engine
 
 - Area: TRI | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-TRI-06 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-TRI-06 | Fix version:
 
 **Steps**
 1. Answer Yes to early jaundice and Yes to danger signs.
@@ -540,10 +550,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Doc 4 Section 4.4 says the UI renders state and never decides clinical flow. Fix package R1.
 
+**Fix** Package E1 (30 October 2026). Hard rules R1 to R5 are decided by `TriageEngine.evaluateBeforeCapture` (the same code `evaluate` runs for those steps); the routes only collect S11 to S13 answers and ask. The state machine no longer builds a rule result of its own. Because the engine needs all answers to apply the rules in order, S11 to S13 always ask all three questions before a rule fires (doc 6 changed). Tests: `TriageBeforeCaptureTest`, `ScreeningTriageRoutingTest`.
+
 #### BUG-2026-021: Saved sessions record a different action from the one shown, with values outside the schema enum
 
 - Area: LOG | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-LOG-12 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-LOG-12 | Fix version:
 
 **Steps**
 1. Trigger R3, R4, or R5 and save.
@@ -557,10 +569,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** The session detail cannot show what was shown at screening time (T16). Fix package R1.
 
+**Fix** Package E1 (30 October 2026). The card, the saved row and the log use one mapping (`ResultPresentation`, `toSessionEntity`): the stored action is the engine's own action name and the reason is the engine's code. Tests: `ScreeningRecordTest`, `ScreeningTriageRoutingTest`.
+
 #### BUG-2026-022: Session records carry hardcoded versions and card batch
 
 - Area: LOG | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-TRI-22 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-TRI-22 | Fix version:
 
 **Steps**
 1. Save any screening.
@@ -573,10 +587,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R1.
 
+**Fix** Package E1 (30 October 2026). The row carries the app, model and config versions of the loaded bundle and the card batch that was scanned in the session (null when a hard rule decided before any card); the state machine no longer fills `1.0.0`/`unknown`. Tests: `ScreeningRecordTest`, `ScreeningFlowRunTest`.
+
 #### BUG-2026-023: Gestational age has a hidden default of 38 weeks in navigation state
 
 - Area: UI | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-UI-11 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-11 | Fix version:
 
 **Steps**
 1. Read `MainActivity.kt` lines 240 and 353.
@@ -588,6 +604,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `MainActivity.kt` lines 240 and 353.
 
 **Notes** S10 itself requires a value (TC-UI-11), so the default is latent. Any path that skipped S10 would screen at 38 weeks (H3). Fix package R1. The stepper also anchors at 38: the first tap on either its minus or plus button sets 38 weeks (`NgControls.kt:52,88`), the band with the highest thresholds.
+
+**Fix** Package E1 (30 October 2026). No screen or class holds a default for gestational age or the three safety answers: `ScreeningFlow` keeps them empty and decides nothing until every one is given; an age is stored as entered (no clamping). The stepper's first tap still starts at 38 (BUG-2026-083 item 5). Tests: `ScreeningFlowRunTest.nothingIsDecidedUntilEveryAnswerIsGiven`.
 
 #### BUG-2026-024: Research mode has no entry point
 
@@ -944,7 +962,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-044: S10 and R03 pre-fill the baby's age with 48 hours
 
 - Area: UI | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-UI-11 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-11 | Fix version:
 
 **Steps**
 1. Open S10 (screening) or R03 (research) and read the birth time before touching it.
@@ -958,6 +976,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Notes** Neither flow is reachable today (screening is hidden, research has no entry point, BUG-2026-024), so nothing records a wrong age yet. In screening, an unnoticed 48 hours puts a younger baby under the wrong threshold row (H2, H3). In research, every row would carry the same age, which would corrupt the validation data the study exists to collect. Fix: S10 in package E1 and R03 in package C2, with no pre-fill, Next disabled until a birth time is set, and a working picker in R03. The gestational-age stepper has a related anchor (BUG-2026-023).
 
 **Update 30 October 2026** The R03 half is fixed in package C2 part 1 (commit d303597): R03 starts with no birth time and no age, uses a birth-time picker (`NgBirthTimePicker`), and works out the age in hours from the time that was set. The S10 half is open until package E1, so this stays New.
+
+**Fix** Package E1 (30 October 2026). S10 has no pre-filled birth time (Next stays off until the worker sets it; a baby over 14 days goes on to rule R5); the R03 side was fixed in package C2. Test: the S10 behaviour is covered by `ScreeningFlowRunTest` and the screen source; a screen test needs the Compose test library (D1, item 21).
 
 #### BUG-2026-045: The colour and estimation golden-vector tests rewrite their own expected files
 
@@ -1050,7 +1070,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-050: The "No further action" card has a solid border where doc 6 says dashed, and no test checks borders
 
 - Area: UI | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
-- Status: New | Owner: Unassigned | Test case: TC-UI-01, TC-A11Y-05 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-01, TC-A11Y-05 | Fix version:
 
 **Steps**
 1. Compare `NgTriageCard` with the border row of doc 6 Section 3.
@@ -1062,6 +1082,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `NgTriageCard.kt:76-91` in `:core:designsystem`; `docs/6_UI_UX_Guidelines.md` Section 3 (border row); `ColorVisionDistinguishabilityTest.kt:12-14`. Found by the safety-reviewer on 27 October 2026. An unused `borderDp` map in that test was removed as dead code in `93a2f9f`.
 
 **Notes** Colour, icon and wording still differ between the two actions, so a reader is not left with colour alone; the border is the missing fourth signal. Fix in package E1, with the result-screen work in BUG-2026-006: draw the dashed border and assert all four borders in the test.
+
+**Fix** Package E1 (30 October 2026). `NgTriageCard` draws the dashed 2 dp border of the no-further-action card; the signals are exposed as data and checked: `TriageCardSignalsTest`.
 
 #### BUG-2026-051: The session detail screen formats clinical numbers with the default locale
 
@@ -1684,6 +1706,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 32. PARTLY VERIFIED (30 October 2026), NOT on a device. The real release build (`:app:minifyReleaseWithR8`) failed on the first try with Tink 1.24: R8 reported two missing classes, `android.crypto.hpke.Hpke` and `android.crypto.hpke.Message` (Android's own HPKE API, referenced from Tink's X-Wing code, which the export never uses). They are now exact `-dontwarn` rules in `app/proguard-rules.pro`, like the four before them, and the build passes. `tools/r8_export_check/run.sh` shrinks and renames Tink plus the app's export package with the app's own rules and Tink's consumer rule, runs the export and a stored-keyset parse round trip on a JVM, and opens the result with the unshrunk decrypt tool: it passes (3.4 MB of Tink became 640 KB). The check is weaker than it looks: it also passes with Tink's protobuf keep rule left out, so it does not prove that rule is applied; and it is not the app's dex. Still open: run the export on a minified release APK on a phone (D1 release smoke test).
 33. RESOLVED in package C4 (30 October 2026; see BUG-2026-026, 027 and 085 to 088). The text below is the hand-over state and is kept for the record. C4 STARTED, NOT DONE (state at hand-over): groundwork only. Added `StudyServer` (the interface `:feature:research` uses for enroll, leave, upload now and schedule uploads; `:app` will implement it over `:sync:research`), seven typed messages (`ENROLL_CODE_FORMAT`, `ENROLL_CODE_REJECTED`, `ENROLL_OTHER_STUDY`, `ENROLL_SETTINGS_MISMATCH`, `SERVER_UNREACHABLE`, `SERVER_REFUSED`, `NOT_ENROLLED`) and 38 English and Bangla strings for R08, R09 and those errors (unused until the screens are changed). Nothing is wired: R08 and R09 are still placeholders in `MainActivity`, `showCloudSync` is still false, nothing schedules uploads, `ResearchRetentionConfirmationHook` is not injected. Planned shape: a `StudyServerViewModel` (scan the study QR again in R08, refuse a QR of another study, check the code format, PIN re-entry for R09 through `verifyPin`), `StudyServerSync` in `:app`, R08 and R09 rewritten with the new strings, upload scheduled after a save, after enrollment and at app start. Decision taken for R09: leaving only disconnects the server (key and device ID), the study stays ACTIVE locally, because export and retention find the study through `getActiveStudy()` and a LEFT or CLOSED row would strand its data (TC-SYNC-16). Moving to a different study stays Export, then Delete all data; items 8, 14 and 23 and BUG-026 and BUG-027 are still open. The full-day simulation runs against a mock server (`SyncFullDaySimulationTest`), not the real backend.
 34. Found in the C4 privacy-security review (30 October 2026). FIXED in the same package: a disconnect and an enrollment wrote back a copy of the study row read before the network call, which could undo a PIN failure count (both now re-read the row); the worker logged the server's error code and minimum version, and the outbox kept an exception message (now the HTTP status, nothing, and the exception class); a phone with no device ID got an error and a retry with a notification each time (now a quiet success, and leaving cancels the queued run); R07 and R09 counted only waiting rows (now every row the server has not acknowledged); a phone on a closed study could not leave (DEVICE_UNKNOWN and STUDY_CLOSED now clean up locally); a throw after the device key was made left it in the Keystore (the key is made inside the guarded block); the enrollment code field turned autocorrect off and uses a password keyboard; the sync notification is hidden on the lock screen. Tests: `StudyEnrollmentGuardsTest`, `ResearchUploadWorkerTest`. OPEN: (a) after a leave, a close or a revoke, retention has no device to ask, so research data on a reassigned phone is never purged automatically; the only path is Export, then Delete all data (doc 4 Section 4.8) - decide whether a verified export or full acknowledgement should also wipe (C3/D1). (b) If the enrollment response is lost, or the row update fails after the server accepted, the key is deleted but the server holds the device and the code is spent; the coordinator reissues a code. A retry with the same idempotency key would need it stored (F3). (c) `ResearchApiClient` reads a response body with no size cap (`body.string()`); a hostile server could exhaust memory on a 2 GB phone (F3). (d) Not checked: `ResearchApiClient.handleErrorResponse` and `DeviceAssertionMinter` retry behaviour; Android 14 and 15 foreground-service start limits on a device.
+35. Package E1 (30 October 2026): the optional forehead photo is not in the flow (BUG-2026-090). The first tap on the gestational-age stepper still starts at 38 weeks and shows it (item 5): decide with the clinical lead whether a first tap should start at a displayed value or a different control should be used. R04's quality limits still fall back to the code's defaults when the config has none (item 7); screening now refuses to start in that case.
+36. Found in the E1 safety review (30 October 2026) and FIXED in the package: the screening was lost on rotation or the app lock and its screens then showed nothing or did nothing (the flow is now held by the app, and a route with no flow goes Home); the 10 second analysis limit did not stop a computation that never checks for cancellation, and its test could not fail (the analysis runs in its own job, and the test times it); a danger sign was not shown until two more questions were answered (decided at once); S10 refused a baby over 30 days instead of letting rule R5 send it to a doctor's review; the recheck time had no date and was counted from Save (now from the decision, with the date); a second tap on Save wrote a second row; going Back from a result could re-run it; a gray patch that was not sampled was replaced by a made-up gray (now a failed analysis, so a blood test). OPEN, for the clinical lead or a later package: (a) the card in the photo is not checked against the stored batch whose colours are used (same as item 15); (b) `mother_card_blood_test` says the estimate is close to the threshold, which is wrong for a blood test that comes from a refused photo, a timeout or a wide interval, and `mother_card_refer_urgent` says clinical signs for an estimate above the threshold (clinical wording); (c) a config that expires during a session gives only "Use a blood test" to a baby with a danger sign: decide whether danger signs should still be named; (d) the log screens show a fixed 24 hours for a recheck and lump a doctor's review with "cannot screen"; (e) the display rounds half up while the engine rounds toward more care, so a card can show 13.9 beside a result reached from 14.0; (f) the quality result keeps its canonical image in memory until the next screening; (g) the Bangla next-step lines are drafts for the nurse panel.
 27. RESOLVED (30 October 2026, approved by the owner): Tink moved from `com.google.crypto.tink:tink` 1.7.0 to `tink-android` 1.24.0 in every module and the decrypt tool (ADR-019). The export engine uses the typed key API (`HpkeParameters`, `HpkePublicKey`, `PredefinedStreamingAeadParameters`, `TinkProtoKeysetFormat` with `InsecureSecretKeyAccess`) instead of `CleartextKeysetHandle`, protobuf messages and a deprecated template. The wire format did not change, and `ExportCryptoEngineTest.tcExp01_archiveWrittenByTink170StillOpens` opens a fixture written by the 1.7.0 build with the 1.24 decryptor (synthetic key, `core/security/src/test/resources/export/`). protobuf-java 3.19.3 is in no classpath any more and its three Trivy exceptions are removed. New transitive libraries: gson 2.13.2, error_prone_annotations 2.41.0, jsr305 3.0.2, androidx.annotation-jvm 1.8.2. Verification hashes: the jar hashes of tink-android, gson and error_prone_annotations were checked against Maven Central directly; the tink-android pom hash was not (Central answered 429), so check it once the CI run has resolved it. Lockfiles were edited from the committed ones, not regenerated, because `gradle dependencies --write-locks` also locks the detekt configurations.
 28. Not run: an export to a real USB drive through the Storage Access Framework, and a decrypt on the coordinator's computer of a file the phone made (bench task). The unit tests decrypt the archive with `DecryptEngine`, but not through a content provider.
 26. Note: `lockEpoch` is 0 when there is no session manager, so the in-flight protection is off in that configuration; production always passes the manager, so this is only a trap for a future caller.
@@ -1773,6 +1797,38 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Actual** A closed study returned `Closed` and the worker failed, but the phone kept its key and device ID, so the next save scheduled another run that failed the same way. R09, where the PIN is now typed again, was not in the secure list.
 
 **Fix** Package C4. `StudyRevocationManager.handleStudyClosed` clears the device key and ID like a revocation or a leave, with an audit event `DEVICE_DISCONNECTED` (reason only); the study stays ACTIVE. `r09_leave_study` is in `SECURE_DESTINATIONS` (`SecureScreenHelperTest`). Tests: `ResearchUploadWorkerTest.aClosedStudy_stopsTheWorker_andDisconnectsThePhone_withTheDataKept`, `StudyEnrollmentGuardsTest.disconnecting_keepsTheStudyActive_clearsKeyAndDeviceId_andIsAudited`.
+
+---
+
+#### BUG-2026-089: Answers without the guardian's consent still reached the rules and the camera
+
+- Area: CAP | Severity: S2 | Clinical: Yes | Hazard: H3 | Priority: P1
+- Status: Fixed | Owner: Unassigned | Test case: TC-UI-13 | Fix version:
+
+**Steps**
+1. Submit answers with `guardianConsentConfirmed = false`, then dispatch `EvaluateRules` (found by `ScreeningFlowRunTest.withoutGuardianConsentTheCameraNeverOpens`, package E1).
+
+**Expected** The camera never opens without the guardian's consent (doc 2 Section 11, TC-UI-13).
+
+**Actual** `SubmitInputs` kept the state at `Inputs` for unconfirmed consent, but `EvaluateRules` accepted the answers held in that state, ran the rules and moved to the card check and capture. The screens never sent that sequence (S10a comes first), so no phone was affected, but the machine itself did not hold the rule.
+
+**Fix** `handleEvaluateRules` takes answers from the `Inputs` state only when consent is confirmed. Tests: `ScreeningFlowRunTest.withoutGuardianConsentTheCameraNeverOpens`.
+
+---
+
+#### BUG-2026-090: The screening flow has no optional forehead photo
+
+- Area: CAP | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
+- Status: New | Owner: Unassigned | Test case: TC-CAP-16 | Fix version:
+
+**Steps**
+1. Run a screening in a build with triage switched on.
+
+**Expected** After the sternum photo the worker may add a forehead photo, and the estimate uses both sites (FR-15, NG-040).
+
+**Actual** S18 is not in the flow. `ScreeningPipelineUseCase.execute` takes one frame and estimates one site, and the old S18 buttons went to S16 and back (a loop that never took a second photo). The estimate is made from the sternum photo alone, which gives a wider interval, never a narrower one.
+
+**Notes** Fix needs the pipeline to take two photos and `EstimationEngine.estimate` to be given both sites. Until then the setting stays out of the flow rather than silently ignoring a photo. `S18ForeheadPhotoScreen` remains in the module, unused.
 
 ---
 
