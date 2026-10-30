@@ -26,6 +26,10 @@ from check_strings import banned_words_in_literals, check_literals_banned, check
         "Safely home",
         "A precision of 2",
         "Safer than before",
+        "Normality restored",
+        "Jaundice-free",
+        "No signs of jaundice",
+        "A healthier baby",
     ],
 )
 def test_inflected_banned_english_forms_are_found(text):
@@ -62,3 +66,9 @@ def test_a_clean_kotlin_ui_literal_passes():
 
 def test_the_repository_has_no_banned_word_in_any_kotlin_ui_literal():
     assert check_literals_banned(REPO_ROOT) == []
+
+
+def test_unwell_in_bangla_is_not_taken_for_the_banned_word_healthy():
+    assert check_strings_content({"k": "x"}, {"k": "শিশু অসুস্থ"}) == []
+    assert check_strings_content({"k": "x"}, {"k": "শিশু সুস্থ"})
+    assert check_strings_content({"k": "x"}, {"k": "চিন্তার কিছু নেই"})

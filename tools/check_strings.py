@@ -26,8 +26,11 @@ from pathlib import Path
 # stay allowed: they are not the banned claims.
 BANNED_ENGLISH = [
     r"\bsafe(?:r|st|ly)?\b",
-    r"\bnormal(?:ly)?\b",
-    r"\bhealthy\b",
+    r"\bnormal(?:ly|ity|cy)?\b",
+    r"\bhealth(?:y|ier|ily)\b",
+    r"\bunsafe\b",
+    r"\bjaundice[- ]free\b",
+    r"\bno (?:signs? of )?jaundice\b",
     r"\bfine\b",
     r"\bno jaundice\b",
     r"\bdiagnos\w*",
@@ -40,11 +43,15 @@ BANNED_ENGLISH = [
 BANNED_BANGLA = [
     r"নিরাপদ",
     r"(?<!অ)স্বাভাবিক",
-    r"সুস্থ",
+    r"(?<!অ)সুস্থ",
     r"ঠিক আছে",
     r"জন্ডিস নেই",
     r"রোগ নির্ণয়",
     r"নির্ভুল",
+    r"নিখুঁত",
+    r"জন্ডিসমুক্ত",
+    r"চিন্তার কিছু নেই",
+    r"ডায়াগনোসিস",
     r"সঠিক মাপ",
     r"এআই",
     r"কৃত্রিম বুদ্ধিমত্তা",
@@ -102,7 +109,7 @@ def check_strings_content(en_strings: dict[str, str], bn_strings: dict[str, str]
 
 LITERAL_START = re.compile(
     r'(?:\bText\s*\(\s*(?:text\s*=\s*)?'
-    r'|\b(?:text|contentDescription|title|label|placeholder|supportingText)\s*=\s*'
+    r'|\b(?:text|contentDescription|title|label|placeholder|supportingText|nextStepText|subtitle)\s*=\s*'
     r'|\.(?:setContentTitle|setContentText|setTicker|setSubText)\s*\(\s*)"'
 )
 INTERPOLATION = re.compile(r"\$\{[^}]*\}|\$[A-Za-z_]\w*")

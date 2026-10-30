@@ -57,3 +57,28 @@ def test_doc7_dates_a_participant_created_at_01_00_in_dhaka_is_dated_that_day(
 
     assert response.status_code == 201, response.text
     assert response.json()["created_on"] == "2027-02-03"
+
+
+def test_the_nightly_backstop_looks_up_the_zone_of_the_study_a_session_belongs_to(db, test_study_and_site):
+    """Doc 7 Section 1 (BUG-2026-094): `complete_backstop_sessions` dates `completed_on` in the study's zone, found through the
+    participant's site."""
+    from app import jobs
+    from app.models.db import Participant
+
+    study, site = test_study_and_site
+    participant = Participant(
+        id=uuid4(),
+        site_id=site.id,
+        participant_code="SKP-2799",
+        consent_form_id="CF-2799",
+        consent_date=datetime.date(2027, 2, 3),
+        created_on=datetime.date(2027, 2, 3),
+    )
+    db.add(participant)
+    db.flush()
+
+    class _Row:
+        participant_id = participant.id
+
+    assert jobs.zone_of_session(db, _Row()) == study.time_zone
+    db.rollback()

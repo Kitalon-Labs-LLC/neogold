@@ -59,10 +59,7 @@ def find_bundle_in_dir(artifact_dir: Path) -> Path:
     if not aabs:
         raise FileNotFoundError(f"No .aab file found in artifact directory: {artifact_dir}")
     if len(aabs) > 1:
-        # Prefer app-release.aab if multiple
-        for a in aabs:
-            if a.name == "app-release.aab":
-                return a
+        raise ValueError(f"More than one .aab file in {artifact_dir}: {sorted(a.name for a in aabs)}; publish exactly one")
     return aabs[0]
 
 

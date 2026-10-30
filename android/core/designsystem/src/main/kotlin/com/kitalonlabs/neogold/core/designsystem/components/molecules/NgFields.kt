@@ -42,7 +42,11 @@ fun NgStepIndicator(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = stringResource(R.string.step_of, currentStep, totalSteps),
+            text = stringResource(
+                R.string.step_of,
+                ClinicalNumberFormatter.formatClinicalInteger(currentStep),
+                ClinicalNumberFormatter.formatClinicalInteger(totalSteps)
+            ),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -107,6 +107,9 @@ def generate_cyclonedx_sbom(
         components.append(component_entry)
         dep_refs.append(purl)
 
+    if not components:
+        raise ValueError(f"No component in {lockfile_path} for configuration {configuration!r}")
+
     # Sort components deterministically by group, name, version
     components.sort(key=lambda c: (c["group"], c["name"], c["version"]))
 

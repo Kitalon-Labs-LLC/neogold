@@ -22,9 +22,7 @@ dependencies {
 
     implementation(project(":engine:vision"))
     implementation(project(":engine:colorscience"))
-    implementation(project(":engine:triage"))
     implementation(project(":core:designsystem"))
-    implementation(project(":core:model"))
 
     testImplementation(libs.findLibrary("robolectric").get())
     testImplementation(libs.findLibrary("kotlinx.coroutines.test").get())

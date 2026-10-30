@@ -44,7 +44,7 @@ How to read the status column: **Built and tested** (code and JVM tests), **Buil
 |---|---|
 | Cause | Not known, or entered wrong |
 | Harm | Wrong threshold band |
-| Controls built | Required field with no default. Under 35 weeks goes to a blood test (R3). |
+| Controls built | Required field, nothing pre-filled; Next stays off until it is set. Under 35 weeks goes to a blood test (R3). The first tap on the stepper starts at 38 weeks (open, item 5). |
 | Status | Built and tested (JVM). |
 | Open | How an unknown gestational age is handled is the clinical lead's decision (doc 8 H3). Stepper first-tap value (item 5). |
 | Verified by | Clinical review |
@@ -140,7 +140,7 @@ How to read the status column: **Built and tested** (code and JVM tests), **Buil
 |---|---|
 | Cause | Low literacy, colour vision, small screens |
 | Harm | Wrong action taken |
-| Controls built | Colour, icon, dashed outline and words together on the result card; the doc 6 Section 3 wording for each action; the banned-word lint over `strings.xml` and over every Kotlin UI literal; every result labelled as a suggested next step. |
+| Controls built | Colour, icon, dashed outline and words together on the result card; the doc 6 Section 3 wording for each action; the banned-word lint over `strings.xml` and over the literals passed to the standard Compose text APIs; every result labelled as a suggested next step. |
 | Status | Built and tested (JVM). Bangla wording is a draft (`docs/BANGLA_STRINGS_REVIEW.md`). |
 | Open | Nurse panel sign-off of the Bangla wording; usability test (TC-USE-01 to 05); the 320 dp and 200% font-scale layout check on a phone; bundling the Noto fonts (BUG-2026-091 notes). |
 | Verified by | Usability test |

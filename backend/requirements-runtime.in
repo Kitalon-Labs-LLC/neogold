@@ -13,3 +13,4 @@ alembic>=1.13.0
 psycopg[binary]>=3.3.0
 cryptography>=43.0.0
 pillow>=10.4.0
+tzdata  # the study's time zone for every server-assigned date (doc 7 Section 1); not only on Windows

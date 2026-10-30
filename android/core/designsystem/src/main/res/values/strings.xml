@@ -121,7 +121,7 @@
     <string name="about_model_card_title">Model Summary</string>
     <string name="about_license_title">Open Source Licenses</string>
     <string name="about_intended_use">Intended use: Decision support for trained health workers. NeoGold suggests a next step; the health worker decides.</string>
-    <string name="about_limitations">Limitations: Validated only for babies born at 35 weeks or later, up to 14 days of age, with no prior phototherapy.</string>
+    <string name="about_limitations">Limitations: Intended for babies born at 35 weeks or later, up to 14 days of age, with no prior phototherapy. Not yet validated.</string>
 
     <!-- S25 Delete Data -->
     <string name="delete_data_title">Delete all local data?</string>
@@ -215,8 +215,6 @@
     <string name="session_detail_title">Screening Detail</string>
 
     <!-- Notifications NG-048, TC-LOG-09 -->
-    <string name="notif_recheck_title">NeoGold</string>
-    <string name="notif_recheck_body">A recheck is due</string>
 
     <!-- Package F1: strings moved out of Kotlin literals -->
     <string name="crash_report_title">Share Crash Report?</string>
@@ -229,7 +227,7 @@
     <string name="result_estimated_range">Estimated range</string>
     <string name="result_threshold">Threshold: %1$s %2$s</string>
     <string name="version_line_card">App %1$s • Model %2$s • Config %3$s • Card %4$s</string>
-    <string name="step_of">Step %1$d of %2$d</string>
+    <string name="step_of">Step %1$s of %2$s</string>
     <string name="age_now_hours">Age now: %1$s hours</string>
     <string name="research_participant">Participant: %1$s</string>
     <string name="research_mode_badge">RESEARCH MODE</string>
@@ -238,7 +236,7 @@
     <string name="log_row_register">Register: %1$s</string>
     <string name="manual_capture">Manual capture</string>
     <string name="log_ga_age">GA %1$s wk • %2$s h</string>
-    <string name="device_check_tested_models">Tested phone models:</string>
+    <string name="device_check_tested_models">Planned test models (not yet tested):</string>
     <string name="register_example">e.g. 12/345 or OPD-2027-15</string>
     <string name="notification_title">NeoGold</string>
     <string name="recheck_notification_text">A recheck is due</string>
@@ -269,4 +267,6 @@
     <string name="detail_not_available">N/A</string>
     <string name="about_data_sources">Data sources: %1$s (%2$s samples).</string>
     <string name="about_data_sources_unknown">Data sources: not available.</string>
+    <string name="about_unavailable">unavailable</string>
+    <string name="about_model_note">%1$s</string>
 </resources>

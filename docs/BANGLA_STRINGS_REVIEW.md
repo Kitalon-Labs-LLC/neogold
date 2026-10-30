@@ -76,6 +76,17 @@ All Bengali strings below are currently **Draft for nurse panel review**.
 | `clock_wrong_block` | The phone's date or time looks wrong. Set the date and time automatically, then try again. | ফোনের তারিখ বা সময় ভুল মনে হচ্ছে। তারিখ ও সময় স্বয়ংক্রিয়ভাবে সেট করে আবার চেষ্টা করুন। | S10 Blocked screening | Draft for nurse panel |
 | `clock_auto_off` | Automatic date and time is off. Turn it on so the baby's age is calculated correctly. | স্বয়ংক্রিয় তারিখ ও সময় বন্ধ আছে। শিশুর বয়স ঠিকভাবে হিসাব করতে এটি চালু করুন। | S10 Battery/clock alert | Draft for nurse panel |
 | `study_settings_mismatch` | Study settings do not match. Contact your coordinator. | স্টাডির সেটিংস মিলছে না। আপনার কোঅর্ডিনেটরের সাথে যোগাযোগ করুন। | R08 Setting profile error | Draft for nurse panel |
+| `consent_explanation` | Screening requires explicit agreement from the parent or caregiver. No names or personal identifiers are recorded. | স্ক্রিনিংয়ের জন্য বাবা-মা বা যত্নদাতার স্পষ্ট সম্মতি প্রয়োজন। কোনো নাম বা ব্যক্তিগত পরিচয় সংরক্ষণ করা হয় না। | S10a consent | Draft for nurse panel |
+| `result_estimated_range` | Estimated range | অনুমানিত পরিসর | S20 result card range bar (panel: confirm it reads as an estimate) | Draft for nurse panel |
+| `result_threshold` | Threshold: %1$s %2$s | সীমা: %1$s %2$s | S20 result card (panel: "সীমা" must read as the treatment threshold, not an upper normal limit) | Draft for nurse panel |
+| `detail_treatment_threshold` | Treatment Threshold | চিকিৎসার সীমা | S22 session detail | Draft for nurse panel |
+| `detail_estimated_bilirubin` | Estimated Bilirubin | অনুমানিত বিলিরুবিন | S22 session detail | Draft for nurse panel |
+| `recheck_notification_text` | A recheck is due | আবার পরীক্ষার সময় হয়েছে | Recheck notification (no baby details) | Draft for nurse panel |
+| `about_intended_use` | Intended use: Decision support for trained health workers. NeoGold suggests a next step; the health worker decides. | উদ্দেশ্য: প্রশিক্ষিত স্বাস্থ্যকর্মীদের সিদ্ধান্ত সহায়তা। নিওগোল্ড পরবর্তী ধাপ সুপারিশ করে; সিদ্ধান্ত নেন স্বাস্থ্যকর্মী। | S24 About | Draft for nurse panel |
+| `about_limitations` | Limitations: Intended for babies born at 35 weeks or later, up to 14 days of age, with no prior phototherapy. Not yet validated. | সীমাবদ্ধতা: 35 সপ্তাহ বা তার পরে জন্ম নেওয়া এবং 14 দিন পর্যন্ত বয়সী নবজাতকের জন্য, আগে ফটোথেরাপি হয়নি এমন। এখনো যাচাই করা হয়নি। | S24 About, S20 | Draft for nurse panel |
+| `about_data_sources` | Data sources: %1$s (%2$s samples). | তথ্যের উৎস: %1$s (%2$s নমুনা)। | S24 About (filled from the model) | Draft for nurse panel |
+| `s08_accuracy` | Colour difference: %s | রঙের পার্থক্য: %s | S08 qualification result | Draft for nurse panel |
+| `device_check_tested_models` | Planned test models (not yet tested): | পরীক্ষার জন্য পরিকল্পিত মডেল (এখনো পরীক্ষা হয়নি): | S05 device check | Draft for nurse panel |
 | `forehead_photo_problem` | The forehead photo could not be used. Place the card flat on the forehead and try again, or continue without it. | কপালের ছবিটি ব্যবহার করা যায়নি। কার্ডটি কপালে সমতলভাবে রেখে আবার তুলুন, অথবা ছবি ছাড়াই এগিয়ে যান। | S18 after a forehead photo was refused | Draft for nurse panel |
 | `forehead_photo_limit` | The forehead photo could not be used after three tries. Continue without it. | তিনবার চেষ্টা করেও কপালের ছবি ব্যবহার করা যায়নি। ছবি ছাড়াই এগিয়ে যান। | S18 after three tries | Draft for nurse panel |
 

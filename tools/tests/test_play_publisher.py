@@ -75,3 +75,12 @@ def test_a_bundle_that_is_not_an_aab_is_refused(tmp_path):
 
     with pytest.raises(ValueError):
         play_publisher.inspect_bundle(bad)
+
+
+def test_more_than_one_bundle_in_the_directory_is_refused(tmp_path):
+    for name in ("app-release.aab", "other.aab"):
+        with zipfile.ZipFile(tmp_path / name, "w") as z:
+            z.writestr("base/manifest/AndroidManifest.xml", "<manifest/>")
+
+    with pytest.raises(ValueError):
+        play_publisher.find_bundle_in_dir(tmp_path)

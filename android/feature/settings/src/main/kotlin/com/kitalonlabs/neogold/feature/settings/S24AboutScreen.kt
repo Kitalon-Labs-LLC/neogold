@@ -48,6 +48,7 @@ fun S24AboutScreen(
     configVersion: String,
     dataSources: String?,
     sampleCount: Int?,
+    modelDescription: String?,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     cardBatchId: String? = null
@@ -124,6 +125,25 @@ fun S24AboutScreen(
 
                 Text(
                     text = stringResource(R.string.about_limitations),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(Dimens.SpacingSm))
+
+                // The model says what it is in its own words (a synthetic bench model says so); the experimental label is
+                // always shown here, because nothing in this build has been validated on babies.
+                if (!modelDescription.isNullOrBlank()) {
+                    Text(
+                        text = stringResource(R.string.about_model_note, modelDescription),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(Dimens.SpacingSm))
+                }
+                Text(
+                    text = stringResource(R.string.experimental),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -213,6 +233,7 @@ private val THIRD_PARTY_LICENSES = listOf(
     ThirdPartyLicense("ZXing", "Apache License 2.0", "Copyright ZXing authors"),
     ThirdPartyLicense("OkHttp and Okio", "Apache License 2.0", "Copyright Square, Inc."),
     ThirdPartyLicense("Tink", "Apache License 2.0", "Copyright Google LLC"),
+    ThirdPartyLicense("Timber", "Apache License 2.0", "Copyright Jake Wharton"),
     ThirdPartyLicense(
         "SQLCipher for Android",
         "BSD-3-Clause license",

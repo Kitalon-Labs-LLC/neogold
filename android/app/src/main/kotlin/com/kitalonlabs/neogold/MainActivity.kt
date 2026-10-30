@@ -1055,13 +1055,17 @@ fun NeoGoldNavHost(
         }
 
         composable(Destinations.S24_ABOUT) {
-            val summary = assets.estimationEngine?.model?.trainingDataSummary
+            // everything on this screen comes from the one parsed model and config; nothing is guessed when they are missing
+            val model = assets.estimationEngine?.model
+            val summary = model?.trainingDataSummary
+            val unavailable = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.about_unavailable)
             com.kitalonlabs.neogold.feature.settings.S24AboutScreen(
                 appVersion = appVersion,
-                modelVersion = assets.modelVersion.orEmpty(),
-                configVersion = assets.triageConfig?.configVersion.orEmpty(),
+                modelVersion = model?.modelVersion ?: unavailable,
+                configVersion = assets.triageConfig?.configVersion ?: unavailable,
                 dataSources = summary?.populations?.joinToString(", "),
                 sampleCount = summary?.sampleCount,
+                modelDescription = summary?.description,
                 onBack = { navController.popBackStack() }
             )
         }

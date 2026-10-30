@@ -498,7 +498,7 @@ class DeviceAuthMiddleware:
                 today = study_today(zone)
                 db.execute(
                     update(Device)
-                    .where(Device.id == device.id)
+                    .where(Device.id == device.id, Device.last_seen_on.is_distinct_from(today))
                     .values(last_seen_on=today)
                 )
                 db.commit()
