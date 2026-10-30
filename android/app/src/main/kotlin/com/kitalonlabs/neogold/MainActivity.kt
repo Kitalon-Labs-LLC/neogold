@@ -67,6 +67,9 @@ import com.kitalonlabs.neogold.feature.log.ScreeningLogExportManager
 import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanState
 import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationState
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
+import com.kitalonlabs.neogold.feature.research.export.ExportProgress
+import com.kitalonlabs.neogold.feature.research.export.ResearchExportManager
+import com.kitalonlabs.neogold.feature.research.export.exportFileName
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
 import com.kitalonlabs.neogold.feature.result.S20ResultScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S09HomeScreen
@@ -215,7 +218,8 @@ class MainActivity : FragmentActivity() {
                                             firstRun = firstRun,
                                             research = container.researchViewModel(state.database),
                                             researchCaptureSetup = { container.researchCaptureSetup(state.database) },
-                                            researchCardStatus = { container.researchCardStatus(state.database) }
+                                            researchCardStatus = { container.researchCardStatus(state.database) },
+                                            researchExport = container.researchExportManager(state.database)
                                         )
                                     }
                                 }
@@ -380,6 +384,7 @@ fun NeoGoldNavHost(
     research: ResearchViewModel?,
     researchCaptureSetup: suspend () -> NeoGoldContainer.ResearchCaptureSetup,
     researchCardStatus: suspend () -> CardTrustStatus,
+    researchExport: ResearchExportManager,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
@@ -1176,27 +1181,26 @@ fun NeoGoldNavHost(
         // Export is wired in package C3; until then this screen only shows the study it belongs to.
         researchSessionComposable(Destinations.R07_EXPORT_SYNC) { session ->
             val study by session.activeStudy.collectAsState()
-            var exportProgress by remember {
-                mutableStateOf<com.kitalonlabs.neogold.feature.research.export.ExportProgress?>(
-                    null
-                )
-            }
+            var exportProgress by remember { mutableStateOf<ExportProgress?>(null) }
             var isExporting by remember { mutableStateOf(false) }
             var exportCompleted by remember { mutableStateOf(false) }
+            var exportFailed by remember { mutableStateOf(false) }
+            // Tied to this screen: leaving it, or a lock that sends the worker back to R01, cancels the export, removes what
+            // it staged and discards the file it was writing.
+            val exportScope = androidx.compose.runtime.rememberCoroutineScope()
+            val contentResolver = androidx.compose.ui.platform.LocalContext.current.contentResolver
 
             val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
                 contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")
             ) { uri ->
-                if (uri != null) {
-                    coroutineScope.launch {
-                        isExporting = true
-                        exportProgress = com.kitalonlabs.neogold.feature.research.export.ExportProgress(
-                            completedFiles = 0,
-                            totalFiles = 10,
-                            bytesProcessed = 0L,
-                            stage = com.kitalonlabs.neogold.feature.research.export.ExportStage.PREPARING,
-                            message = "Preparing export package..."
-                        )
+                if (uri != null && !isExporting) {
+                    isExporting = true
+                    exportFailed = false
+                    exportProgress = null
+                    exportScope.launch {
+                        val result = researchExport.exportToUri(contentResolver, uri) { exportProgress = it }
+                        isExporting = false
+                        result.onSuccess { exportCompleted = true }.onFailure { exportFailed = true }
                     }
                 }
             }
@@ -1209,7 +1213,12 @@ fun NeoGoldNavHost(
                     exportProgress = exportProgress,
                     isExporting = isExporting,
                     exportCompleted = exportCompleted,
-                    onChooseDestinationClicked = { exportLauncher.launch("neogold-export-${it.studyCode}.zip") },
+                    exportFailed = exportFailed,
+                    // the server side (enrollment, upload now, leave study) is wired in package C4
+                    showCloudSync = false,
+                    onChooseDestinationClicked = {
+                        exportLauncher.launch(exportFileName(it.studyCode, java.time.Instant.now()))
+                    },
                     onDoneClicked = { navController.popBackStack() }
                 )
             }

@@ -43,6 +43,7 @@ import com.kitalonlabs.neogold.feature.research.capture.ResearchCaptureProcessor
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
 import com.kitalonlabs.neogold.feature.research.data.ResearchProvenance
 import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
+import com.kitalonlabs.neogold.feature.research.export.ResearchExportManager
 import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
 import com.kitalonlabs.neogold.integrity.VerifiedAssets
 import com.kitalonlabs.neogold.onboarding.OnboardingServices
@@ -82,6 +83,7 @@ sealed interface DeleteState {
  * Everything is lazy: nothing touches the Keystore until something needs it. The order that matters is fixed in
  * [NeoGoldApplication.onCreate]: the bundle is verified first, then the keys are checked, then the database opens.
  */
+@Suppress("TooManyFunctions") // the app's service locator: one factory per feature, split with the feature graphs (F4)
 class NeoGoldContainer(private val application: Application) {
 
     /** Outlives every screen; used for work that must finish even if the activity goes away. */
@@ -233,6 +235,13 @@ class NeoGoldContainer(private val application: Application) {
             ?: return@withContext CardTrustStatus.UNVERIFIED
         cardStatusOf(CardTrustVerifier(trustList).verifyCardBatch(card.qrPayload))
     }
+
+    /**
+     * The export of research data to a drive (R07, FR-30): encrypted on this phone, de-identified, written to a document
+     * the health worker chooses. It makes a new data key for every export and keeps nothing between exports.
+     */
+    fun researchExportManager(database: NeoGoldDatabase): ResearchExportManager =
+        ResearchExportManager(application, database, encryptedFiles)
 
     /** Verifies the bundle once and keeps the result. Called first thing at start-up. */
     fun verifyAssets() {

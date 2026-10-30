@@ -288,14 +288,9 @@ object ExportCryptoEngine {
     fun createSession(): ExportSession {
         return ExportSession(generateDataKeysetHandle())
     }
-
-    fun restoreSession(serializedKeysetBase64: String): ExportSession {
-        val bytes = Base64.getDecoder().decode(serializedKeysetBase64)
-        val handle = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(bytes))
-        return ExportSession(handle)
-    }
 }
 
+/** The data key of one export, held in memory for the length of that export and never written anywhere. */
 class ExportSession internal constructor(
     private val keysetHandle: KeysetHandle
 ) {
@@ -313,9 +308,6 @@ class ExportSession internal constructor(
         return ExportCryptoEngine.wrapDataKey(keysetHandle, exportPublicKeyBytes)
     }
 
-    fun serializeKeyset(): String {
-        val baos = ByteArrayOutputStream()
-        CleartextKeysetHandle.write(keysetHandle, BinaryKeysetWriter.withOutputStream(baos))
-        return Base64.getEncoder().encodeToString(baos.toByteArray())
-    }
+    // There is deliberately no way to serialize this key: the data key of an export lives in memory only, and leaves the
+    // phone only inside the HPKE wrap addressed to the offline study key (BUG-2026-038).
 }

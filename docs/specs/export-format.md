@@ -196,3 +196,14 @@ To prevent re-identification by correlating capture or draw dates with hospital 
 | **Tampered Ciphertext** | SHA-256 check fails with `ManifestVerificationException: File hash mismatch for <path>`. Streaming AEAD fails with `GeneralSecurityException`. Process terminates with code 3. |
 | **Missing File** | Manifest check detects absent file and terminates with code 4. |
 | **Success** | Outputs decrypted CSVs, decrypted JPEG images, and a decrypted `manifest.sha256` verified and compatible with `PartnerExportLoader`. |
+
+---
+
+## 7. On-phone handling (package C3)
+
+- **The data key lives in memory only.** Every export makes a new data key. It is never written to disk, not even next to the ciphertext, and leaves the phone only inside the HPKE wrap in `header.json`. There is no checkpoint and no resume: an export that stops is started again.
+- **Staging holds ciphertext only.** The ciphertext files are built in a staging directory in the app's cache. The directory is emptied before an export starts and removed when it ends, on success, failure and cancel alike; "Delete all data" removes it too.
+- **A failed or cancelled export discards its file.** The document the health worker chose is deleted if the export does not finish, so a partly written archive never looks like an export.
+- **The file name** is `neogold-export-<STUDY_CODE>-<TIMESTAMP>.zip`, with the timestamp in UTC as `yyyyMMdd'T'HHmmss'Z'`; characters in the study code other than ASCII letters, digits, `_` and `-` are dropped.
+- **Messages.** The screen shows the stage the export is in, in the language of the app. A failure shows a fixed message; the text of an exception is never shown, because it can carry a file path.
+

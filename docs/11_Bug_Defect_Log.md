@@ -99,7 +99,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-022 | Session records carry hardcoded versions and card batch | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | New | Unassigned | TC-TRI-22 | |
 | BUG-2026-023 | Gestational age has a hidden default of 38 weeks | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
 | BUG-2026-024 | Research mode has no entry point | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-01 | |
-| BUG-2026-025 | Research export screen never writes a file | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | EXP | S2 | No | - | P2 | New | Unassigned | TC-EXP-01 | |
+| BUG-2026-025 | Research export screen never writes a file | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | EXP | S2 | No | - | P2 | Fixed | Unassigned | TC-EXP-01 | |
 | BUG-2026-026 | Study enrollment (R08) and Leave study (R09) are placeholder screens | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | New | Unassigned | TC-API-07 | |
 | BUG-2026-027 | Upload is never started by the app | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | New | Unassigned | TC-SYNC-10 | |
 | BUG-2026-028 | No Play In-App Updates implementation | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | ONB | S2 | No | - | P2 | New | Unassigned | TC-OPS-03 | |
@@ -112,7 +112,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-035 | ScreeningPipelineBenchmarkTest asserts phone time budgets on a shared build machine | 2026-10-27 | Test | commit a0b6da2 | n/a | PERF | S3 | No | - | P3 | New | Unassigned | TC-PERF-01 | |
 | BUG-2026-036 | Trivy gate S2 fails: Bouncy Castle 1.78.1 (CRITICAL) and protobuf-java 3.19.3 (HIGH) ship in the app | 2026-10-27 | CI | commit 8c13d2a | n/a | SEC | S2 | No | - | P2 | In progress | Unassigned | TC-SEC-05 | |
 | BUG-2026-037 | TC-CAP-01 builds a LiveCardAnalyzer and never calls it, so the test asserts on objects it constructed itself | 2026-10-27 | Review | commit a0b6da2 | n/a | CAP | S3 | No | - | P3 | Fixed | Unassigned | TC-CAP-01 | |
-| BUG-2026-038 | The export checkpoint keeps the data keyset in clear next to the staged ciphertext, and a failed export leaves both behind | 2026-10-27 | Review | commit 93a2f9f | n/a | EXP | S2 | No | - | P2 | New | Unassigned | TC-EXP-01 | |
+| BUG-2026-038 | The export checkpoint keeps the data keyset in clear next to the staged ciphertext, and a failed export leaves both behind | 2026-10-27 | Review | commit 93a2f9f | n/a | EXP | S2 | No | - | P2 | Fixed | Unassigned | TC-EXP-01 | |
 | BUG-2026-039 | ResearchJpegSanitizer is never called outside tests, and extractOrientation reads the wrong bytes | 2026-10-27 | Review | commit 93a2f9f | n/a | PRIV | S2 | No | - | P2 | New | Unassigned | TC-API-20 | |
 | BUG-2026-040 | StudyEnrollmentManager accepts a null verifier (unsigned study QR) and echoes the enrollment code in an error message | 2026-10-27 | Review | commit 93a2f9f | n/a | SYNC | S3 | No | - | P2 | Fixed | Unassigned | TC-API-07 | |
 | BUG-2026-041 | TriageCli ships in main with silent defaults for clinical inputs, and nothing uses it | 2026-10-27 | Review | commit 93a2f9f | n/a | TRI | S3 | No | - | P3 | Fixed | Unassigned | TC-CAP-04 | |
@@ -604,7 +604,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-025: The research export screen never writes a file
 
 - Area: EXP | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-EXP-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-EXP-01 | Fix version:
 
 **Steps**
 1. Open R07 and choose a destination.
@@ -616,6 +616,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `MainActivity.kt:849-885`.
 
 **Notes** Fix package R3.
+
+**Fix** Package C3. The R07 route passes the picked document to `ResearchExportManager.exportToUri` (through `ExportDestination`), shows the manager's real progress by stage (the screen writes the stage text itself, in English or Bangla), names the file `neogold-export-<STUDY_CODE>-<UTC TIMESTAMP>.zip` (`exportFileName`, spec Section 3), and shows a failure card when the export does not finish. The export runs in a scope tied to the screen: leaving R07, or a lock that sends the worker back to R01, cancels it at the next file, removes what it staged and deletes the half-written document. The server section (enroll, upload now, leave study) is hidden until package C4 so no button does nothing. The banned word "safe" in the old encryption notes is gone (reworded: "If the drive is lost, the records cannot be read without ..."), and every visible text on R07 is in both languages (the Bangla is a draft). Tests: `ResearchExportCleanupTest` (11), `ExportWiringGuardTest`. Not run on a device with a real USB drive (bench task).
 
 #### BUG-2026-026: Study enrollment (R08) and Leave study (R09) are placeholder screens
 
@@ -823,7 +825,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-038: The export checkpoint keeps the data keyset in clear next to the staged ciphertext, and a failed export leaves both behind
 
 - Area: EXP | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-EXP-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-EXP-01 | Fix version:
 
 **Steps**
 1. Start a research export and interrupt it (kill the app, or make the destination fail).
@@ -836,6 +838,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `android/feature/research/src/main/kotlin/com/kitalonlabs/neogold/feature/research/export/ResearchExportManager.kt` (`saveCheckpoint`, `loadOrCreateCheckpoint`, the success-only cleanup) and `android/core/security/src/main/kotlin/com/kitalonlabs/neogold/core/security/export/ExportCryptoEngine.kt` (`serializeKeyset`). Found by the privacy-security-reviewer on 27 October 2026. Doc 8 does not mention a checkpoint.
 
 **Notes** Latent: the export screen is not wired yet (BUG-2026-025). Fix in package C3: wrap the checkpoint keyset with a key-store-backed key (as `FileKeysetProvider` does) or drop resumability, delete the staging directory on failure and cancel, and add a test that fails an export half way and checks that nothing readable is left.
+
+**Fix** Package C3. Resumability is dropped: nothing in the spec, the PRD or the test cases asks for it, and the old "resume" test only ran two exports one after the other (the staging directory was deleted after the first). The data key of an export is made for that export and kept in memory only: `ExportSession.serializeKeyset` and `ExportCryptoEngine.restoreSession` are removed, so the app has no way to write it to disk, and it leaves the phone only inside the HPKE wrap addressed to the offline study key. The staging directory is emptied before an export starts (leftovers of a killed run are never reused) and removed in `finally`, on success, failure and cancel. A failure shows a fixed message, never the text of an exception. Tests (each fails with its guard removed): `ResearchExportCleanupTest`: the key is never on disk while an export runs, a finished, a failed (images, archive) and a cancelled export leave nothing, and leftovers are removed. The old `testExportResumeCapability` is unchanged and still passes; it checks that a second export into the same directory works.
 
 #### BUG-2026-039: ResearchJpegSanitizer is never called outside tests, and extractOrientation reads the wrong bytes
 
@@ -1659,7 +1663,9 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 22. Found in the C2 test-round reviews and FIXED in the same package: registering a participant and entering a TSB later had no lock check, so a lock that landed during the database call let the late result put the participant and inputs back in memory; a lock that came before the view model had collected it was not seen by any action (every action now refuses unless the session manager itself says unlocked); the repository imported the error types from the UI package (moved to `data`); R02 showed VERIFIED from the stored flag without asking the card verifier again, so a card whose issuer key was revoked after the scan still looked fine (`researchCardStatus` now verifies the stored bytes against the trust list, as a save does, and falls back to UNVERIFIED on a storage error); stale messages from R05 could show on R03 (cleared on entry); the Bangla unit read "ডেসিলি" (now "ডেসিলিটার", for the nurse panel to confirm); the card badges on R02 and R06 and the R05 method names were English only (localized). Tests: `ResearchViewModelTest` registration, deferred TSB, save and enrollment against a lock (the registration and deferred-TSB tests fail without their guard; the save test depends on timing).
 23. Open (low): R01 shows the enrolled study's name before the PIN, and the "another study is set up" message tells a holder of any validly signed study QR that the phone is enrolled elsewhere, without costing a PIN try. Decide with doc 8 whether the name should wait for the PIN. (C4.)
 24. Open (low): `ResearchBlindingGuardTest` checks the module's own build file, the screen and capture code, and the displayed strings; it does not check `export/` (the CSV has estimate and triage columns, always empty for research rows) or the dependency graph through other modules. Add a test that the export columns are empty for research rows, and a graph check in `tools/check_dependencies.py`. (D1.)
-25. Open (low, pre-existing, package C3): `ResearchExportManager` builds "Export failed: ${e.message}" and R07 shows it; an exception message can carry a file path, and it is English only.
+25. RESOLVED in package C3: the export failure shows a fixed message in both languages; no exception text reaches the screen (`ExportWiringGuardTest`, `ResearchExportCleanupTest`).
+27. Not done in C3, needs the owner (a dependency change): the Tink version bump and the `ExportCryptoEngine` rewrite that would let the protobuf Trivy ignores go (the engine builds HPKE and streaming keysets with `CleartextKeysetHandle` and a deprecated template). A version bump changes the locked dependencies and the SBOM, so it waits for approval. (F2.)
+28. Not run: an export to a real USB drive through the Storage Access Framework, and a decrypt on the coordinator's computer of a file the phone made (bench task). The unit tests decrypt the archive with `DecryptEngine`, but not through a content provider.
 26. Note: `lockEpoch` is 0 when there is no session manager, so the in-flight protection is off in that configuration; production always passes the manager, so this is only a trap for a future caller.
 19. No DAST pass has reached the authenticated routes: StackHawk cannot make a device assertion, so it got 401 on every route except `/health` and `/enrollments` (BUG-2026-084). A test-only issuer key and a helper that signs assertions for the scanner would let it exercise participants, sessions, captures and TSB, and the cross-device checks. (F3, with the Schemathesis work.)
 18. The age shown on R03 is the whole hours (`toInt`, rounded down) and the record is rounded down to a tenth: the two agree to within a tenth of an hour. (None.)

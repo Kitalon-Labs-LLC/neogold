@@ -3,6 +3,7 @@ package com.kitalonlabs.neogold.feature.research.export
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
 import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
@@ -12,12 +13,13 @@ import com.kitalonlabs.neogold.core.data.local.entity.TsbMeasurementEntity
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.export.ExportCryptoEngine
 import com.kitalonlabs.neogold.core.security.export.ExportHeader
-import com.kitalonlabs.neogold.core.security.export.ExportSession
 import com.kitalonlabs.neogold.core.security.export.ManifestEntry
 import com.kitalonlabs.neogold.core.security.export.ManifestParser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -28,6 +30,7 @@ import java.time.Instant
 import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.coroutines.cancellation.CancellationException
 
 enum class ExportStage {
     PREPARING,
@@ -64,23 +67,40 @@ class ResearchExportManager(
     private val encryptedFileStore: EncryptedFileStore
 ) {
 
-    @Suppress("TooGenericExceptionCaught") // report any export failure through Result and progress, never crash
+    /** Writes the export to a document chosen with the Storage Access Framework (see [exportToDestination]). */
     suspend fun exportToUri(
         contentResolver: ContentResolver,
         destinationUri: Uri,
         stagingDir: File = File(context.cacheDir, "export_staging"),
         onProgress: ((ExportProgress) -> Unit)? = null
-    ): Result<ExportSummary> = withContext(Dispatchers.IO) {
-        try {
-            val outputStream = contentResolver.openOutputStream(destinationUri)
-                ?: return@withContext Result.failure(IllegalStateException("Could not open destination URI for writing: $destinationUri"))
+    ): Result<ExportSummary> =
+        exportToDestination(ExportDestination.forUri(contentResolver, destinationUri), stagingDir, onProgress)
 
-            outputStream.use { out ->
-                exportToStream(out, stagingDir, onProgress)
+    /**
+     * Writes the export to [destination]. If the export fails or is cancelled, the destination is discarded: a half-written
+     * archive that looks like an export is worse than none.
+     */
+    @Suppress("TooGenericExceptionCaught") // any failure goes back through Result, never a crash
+    suspend fun exportToDestination(
+        destination: ExportDestination,
+        stagingDir: File = File(context.cacheDir, "export_staging"),
+        onProgress: ((ExportProgress) -> Unit)? = null
+    ): Result<ExportSummary> = withContext(Dispatchers.IO) {
+        val result = try {
+            val out = destination.open()
+            if (out == null) {
+                Result.failure(IllegalStateException("The export destination could not be opened"))
+            } else {
+                out.use { exportToStream(it, stagingDir, onProgress) }
             }
+        } catch (e: CancellationException) {
+            withContext(NonCancellable) { destination.discard() }
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
+        if (result.isFailure) withContext(NonCancellable) { destination.discard() }
+        result
     }
 
     @Suppress(
@@ -93,6 +113,8 @@ class ResearchExportManager(
         onProgress: ((ExportProgress) -> Unit)? = null
     ): Result<ExportSummary> = withContext(Dispatchers.IO) {
         try {
+            // Always start clean. Nothing is resumed, so nothing left by an earlier run is trusted or reused.
+            stagingDir.deleteRecursively()
             onProgress?.invoke(ExportProgress(0, 0, 0L, ExportStage.PREPARING, "Loading study data..."))
 
             // 1. Verify active study and export public key
@@ -126,12 +148,13 @@ class ResearchExportManager(
 
             val totalExpectedFiles = 4 + imageCaptures.size // 4 CSVs + images
             val studyStaging = File(stagingDir, study.studyCode).apply { mkdirs() }
-            val checkpointFile = File(studyStaging, "checkpoint.json")
 
-            // 3. Load or generate data keyset session
-            val (exportSession, completedFilesMap) = loadOrCreateCheckpoint(checkpointFile)
+            // 3. A new data key for this export, in memory only (BUG-2026-038): it is never written to the staging
+            // directory, and leaves the phone only inside the HPKE wrap addressed to the offline study key.
+            val exportSession = ExportCryptoEngine.createSession()
+            val completedFilesMap = linkedMapOf<String, String>()
 
-            var completedCount = completedFilesMap.size
+            var completedCount = 0
             var totalBytesProcessed = 0L
 
             onProgress?.invoke(
@@ -153,15 +176,11 @@ class ResearchExportManager(
             )
 
             for ((relPath, csvText) in csvFiles) {
+                currentCoroutineContext().ensureActive() // leaving the screen cancels the export at the next file
                 val targetFile = File(studyStaging, relPath).apply { parentFile?.mkdirs() }
-                if (!isCompletedAndValid(relPath, targetFile, completedFilesMap)) {
-                    val plaintextBytes = csvText.toByteArray(StandardCharsets.UTF_8)
-                    val cipherBytes = exportSession.encryptBytes(plaintextBytes)
-                    targetFile.writeBytes(cipherBytes)
-                    val sha = ExportCryptoEngine.sha256Hex(cipherBytes)
-                    completedFilesMap[relPath] = sha
-                    saveCheckpoint(checkpointFile, exportSession, completedFilesMap)
-                }
+                val cipherBytes = exportSession.encryptBytes(csvText.toByteArray(StandardCharsets.UTF_8))
+                targetFile.writeBytes(cipherBytes)
+                completedFilesMap[relPath] = ExportCryptoEngine.sha256Hex(cipherBytes)
                 completedCount = completedFilesMap.size
                 totalBytesProcessed += targetFile.length()
                 onProgress?.invoke(
@@ -187,20 +206,17 @@ class ResearchExportManager(
             )
 
             for ((index, cap) in imageCaptures.withIndex()) {
+                currentCoroutineContext().ensureActive()
                 val relPath = "images/${cap.id}.jpg.enc"
                 val targetFile = File(studyStaging, relPath).apply { parentFile?.mkdirs() }
 
-                if (!isCompletedAndValid(relPath, targetFile, completedFilesMap)) {
-                    val imgFile = cap.imageFile!!
-                    encryptedFileStore.openDecryptedStream(imgFile).use { imageInStream ->
-                        FileOutputStream(targetFile).use { fileOut ->
-                            exportSession.encryptStream(imageInStream, fileOut)
-                        }
+                val imgFile = cap.imageFile!!
+                encryptedFileStore.openDecryptedStream(imgFile).use { imageInStream ->
+                    FileOutputStream(targetFile).use { fileOut ->
+                        exportSession.encryptStream(imageInStream, fileOut)
                     }
-                    val sha = ExportCryptoEngine.sha256Hex(targetFile)
-                    completedFilesMap[relPath] = sha
-                    saveCheckpoint(checkpointFile, exportSession, completedFilesMap)
                 }
+                completedFilesMap[relPath] = ExportCryptoEngine.sha256Hex(targetFile)
 
                 completedCount = completedFilesMap.size
                 totalBytesProcessed += targetFile.length()
@@ -318,8 +334,7 @@ class ResearchExportManager(
                 )
             )
 
-            // 10. Clean up staging directory on complete
-            studyStaging.deleteRecursively()
+            // 10. The staging directory is removed in `finally`, on success, failure and cancel alike.
 
             onProgress?.invoke(
                 ExportProgress(
@@ -332,62 +347,15 @@ class ResearchExportManager(
             )
 
             Result.success(summary)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            onProgress?.invoke(
-                ExportProgress(0, 0, 0L, ExportStage.FAILED, "Export failed: ${e.message}")
-            )
+            // The message of an exception can carry a path or other values, so the screen is never given it.
+            onProgress?.invoke(ExportProgress(0, 0, 0L, ExportStage.FAILED, "Export failed"))
             Result.failure(e)
+        } finally {
+            withContext(NonCancellable) { stagingDir.deleteRecursively() }
         }
-    }
-
-    private fun isCompletedAndValid(relPath: String, file: File, completedMap: Map<String, String>): Boolean {
-        val expectedSha = completedMap[relPath] ?: return false
-        if (!file.exists() || file.length() == 0L) return false
-        val actualSha = ExportCryptoEngine.sha256Hex(file)
-        return actualSha.equals(expectedSha, ignoreCase = true)
-    }
-
-    private fun loadOrCreateCheckpoint(checkpointFile: File): Pair<ExportSession, MutableMap<String, String>> {
-        if (checkpointFile.exists()) {
-            try {
-                val jsonStr = checkpointFile.readText(StandardCharsets.UTF_8)
-                val obj = JSONObject(jsonStr)
-                val rawKeysetB64 = obj.getString("raw_keyset_b64")
-                val session = ExportCryptoEngine.restoreSession(rawKeysetB64)
-
-                val completedFiles = mutableMapOf<String, String>()
-                val filesObj = obj.getJSONObject("files")
-                for (key in filesObj.keys()) {
-                    completedFiles[key] = filesObj.getString(key)
-                }
-                return Pair(session, completedFiles)
-            } catch (_: Exception) {
-                // If checkpoint corrupted, reset
-            }
-        }
-
-        // New checkpoint
-        val session = ExportCryptoEngine.createSession()
-        val completedFiles = mutableMapOf<String, String>()
-        saveCheckpoint(checkpointFile, session, completedFiles)
-        return Pair(session, completedFiles)
-    }
-
-    private fun saveCheckpoint(checkpointFile: File, session: ExportSession, completedFiles: Map<String, String>) {
-        val rawKeysetB64 = session.serializeKeyset()
-
-        val filesObj = JSONObject()
-        for ((path, sha) in completedFiles) {
-            filesObj.put(path, sha)
-        }
-
-        val root = JSONObject().apply {
-            put("raw_keyset_b64", rawKeysetB64)
-            put("files", filesObj)
-            put("updated_at", System.currentTimeMillis())
-        }
-
-        checkpointFile.writeText(root.toString(2), StandardCharsets.UTF_8)
     }
 
     // CSV Generators enforcing data minimization
@@ -502,3 +470,40 @@ class ResearchExportManager(
         }
     }
 }
+
+/** Where an export is written: the stream to write to, and how to remove what was written when the export fails. */
+class ExportDestination(
+    val open: () -> OutputStream?,
+    val discard: () -> Unit
+) {
+    companion object {
+        /** A document chosen with the Storage Access Framework; a failed export deletes the partly written document. */
+        fun forUri(contentResolver: ContentResolver, uri: Uri) = ExportDestination(
+            open = { contentResolver.openOutputStream(uri) },
+            discard = {
+                try {
+                    DocumentsContract.deleteDocument(contentResolver, uri)
+                } catch (_: Exception) {
+                    // the document may already be gone, or the provider may not allow deletion: nothing more to do
+                }
+            }
+        )
+    }
+}
+
+/**
+ * The name of an export archive: `neogold-export-<STUDY_CODE>-<TIMESTAMP>.zip` (docs/specs/export-format.md Section 3). The
+ * timestamp is UTC, so two exports never share a name and the name sorts by time. Anything in the study code that is not a
+ * letter, a digit, an underscore or a dash is dropped, so the name is safe on every file system.
+ */
+fun exportFileName(studyCode: String, at: Instant): String {
+    val code = studyCode
+        .filter { (it.isLetterOrDigit() && it.code < ASCII_LIMIT) || it == '_' || it == '-' }
+        .ifEmpty { "STUDY" }
+    val stamp = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+        .withZone(java.time.ZoneOffset.UTC)
+        .format(at)
+    return "neogold-export-$code-$stamp.zip"
+}
+
+private const val ASCII_LIMIT = 128
