@@ -4,6 +4,8 @@ import com.kitalonlabs.neogold.core.security.integrity.BundleLoadResult
 import com.kitalonlabs.neogold.core.security.integrity.BundleManifest
 import com.kitalonlabs.neogold.core.security.integrity.BundleManifestVerifier
 import com.kitalonlabs.neogold.core.security.integrity.IntegrityResult
+import com.kitalonlabs.neogold.engine.cardtrust.TrustList
+import com.kitalonlabs.neogold.engine.cardtrust.TrustListParser
 import com.kitalonlabs.neogold.engine.triage.SignoffStatus
 import com.kitalonlabs.neogold.engine.triage.TriageConfig
 import com.kitalonlabs.neogold.engine.triage.TriageConfigParser
@@ -20,7 +22,9 @@ import java.time.LocalDate
 class VerifiedAssets private constructor(
     val integrity: IntegrityResult,
     val triageConfig: TriageConfig?,
-    val modelVersion: String? = null
+    val modelVersion: String? = null,
+    /** The signed trust list the card and study QR checks run against; null unless the whole bundle verified. */
+    val trustList: TrustList? = null
 ) {
     /** Screening and research may run on these files. */
     val isUsable: Boolean get() = integrity.isScreeningAllowed
@@ -45,6 +49,7 @@ class VerifiedAssets private constructor(
     companion object {
         const val TRIAGE_CONFIG = "triage-config.json"
         const val MODEL = "model.json"
+        const val TRUST_LIST = "trust-list.json"
 
         private val MODEL_VERSION = Regex("\"modelVersion\"\\s*:\\s*\"([^\"]+)\"")
 
@@ -68,6 +73,7 @@ class VerifiedAssets private constructor(
                 manifest = result.bundle.manifest,
                 triageConfigText = result.bundle.text(TRIAGE_CONFIG),
                 modelText = result.bundle.text(MODEL),
+                trustListText = result.bundle.text(TRUST_LIST),
                 isDevelopmentKey = isDevelopmentKey,
                 isDebuggable = isDebuggable
             )
@@ -85,7 +91,8 @@ class VerifiedAssets private constructor(
             triageConfigText: String,
             isDevelopmentKey: Boolean,
             isDebuggable: Boolean,
-            modelText: String = ""
+            modelText: String = "",
+            trustListText: String? = null
         ): VerifiedAssets {
             if (isDevelopmentKey && !isDebuggable) {
                 return VerifiedAssets(IntegrityResult.DevelopmentKeyInRelease, null)
@@ -95,8 +102,18 @@ class VerifiedAssets private constructor(
             } catch (_: RuntimeException) {
                 return VerifiedAssets(IntegrityResult.UnusableAsset(TRIAGE_CONFIG), null)
             }
+            // An unreadable trust list leaves nothing to check a card against, so the bundle is unusable as a whole.
+            val trustList = if (trustListText == null) {
+                null
+            } else {
+                try {
+                    TrustListParser.parse(trustListText)
+                } catch (_: RuntimeException) {
+                    return VerifiedAssets(IntegrityResult.UnusableAsset(TRUST_LIST), null)
+                }
+            }
             val modelVersion = MODEL_VERSION.find(modelText)?.groupValues?.get(1)
-            return VerifiedAssets(IntegrityResult.Valid(manifest), config, modelVersion)
+            return VerifiedAssets(IntegrityResult.Valid(manifest), config, modelVersion, trustList)
         }
     }
 }

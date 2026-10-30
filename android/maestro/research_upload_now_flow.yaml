@@ -1,4 +1,4 @@
-appId: com.kitalonlabs.neogold
+appId: ${APP_ID}
 ---
 # ==============================================================================
 # NeoGold Research Mode: Manual Upload Now Flow (doc 7 Section 5, doc 10 TC-SYNC-10, TC-SYNC-12)

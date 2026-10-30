@@ -47,7 +47,8 @@ class LiveCardAnalyzer(
     private val maxMovementPx: Double = 18.0,
     private val steadyRequiredDurationMs: Long = 1000L,
     private val onStateChanged: (LiveCardState) -> Unit,
-    private val onAutoCaptureTriggered: () -> Unit
+    private val onAutoCaptureTriggered: () -> Unit,
+    private val clockMs: () -> Long = System::currentTimeMillis
 ) : ImageAnalysis.Analyzer {
 
     private var steadyStartTimeMs: Long = 0L
@@ -61,7 +62,7 @@ class LiveCardAnalyzer(
             val markerMap = markers.associateBy { it.id }
             val hasAllFour = markerMap.keys.containsAll(listOf(0, 1, 2, 3))
 
-            val now = System.currentTimeMillis()
+            val now = clockMs()
 
             if (!hasAllFour) {
                 steadyStartTimeMs = 0L

@@ -91,4 +91,35 @@ class VerifiedAssetsTest {
         assertThat(VerifiedAssets.NotVerified.triageEnabled).isFalse()
         assertThat(VerifiedAssets.NotVerified.triageConfig).isNull()
     }
+
+    @Test
+    fun theShippedTrustList_isParsedFromTheVerifiedBytes_TC_CARD_01() {
+        val trustList = File(repositoryRoot, "config/trust-list.json").readText()
+
+        val assets = VerifiedAssets.interpret(
+            manifest,
+            shippedConfig,
+            isDevelopmentKey = false,
+            isDebuggable = false,
+            trustListText = trustList
+        )
+
+        assertThat(assets.isUsable).isTrue()
+        assertThat(assets.trustList).isNotNull()
+    }
+
+    @Test
+    fun aTrustListThatCannotBeRead_makesTheWholeBundleUnusable() {
+        val assets = VerifiedAssets.interpret(
+            manifest,
+            shippedConfig,
+            isDevelopmentKey = false,
+            isDebuggable = false,
+            trustListText = "{ not json"
+        )
+
+        assertThat(assets.isUsable).isFalse()
+        assertThat(assets.trustList).isNull()
+        assertThat(assets.integrity).isEqualTo(IntegrityResult.UnusableAsset("trust-list.json"))
+    }
 }

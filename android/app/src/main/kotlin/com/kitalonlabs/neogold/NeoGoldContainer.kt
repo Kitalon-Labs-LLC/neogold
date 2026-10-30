@@ -2,6 +2,7 @@ package com.kitalonlabs.neogold
 
 import android.app.Application
 import android.content.pm.ApplicationInfo
+import android.os.Build
 import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
@@ -26,7 +27,15 @@ import com.kitalonlabs.neogold.core.security.integrity.IntegrityStateManager
 import com.kitalonlabs.neogold.core.security.pin.KeystorePinHmacKeyProvider
 import com.kitalonlabs.neogold.core.security.pin.PinHmacKeyProvider
 import com.kitalonlabs.neogold.core.security.pin.ResearchSessionManager
+import com.kitalonlabs.neogold.engine.camera.qualification.CameraQualifier
+import com.kitalonlabs.neogold.engine.camera.qualification.QualificationThresholds
+import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
+import com.kitalonlabs.neogold.engine.vision.QualityThresholds
+import com.kitalonlabs.neogold.engine.vision.VisionEngine
+import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanService
+import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationService
 import com.kitalonlabs.neogold.integrity.VerifiedAssets
+import com.kitalonlabs.neogold.onboarding.OnboardingServices
 import com.kitalonlabs.neogold.storage.StorageCoordinator
 import com.kitalonlabs.neogold.storage.StorageState
 import com.kitalonlabs.neogold.wipe.DirectoryWiper
@@ -112,6 +121,34 @@ class NeoGoldContainer(private val application: Application) {
      */
     fun screeningAvailable(today: LocalDate = LocalDate.now()): Boolean =
         SCREENING_PIPELINE_WIRED && assets.triageAvailable(today, isPublicBuild = !isDebuggable)
+
+    /**
+     * The first-run flow (S06, S07) over the open [database]. The quality limits come from the signed config; if the
+     * bundle did not verify there is no trust list, [OnboardingServices.cardScan] is null, and no card is accepted.
+     */
+    fun onboardingServices(database: NeoGoldDatabase): OnboardingServices {
+        val limits = assets.triageConfig?.qualityThresholds.orEmpty()
+        val vision = VisionEngine(thresholds = QualityThresholds.fromMap(limits))
+        return OnboardingServices(
+            cardScan = assets.trustList?.let {
+                CardScanService(CardTrustVerifier(it), database.cardBatchDao(), database.auditEventDao())
+            },
+            qualification = QualificationService(
+                qualifier = CameraQualifier(
+                    thresholds = QualificationThresholds.fromMap(limits),
+                    visionEngine = vision
+                ),
+                vision = vision,
+                cardBatches = database.cardBatchDao(),
+                profiles = database.deviceProfileDao(),
+                audit = database.auditEventDao(),
+                dataStore = dataStore,
+                appVersion = BuildConfig.VERSION_NAME
+            ),
+            dataStore = dataStore,
+            buildFingerprint = Build.FINGERPRINT
+        )
+    }
 
     /** Verifies the bundle once and keeps the result. Called first thing at start-up. */
     fun verifyAssets() {

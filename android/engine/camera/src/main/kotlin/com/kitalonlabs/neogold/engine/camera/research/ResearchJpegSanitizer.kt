@@ -318,13 +318,17 @@ object ResearchJpegSanitizer {
             if (marker == MARKER_SOI || marker == MARKER_EOI || (marker in MARKER_RST0..MARKER_RST7)) continue
 
             val len = readUint16(jpegBytes, pos)
-            if (marker == MARKER_APP1 && len >= 16) {
+            if (marker == MARKER_APP1 && len >= 16 && pos + 8 <= jpegBytes.size) {
                 val header = String(jpegBytes, pos + 2, 6, Charsets.US_ASCII)
                 if (header.startsWith("Exif\u0000\u0000")) {
                     val tiffStart = pos + 8
+                    // A length that runs past the end of the file is not an EXIF block we can read.
+                    if (tiffStart + (len - 8) > jpegBytes.size) return null
                     val isLE = jpegBytes[tiffStart] == 'I'.code.toByte()
                     val order = if (isLE) ByteOrder.LITTLE_ENDIAN else ByteOrder.BIG_ENDIAN
-                    val buf = ByteBuffer.wrap(jpegBytes, tiffStart, len - 8).order(order)
+                    // slice(): the offsets inside EXIF count from the start of the TIFF header, not from the start of
+                    // the file. Without it every position was read from the wrong place (BUG-2026-039).
+                    val buf = ByteBuffer.wrap(jpegBytes, tiffStart, len - 8).slice().order(order)
                     buf.position(4)
                     val ifd0 = buf.int
                     if (ifd0 in 8 until (len - 8)) {

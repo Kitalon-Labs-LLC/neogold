@@ -3,8 +3,10 @@ package com.kitalonlabs.neogold.engine.camera.qualification
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.engine.camera.device.DeviceCapabilities
 import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
+import com.kitalonlabs.neogold.engine.vision.CardGeometry
 import com.kitalonlabs.neogold.engine.vision.SyntheticCardRenderer
 import com.kitalonlabs.neogold.engine.vision.SyntheticRenderConfig
+import com.kitalonlabs.neogold.engine.vision.SyntheticWindowContent
 import org.junit.Test
 
 /**
@@ -14,6 +16,9 @@ class CameraQualifierTest {
 
     private val renderer = SyntheticCardRenderer()
     private val qualifier = CameraQualifier()
+
+    /** The synthetic photos show the card as designed, so the batch they are compared with has the design's values. */
+    private val nominalReference = CardGeometry.PATCHES.mapValues { it.value.nominalLab }
 
     private fun createStandardCapabilities(
         hwLevel: CameraHardwareLevel = CameraHardwareLevel.FULL,
@@ -42,6 +47,7 @@ class CameraQualifierTest {
         val photo3 = renderer.renderFrame(SyntheticRenderConfig(scale = 1.02, tiltDegrees = 1.8))
 
         val result = qualifier.qualifyCamera(
+            batchReference = nominalReference,
             photos = listOf(photo1, photo2, photo3),
             capabilities = createStandardCapabilities(),
             cardBatchId = "NG-2026-001"
@@ -67,6 +73,22 @@ class CameraQualifierTest {
     }
 
     @Test
+    fun tcDev02_aCardOnATableWithNoSkinInItsWindowQualifiesLikeAnyOther() {
+        // The skin check on the card's window is for a baby's skin; qualification photos show the card on a table.
+        val onATable = SyntheticRenderConfig(windowContent = SyntheticWindowContent.CLOTH_BLUE)
+
+        val result = qualifier.qualifyCamera(
+            batchReference = nominalReference,
+            photos = List(3) { renderer.renderFrame(onATable) },
+            capabilities = createStandardCapabilities(),
+            cardBatchId = "NG-2026-001"
+        )
+
+        assertThat(result.status).isEqualTo(QualificationStatus.QUALIFIED)
+        assertThat(result.failureReasons).isEmpty()
+    }
+
+    @Test
     fun tcDev05_localProcessingFailsPhone() {
         // TC-DEV-05: Force duplicate patch mismatch (e.g. HDR / local tone mapping)
         val photo1 = renderer.renderFrame(SyntheticRenderConfig(duplicateMismatchDeltaE = 3.8))
@@ -74,6 +96,7 @@ class CameraQualifierTest {
         val photo3 = renderer.renderFrame(SyntheticRenderConfig(duplicateMismatchDeltaE = 4.0))
 
         val result = qualifier.qualifyCamera(
+            batchReference = nominalReference,
             photos = listOf(photo1, photo2, photo3),
             capabilities = createStandardCapabilities(),
             cardBatchId = "NG-2026-001"
@@ -101,6 +124,7 @@ class CameraQualifierTest {
         )
 
         val result = qualifier.qualifyCamera(
+            batchReference = nominalReference,
             photos = listOf(photo1, photo2, photo3),
             capabilities = legacyCapabilities,
             cardBatchId = "NG-2026-001"
@@ -175,6 +199,7 @@ class CameraQualifierTest {
             renderer.renderFrame(SyntheticRenderConfig())
         )
         val passResult = qualifier.qualifyCamera(
+            batchReference = nominalReference,
             photos = passPhotos,
             capabilities = createStandardCapabilities(),
             cardBatchId = "NG-2026-001"
@@ -190,6 +215,7 @@ class CameraQualifierTest {
             renderer.renderFrame(SyntheticRenderConfig(duplicateMismatchDeltaE = 4.0))
         )
         val failResult = qualifier.qualifyCamera(
+            batchReference = nominalReference,
             photos = failPhotos,
             capabilities = createStandardCapabilities(),
             cardBatchId = "NG-2026-001"

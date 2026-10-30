@@ -16,8 +16,12 @@ import java.io.ByteArrayOutputStream
  * (NG-039, card/spec/qr-formats.md Section 1).
  *
  * The payloads are packed bytes in QR byte mode, not text. ZXing turns byte-mode data into a string by guessing a
- * character set, which would corrupt bytes above 0x7F, so the bytes are taken from its byte segments instead. A symbol
- * that is not made of byte segments alone is not one of ours and is ignored.
+ * character set, which would corrupt bytes above 0x7F, so the bytes are taken from its byte segments instead. A
+ * symbol with no byte segments is not one of ours and is ignored; for a mixed-mode symbol only its byte segments are
+ * returned, which cannot matter because the signature is checked over exactly those bytes.
+ *
+ * A camera frame is untrusted input, so no frame may raise: whatever ZXing throws on a damaged or crafted symbol is
+ * "no symbol in this frame".
  *
  * Pure JVM: no Android class is used, so the tests render real QR images and read them back.
  */
@@ -34,6 +38,7 @@ object QrDecoder {
      * @param rowStride bytes from the start of one row to the start of the next
      * @return the payload bytes of the QR symbol in the frame, or null when there is none or it is not byte mode
      */
+    @Suppress("TooGenericExceptionCaught") // see the class comment: no frame may raise
     fun decode(luminance: ByteArray, width: Int, height: Int, rowStride: Int = width): ByteArray? {
         require(width > 0 && height > 0 && rowStride >= width) { "Frame size is not valid" }
         require(luminance.size >= rowStride * (height - 1) + width) { "Frame is smaller than its size says" }
@@ -48,6 +53,8 @@ object QrDecoder {
             null // no symbol in this frame, which is the usual case
         } catch (_: ReaderException) {
             null // a symbol that did not decode cleanly; the next frame may
+        } catch (_: RuntimeException) {
+            null // a crafted or damaged symbol that ZXing did not expect; it must not end the app
         }
     }
 

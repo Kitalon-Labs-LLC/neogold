@@ -32,7 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
-import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 
 /**
  * S23: Settings (NG-002, NG-005, NFR-06, TC-ONB-04, doc 6 Section 5).
@@ -205,10 +204,7 @@ fun S23SettingsScreen(
         // Retention Days Slider
         val currentDaysInt = retentionSlider.toInt()
         Text(
-            text = stringResource(
-                R.string.settings_retention_days,
-                ClinicalNumberFormatter.formatInteger(currentDaysInt)
-            ),
+            text = stringResource(R.string.settings_retention_days, currentDaysInt),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface

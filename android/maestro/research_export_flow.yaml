@@ -1,4 +1,4 @@
-appId: com.kitalonlabs.neogold
+appId: ${APP_ID}
 ---
 # ==============================================================================
 # NeoGold Research Mode: Encrypted USB / File Export Flow (doc 8 Section 3, doc 10 TC-EXP-01, TC-EXP-04)

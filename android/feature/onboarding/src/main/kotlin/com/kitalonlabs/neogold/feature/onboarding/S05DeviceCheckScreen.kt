@@ -129,8 +129,6 @@ private fun DeviceSpecsCard(report: DeviceCompatibilityReport) {
         stringResource(R.string.s05_status_untested)
     }
 
-    val ramText = "${ClinicalNumberFormatter.formatInteger(report.capabilities.ramMb)} MB"
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -168,7 +166,7 @@ private fun DeviceSpecsCard(report: DeviceCompatibilityReport) {
             Spacer(modifier = Modifier.height(Dimens.SpacingSm))
 
             Text(
-                text = stringResource(R.string.s05_ram, ramText),
+                text = stringResource(R.string.s05_ram, report.capabilities.ramMb),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

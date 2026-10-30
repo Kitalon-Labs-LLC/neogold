@@ -27,6 +27,10 @@ interface NeoGoldDataStore {
     val activeDeviceProfileId: Flow<String?>
     suspend fun setActiveDeviceProfileId(profileId: String?)
 
+    /** The OS build the camera was qualified on; a different build means qualify again (NG-044, TC-DEV-07). */
+    val qualificationBuildFingerprint: Flow<String?>
+    suspend fun setQualificationBuildFingerprint(fingerprint: String?)
+
     val screeningRetentionDays: Flow<Int>
     suspend fun setScreeningRetentionDays(days: Int)
 
@@ -94,6 +98,20 @@ class DefaultNeoGoldDataStore(
                 prefs[KEY_ACTIVE_DEVICE_PROFILE_ID] = profileId
             } else {
                 prefs.remove(KEY_ACTIVE_DEVICE_PROFILE_ID)
+            }
+        }
+    }
+
+    override val qualificationBuildFingerprint: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[KEY_QUALIFICATION_BUILD_FINGERPRINT]
+    }
+
+    override suspend fun setQualificationBuildFingerprint(fingerprint: String?) {
+        dataStore.edit { prefs ->
+            if (fingerprint != null) {
+                prefs[KEY_QUALIFICATION_BUILD_FINGERPRINT] = fingerprint
+            } else {
+                prefs.remove(KEY_QUALIFICATION_BUILD_FINGERPRINT)
             }
         }
     }
@@ -175,6 +193,7 @@ class DefaultNeoGoldDataStore(
         val KEY_SAFETY_ACK_VERSION = intPreferencesKey("safety_ack_version")
         val KEY_ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val KEY_ACTIVE_DEVICE_PROFILE_ID = stringPreferencesKey("active_device_profile_id")
+        val KEY_QUALIFICATION_BUILD_FINGERPRINT = stringPreferencesKey("qualification_build_fingerprint")
         val KEY_SCREENING_RETENTION_DAYS = intPreferencesKey("screening_retention_days")
         val KEY_REGISTER_NUMBER_RETENTION_DAYS = intPreferencesKey("register_number_retention_days")
         val KEY_KEEP_SCREENING_LOG = booleanPreferencesKey("keep_screening_log")

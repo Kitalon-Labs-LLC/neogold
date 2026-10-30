@@ -105,4 +105,72 @@ class ResearchJpegSanitizerTest {
         assertThat(report.errorCode).isEqualTo("IMAGE_METADATA_NOT_ALLOWED")
         assertThat(report.violationMessage).contains("XMP")
     }
+
+    /** A JPEG with one EXIF tag, orientation [orientation], in the byte order [littleEndian] (as a phone writes it). */
+    private fun jpegWithOrientation(orientation: Int, littleEndian: Boolean): ByteArray {
+        val raw = createSyntheticJpeg(40, 40)
+        fun u16(
+            v: Int
+        ) = if (littleEndian) {
+            byteArrayOf(
+                v.toByte(),
+                (v shr 8).toByte()
+            )
+        } else {
+            byteArrayOf((v shr 8).toByte(), v.toByte())
+        }
+        fun u32(v: Int) = if (littleEndian) {
+            byteArrayOf(v.toByte(), (v shr 8).toByte(), (v shr 16).toByte(), (v shr 24).toByte())
+        } else {
+            byteArrayOf((v shr 24).toByte(), (v shr 16).toByte(), (v shr 8).toByte(), v.toByte())
+        }
+        val tiff = ByteArrayOutputStream().apply {
+            write(if (littleEndian) "II".toByteArray() else "MM".toByteArray())
+            write(u16(42))
+            write(u32(8)) // IFD0 starts right after this 8-byte header
+            write(u16(1)) // one entry
+            write(u16(0x0112)) // orientation
+            write(u16(3)) // SHORT
+            write(u32(1))
+            write(u16(orientation))
+            write(u16(0)) // padding
+            write(u32(0)) // no next IFD
+        }.toByteArray()
+        val payload = "Exif\u0000\u0000".toByteArray(Charsets.US_ASCII) + tiff
+        val out = ByteArrayOutputStream()
+        out.write(raw, 0, 2) // SOI
+        out.write(0xFF)
+        out.write(0xE1) // APP1
+        out.write(((payload.size + 2) shr 8) and 0xFF)
+        out.write((payload.size + 2) and 0xFF)
+        out.write(payload)
+        out.write(raw, 2, raw.size - 2)
+        return out.toByteArray()
+    }
+
+    @Test
+    fun orientationIsReadFromTheExifOfARealPhoto_BUG_2026_039() {
+        for (orientation in 1..8) {
+            assertThat(ResearchJpegSanitizer.extractOrientation(jpegWithOrientation(orientation, littleEndian = true)))
+                .isEqualTo(orientation)
+            assertThat(ResearchJpegSanitizer.extractOrientation(jpegWithOrientation(orientation, littleEndian = false)))
+                .isEqualTo(orientation)
+        }
+    }
+
+    @Test
+    fun sanitizingKeepsTheOriginalOrientationWhenNoneIsForced_BUG_2026_039() {
+        val sanitized = ResearchJpegSanitizer.sanitize(jpegWithOrientation(6, littleEndian = true))
+
+        val report = ResearchJpegSanitizer.validateAllowList(sanitized)
+        assertThat(report.isValid).isTrue()
+        assertThat(report.detectedOrientation).isEqualTo(6)
+    }
+
+    @Test
+    fun aJpegWithoutExifOrWithATruncatedBlockGivesNoOrientation() {
+        assertThat(ResearchJpegSanitizer.extractOrientation(createSyntheticJpeg())).isNull()
+        val whole = jpegWithOrientation(6, littleEndian = true)
+        assertThat(ResearchJpegSanitizer.extractOrientation(whole.copyOf(20))).isNull()
+    }
 }

@@ -9,14 +9,14 @@ Target Devices:
 
 ## 1. Test Automation Execution with Maestro
 
-To run automated flows on a connected device via Maestro:
+To run automated flows on a connected device via Maestro (use the debug build: its screen test tags are exposed as ids, a release build does not expose them):
 
 ```bash
 # 1. Device check & 3-photo camera qualification
-maestro test android/maestro/device_qualification_flow.yaml
+maestro test -e APP_ID=com.kitalonlabs.neogold.debug android/maestro/device_qualification_flow.yaml
 
 # 2. Live preview, card detection & screening burst auto-capture
-maestro test android/maestro/screening_capture_flow.yaml
+maestro test -e APP_ID=com.kitalonlabs.neogold.debug android/maestro/screening_capture_flow.yaml
 ```
 
 ---

@@ -12,7 +12,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,8 +34,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -54,12 +57,15 @@ import com.kitalonlabs.neogold.core.designsystem.theme.NeoGoldTheme
 import com.kitalonlabs.neogold.core.security.applock.AppLockManager
 import com.kitalonlabs.neogold.core.security.crash.CrashReportManager
 import com.kitalonlabs.neogold.core.security.privacy.SecureScreenHelper
+import com.kitalonlabs.neogold.engine.camera.device.DeviceChecker
 import com.kitalonlabs.neogold.engine.camera.ui.CameraPermissionState
 import com.kitalonlabs.neogold.engine.camera.ui.LocalCameraPermission
 import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
 import com.kitalonlabs.neogold.feature.log.S21LogScreen
 import com.kitalonlabs.neogold.feature.log.S22SessionDetailScreen
 import com.kitalonlabs.neogold.feature.log.ScreeningLogExportManager
+import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanState
+import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationState
 import com.kitalonlabs.neogold.feature.result.S20ResultScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S09HomeScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S10BirthTimeGaScreen
@@ -75,6 +81,8 @@ import com.kitalonlabs.neogold.feature.screening.ui.S18ForeheadPhotoScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S19AnalyzingScreen
 import com.kitalonlabs.neogold.integrity.VerifiedAssets
 import com.kitalonlabs.neogold.navigation.Destinations
+import com.kitalonlabs.neogold.onboarding.FirstRunState
+import com.kitalonlabs.neogold.onboarding.OnboardingServices
 import com.kitalonlabs.neogold.storage.StorageState
 import kotlinx.coroutines.launch
 
@@ -89,18 +97,23 @@ class MainActivity : FragmentActivity() {
     /** Whether the camera may be used. The screens that open it read this through [LocalCameraPermission]. */
     private var cameraGranted by mutableStateOf(false)
 
-    private val cameraPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> cameraGranted = granted }
-
     private fun cameraPermissionState() = CameraPermissionState(
         granted = cameraGranted,
-        request = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
+        request = { ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE) },
         openSettings = {
             startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
             )
         }
     )
+
+    private fun observeAppLockSetting() {
+        lifecycleScope.launch {
+            dataStore.appLockEnabled.collect { enabled ->
+                appLockManager.isAppLockEnabled = enabled
+            }
+        }
+    }
 
     private fun hasCameraPermission() =
         ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -116,11 +129,7 @@ class MainActivity : FragmentActivity() {
         // Overlay protection on API 26..30 (doc 8 Section 6.1)
         SecureScreenHelper.setFilterTouchesWhenObscured(window, true)
 
-        lifecycleScope.launch {
-            dataStore.appLockEnabled.collect { enabled ->
-                appLockManager.isAppLockEnabled = enabled
-            }
-        }
+        observeAppLockSetting()
 
         setContent {
             val cameraPermission = remember(cameraGranted) { cameraPermissionState() }
@@ -190,7 +199,9 @@ class MainActivity : FragmentActivity() {
                             }
                         )
                     } else {
-                        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize().then(testIds(container.isDebuggable))
+                        ) { innerPadding ->
                             val storageState by container.storage.state.collectAsState()
                             val deleteState by container.deleteState.collectAsState()
                             val content = Modifier.padding(innerPadding)
@@ -210,17 +221,24 @@ class MainActivity : FragmentActivity() {
                                         onReset = { container.applicationScope.launch { container.storage.resetAndOpen() } },
                                         modifier = content
                                     )
-                                    is StorageState.Ready -> NeoGoldNavHost(
-                                        navController = navController,
-                                        dataStore = dataStore,
+                                    is StorageState.Ready -> OpenWhenOnboardingIsKnown(
                                         database = state.database,
-                                        assets = container.assets,
-                                        appVersion = BuildConfig.VERSION_NAME,
-                                        triageEnabled = container.screeningAvailable(),
-                                        unsentResearchItems = container::unsentResearchItems,
-                                        onDeleteAllData = container::startDeleteAll,
                                         modifier = content
-                                    )
+                                    ) { onboarding, firstRun ->
+                                        NeoGoldNavHost(
+                                            navController = navController,
+                                            dataStore = dataStore,
+                                            database = state.database,
+                                            assets = container.assets,
+                                            appVersion = BuildConfig.VERSION_NAME,
+                                            configAllowsScreening = container.screeningAvailable(),
+                                            unsentResearchItems = container::unsentResearchItems,
+                                            onDeleteAllData = container::startDeleteAll,
+                                            onboarding = onboarding,
+                                            modifier = content,
+                                            firstRun = firstRun
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -248,6 +266,13 @@ class MainActivity : FragmentActivity() {
         appLockManager.onAppBackgrounded()
     }
 
+    // The system permission dialog is asked for with a small request code and answered here, not through the
+    // activity-result registry: the registry's request codes do not fit what FragmentActivity accepts for permissions.
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CAMERA_REQUEST_CODE) cameraGranted = hasCameraPermission()
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (appLockManager.onActivityResult(requestCode, resultCode)) {
@@ -256,7 +281,38 @@ class MainActivity : FragmentActivity() {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
     }
+
+    private companion object {
+        const val CAMERA_REQUEST_CODE = 41
+    }
 }
+
+/**
+ * Builds the first-run services for [database] and finds where the app opens, then shows [content]. While that is
+ * being read the "opening" screen is shown, so the navigation graph never starts on a guess.
+ */
+@Composable
+private fun OpenWhenOnboardingIsKnown(
+    database: NeoGoldDatabase,
+    modifier: Modifier,
+    content: @Composable (OnboardingServices, FirstRunState) -> Unit
+) {
+    val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    val services = remember(database) { (appContext as NeoGoldApplication).container.onboardingServices(database) }
+    val firstRun by androidx.compose.runtime.produceState<FirstRunState?>(null, services) {
+        value = services.firstRunState()
+    }
+    val state = firstRun
+    if (state == null) StorageOpeningScreen(modifier) else content(services, state)
+}
+
+/**
+ * In a debuggable build, makes the screens' test tags visible to UI automation (Maestro's `id:`) as resource ids. A
+ * release build does not expose them.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+private fun testIds(debuggable: Boolean): Modifier =
+    if (debuggable) Modifier.semantics { testTagsAsResourceId = true } else Modifier
 
 @Composable
 private fun AppLockScreen(onUnlock: () -> Unit) {
@@ -292,7 +348,7 @@ private fun AppLockScreen(onUnlock: () -> Unit) {
  *
  * @param assets the startup check of the bundled files; screening and research screens show a block screen unless it
  * is valid (BUG-2026-007). Saved records take the config and model versions from it.
- * @param triageEnabled whether screening is offered today: the signed config says so, it is not past `validUntil`,
+ * @param configAllowsScreening whether screening is offered today: the signed config says so, it is not past `validUntil`,
  * and the app really computes a result (`NeoGoldContainer.screeningAvailable`). The screening screens are not
  * reachable otherwise.
  * @param unsentResearchItems asks how many research items the study has not acknowledged, for S25's warning
@@ -307,16 +363,23 @@ fun NeoGoldNavHost(
     database: NeoGoldDatabase,
     assets: VerifiedAssets,
     appVersion: String,
-    triageEnabled: Boolean,
+    configAllowsScreening: Boolean,
     unsentResearchItems: suspend () -> Int,
     onDeleteAllData: () -> Unit,
-    modifier: Modifier = Modifier,
-    startDestination: String = Destinations.S01_LANGUAGE
+    onboarding: OnboardingServices,
+    firstRun: FirstRunState,
+    modifier: Modifier = Modifier
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var lastQualificationResult by remember {
         mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null)
     }
+    // Screening needs the config's switch AND a phone whose camera was measured to qualify and is not due again
+    // (H5, TC-DEV-05). A phone that is research-only, or has no profile, never gets it.
+    var qualifiedForScreening by remember { mutableStateOf(firstRun.screeningEligible) }
+    val triageEnabled = configAllowsScreening && qualifiedForScreening
+    // The card S06 verified, which S07 qualifies the camera against.
+    var scannedBatchId by remember { mutableStateOf<String?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val db = database
 
@@ -344,7 +407,7 @@ fun NeoGoldNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = firstRun.startDestination,
         modifier = modifier
     ) {
         // Research runs only on files that passed the startup check (BUG-2026-007, TC-SEC-09).
@@ -408,21 +471,53 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S06_CARD_SCAN) {
-            com.kitalonlabs.neogold.feature.onboarding.S06CardScanScreen(
-                onContinue = {
-                    navController.navigate(Destinations.S07_QUALIFICATION)
-                }
-            )
+        // The card is checked against the signed trust list and the camera is qualified on the card it names, so both
+        // need a bundle that verified (BUG-2026-007).
+        researchComposable(Destinations.S06_CARD_SCAN) {
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
+            val state = remember(onboarding) { onboarding.cardScan?.let { CardScanState(it, scope) } }
+            if (state != null) {
+                com.kitalonlabs.neogold.feature.onboarding.S06CardScanScreen(
+                    state = state,
+                    onContinue = { batchId ->
+                        scannedBatchId = batchId
+                        navController.navigate(Destinations.S07_QUALIFICATION)
+                    },
+                    requalification = firstRun.requalification
+                )
+            } else {
+                IntegrityBlockedScreen(integrity)
+            }
         }
 
-        composable(Destinations.S07_QUALIFICATION) {
-            com.kitalonlabs.neogold.feature.onboarding.S07QualificationScreen(
-                onQualificationComplete = { res ->
-                    lastQualificationResult = res
-                    navController.navigate(Destinations.S08_QUALIFICATION_RESULT)
+        researchComposable(Destinations.S07_QUALIFICATION) {
+            val batchId = scannedBatchId
+            if (batchId == null) {
+                // The flow was interrupted (the app was closed and reopened here): start again from the card.
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    navController.navigate(Destinations.S06_CARD_SCAN) {
+                        popUpTo(Destinations.S06_CARD_SCAN) { inclusive = true }
+                    }
                 }
-            )
+                Box(modifier = Modifier.fillMaxSize())
+            } else {
+                val scope = androidx.compose.runtime.rememberCoroutineScope()
+                val state = remember(batchId) {
+                    QualificationState(
+                        service = onboarding.qualification,
+                        capabilities = DeviceChecker.checkDevice(context).capabilities,
+                        cardBatchId = batchId,
+                        scope = scope
+                    )
+                }
+                com.kitalonlabs.neogold.feature.onboarding.S07QualificationScreen(
+                    state = state,
+                    onQualificationComplete = { res ->
+                        lastQualificationResult = res
+                        navController.navigate(Destinations.S08_QUALIFICATION_RESULT)
+                    }
+                )
+            }
         }
 
         composable(Destinations.S08_QUALIFICATION_RESULT) {
@@ -435,9 +530,8 @@ fun NeoGoldNavHost(
                             dataStore.setActiveDeviceProfileId(result.profile.id)
                             dataStore.setOnboardingComplete(true)
                         }
-                        navController.navigate(Destinations.S09_HOME) {
-                            popUpTo(Destinations.S01_LANGUAGE) { inclusive = true }
-                        }
+                        qualifiedForScreening = result.isQualified
+                        navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
                     }
                 )
             } else {

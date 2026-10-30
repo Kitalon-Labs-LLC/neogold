@@ -81,7 +81,15 @@ class CameraHost(private val context: Context) {
             analysis?.let { addUseCase(it.first) }
             addUseCase(imageCapture)
         }.build()
-        provider.bindToLifecycle(lifecycleOwner, selector, useCases)
+        try {
+            provider.bindToLifecycle(lifecycleOwner, selector, useCases)
+        } catch (e: IllegalArgumentException) {
+            workExecutor.shutdown() // a failed open must not leave a thread behind for every retry
+            throw e
+        } catch (e: IllegalStateException) {
+            workExecutor.shutdown()
+            throw e
+        }
         analysis?.let { (useCase, analyzer) -> useCase.setAnalyzer(workExecutor, analyzer) }
 
         val controller = BurstCaptureController(

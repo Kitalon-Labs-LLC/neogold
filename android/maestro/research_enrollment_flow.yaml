@@ -1,4 +1,4 @@
-appId: com.kitalonlabs.neogold
+appId: ${APP_ID}
 ---
 # ==============================================================================
 # NeoGold Study Enrollment Flow (doc 7 Section 4, doc 10 TC-RSH-01, TC-API-02)

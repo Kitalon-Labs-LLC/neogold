@@ -1,90 +1,101 @@
-appId: com.kitalonlabs.neogold
+appId: ${APP_ID}
 ---
 # ==============================================================================
-# NeoGold Device Check & Camera Qualification Flow (TC-DEV-01 to TC-DEV-10)
+# NeoGold Device Check, Card Scan & Camera Qualification (TC-DEV-01 to TC-DEV-10, TC-CARD-01)
 # Target devices: D1 (Transsion), D2 (Xiaomi), D4 (Android Go 2GB)
+#
+# Run against the debug build, which exposes screen test tags as ids:
+#   maestro test -e APP_ID=com.kitalonlabs.neogold.debug android/maestro/device_qualification_flow.yaml
+# Needs a real printed NeoGold calibration card with its QR (a signed batch the test trust list or the release
+# trust list accepts), laid flat in room light. Nothing here is simulated: the QR is read and the photos are taken
+# by the phone's own camera, and the verdict is whatever the phone measures.
 # ==============================================================================
 
 - launchApp:
     clearState: true
+    permissions:
+      camera: allow
 
-# 1. Device Check Screen (S05) - TC-DEV-01, TC-DEV-09, TC-DEV-10
-- assertVisible:
-    id: "device_check_screen"
-
-- assertVisible:
-    id: "text_device_model"
-
-- assertVisible:
-    id: "text_device_ram"
-
-- assertVisible:
-    id: "text_camera_level"
-
-# Brand-specific battery optimization guidance (TC-DEV-09)
-- assertVisible:
-    id: "battery_guidance_card"
-
-# Tap battery settings button (deep link or fallback to battery optimization settings)
+# Language and the safety notice (S01 to S04)
 - tapOn:
-    id: "btn_open_battery_settings"
-
-- back
-
-# 2. Advance to Camera Qualification (S07) - TC-DEV-02, TC-DEV-03, TC-DEV-04
+    id: "lang_option_en"
 - tapOn:
-    id: "btn_start_qualification"
-
-- assertVisible:
-    id: "qualification_camera_screen"
-
-# Photo 1 capture
-- assertVisible:
-    text: ".*Photo 1 of 3.*"
+    id: "btn_language_continue"
 - extendedWaitUntil:
     visible:
-      id: "steady_progress_bar"
+      id: "safety_notice_card"
     timeout: 8000
 - tapOn:
-    id: "btn_capture_qualification_photo"
-    optional: true
+    id: "btn_safety_next"
+- tapOn:
+    id: "btn_safety_next"
+- tapOn:
+    id: "btn_acknowledge_safety"
 
-# Photo 2 capture
+# 1. Device check (S05): TC-DEV-01, TC-DEV-09, TC-DEV-10
 - extendedWaitUntil:
     visible:
-      text: ".*Photo 2 of 3.*"
+      id: "btn_device_check_continue"
     timeout: 8000
+- assertVisible:
+    text: "Memory: .* MB"
+- assertVisible:
+    text: "Camera level: .*"
+- assertVisible:
+    id: "btn_view_supported_devices"
 - tapOn:
-    id: "btn_capture_qualification_photo"
-    optional: true
+    id: "btn_device_check_continue"
 
-# Photo 3 capture
+# 2. Card scan (S06): TC-CARD-01. Continue stays off until the signed card has been read and checked.
 - extendedWaitUntil:
     visible:
-      text: ".*Photo 3 of 3.*"
+      id: "card_scan_viewfinder"
     timeout: 8000
-- tapOn:
-    id: "btn_capture_qualification_photo"
-    optional: true
-
-# 3. Qualification Evaluation & Result (S08) - TC-DEV-05, TC-DEV-06, TC-DEV-08
+- assertVisible:
+    id: "scan_looking"
 - extendedWaitUntil:
     visible:
-      id: "qualification_result_screen"
-    timeout: 10000
-
-# Verify Qualified status or Research-only status
-- assertVisible:
-    id: "text_qualification_status"
-
-- assertVisible:
-    id: "text_repeatability_metric"
-
-- assertVisible:
-    id: "text_uniformity_metric"
-
-- assertVisible:
-    id: "text_accuracy_metric"
-
+      id: "badge_card_verified"
+    timeout: 30000
 - tapOn:
-    id: "btn_continue_from_qualification"
+    id: "btn_card_scan_continue"
+
+# 3. Camera qualification (S07): TC-DEV-02 to TC-DEV-06. A photo the quality gate refuses is asked for again.
+- extendedWaitUntil:
+    visible:
+      id: "qualification_viewfinder"
+    timeout: 8000
+- assertVisible:
+    text: "Take 3 photos.*Photo 1 of 3.*"
+- tapOn:
+    id: "btn_take_qualification_photo"
+- extendedWaitUntil:
+    notVisible:
+      id: "qualification_checking"
+    timeout: 30000
+- assertVisible:
+    text: "Take 3 photos.*Photo 2 of 3.*"
+- tapOn:
+    id: "btn_take_qualification_photo"
+- extendedWaitUntil:
+    notVisible:
+      id: "qualification_checking"
+    timeout: 30000
+- assertVisible:
+    text: "Take 3 photos.*Photo 3 of 3.*"
+- tapOn:
+    id: "btn_take_qualification_photo"
+
+# 4. The measured result (S08): TC-DEV-05, TC-DEV-06, TC-DEV-08. Either verdict is a pass for this flow.
+- extendedWaitUntil:
+    visible:
+      id: "qualification_result_card"
+    timeout: 60000
+- assertVisible:
+    id: "btn_get_started"
+- tapOn:
+    id: "btn_get_started"
+- extendedWaitUntil:
+    visible:
+      id: "home_experimental_banner"
+    timeout: 8000

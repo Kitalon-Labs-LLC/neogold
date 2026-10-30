@@ -1,12 +1,17 @@
-appId: com.kitalonlabs.neogold
+appId: ${APP_ID}
 ---
 # ==============================================================================
+# Run against the debug build (screen test tags are ids only there):
+#   maestro test -e APP_ID=com.kitalonlabs.neogold.debug android/maestro/j1_onboarding_qualification_flow.yaml
+# Needs a real printed NeoGold card in view for S06 and S07.
 # NeoGold Journey J1: First Launch, Onboarding & Qualification Flow (doc 2 Section 6, doc 10 TC-ONB-01..03, TC-DEV-01..04)
 # Target devices: D1 (Transsion), D2 (Xiaomi), D3 (Samsung), D4 (Android Go 2GB), D5, D6
 # ==============================================================================
 
 - launchApp:
     clearState: true
+    permissions:
+      camera: allow
 
 # 1. Screen S01: Language Selection (TC-ONB-01)
 - assertVisible:
@@ -79,19 +84,19 @@ appId: com.kitalonlabs.neogold
 - tapOn:
     id: "btn_take_qualification_photo"
 
-# Capture Photo 2
+# Capture Photo 2 (the photo is checked first; a photo the quality gate refuses is asked for again)
 - extendedWaitUntil:
-    visible:
-      id: "btn_take_qualification_photo"
-    timeout: 8000
+    notVisible:
+      id: "qualification_checking"
+    timeout: 30000
 - tapOn:
     id: "btn_take_qualification_photo"
 
 # Capture Photo 3
 - extendedWaitUntil:
-    visible:
-      id: "btn_take_qualification_photo"
-    timeout: 8000
+    notVisible:
+      id: "qualification_checking"
+    timeout: 30000
 - tapOn:
     id: "btn_take_qualification_photo"
 

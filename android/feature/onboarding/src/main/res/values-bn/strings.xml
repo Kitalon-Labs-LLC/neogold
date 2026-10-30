@@ -1,0 +1,21 @@
+<resources>
+    <!-- Draft for the nurse wording panel, like the rest of the Bangla text (doc 6 Section 10.4) -->
+    <string name="s06_looking">QR কোড খোঁজা হচ্ছে…</string>
+    <string name="s06_checking">কার্ড যাচাই করা হচ্ছে…</string>
+    <string name="s06_card_expired">এই কার্ডের মেয়াদ শেষ। নতুন ব্যাচের কার্ড ব্যবহার করুন।</string>
+    <string name="s06_card_revoked">এই কার্ড ব্যাচ বাতিল করা হয়েছে। নতুন ব্যাচের কার্ড ব্যবহার করুন।</string>
+    <string name="s06_card_unreadable">এই QR কোডটি নিওগোল্ড কার্ডের নয়। আবার চেষ্টা করুন, অথবা অন্য কার্ড ব্যবহার করুন।</string>
+    <string name="s06_card_not_saved">কার্ডটি এই ফোনে সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="s06_scan_again">আবার স্ক্যান করুন</string>
+    <string name="s06_verified_badge">যাচাই হয়েছে</string>
+
+    <string name="s07_checking">ছবি যাচাই করা হচ্ছে…</string>
+    <string name="s07_judging">এই ফোনের ক্যামেরা রং কেমন দেখে তা যাচাই করা হচ্ছে…</string>
+    <string name="s07_retake_no_card">কার্ড পাওয়া যায়নি। কার্ডটি টেবিলে সমতলভাবে রাখুন এবং চারটি কোণই দেখা যাচ্ছে কিনা নিশ্চিত করুন।</string>
+    <string name="s07_not_saved">ফলাফল এই ফোনে সংরক্ষণ করা যায়নি। ৩টি ছবি আবার তুলুন।</string>
+    <string name="s07_photo_failed">ছবি তোলা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="s07_card_missing">স্ক্যান করা কার্ডটি এই ফোনে সংরক্ষিত নেই। ফিরে গিয়ে আবার স্ক্যান করুন।</string>
+
+    <string name="requalify_30_days">এই ফোনের ক্যামেরা ৩০ দিনের বেশি আগে যাচাই করা হয়েছিল। স্ক্রিনিং চালিয়ে যেতে আবার যাচাই করুন।</string>
+    <string name="requalify_os_changed">এই ফোনের সফটওয়্যার আপডেট হয়েছে। স্ক্রিনিং চালিয়ে যেতে ক্যামেরা আবার যাচাই করুন।</string>
+</resources>

@@ -17,44 +17,56 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcon
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgStepIndicator
+import com.kitalonlabs.neogold.core.designsystem.theme.CameraOverlayBackground
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
-import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
-import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
-import com.kitalonlabs.neogold.engine.camera.qualification.DeviceProfile
-import com.kitalonlabs.neogold.engine.camera.qualification.DeviceProfileStatus
-import com.kitalonlabs.neogold.engine.camera.qualification.QualificationAuditEvent
+import com.kitalonlabs.neogold.engine.camera.host.CameraMode
+import com.kitalonlabs.neogold.engine.camera.host.CameraSession
 import com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult
-import com.kitalonlabs.neogold.engine.camera.qualification.QualificationStatus
-import java.util.UUID
+import com.kitalonlabs.neogold.engine.camera.ui.CameraPreviewHost
+import com.kitalonlabs.neogold.engine.vision.QualityReasonCode
+import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationState
+import com.kitalonlabs.neogold.feature.onboarding.R as OnboardingR
 
 /**
  * S07: Camera qualification (3 photos) (NG-007, doc 6 Section 5).
  *
- * Prompts user to take 3 photos of the card under room lighting on a flat surface.
- * Evaluates repeatability, duplicate patch uniformity, and color correction accuracy.
+ * Takes three real photos of the card under room lighting on a flat surface, with the phone's own camera. A photo the
+ * quality gate refuses is a bad photo and is taken again; only three good photos are judged, and the result is the
+ * measured one (TC-DEV-02 to TC-DEV-05). There is no built-in result: if nothing is measured, nothing is qualified.
  */
 @Composable
 fun S07QualificationScreen(
+    state: QualificationState,
     onQualificationComplete: (QualificationResult) -> Unit,
-    simulateResult: QualificationResult? = null,
     modifier: Modifier = Modifier
 ) {
-    var photoCount by remember { mutableIntStateOf(0) }
+    val phase by state.phase.collectAsState()
+    var session by remember { mutableStateOf<CameraSession?>(null) }
+
+    LaunchedEffect(phase) {
+        (phase as? QualificationState.Phase.Done)?.let { onQualificationComplete(it.result) }
+    }
+    DisposableEffect(state) { onDispose { state.release() } }
+
+    val taken = (phase as? QualificationState.Phase.Photographing)?.taken ?: 0
+    val busy = phase is QualificationState.Phase.CheckingPhoto || phase is QualificationState.Phase.Judging
 
     Column(
         modifier = modifier
@@ -66,10 +78,7 @@ fun S07QualificationScreen(
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            NgStepIndicator(
-                currentStep = photoCount + 1,
-                totalSteps = 3
-            )
+            NgStepIndicator(currentStep = taken + 1, totalSteps = 3)
 
             Spacer(modifier = Modifier.height(Dimens.SpacingSm))
 
@@ -81,85 +90,59 @@ fun S07QualificationScreen(
 
             Spacer(modifier = Modifier.height(Dimens.SpacingSm))
 
-            val photoNumber = ClinicalNumberFormatter.formatInteger(photoCount + 1)
             Text(
-                text = stringResource(R.string.s07_instruction, photoNumber),
+                text = stringResource(R.string.s07_instruction, taken + 1),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(Dimens.SpacingLg))
 
-            // Calibration Card Viewfinder Box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(260.dp)
                     .clip(RoundedCornerShape(Dimens.CardCornerRadius))
-                    .background(com.kitalonlabs.neogold.core.designsystem.theme.CameraOverlayBackground)
+                    .background(CameraOverlayBackground)
                     .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(Dimens.CardCornerRadius))
                     .testTag("qualification_viewfinder"),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    NgIcon(
-                        imageVector = NgIcons.Science,
-                        contentDescription = "Calibration viewfinder",
-                        tint = com.kitalonlabs.neogold.core.designsystem.theme.CameraOverlayText,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(Dimens.SpacingSm))
-                    Text(
-                        text = "Card calibration photo ${photoCount + 1} of 3",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = com.kitalonlabs.neogold.core.designsystem.theme.CameraOverlayText
+                if (phase !is QualificationState.Phase.CardMissing) {
+                    CameraPreviewHost(
+                        mode = CameraMode.Stills,
+                        onSession = { session = it },
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(Dimens.SpacingMd))
 
-            // Shot indicators
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 for (i in 0 until 3) {
-                    val isTaken = i < photoCount
                     Box(
                         modifier = Modifier
                             .padding(horizontal = 6.dp)
                             .size(16.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isTaken) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.outline
-                                }
+                                if (i < taken) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                             )
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(Dimens.SpacingMd))
+
+            Message(phase)
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = Dimens.SpacingLg)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(bottom = Dimens.SpacingLg)) {
             NgPrimaryButton(
                 text = stringResource(R.string.btn_take_photo),
-                onClick = {
-                    val nextCount = photoCount + 1
-                    if (nextCount >= 3) {
-                        photoCount = 3
-                        val result = simulateResult ?: createDefaultQualificationResult()
-                        onQualificationComplete(result)
-                    } else {
-                        photoCount = nextCount
-                    }
-                },
+                onClick = { session?.let(state::takePhoto) },
+                enabled = session != null && !busy && phase is QualificationState.Phase.Photographing,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("btn_take_qualification_photo")
@@ -168,51 +151,56 @@ fun S07QualificationScreen(
     }
 }
 
-private fun createDefaultQualificationResult(): QualificationResult {
-    val profile = DeviceProfile(
-        id = UUID.randomUUID().toString(),
-        manufacturer = "SampleManufacturer",
-        deviceModel = "SampleModel",
-        androidApi = 33,
-        buildFingerprint = "sample_fingerprint",
-        cameraId = "0",
-        ramMb = 3800,
-        isLowRamDevice = false,
-        cameraHardwareLevel = CameraHardwareLevel.FULL,
-        supportsAeLock = true,
-        supportsAwbLock = true,
-        supportsManualSensor = true,
-        supportsRaw = false,
-        residualCorrectionJson = null,
-        repeatabilityDe = 0.85,
-        uniformityDe = 1.10,
-        calibrationResidualDe = 1.65,
-        qualification = QualificationStatus.QUALIFIED,
-        cardBatchId = "NG-2026-001",
-        calibratedAt = System.currentTimeMillis(),
-        appVersion = "1.0.0",
-        status = DeviceProfileStatus.ACTIVE
-    )
-    val auditEvent = QualificationAuditEvent(
-        eventType = "DEVICE_QUALIFIED",
-        timestampMs = System.currentTimeMillis(),
-        deviceModel = profile.deviceModel,
-        hardwareLevel = profile.cameraHardwareLevel.name,
-        repeatabilityDe = profile.repeatabilityDe,
-        uniformityDe = profile.uniformityDe,
-        calibrationResidualDe = profile.calibrationResidualDe,
-        qualification = profile.qualification
-    )
-    return QualificationResult(
-        status = QualificationStatus.QUALIFIED,
-        profile = profile,
-        repeatabilityDe = profile.repeatabilityDe,
-        uniformityDe = profile.uniformityDe,
-        accuracyDe = profile.calibrationResidualDe,
-        repeatabilityPassed = true,
-        uniformityPassed = true,
-        accuracyPassed = true,
-        auditEvent = auditEvent,
-        failureReasons = emptyList()
-    )
+@Composable
+private fun Message(phase: QualificationState.Phase) {
+    val error = MaterialTheme.colorScheme.error
+    val plain = MaterialTheme.colorScheme.onSurfaceVariant
+    when (phase) {
+        QualificationState.Phase.CheckingPhoto -> Line(
+            stringResource(OnboardingR.string.s07_checking),
+            plain,
+            "qualification_checking"
+        )
+        QualificationState.Phase.Judging -> Line(
+            stringResource(OnboardingR.string.s07_judging),
+            plain,
+            "qualification_judging"
+        )
+        QualificationState.Phase.CardMissing -> Line(
+            stringResource(OnboardingR.string.s07_card_missing),
+            error,
+            "qualification_card_missing"
+        )
+        is QualificationState.Phase.Photographing -> when {
+            phase.notSaved -> Line(stringResource(OnboardingR.string.s07_not_saved), error, "qualification_not_saved")
+            phase.cameraFailed -> Line(
+                stringResource(OnboardingR.string.s07_photo_failed),
+                error,
+                "qualification_photo_failed"
+            )
+            phase.problem.isNotEmpty() -> Line(retakeMessage(phase.problem.first()), error, "qualification_retake")
+        }
+        is QualificationState.Phase.Done -> Unit
+    }
 }
+
+@Composable
+private fun Line(text: String, color: Color, tag: String) {
+    Text(text = text, style = MaterialTheme.typography.bodyMedium, color = color, modifier = Modifier.testTag(tag))
+}
+
+@Composable
+private fun retakeMessage(reason: QualityReasonCode): String = stringResource(
+    when (reason) {
+        QualityReasonCode.NO_CARD -> OnboardingR.string.s07_retake_no_card // the card is on a table here, not on a baby
+        QualityReasonCode.CARD_ANGLE -> R.string.retake_card_angle
+        QualityReasonCode.NONUNIFORM_PATCHES -> R.string.retake_nonuniform_patches
+        QualityReasonCode.BLUR -> R.string.retake_blur
+        QualityReasonCode.GLARE -> R.string.retake_glare
+        QualityReasonCode.UNDEREXPOSED -> R.string.retake_underexposed
+        QualityReasonCode.OVEREXPOSED -> R.string.retake_overexposed
+        QualityReasonCode.UNEVEN_LIGHT -> R.string.retake_uneven_light
+        QualityReasonCode.HIGH_RESIDUAL -> R.string.retake_high_residual
+        QualityReasonCode.WINDOW_NOT_SKIN -> R.string.retake_general // the window check is for babies, not the card on a table
+    }
+)

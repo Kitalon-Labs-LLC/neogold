@@ -1,4 +1,4 @@
-appId: com.kitalonlabs.neogold
+appId: ${APP_ID}
 ---
 # ==============================================================================
 # NeoGold Journey J4: Research Mode Blinded Capture Flow (doc 2 Section 6, doc 10 TC-RSH-08..10, TC-RSH-16)

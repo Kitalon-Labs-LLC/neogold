@@ -7,6 +7,8 @@ Enforces:
 2. TC-UI-04: No banned words from doc 6 Section 10.2 in English or Bangla.
 3. No hardcoded string violations in layouts/code where strings.xml keys should be used.
    Implemented as a ratchet for Kotlin sources (section 4 below; BUG-2026-029).
+4. A number placeholder (%d, %f) is never given a String (section 5 below; BUG-2026-067): the call throws
+   IllegalFormatConversionException when the screen opens, which no unit test of the logic can see.
 
 Usage: python3 tools/check_strings.py [--update-baseline]
 """
@@ -203,6 +205,110 @@ def write_baseline(repo_root, counts):
         f.write("\n")
 
 
+# --- 5. Arguments of format strings (BUG-2026-067) -------------------------------------------------------------------
+# `stringResource(R.string.x, "4,096")` with x = "Memory: %d MB" compiles and then crashes when the screen is drawn.
+# Heuristic, not a Kotlin parser: it reads calls of stringResource and getString whose first argument is R.string.<key>.
+
+FORMAT_SPEC = re.compile(r"%(?:(\d+)\$)?[-#+ 0,(]*\d*(?:\.\d+)?([a-zA-Z])")
+FORMAT_CALL = re.compile(r"(?:stringResource|getString)\(\s*(?:id\s*=\s*)?(?:[\w.]*\.)?R\.string\.(\w+)\s*(?=[,)])")
+NUMBER_CONVERSIONS = set("dfxXeEgG")
+STRING_LOOKING = re.compile(r'^"|\.format\w*\(|\bformat\w*\(|\.toString\(\)|String\.format\(|\$\{|(?:Text|Label|Str)$')
+
+
+def placeholder_conversions(text):
+    """The conversion letter of each placeholder, by argument position (0-based)."""
+    found, sequential = {}, 0
+    for m in FORMAT_SPEC.finditer(text.replace("%%", "")):
+        index = int(m.group(1)) - 1 if m.group(1) else sequential
+        if not m.group(1):
+            sequential += 1
+        found[index] = m.group(2)
+    return found
+
+
+def split_call_arguments(source, start):
+    """The top-level arguments of the call whose argument list begins at source[start] (just after the first argument)."""
+    args, depth, current, i, quote = [], 0, [], start, None
+    while i < len(source):
+        c = source[i]
+        if quote:
+            current.append(c)
+            if c == "\\":
+                current.append(source[i + 1] if i + 1 < len(source) else "")
+                i += 1
+            elif c == quote:
+                quote = None
+        elif c in "\"'":
+            quote = c
+            current.append(c)
+        elif c in "([{":
+            depth += 1
+            current.append(c)
+        elif c in ")]}":
+            if depth == 0:
+                break
+            depth -= 1
+            current.append(c)
+        elif c == "," and depth == 0:
+            args.append("".join(current).strip())
+            current = []
+        else:
+            current.append(c)
+        i += 1
+    tail = "".join(current).strip()
+    if tail:
+        args.append(tail)
+    return args
+
+
+def check_format_arguments_in_source(source, formats, label="<source>"):
+    """Errors for each call that gives a String-looking argument to a number placeholder of a known format string."""
+    errors = []
+    for m in FORMAT_CALL.finditer(source):
+        key = m.group(1)
+        conversions = formats.get(key)
+        if not conversions:
+            continue
+        rest = source[m.end():]
+        args = split_call_arguments(rest.lstrip(",") if rest.startswith(",") else rest, 0)
+        for index, conversion in conversions.items():
+            if conversion not in NUMBER_CONVERSIONS or index >= len(args):
+                continue
+            if STRING_LOOKING.search(args[index]):
+                errors.append(
+                    f"{label}: stringResource(R.string.{key}) passes a String ({args[index][:40]}) to the "
+                    f"%{conversion} placeholder in argument {index + 1}; pass the number itself (BUG-2026-067)"
+                )
+    return errors
+
+
+def format_strings_of(res_dirs):
+    formats = {}
+    for res_dir in res_dirs:
+        for name, text in parse_strings(res_dir / "values" / "strings.xml").items():
+            conversions = placeholder_conversions(text)
+            if conversions:
+                formats[name] = conversions
+    return formats
+
+
+def check_format_arguments(repo_root, res_dirs):
+    formats = format_strings_of(res_dirs)
+    errors = []
+    for dirpath, dirnames, filenames in os.walk(os.path.join(str(repo_root), "android")):
+        dirnames[:] = [d for d in dirnames if d not in SKIPPED_DIRS]
+        posix = dirpath.replace(os.sep, "/")
+        if "/src/main/" not in posix + "/":
+            continue
+        for name in filenames:
+            if name.endswith(".kt"):
+                full = os.path.join(dirpath, name)
+                with open(full, encoding="utf-8", errors="replace") as f:
+                    rel = os.path.relpath(full, str(repo_root)).replace(os.sep, "/")
+                    errors.extend(check_format_arguments_in_source(f.read(), formats, rel))
+    return errors
+
+
 def find_res_dirs(repo_root):
     """Every android/**/src/main/res folder that has a values/strings.xml, so a module's own strings are linted too."""
     found = []
@@ -238,6 +344,9 @@ def main():
 
         errors = check_strings_content(en_strings, bn_strings)
         all_errors.extend(errors)
+
+    # 5. A String given to a number placeholder (BUG-2026-067)
+    all_errors.extend(check_format_arguments(repo_root, res_dirs))
 
     # 4. Hardcoded UI literals in Kotlin (BUG-2026-029): a ratchet that can only shrink
     literal_counts = scan_kotlin_literals(repo_root)

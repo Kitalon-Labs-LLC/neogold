@@ -120,6 +120,23 @@ class QrDecoderTest {
         assertThat(decode(numeric)).isNull()
     }
 
+    @Test
+    fun noCraftedOrDamagedFrameRaises() {
+        // The camera hands over whatever is in front of it: flat frames, noise, almost-symbols. None may throw.
+        val random = java.util.Random(20261030L)
+        repeat(300) {
+            val width = 1 + random.nextInt(200)
+            val height = 1 + random.nextInt(200)
+            val pixels = ByteArray(width * height)
+            when (it % 3) {
+                0 -> random.nextBytes(pixels)
+                1 -> pixels.fill(if (random.nextBoolean()) WHITE else BLACK)
+                else -> for (i in pixels.indices) pixels[i] = if ((i / 7 + i / (width * 5 + 1)) % 2 == 0) WHITE else BLACK
+            }
+            assertThat(QrDecoder.decode(pixels, width, height)).isNull()
+        }
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun aFrameSmallerThanItsSizeSaysIsRefused() {
         QrDecoder.decode(ByteArray(10), 100, 100)

@@ -9,6 +9,7 @@ import com.kitalonlabs.neogold.engine.colorscience.Rgb
 import com.kitalonlabs.neogold.engine.colorscience.ciede2000
 import com.kitalonlabs.neogold.engine.vision.CardGeometry
 import com.kitalonlabs.neogold.engine.vision.ImageFrame
+import com.kitalonlabs.neogold.engine.vision.QualityReasonCode
 import com.kitalonlabs.neogold.engine.vision.VisionEngine
 import java.util.UUID
 
@@ -74,7 +75,7 @@ class CameraQualifier(
     ) // one qualification pass (doc 4 Section 5.7); split when the camera package is reworked in C1
     fun qualifyCamera(
         photos: List<ImageFrame>,
-        batchReference: Map<String, Lab> = CardGeometry.PATCHES.mapValues { it.value.nominalLab },
+        batchReference: Map<String, Lab>,
         capabilities: DeviceCapabilities,
         cardBatchId: String,
         appVersion: String = "1.0.0",
@@ -92,8 +93,10 @@ class CameraQualifier(
         for (i in 0 until 3) {
             val qgResult = visionEngine.processFrame(photos[i], batchReference)
             val sampled = qgResult.sampledPatches
-            if (!qgResult.passed || sampled == null) {
-                failureReasons.add("Photo ${i + 1} failed quality gate: ${qgResult.failureReasons}")
+            // The skin check on the card's window is for a baby's skin; these photos show the card on a table.
+            val blocking = qgResult.failureReasons.filter { it != QualityReasonCode.WINDOW_NOT_SKIN }
+            if (blocking.isNotEmpty() || sampled == null) {
+                failureReasons.add("Photo ${i + 1} failed quality gate: $blocking")
             }
 
             // Convert sampled RGB to Lab, with linear matrix fit to batch reference

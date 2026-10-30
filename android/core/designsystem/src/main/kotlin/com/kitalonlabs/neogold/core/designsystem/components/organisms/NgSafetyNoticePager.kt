@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,7 @@ fun NgSafetyNoticePager(
         modifier = modifier
             .fillMaxSize()
             .padding(ScreenSidePadding)
+            .testTag("safety_notice_card")
     ) {
         // Page indicator dots
         Row(
@@ -117,6 +119,7 @@ fun NgSafetyNoticePager(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp)
+                .testTag(if (isLastPage) "btn_acknowledge_safety" else "btn_safety_next")
         )
     }
 }

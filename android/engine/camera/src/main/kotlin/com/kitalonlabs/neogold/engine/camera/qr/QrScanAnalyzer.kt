@@ -31,10 +31,17 @@ class QrScanAnalyzer(
             val buffer = plane.buffer.duplicate().apply { rewind() }
             val bytes = ByteArray(buffer.remaining())
             buffer.get(bytes)
+            if (!holdsFrame(bytes.size, image.width, image.height, plane.rowStride)) return
             QrDecoder.decode(bytes, image.width, image.height, plane.rowStride)?.let(onPayload)
         } finally {
             image.close()
         }
+    }
+
+    /** A frame whose plane is smaller than its size says is not read, rather than raising on the analysis thread. */
+    private fun holdsFrame(bytes: Int, width: Int, height: Int, rowStride: Int): Boolean {
+        if (width <= 0 || height <= 0 || rowStride < width) return false
+        return bytes >= rowStride.toLong() * (height - 1) + width
     }
 
     private companion object {
