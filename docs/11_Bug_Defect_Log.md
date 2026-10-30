@@ -86,8 +86,8 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-009 | Delete all data clears settings only; database, files, and keys remain | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S1 | No | - | P1 | Fixed | Unassigned | TC-LOG-11 | |
 | BUG-2026-010 | Retention never runs; register numbers and old records are kept | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S1 | No | - | P1 | Fixed | Unassigned | TC-LOG-04 | |
 | BUG-2026-011 | PIN verifier key falls back to a hardcoded key on any Keystore error | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | Fixed | Unassigned | TC-RSH-06 | |
-| BUG-2026-012 | Research unlock accepts any PIN | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-05 | |
-| BUG-2026-013 | Research sessions are never saved or queued | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | New | Unassigned | TC-RSH-14 | |
+| BUG-2026-012 | Research unlock accepts any PIN | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | Fixed | Unassigned | TC-RSH-05 | |
+| BUG-2026-013 | Research sessions are never saved or queued | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S1 | No | - | P1 | Fixed | Unassigned | TC-RSH-14 | |
 | BUG-2026-014 | android-ci and android-release workflows are invalid YAML; Android CI has never passed | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S1 | No | - | P1 | Verified | Unassigned | TC-OPS-01 | |
 | BUG-2026-015 | Test summary reports state results the repository cannot support | 2026-10-26 | Review | docs at 91c1125 | n/a | OPS | S1 | No | - | P1 | In progress | Unassigned | n/a (doc 9 Section 15) | |
 | BUG-2026-016 | Gradle wrapper and two gate scripts lack the executable bit | 2026-10-26 | Review | commit 91c1125 | n/a | OPS | S2 | No | - | P2 | Verified | Unassigned | TC-SEC-04 | |
@@ -98,7 +98,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-021 | Saved sessions record a different action from the one shown | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | New | Unassigned | TC-LOG-12 | |
 | BUG-2026-022 | Session records carry hardcoded versions and card batch | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | LOG | S2 | No | - | P2 | New | Unassigned | TC-TRI-22 | |
 | BUG-2026-023 | Gestational age has a hidden default of 38 weeks | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
-| BUG-2026-024 | Research mode has no entry point | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S2 | No | - | P2 | New | Unassigned | TC-RSH-01 | |
+| BUG-2026-024 | Research mode has no entry point | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-01 | |
 | BUG-2026-025 | Research export screen never writes a file | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | EXP | S2 | No | - | P2 | New | Unassigned | TC-EXP-01 | |
 | BUG-2026-026 | Study enrollment (R08) and Leave study (R09) are placeholder screens | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | New | Unassigned | TC-API-07 | |
 | BUG-2026-027 | Upload is never started by the app | 2026-10-26 | Review | 1.0.0 (1000001) | n/a | SYNC | S2 | No | - | P2 | New | Unassigned | TC-SYNC-10 | |
@@ -146,6 +146,12 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-069 | Qualification photos fail the skin check on the card's window, because the card is on a table: every real phone would have been research-only | 2026-10-30 | Review | commit ea47755 | n/a | DEV | S1 | Yes | H5 | P1 | Fixed | Unassigned | TC-DEV-02 | |
 | BUG-2026-070 | Nothing stops a research-only or unqualified phone from being offered screening, and the re-qualification check fails open in three places | 2026-10-30 | Review | commit ea47755 | n/a | DEV | S1 | Yes | H5 | P1 | Fixed | Unassigned | TC-DEV-05, TC-DEV-07 | |
 | BUG-2026-071 | Findings from the C1 reviews that are left open for later packages: partial config limits, no clock floor on S06, AE and AWB never locked, secure screens for the baby-photo preview | 2026-10-30 | Review | commit ea47755 | n/a | CAP | S3 | Yes | H5 | P3 | New | Unassigned | TC-DEV-06, TC-CAP-04 | |
+| BUG-2026-072 | A saved research session records fixed app, model and config versions and no device profile, whatever was running | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | n/a (`ResearchSessionRecordTest`) | |
+| BUG-2026-073 | Every research photo is stored as quality PASSED with no failure reasons and no residual, whatever the gate said | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | n/a (`ResearchSessionRecordTest`) | |
+| BUG-2026-074 | Research photo metadata defaults to ISO 100, 10 ms and AE and AWB locked, so a lock that never happened is recorded as done | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | n/a (`ResearchSessionRecordTest`) | |
+| BUG-2026-075 | R04 "captures" a text string as the image and shows a drawn viewfinder; nothing checks that a kept photo is a JPEG | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S1 | No | - | P1 | Fixed | Unassigned | TC-API-20 | |
+| BUG-2026-076 | The research session never locks: its background timer, screen-off receiver and return to R01 are not wired | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-RSH-07 | |
+| BUG-2026-077 | Saving a research session names a card batch the phone never stored, so the insert is refused | 2026-10-30 | Review | commit 071d782 | n/a | RSH | S2 | No | - | P2 | Fixed | Unassigned | TC-CARD-02, TC-CARD-05 | |
 
 ### 4.1 Entries
 
@@ -354,7 +360,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-012: Research unlock accepts any PIN
 
 - Area: RSH | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-RSH-04, TC-RSH-05 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-RSH-04, TC-RSH-05 | Fix version:
 
 **Steps**
 1. Reach R01 and enter any digits.
@@ -367,10 +373,12 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Notes** Fix package R3.
 
+**Fix** Package C2 part 1 (commit d303597). R01 calls `ResearchViewModel.unlockWithPin` and `enrollWithScannedProfile`, which check the PIN through `ResearchPinManager` (Argon2id plus the Keystore HMAC, run off the main thread) and show the lockout; R02 opens only after a successful check. The ViewModel tests for a wrong PIN, lockout and session lock are not written yet, so this is not Verified; `ResearchPinSecurityTest` covers the manager.
+
 #### BUG-2026-013: Research sessions are never saved or queued
 
 - Area: RSH | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
-- Status: New | Owner: Unassigned | Test case: TC-RSH-11, TC-RSH-14, TC-SYNC-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-RSH-11, TC-RSH-14, TC-SYNC-01 | Fix version:
 
 **Steps**
 1. Complete R03 to R06 with a test participant code.
@@ -382,6 +390,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `MainActivity.kt:775-847`; `R03ParticipantConsentScreen.kt:66-67,193` in `:feature:research`.
 
 **Notes** A nurse who completes a session believes it was recorded. Fix package R3. Proposed release check (package C2): fail the build when `SKP-0142` or `14.2` is left in a `src/main` source file, so a placeholder screen cannot reach a store build.
+
+**Fix** Package C2 part 1 (commit d303597). R03 to R06 go through `ResearchViewModel` and `ResearchRepository`, which write the participant, inputs, captures and TSB in one transaction and queue the outbox rows; R02 and R06 read the real study, participant and session result, and `SKP-0142`, `14.2` and `DHK-01` are gone from the research screens. Still open: the upload itself (package C4, BUG-2026-026 and 027), the export file (C3, BUG-2026-025), TC-RSH-14 and TC-SYNC-01 (no run yet), and the proposed release check that fails a build when a placeholder literal is left in `src/main`. The five fabrications that the same wiring removed are BUG-2026-072 to 077.
 
 #### BUG-2026-014: The android-ci and android-release workflows are invalid YAML, and Android CI has never passed
 
@@ -569,7 +579,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-024: Research mode has no entry point
 
 - Area: RSH | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-RSH-01 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-RSH-01 | Fix version:
 
 **Steps**
 1. From Home or Settings, look for a way into research mode.
@@ -581,6 +591,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `grep -n R01_RESEARCH_UNLOCK android/app/src/main`.
 
 **Notes** Fix package R3.
+
+**Fix** Package C2 part 1 (commit d303597). Settings (S23) has a Research mode row that opens R01; when the research session is already unlocked, R01 goes straight to R02. Not run on a device.
 
 #### BUG-2026-025: The research export screen never writes a file
 
@@ -923,6 +935,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Evidence** `S10BirthTimeGaScreen.kt:85-87,113` in `:feature:screening`; `R03ParticipantConsentScreen.kt:66-67,193` in `:feature:research`. Found by the safety-reviewer on 27 October 2026. The file-level suppressions A2 added to both files say the defaults go in E1 and C2.
 
 **Notes** Neither flow is reachable today (screening is hidden, research has no entry point, BUG-2026-024), so nothing records a wrong age yet. In screening, an unnoticed 48 hours puts a younger baby under the wrong threshold row (H2, H3). In research, every row would carry the same age, which would corrupt the validation data the study exists to collect. Fix: S10 in package E1 and R03 in package C2, with no pre-fill, Next disabled until a birth time is set, and a working picker in R03. The gestational-age stepper has a related anchor (BUG-2026-023).
+
+**Update 30 October 2026** The R03 half is fixed in package C2 part 1 (commit d303597): R03 starts with no birth time and no age, uses a birth-time picker (`NgBirthTimePicker`), and works out the age in hours from the time that was set. The S10 half is open until package E1, so this stays New.
 
 #### BUG-2026-045: The colour and estimation golden-vector tests rewrite their own expected files
 
@@ -1404,6 +1418,114 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 
 **Fix** Per item, in the package named.
 
+#### BUG-2026-072: A saved research session records fixed app, model and config versions and no device profile, whatever was running
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: n/a (`ResearchSessionRecordTest`) | Fix version:
+
+**Steps**
+1. Save a research session, then read the session row.
+
+**Expected** The row names the app version, model version, config version and device profile that produced the captures (audit finding A11; doc 5).
+
+**Actual** `ResearchRepository.completeSessionWithTsb` wrote `appVersion = "1.0.0"`, `modelVersion = "1.0.0-synthetic"`, `configVersion = "2026.10.0"` and `deviceProfileId = null` for every session, on every build.
+
+**Evidence** `ResearchRepository.kt`, the `ScreeningSessionEntity(...)` call (commit 071d782).
+
+**Notes** The study exists to compare phones and builds; with these values every row looks the same and the real build cannot be recovered from the data. A wrong version on a research row is false provenance, the same fault as BUG-2026-060 on the screening side.
+
+**Fix** Package C2 part 1 (commit d303597). `ResearchRepository` takes a `provenance` provider that is read when the session is saved; `NeoGoldContainer` builds it from `BuildConfig.VERSION_NAME`, the verified asset bundle's model version, the signed config's version and the active device profile. Test: `ResearchSessionRecordTest.theRecordNamesTheAppModelAndConfigThatRan_A11`.
+
+#### BUG-2026-073: Every research photo is stored as quality PASSED with no failure reasons and no residual, whatever the gate said
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: n/a (`ResearchSessionRecordTest`) | Fix version:
+
+**Steps**
+1. Save a research session that contains a photo the quality gate refused.
+
+**Expected** The capture row keeps that photo's verdict, its failure reasons and its correction residual (doc 5 `captures`).
+
+**Actual** `ResearchRepository` wrote `qualityStatus = "PASSED"`, `qualityFailReasons = null` and `correctionResidualDe = null` for every capture. `ResearchCaptureInput` had no field to carry a verdict, so the caller could not say otherwise.
+
+**Evidence** `ResearchRepository.kt`, the `CaptureEntity(...)` call and `ResearchCaptureInput` (commit 071d782).
+
+**Notes** Analysis of the validation data would have counted blurred, shadowed and card-less photos as good ones. Nothing in the research flow ran the gate on a photo before this package (BUG-2026-075), so the value was also never measured.
+
+**Fix** Package C2 part 1 (commit d303597). `ResearchCaptureInput` requires `qualityPassed` and carries the failure reasons and the residual; the repository stores them as given. `ResearchCaptureProcessor` runs the vision quality gate on a downsampled copy of each photo, against the card of the active device profile. Test: `ResearchSessionRecordTest.eachPhotoKeepsItsOwnQualityVerdictAndWhatTheCameraReported_TC_RSH_13`. Open: whether an expired card should still give the gate a reference (the record keeps the card status either way).
+
+#### BUG-2026-074: Research photo metadata defaults to ISO 100, 10 ms and AE and AWB locked, so a lock that never happened is recorded as done
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: n/a (`ResearchSessionRecordTest`) | Fix version:
+
+**Steps**
+1. Save a research capture without giving the camera metadata.
+
+**Expected** A value that was not measured is empty; exposure locks that were not seen are recorded as off.
+
+**Actual** `ResearchCaptureInput` defaulted `iso = 100`, `exposureNs = 10_000_000`, `aeLocked = 1` and `awbLocked = 1`, so a caller that passed nothing produced a row claiming a locked, fixed exposure.
+
+**Evidence** `ResearchCaptureInput` (commit 071d782).
+
+**Notes** This is the research-side counterpart of BUG-2026-071 item 3 (AE and AWB are never locked by `CameraHost`): a default of "locked" hid it. The defaults named by the C2 hand-off as "gestation and flags" are not in the research code: R03 already started with no gestational age and no safety answers, and the repository takes them as required values. The code that sets the screening flags from the rule code and clamps the gestational age to 22 to 44 is in the screening save path (`MainActivity`) and belongs to package E1.
+
+**Fix** Package C2 part 1 (commit d303597). The defaults are now `null` for ISO and exposure and `0` for both locks; the camera session reports what it did. Test: `ResearchSessionRecordTest.eachPhotoKeepsItsOwnQualityVerdictAndWhatTheCameraReported_TC_RSH_13`.
+
+#### BUG-2026-075: R04 "captures" a text string as the image and shows a drawn viewfinder; nothing checks that a kept photo is a JPEG
+
+- Area: RSH | Severity: S1 | Clinical: No | Hazard: - | Priority: P1
+- Status: Fixed | Owner: Unassigned | Test case: TC-API-20 | Fix version:
+
+**Steps**
+1. Open R04 and tap Capture at each step of the protocol.
+
+**Expected** The camera takes a still, the quality gate checks it, only the orientation survives in the JPEG, and a photo over 5,000,000 bytes is refused (FR-27, TC-API-20, doc 7).
+
+**Actual** `R04ResearchCaptureScreen` drew a simulated viewfinder, and its default `onCaptureImage` returned the bytes of the text `MOCK_IMAGE_DATA_FOR_<site>_<time>`. The repository encrypted and stored whatever it was given, so a nurse could finish a session believing five photos had been taken, and the rows would hold text.
+
+**Evidence** `R04ResearchCaptureScreen.kt` (the `onCaptureImage` default and the viewfinder box), `ResearchRepository.kt` (no image check), commit 071d782.
+
+**Notes** Hidden because research mode had no entry point (BUG-2026-024) and `MainActivity` discarded the captures (BUG-2026-013). It would have been the first thing a study site found.
+
+**Fix** Package C2 part 1 (commit d303597). R04 uses `CameraPreviewHost` in still mode and `CameraSession.captureStill` (JPEG quality 90, about 8 MP). `ResearchCaptureProcessor` checks quality on a downsampled copy, strips the metadata with `ResearchJpegSanitizer` and throws `CaptureTooLargeException` over 5,000,000 bytes. The repository refuses any photo that is not a JPEG carrying only its orientation (`isAllowedImage`) and keeps nothing. Tests: `ResearchSessionRecordTest.aPhotoThatIsNotACleanJpegIsRefusedAndNothingIsKept_TC_API_20` and `aPhotoWithGpsInItIsRefused_TC_API_20`. Open: a `ResearchCaptureProcessor` test with a fake `CameraSession`, the blinding checks on the wired screens, and an emulator offline session (all package C2, not written yet). Not run on a device.
+
+#### BUG-2026-076: The research session never locks: its background timer, screen-off receiver and return to R01 are not wired
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-RSH-07 | Fix version:
+
+**Steps**
+1. Unlock research mode, leave the app for 5 minutes (or turn the screen off), come back.
+
+**Expected** The PIN is asked for again (FR-25, TC-RSH-07), and no research screen stays on show.
+
+**Actual** `MainActivity.onStart` and `onStop` called `appLockManager` only; nothing called `researchSession.onAppForegrounded` or `onAppBackgrounded`, and `NeoGoldApplication` never registered the screen-off receiver that `ResearchSessionManager` provides. `researchSession.lock()` ran only from "Reset saved data" and delete-all in `NeoGoldContainer`. R02 to R06 had only the manual Lock button and did not watch the session state, so a lock from elsewhere would have left them on screen.
+
+**Evidence** `MainActivity.kt` (commit 071d782: the only lifecycle hook is `appLockManager`), `NeoGoldApplication.kt`, `ResearchSessionManager.kt`.
+
+**Notes** Latent while research mode was unreachable (BUG-2026-024). Participant codes and the study name are visible on R02 to R06, so an unlocked phone left on a ward would have shown them.
+
+**Fix** Package C2 part 1 (commit d303597). `MainActivity` calls the research session's foreground and background hooks, `NeoGoldApplication` registers the screen-off receiver, and every research route goes through `researchSessionComposable`, which returns to R01 when `isUnlocked` becomes false. Open: the ViewModel test for session lock (package C2); an emulator check that the camera is released when R04 is left and entered again twice.
+
+#### BUG-2026-077: Saving a research session names a card batch the phone never stored, so the insert is refused
+
+- Area: RSH | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
+- Status: Fixed | Owner: Unassigned | Test case: TC-CARD-02, TC-CARD-05 | Fix version:
+
+**Steps**
+1. Save a research session with the QR payload of a card whose signature checks (or that has expired).
+
+**Expected** The session is saved, and the row names a card batch that is stored (TC-CARD-05: research continues on an expired card and records `EXPIRED`).
+
+**Actual** `completeSessionWithTsb` set `cardBatchId` from the payload and inserted the session row without a `card_batch` row. The database enforces foreign keys, so the insert threw and the transaction rolled back; the session was lost.
+
+**Evidence** `ResearchRepository.kt` (commit 071d782); the screening counterpart is BUG-2026-060 and `ForeignKeyEnforcementTest`.
+
+**Notes** Written separately from BUG-2026-060 because the research code path is different and `MainActivity` never reached it before C2. The research record is the only place a card status other than VERIFIED is meant to be kept, so the failure fell on exactly the cases TC-CARD-02 and TC-CARD-05 describe.
+
+**Fix** Package C2 part 1 (commit d303597). `storeCardBatch` inserts the batch inside the same transaction before the session row; a batch already on the phone is not replaced, and a session never names a batch whose stored bytes differ from the payload. A payload that cannot be read is not kept and the session names no batch. Tests: `ResearchSessionRecordTest` (`theCardBatchIsStoredBeforeTheSessionNamesIt_BUG_2026_060`, `anExpiredCardIsRecordedAsExpiredWithItsSignatureValid_TC_CARD_05`, `aCardFromAnIssuerNotOnTheTrustListIsKeptButNotTrusted_TC_CARD_03`, `aCardThatCannotBeReadIsNotKeptAndTheSessionNamesNoBatch_TC_CARD_02`, `aDifferentCardUnderAnIdAlreadyOnThePhoneIsNotTaken_TC_CARD_02`).
+
 ---
 
 ## 5. Closed Defects
@@ -1421,8 +1543,8 @@ Updated with each test summary report (doc 9 Section 15).
 
 | Severity | Open | Clinical open | Closed this release |
 |---|---|---|---|
-| S1 | 18 | 10 | 0 |
-| S2 | 27 | 0 | 0 |
+| S1 | 19 | 10 | 0 |
+| S2 | 32 | 0 | 0 |
 | S3 | 20 | 1 | 0 |
 | S4 | 0 | 0 | 0 |
 
