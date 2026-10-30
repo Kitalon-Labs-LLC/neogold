@@ -20,5 +20,12 @@ fun ResearchError.text(): String = when (message) {
     ResearchMessage.NO_CAPTURES -> stringResource(R.string.r_err_no_captures)
     ResearchMessage.AGE_OUT_OF_RANGE -> stringResource(R.string.r_err_age_range)
     ResearchMessage.BAD_IMAGE -> stringResource(R.string.r_err_bad_image)
+    ResearchMessage.ENROLL_CODE_FORMAT -> stringResource(R.string.r_err_code_format)
+    ResearchMessage.ENROLL_CODE_REJECTED -> stringResource(R.string.r_err_code_rejected)
+    ResearchMessage.ENROLL_OTHER_STUDY -> stringResource(R.string.r_err_other_study)
+    ResearchMessage.ENROLL_SETTINGS_MISMATCH -> stringResource(R.string.r_err_settings_mismatch)
+    ResearchMessage.SERVER_UNREACHABLE -> stringResource(R.string.r_err_unreachable)
+    ResearchMessage.SERVER_REFUSED -> stringResource(R.string.r_err_refused)
+    ResearchMessage.NOT_ENROLLED -> stringResource(R.string.r_err_not_enrolled)
     ResearchMessage.UNEXPECTED -> stringResource(R.string.r_err_unexpected)
 }
