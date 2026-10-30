@@ -36,7 +36,7 @@ Confidence tags: **[Certain]** verified or computed, **[Likely]** strong inferen
 | No triage mistake from code | Exhaustive triage tests and a differential test against an independent reference implementation (TC-TRI-24) |
 | The app works on the phones people own | Device matrix results for every release |
 | No data loss in research mode | Crash, kill, and power-loss tests with zero lost records (PRD Phase B metric) |
-| Security claims hold | Release gates S1 to S9 (doc 8 Section 13.3) |
+| Security claims hold | Release gates S1 to S10 (doc 8 Section 13.3) |
 
 ---
 
@@ -74,7 +74,7 @@ Test effort follows harm, not code size.
 | Bench optical | Color accuracy, repeatability, angle, lighting, counterfeit cards | Bench rig (Section 5) | Each model or camera code change, each release candidate |
 | Performance | Time to result, memory, size, battery, startup | Macrobenchmark, Perfetto, `dumpsys meminfo`, `batterystats`, bundletool size report | Release candidate |
 | Reliability and chaos | Process death, power loss, storage full, wrong clock, killed background work | Scripts with `adb`, manual power pull | Release candidate |
-| Security | MASVS checklist, manifest and network checks, Keystore loss, server hardening | CI scripts, MobSF, nmap, testssl.sh, manual | Every release (gates S1 to S9) |
+| Security | MASVS checklist, manifest and network checks, Keystore loss, server hardening | CI scripts, MobSF, nmap, testssl.sh, manual | Every release (gates S1 to S10) |
 | Accessibility and localization | TalkBack, font scale, 320 dp, contrast, Bangla rendering, banned words | Accessibility Scanner, Compose checks, string lint | Release candidate |
 | Usability | Nurses complete tasks and explain results | Moderated sessions, teach-back | Before v1.0 and after major UI changes |
 | Field pilot | Real wards, real light, real phones | Partner sites under ethics approval | v0.5 onward |
@@ -163,7 +163,7 @@ Pipeline definitions are in doc 12 Section 3.
 |---|---|---|
 | v0.1 Prototype | Scaffold builds; bench rig assembled | Pipeline runs end to end on 3 phones; golden-vector parity passes; bad image set 100% rejected; camera qualification measured on all six matrix phones |
 | v0.5 Research build | v0.1 exit met; partner device survey done | All P1 cases for research mode, sync, export, security pass; zero records lost in 50 kill tests and 10 power-pull tests per phone; research build on Play closed testing for the partner |
-| v1.0 internal track | v0.5 exit met; G1 and G2 met (doc 8 Section 13.3) | All P1 and P2 cases pass on D1 to D4; no open S1 or S2 defects; performance budgets met on D1 and D2; gates S1 to S9 pass |
+| v1.0 internal track | v0.5 exit met; G1 and G2 met (doc 8 Section 13.3) | All P1 and P2 cases pass on D1 to D4; no open S1 or S2 defects; performance budgets met on D1 and D2; gates S1 to S10 pass |
 | v1.0 closed testing (partner nurses) | Internal track exit met | Usability targets met (Section 13); 14 days with no S1 and no unresolved S2. No minimum tester count: Kitalon Labs publishes from an organization account, and Play's 12-tester rule applies only to new personal accounts [Certain] (confirmed by the founder, 11 October 2026) |
 | v1.0 closed research release (PRD D10) | Closed testing exit met; partner ethics approval in hand | Research build with `triageEnabled` false on the closed track for all study sites |
 | Later public release | v1.0 study results; **G1, G2, and G3 met** (doc 8 Section 13.3) | Production checklist in doc 12 Section 9 complete |
@@ -284,7 +284,7 @@ A developer testing his own code is still the weakest point in this plan. The mi
 
 ## 15. Deliverables and Reporting
 
-- A test summary report for each release in `docs/test-reports/`, with: build and versions; device results; pass, fail, and blocked counts by area; open defects by severity; gates S1 to S9; and a plain statement of what testing does not show (Section 0, item 1).
+- A test summary report for each release in `docs/test-reports/`, with: build and versions; device results; pass, fail, and blocked counts by area; open defects by severity; gates S1 to S10; and a plain statement of what testing does not show (Section 0, item 1).
 - Bench and performance raw data committed with hashes.
 - The v1.0 report is attached to the GitHub release.
 

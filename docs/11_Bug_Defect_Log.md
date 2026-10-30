@@ -119,7 +119,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-042 | The trust list parser accepts a missing or malformed revocation list and duplicate key ids | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P2 | New | Unassigned | TC-CARD-06 | |
 | BUG-2026-043 | The three bundled-asset JSON parsers have no nesting-depth or size limit | 2026-10-27 | Review | commit c5a47b0 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-SEC-03 | |
 | BUG-2026-044 | S10 and R03 pre-fill the baby's age with 48 hours | 2026-10-27 | Review | commit 3c60999 | n/a | UI | S2 | No | - | P2 | New | Unassigned | TC-UI-11 | |
-| BUG-2026-045 | The colour and estimation golden-vector tests rewrite their own expected files | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S2 | No | - | P2 | New | Unassigned | TC-EST-01, TC-EST-07 | |
+| BUG-2026-045 | The colour and estimation golden-vector tests rewrite their own expected files | 2026-10-27 | Review | commit 3c60999 | n/a | EST | S2 | No | - | P2 | Fixed | Unassigned | TC-EST-01, TC-EST-07 | |
 | BUG-2026-046 | The tier map does not cover the vision quality gate, its defaults, or the detekt config | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P2 | Fixed | Unassigned | n/a (tools/quality_gate.py) | |
 | BUG-2026-047 | The StrictMath guards miss cbrt and trigonometric calls, and detekt's method rule never runs | 2026-10-27 | Review | commit 3c60999 | n/a | OPS | S3 | No | - | P3 | Fixed | Unassigned | TC-EST-07 | |
 | BUG-2026-048 | The quality gate's residual check passes when fewer than three reference patches match | 2026-10-27 | Review | commit 3c60999 | n/a | CAP | S3 | No | - | P3 | New | Unassigned | TC-CAP-09 | |
@@ -132,7 +132,7 @@ Entries BUG-2026-001 to BUG-2026-031 come from the 26 October 2026 build audit: 
 | BUG-2026-055 | The vision engine accepts any four markers with the right IDs and never checks that they form the card | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S2 | No | - | P2 | In progress | Unassigned | TC-CAP-11 | |
 | BUG-2026-056 | CARD_ANGLE does not enforce the 20 degree limit for every in-plane rotation of the card | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S2 | No | - | P2 | New | Unassigned | TC-CAP-03 | |
 | BUG-2026-057 | A phone on which OpenCV fails to load silently runs the looser Kotlin detector | 2026-10-28 | Review | commit 3556b25 | n/a | CAP | S3 | No | - | P2 | In progress | Unassigned | TC-CAP-17 | |
-| BUG-2026-058 | No gate checks what the bundled native libraries import, or that screening writes no file and sends no traffic | 2026-10-29 | Review | commit 3556b25 | n/a | SEC | S3 | No | - | P3 | New | Unassigned | TC-PRIV-01 | |
+| BUG-2026-058 | No gate checks what the bundled native libraries import, or that screening writes no file and sends no traffic | 2026-10-29 | Review | commit 3556b25 | n/a | SEC | S3 | No | - | P3 | In progress | Unassigned | TC-PRIV-01 | |
 | BUG-2026-059 | Gate S2 fails on a new Guava advisory (CVE-2026-102554, HIGH) that sits only on lint, test and annotation-processor classpaths | 2026-10-29 | CI | commit 6a9e4e8 | n/a | SEC | S3 | No | - | P3 | Fixed | Unassigned | TC-SEC-05 | |
 | BUG-2026-060 | Saving a screening names a card batch the phone never stored, so the insert is refused | 2026-10-29 | Review | commit 79f5643 | n/a | LOG | S2 | No | - | P2 | Fixed | Unassigned | n/a (`ForeignKeyEnforcementTest`) | |
 | BUG-2026-061 | Home shows register numbers in the due-recheck list, but is not a protected screen | 2026-10-29 | Review | commit 79f5643 | n/a | PRIV | S3 | No | - | P3 | New | Unassigned | TC-PRIV-02 | |
@@ -962,7 +962,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-045: The colour and estimation golden-vector tests rewrite their own expected files
 
 - Area: EST | Severity: S2 | Clinical: No | Hazard: - | Priority: P2
-- Status: New | Owner: Unassigned | Test case: TC-EST-01, TC-EST-07 | Fix version:
+- Status: Fixed | Owner: Unassigned | Test case: TC-EST-01, TC-EST-07 | Fix version:
 
 **Steps**
 1. Change a constant in `Ciede2000.kt` or `ColorConversions.kt`.
@@ -973,6 +973,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Actual** `GoldenVectorsTest.testGenerateAndVerifyGoldenVectors` and `EstimationGoldenVectorsTest` write `testdata/golden/colorscience/*.json` and `testdata/golden/estimation/golden_estimation.json` from the engine's current output, write the SHA-256 manifest from those files, and then check the manifest they just wrote. A changed value cannot fail them, and no CI step runs `git diff --exit-code` on `testdata/golden/`. Each local run also leaves modified tracked files behind.
 
 **Evidence** `GoldenVectorsTest.kt:26-47` in `:engine:colorscience`; `EstimationGoldenVectorsTest.kt:58-76` in `:engine:estimation`; `.github/workflows/android-ci.yml` (no diff step). Found by the safety-reviewer on 27 October 2026. The A2 claim that the engine edits changed no value rests on a by-hand comparison of the regenerated files with `HEAD`, which is the comparison the test should make.
+
+**Fix** Package D1 (30 October 2026). `GoldenVectorsTest` and `EstimationGoldenVectorsTest` build the JSON in memory and compare it with the committed file (line endings ignored), and check that the committed manifest hashes the committed files. They write nothing unless `NEOGOLD_REGENERATE_GOLDEN=1` is set, and then they fail with a reminder to read the diff and commit it. Mutation check: changing one value in a committed golden file fails the test, and the test task reruns when only that file changes (the golden folders, the synthetic model and the regenerate switch are declared as inputs of the engine test tasks in `android/build.gradle.kts`; found by the safety-reviewer, because Gradle's cache would otherwise have restored an old result). Not enforced: a pull request that changes an engine constant and regenerates the golden files in the same commit still passes; the rule "never change a vector in the same commit as an engine edit" stays a review rule. A run no longer leaves modified tracked files behind. The independent TC-EST-01 value checks (1e-4 against fixed numbers) are unchanged.
 
 **Notes** The triage differential test reads fixed vectors and writes nothing, so TC-TRI-24 is not affected. Fix in package D1: compare against the committed files, regenerate only on an explicit request (a system property), and add the diff check to CI. Never change a vector in the same commit as an engine edit.
 
@@ -1183,7 +1185,7 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 #### BUG-2026-058: No gate checks what the bundled native libraries import, or that screening writes no file and sends no traffic
 
 - Area: SEC | Severity: S3 | Clinical: No | Hazard: - | Priority: P3
-- Status: New | Owner: Unassigned | Test case: TC-PRIV-01 | Fix version:
+- Status: In progress | Owner: Unassigned | Test case: TC-PRIV-01 | Fix version:
 
 **Steps**
 1. In `:engine:vision`, call `Imgcodecs.imwrite` on a frame (a debug aid that someone forgets).
@@ -1194,6 +1196,8 @@ Every entry below was found on 26 October 2026 (Source and Build as in the table
 **Actual** Nothing stops it except review. `proguard-rules.pro` keeps all of `org.opencv.**`, so the release dex holds `Imgcodecs`, `VideoCapture`, `dnn.Net` and `android.Utils`. `NetworkIsolationTest` reads build files only, `tools/check_dependencies.py` reads Maven names, and the OpenCV on-device tests do not run in CI. A3 adds a detekt ban on those four OpenCV imports (checked with a probe file), which covers the Kotlin source but not a native call.
 
 **Evidence** The supply-chain review of 29 October 2026 (findings 1 and 2); `android/config/detekt/detekt-engine.yml`.
+
+**Fix (part, package D1, 30 October 2026)** `tools/check_native_imports.py` (Gate S10) reads the undefined dynamic symbols of every `lib/**/*.so` in the release APK with a plain ELF parser and fails when a library other than `libsqlcipher.so` imports a socket or name-resolution function; it runs in android-ci and the release workflow, and `tools/tests/test_check_native_imports.py` builds ELF files to prove it fails when it should. On the current release APK 14 libraries pass (libsqlcipher imports eight such functions and is the only allow-list entry). NOT done: the on-device OpenCV test that the files and cache directories stay unchanged and `TrafficStats.getUidTxBytes` stays flat across `initLocal` and `detectMarkers` (needs the emulator job, D1 nightly), and the OpenCV bundled-library SBOM entries.
 
 **Notes** Fix in package D1: check the imported symbols of every `lib/*.so` in the release APK against an allow-list (`libsqlcipher.so` already imports `socket`, `connect` and `getaddrinfo`), and make the OpenCV on-device test assert that the files and cache directories are unchanged and that `TrafficStats.getUidTxBytes` stays flat across `initLocal` and `detectMarkers`. The library also embeds libjpeg-turbo, libwebp, libpng, libtiff, libopenjp2, OpenEXR, protobuf and oneTBB, which neither the Trivy gate nor the SBOM sees; track OpenCV releases by hand until the SBOM lists them.
 

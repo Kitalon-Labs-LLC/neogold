@@ -313,7 +313,7 @@ Each environment tests **its own** repository where it lives. Staging restores i
 | 1 | G1: clinical sign-off verified by the release workflow | Clinical lead, founder | Workflow log |
 | 2 | G2: verified card batches distributed to every launch site | Founder | Batch register and signing log |
 | 3 | G3: legal opinion received and Play declarations aligned (Path A only) | Founder | Opinion letter on file |
-| 4 | S1 to S9 passed (doc 8 Section 13.3) | Founder | Test summary report |
+| 4 | S1 to S10 passed (doc 8 Section 13.3) | Founder | Test summary report |
 | 5 | Doc 9 exit criteria for closed testing met; no open S1 or S2 | Founder | Defect log summary |
 | 6 | Usability round 2 passed (doc 9 Section 13) | Founder, nurse panel | Session notes |
 | 7 | Release notes in English and Bangla, each under 500 characters for the Play field [Certain, Play limit] | Founder | Doc 13 |

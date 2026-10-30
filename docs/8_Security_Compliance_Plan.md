@@ -462,6 +462,7 @@ Section numbers refer to the unofficial English translation; the lawyer confirms
 | S7 | Authentication test cases 10 of 10 (doc 7 Section 12.3) | Backend release |
 | S8 | Backup restore test passed within the last 30 days | Production study go-live and each backend release |
 | S9 | Secrets scan clean on the release commit | Release |
+| S10 | No bundled native library imports a socket or name-resolution function, except `libsqlcipher.so` (`tools/check_native_imports.py`, BUG-2026-058; a library outside Kotlin's dependency rule and detekt) | Pull request, release |
 
 G3 was adopted on 11 October 2026 together with the decision to keep v1.0 a closed research build (PRD D10); PRD Section 16 open item 5 tracks it.
 

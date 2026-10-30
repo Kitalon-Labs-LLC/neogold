@@ -71,12 +71,13 @@ jobs:
             dirname "$(find "$ANDROID_HOME/build-tools" -name zipalign | sort -V | tail -n 1)"
             dirname "$(find "$ANDROID_NDK_LATEST_HOME" -name llvm-objdump | head -n 1)"
           } >> "$GITHUB_PATH"
-      - name: Gates S4 and S5 on the release bundle
+      - name: Gates S4, S5 and S10 on the release bundle
         run: |
           bundletool build-apks --bundle="$RUNNER_TEMP/upload/app-release.aab" \
             --output="$RUNNER_TEMP/universal.apks" --mode=universal
           unzip -o -q "$RUNNER_TEMP/universal.apks" universal.apk -d "$RUNNER_TEMP"
           tools/check_16kb.sh "$RUNNER_TEMP/universal.apk"
+          python3 tools/check_native_imports.py "$RUNNER_TEMP/universal.apk"
           python3 tools/check_manifest.py "$(find android/app/build/intermediates -path '*release*' -name AndroidManifest.xml | head -n 1)"
       - name: Publish the checked bundle to the internal testing track (no rebuild)
         working-directory: android

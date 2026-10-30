@@ -133,6 +133,22 @@ fun resolvePythonCommand(): List<String> {
 // :app signs its bundle with the same Python.
 extra["pythonCommand"] = resolvePythonCommand()
 
+// The golden-vector tests read testdata/ with java.io.File, which Gradle does not see. Without these declarations a change to
+// a golden file, the synthetic model or the regenerate switch alone could leave the test task UP-TO-DATE or FROM-CACHE, so
+// the comparison would never run (BUG-2026-045, safety review of package D1).
+val testdataDir = rootDir.parentFile.resolve("testdata")
+for (module in listOf("colorscience", "estimation")) {
+    project(":engine:$module").tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+        inputs.dir(testdataDir.resolve("golden/colorscience")).withPropertyName("goldenColorscience")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(testdataDir.resolve("golden/estimation")).withPropertyName("goldenEstimation")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(testdataDir.resolve("models/model.synthetic.json")).withPropertyName("syntheticModel")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.property("regenerateGolden", providers.environmentVariable("NEOGOLD_REGENERATE_GOLDEN").orElse(""))
+    }
+}
+
 tasks.register("verifyGoldenVectors") {
     description = "Golden vectors verification for color science and estimation (implemented in P04/P06)"
     group = "verification"

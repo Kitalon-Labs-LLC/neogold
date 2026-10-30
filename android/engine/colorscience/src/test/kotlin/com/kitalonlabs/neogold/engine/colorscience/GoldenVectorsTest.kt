@@ -6,7 +6,7 @@ import java.io.File
 import java.security.MessageDigest
 
 /**
- * Generates and validates golden test vectors for P06 (estimation) and P07 (training pipeline).
+ * Compares the colour engine's output with the committed golden vectors for P06 (estimation) and P07 (training pipeline).
  * Stored in testdata/golden/colorscience/ with a SHA-256 manifest.
  */
 class GoldenVectorsTest {
@@ -23,45 +23,55 @@ class GoldenVectorsTest {
             return File("../../../testdata/golden/colorscience").canonicalFile
         }
 
+    /**
+     * TC-EST-01, hazard H7 (BUG-2026-045): the engine's output is compared with the golden files that are committed and
+     * reviewed. A changed constant changes the output and fails this test until a person regenerates the files, reads the
+     * diff, and commits it. Nothing is written unless NEOGOLD_REGENERATE_GOLDEN=1 is set on purpose, and even then the test
+     * fails with a reminder, so a regeneration can never pass CI by itself.
+     */
     @Test
-    fun testGenerateAndVerifyGoldenVectors() {
-        goldenDir.mkdirs()
-
+    fun testEngineOutputMatchesTheCommittedGoldenVectors() {
         val conversionsFile = File(goldenDir, "golden_color_conversions.json")
         val correctionFile = File(goldenDir, "golden_patch_correction.json")
         val manifestFile = File(goldenDir, "manifest.sha256")
 
         val conversionsJson = buildConversionsGoldenJson()
-        conversionsFile.writeText(conversionsJson)
-
         val correctionJson = buildCorrectionGoldenJson()
-        correctionFile.writeText(correctionJson)
 
-        val conversionsSha256 = sha256(conversionsFile)
-        val correctionSha256 = sha256(correctionFile)
-
-        val manifestContent = buildString {
-            appendLine("$conversionsSha256  golden_color_conversions.json")
-            appendLine("$correctionSha256  golden_patch_correction.json")
+        if (System.getenv(REGENERATE_ENV) == "1") {
+            goldenDir.mkdirs()
+            conversionsFile.writeText(conversionsJson)
+            correctionFile.writeText(correctionJson)
+            manifestFile.writeText(
+                "${sha256(conversionsFile)}  golden_color_conversions.json\n" +
+                    "${sha256(correctionFile)}  golden_patch_correction.json\n"
+            )
+            throw AssertionError(
+                "Golden vectors regenerated. Read the diff of testdata/golden/colorscience, commit it, run again."
+            )
         }
-        manifestFile.writeText(manifestContent)
 
-        // Verification checks
         assertThat(conversionsFile.exists()).isTrue()
         assertThat(correctionFile.exists()).isTrue()
         assertThat(manifestFile.exists()).isTrue()
 
-        // Read back and verify manifest matches
-        val manifestLines = manifestFile.readLines().map { it.trim() }.filter { it.isNotEmpty() }
-        assertThat(manifestLines).hasSize(2)
+        // the committed files are the expectation (line endings do not matter: a Windows checkout may use CRLF)
+        assertThat(lf(conversionsFile.readText())).isEqualTo(lf(conversionsJson))
+        assertThat(lf(correctionFile.readText())).isEqualTo(lf(correctionJson))
 
-        val line1Parts = manifestLines[0].split(Regex("\\s+"))
-        assertThat(line1Parts[0]).isEqualTo(conversionsSha256)
-        assertThat(line1Parts[1]).isEqualTo("golden_color_conversions.json")
-
-        val line2Parts = manifestLines[1].split(Regex("\\s+"))
-        assertThat(line2Parts[0]).isEqualTo(correctionSha256)
-        assertThat(line2Parts[1]).isEqualTo("golden_patch_correction.json")
+        // and the committed manifest still describes the committed files
+        val manifest = manifestFile.readLines().map { it.trim() }.filter { it.isNotEmpty() }.map {
+            it.split(
+                Regex("\\s+")
+            )
+        }
+        assertThat(
+            manifest.map {
+                it[1]
+            }
+        ).containsExactly("golden_color_conversions.json", "golden_patch_correction.json").inOrder()
+        assertThat(manifest[0][0]).isEqualTo(sha256(conversionsFile))
+        assertThat(manifest[1][0]).isEqualTo(sha256(correctionFile))
     }
 
     private fun buildConversionsGoldenJson(): String {
@@ -293,10 +303,16 @@ class GoldenVectorsTest {
 
     private fun fmt(d: Double): String = String.format(java.util.Locale.US, "%.8f", d)
 
+    private fun lf(text: String): String = text.replace("\r\n", "\n")
+
+    /** SHA-256 of the file with LF line endings, which is how the manifest was written and how git stores it. */
     private fun sha256(file: File): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val bytes = file.readBytes()
-        val hash = digest.digest(bytes)
+        val bytes = lf(file.readText()).toByteArray(Charsets.UTF_8)
+        val hash = MessageDigest.getInstance("SHA-256").digest(bytes)
         return hash.joinToString("") { "%02x".format(it) }
+    }
+
+    private companion object {
+        const val REGENERATE_ENV = "NEOGOLD_REGENERATE_GOLDEN"
     }
 }
