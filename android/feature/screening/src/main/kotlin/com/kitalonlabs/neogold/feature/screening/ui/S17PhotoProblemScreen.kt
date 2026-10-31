@@ -86,7 +86,7 @@ fun S17PhotoProblemScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.btn_back)
                         )
                     }
                 },
@@ -151,7 +151,7 @@ fun S17PhotoProblemScreen(
                             modifier = Modifier
                                 .size(56.dp)
                                 .background(
-                                    color = Color(0xFFFFB74D).copy(alpha = 0.2f),
+                                    color = WarningBadgeBackground.copy(alpha = 0.2f),
                                     shape = CircleShape
                                 ),
                             contentAlignment = Alignment.Center
@@ -159,7 +159,7 @@ fun S17PhotoProblemScreen(
                             Icon(
                                 imageVector = Icons.Default.Warning,
                                 contentDescription = null,
-                                tint = Color(0xFFF57C00),
+                                tint = WarningBadgeIcon,
                                 modifier = Modifier.size(32.dp)
                             )
                         }
@@ -252,3 +252,6 @@ fun S17PhotoProblemScreen(
         }
     }
 }
+
+private val WarningBadgeBackground = Color(0xFFFFB74D)
+private val WarningBadgeIcon = Color(0xFFF57C00)

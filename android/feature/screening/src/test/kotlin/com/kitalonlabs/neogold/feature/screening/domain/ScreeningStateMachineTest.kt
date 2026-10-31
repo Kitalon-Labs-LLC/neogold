@@ -77,7 +77,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testStartScreening_transitionsToInputs() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         assertThat(sm.currentState).isEqualTo(ScreeningState.Initial)
 
         val next = sm.dispatch(ScreeningEvent.StartScreening)
@@ -86,7 +86,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testConsentNotConfirmed_staysInInputs() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val unconsentedInputs = ScreeningInputs(
@@ -106,7 +106,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testHardRuleR1_dangerSigns_urgentReferral() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(
@@ -129,7 +129,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testHardRuleR2_earlyJaundice_urgentReferral() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(
@@ -150,7 +150,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testHardRuleR3_gaUnder35_cannotScreen() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(
@@ -171,7 +171,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testHardRulesPass_transitionsToCardCheck() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(
@@ -190,7 +190,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testCardVerificationFailure_transitionsToBlocked() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(
@@ -212,7 +212,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testCardVerificationSuccess_transitionsToCapture() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(
@@ -235,7 +235,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testQualityFailureAttempts_loopBackAndFallbackOnThree() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(
@@ -287,7 +287,7 @@ class ScreeningStateMachineTest {
 
     @Test
     fun testSaveSession_recordsSummary() {
-        val sm = ScreeningStateMachine()
+        val sm = ScreeningStateMachine(integrityChecker = { true })
         sm.dispatch(ScreeningEvent.StartScreening)
 
         val inputs = ScreeningInputs(

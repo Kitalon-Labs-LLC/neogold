@@ -21,10 +21,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NeoGold">
-        <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="dataSync"
-            android:exported="false" />
         <activity
             android:name="com.kitalonlabs.neogold.MainActivity"
             android:exported="true"

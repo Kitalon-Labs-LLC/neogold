@@ -92,8 +92,7 @@ class ScreeningFlowTest {
             File("../../../testdata/triage/config.synthetic.json"),
             File("../../testdata/triage/config.synthetic.json"),
             File("../testdata/triage/config.synthetic.json"),
-            File("testdata/triage/config.synthetic.json"),
-            File("d:/Project/neogold-android/testdata/triage/config.synthetic.json")
+            File("testdata/triage/config.synthetic.json")
         )
         val configFile = candidatePaths.firstOrNull { it.exists() }
             ?: File("testdata/triage/config.synthetic.json")
@@ -103,7 +102,7 @@ class ScreeningFlowTest {
             isPublicBuild = false,
             clock = { LocalDate.of(2026, 10, 17) }
         )
-        stateMachine = ScreeningStateMachine()
+        stateMachine = ScreeningStateMachine(integrityChecker = { true })
     }
 
     private fun createQualityResult(passed: Boolean, failureReasons: List<QualityReasonCode>): QualityGateResult {
@@ -304,7 +303,7 @@ class ScreeningFlowTest {
         stateMachine.dispatch(ScreeningEvent.StartScreening)
         stateMachine.dispatch(ScreeningEvent.SubmitInputs(validInputs))
 
-        val freshStateMachine = ScreeningStateMachine()
+        val freshStateMachine = ScreeningStateMachine(integrityChecker = { true })
         assertThat(freshStateMachine.state.value).isEqualTo(ScreeningState.Initial)
         assertThat(freshStateMachine.state.value).isNotInstanceOf(ScreeningState.Result::class.java)
     }
@@ -338,7 +337,7 @@ class ScreeningFlowTest {
             override suspend fun insert(session: ScreeningSessionEntity) {
                 insertCalled = true
             }
-            override suspend fun update(session: ScreeningSessionEntity) {}
+            override suspend fun update(session: ScreeningSessionEntity) { /* not needed by this flow */ }
             override suspend fun getSessionById(id: String) = null
             override suspend fun getSessionsByMode(mode: String) = emptyList<ScreeningSessionEntity>()
             override suspend fun getSessionsForParticipant(participantId: String) = emptyList<ScreeningSessionEntity>()
@@ -348,7 +347,7 @@ class ScreeningFlowTest {
             override suspend fun eraseRegisterNumbersOlderThan(cutoffTimeMs: Long, erasureTimeMs: Long) = 0
             override suspend fun deleteSessionsOlderThan(mode: String, cutoffTimeMs: Long) = 0
             override suspend fun deleteSession(id: String) = 0
-            override suspend fun deleteAll() {}
+            override suspend fun deleteAll() { /* not needed by this flow */ }
         }
 
         val keepScreeningLog = false

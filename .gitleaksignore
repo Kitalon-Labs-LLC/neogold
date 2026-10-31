@@ -1,0 +1,22 @@
+# Gate S9 (secrets scan) - exact findings in git history that were triaged and accepted. One fingerprint per line
+# (commit:file:rule:line), never a path or a rule. Every entry needs a reason; remove it if the commit is ever rewritten.
+
+# BUG-2026-008, triaged 2026-10-30: commit fe31801 added tools/tests/test_sign_bundle_manifest.py with the retired K3
+# test private key split in two string halves, so the test could look for it in the repository. The key was committed
+# in earlier commits before package B1 removed it, no build trusts it any more (the app trusts the key that signed its
+# own bundle), and it protected nothing but a test bundle. The next commit replaces the literal with a check that
+# derives the public key from candidates, so the file at HEAD holds no key material; only this history entry remains.
+fe318013c964b2d786c0a239834bde6e5046bd9e:tools/tests/test_sign_bundle_manifest.py:generic-api-key:26
+
+# BUG-2026-083 item 27, triaged 2026-10-30: commit fb91cd1 (Tink 1.24) added the compatibility fixture
+# android/core/security/src/test/resources/export/legacy-tink-1.7.0.properties. It holds a throwaway key pair, a wrapped data key
+# and a short ciphertext that a Tink 1.7.0 build wrote for the test "archive written by Tink 1.7.0 still opens". The file says
+# "synthetic ... Not real data"; the key protects nothing and is used by no study, no build and no server. The fixture has to
+# hold key material for the test to mean anything, so the file stays and only this history entry is accepted.
+fb91cd186fd91e401b17148ab4e9401d94059f25:android/core/security/src/test/resources/export/legacy-tink-1.7.0.properties:generic-api-key:2
+
+# Package C4, triaged 2026-10-30: commit 6f2a471 added ResearchUploadWorkerTest, which makes a software test key with the sample
+# enrollment code 7K2X-M49P-3ABC. That string is the format example printed in the docs and used in the other sync tests; it is
+# not a code any server issued. The scanner read it as a generic key because the argument sits next to the word "key". Only this
+# history entry is accepted.
+6f2a47153c399dd2a0e41b112b08904c76ed45aa:android/sync/research/src/test/kotlin/com/kitalonlabs/neogold/sync/research/ResearchUploadWorkerTest.kt:generic-api-key:70

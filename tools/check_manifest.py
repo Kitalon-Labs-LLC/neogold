@@ -58,6 +58,18 @@ def main(path):
                     errors.append(f"exported {tag} not allow-listed: {name}")
                 elif ALLOWED_EXPORTED[name] and c.get(A + "permission") != ALLOWED_EXPORTED[name]:
                     errors.append(f"exported {tag} {name} is not guarded by {ALLOWED_EXPORTED[name]}")
+    # A foreground worker on Android 14 and later must declare its type, and the type must be the one the app asks permission
+    # for (TC-SEC-01, doc 8 Section 6.1). Without it the system stops the upload service the first time it starts.
+    wants_data_sync = any(
+        p.get(A + "name") == "android.permission.FOREGROUND_SERVICE_DATA_SYNC" for p in root.findall("uses-permission")
+    )
+    for c in app.findall("service"):
+        if c.get(A + "name") == "androidx.work.impl.foreground.SystemForegroundService":
+            types = (c.get(A + "foregroundServiceType") or "").split("|")
+            if wants_data_sync and "dataSync" not in types:
+                errors.append("SystemForegroundService lacks foregroundServiceType dataSync")
+            if c.get(A + "exported") == "true":
+                errors.append("SystemForegroundService is exported")
     for e in errors:
         print("S5 FAIL:", e)
     if not errors:

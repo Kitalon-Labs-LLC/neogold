@@ -1,0 +1,9 @@
+<resources>
+    <!-- Draft for the nurse wording panel, like the rest of the Bangla text (doc 6 Section 10.4) -->
+    <!-- S25 Delete all data: what deleting also takes away (doc 8 Section 7.3) -->
+    <plurals name="delete_data_unsent_research">
+        <item quantity="one">%dটি গবেষণা তথ্য এখনো স্টাডিতে পাঠানো হয়নি। সেটিও মুছে যাবে।</item>
+        <item quantity="other">%dটি গবেষণা তথ্য এখনো স্টাডিতে পাঠানো হয়নি। সেগুলোও মুছে যাবে।</item>
+    </plurals>
+    <string name="settings_research_mode">গবেষণা মোড</string>
+</resources>

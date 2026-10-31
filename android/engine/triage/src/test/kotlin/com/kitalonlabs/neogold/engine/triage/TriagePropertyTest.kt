@@ -10,11 +10,10 @@ class TriagePropertyTest {
         val candidates = listOf(
             File(relativePath),
             File("../../../$relativePath"),
-            File("../../$relativePath"),
-            File("d:/Project/neogold-android/$relativePath")
+            File("../../$relativePath")
         )
         val file = candidates.firstOrNull { it.exists() }
-            ?: throw IllegalStateException("Could not find $relativePath")
+            ?: error("Could not find $relativePath")
         return TriageConfigParser.parse(file.readText())
     }
 

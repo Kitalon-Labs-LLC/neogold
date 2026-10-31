@@ -1,6 +1,7 @@
+@file:Suppress("MagicNumber") // test-support card: every number is a pixel or millimetre dimension of the printed card
+
 package com.kitalonlabs.neogold.engine.vision
 
-import com.kitalonlabs.neogold.engine.colorscience.ColorConversions
 import com.kitalonlabs.neogold.engine.colorscience.Lab
 import com.kitalonlabs.neogold.engine.colorscience.RectPx
 import com.kitalonlabs.neogold.engine.colorscience.Rgb
@@ -57,11 +58,88 @@ class SyntheticCardRenderer {
         val fw = frameWidth
         val fh = frameHeight
 
+        // Homography from projected frame coordinates to canonical coordinates
+        val frameToCanon = Homography.findHomography(projectCardCorners(config, fw, fh), canonicalCardCorners())
+
+        // 3. Render frame pixels using inverse homography
+        val bgLum = (220 * config.exposureMultiplier).toInt().coerceIn(10, 255)
+        val frameData = IntArray(fw * fh) { (0xFF shl 24) or (bgLum shl 16) or (bgLum shl 8) or bgLum }
+
+        for (fy in 0 until fh) {
+            for (fx in 0 until fw) {
+                val canonPt = frameToCanon.transform(Point2D(fx.toDouble(), fy.toDouble()))
+                val cx = canonPt.x.toInt()
+                val cy = canonPt.y.toInt()
+
+                if (cx in 0 until cw && cy in 0 until ch) {
+                    val pixel = canonicalPixels[cy * cw + cx]
+                    frameData[fy * fw + fx] = pixel
+                }
+            }
+        }
+
+        // 4. Apply Blur if requested
+        if (config.blurRadius > 0) {
+            applyBoxBlur(frameData, fw, fh, config.blurRadius)
+        }
+
+        return ImageFrame(fw, fh, frameData)
+    }
+
+    /**
+     * Where [renderFrame] puts the four corners of each corner marker (TL, TR, BR, BL as printed on the card): the
+     * ground truth for detector tests.
+     */
+    fun markerCornersInFrame(
+        config: SyntheticRenderConfig = SyntheticRenderConfig(),
+        frameWidth: Int = 1600,
+        frameHeight: Int = 1200
+    ): Map<Int, List<Point2D>> {
+        val canonToFrame = Homography.findHomography(
+            canonicalCardCorners(),
+            projectCardCorners(config, frameWidth, frameHeight)
+        )
+        return CardGeometry.MARKER_RECTS.mapValues { (_, r) ->
+            listOf(
+                Point2D(r.x.toDouble(), r.y.toDouble()),
+                Point2D((r.x + r.w).toDouble(), r.y.toDouble()),
+                Point2D((r.x + r.w).toDouble(), (r.y + r.h).toDouble()),
+                Point2D(r.x.toDouble(), (r.y + r.h).toDouble())
+            ).map { canonToFrame.transform(it) }
+        }
+    }
+
+    /**
+     * Where [renderFrame] puts the centre of each corner marker: the exact projection of the printed centre, which is
+     * not the mean of the projected corners.
+     */
+    fun markerCentersInFrame(
+        config: SyntheticRenderConfig = SyntheticRenderConfig(),
+        frameWidth: Int = 1600,
+        frameHeight: Int = 1200
+    ): Map<Int, Point2D> {
+        val canonToFrame = Homography.findHomography(
+            canonicalCardCorners(),
+            projectCardCorners(config, frameWidth, frameHeight)
+        )
+        return CardGeometry.MARKER_CENTERS.mapValues { (_, center) -> canonToFrame.transform(center) }
+    }
+
+    private fun canonicalCardCorners(): List<Point2D> {
+        val cw = CardGeometry.CANONICAL_WIDTH.toDouble()
+        val ch = CardGeometry.CANONICAL_HEIGHT.toDouble()
+        return listOf(Point2D(0.0, 0.0), Point2D(cw, 0.0), Point2D(cw, ch), Point2D(0.0, ch))
+    }
+
+    private fun projectCardCorners(config: SyntheticRenderConfig, fw: Int, fh: Int): List<Point2D> {
+        val cw = CardGeometry.CANONICAL_WIDTH
+        val ch = CardGeometry.CANONICAL_HEIGHT
+
         val corners3D = arrayOf(
             doubleArrayOf(-cw / 2.0, -ch / 2.0, 0.0),
-            doubleArrayOf( cw / 2.0, -ch / 2.0, 0.0),
-            doubleArrayOf( cw / 2.0,  ch / 2.0, 0.0),
-            doubleArrayOf(-cw / 2.0,  ch / 2.0, 0.0)
+            doubleArrayOf(cw / 2.0, -ch / 2.0, 0.0),
+            doubleArrayOf(cw / 2.0, ch / 2.0, 0.0),
+            doubleArrayOf(-cw / 2.0, ch / 2.0, 0.0)
         )
 
         // Apply scale
@@ -101,41 +179,13 @@ class SyntheticCardRenderer {
             projectedCorners.add(Point2D(projX, projY))
         }
 
-        val canonicalCorners = listOf(
-            Point2D(0.0, 0.0),
-            Point2D(cw.toDouble(), 0.0),
-            Point2D(cw.toDouble(), ch.toDouble()),
-            Point2D(0.0, ch.toDouble())
-        )
-
-        // Homography from projected frame coordinates to canonical coordinates
-        val H_frame_to_canon = Homography.findHomography(projectedCorners, canonicalCorners)
-
-        // 3. Render frame pixels using inverse homography
-        val bgLum = (220 * config.exposureMultiplier).toInt().coerceIn(10, 255)
-        val frameData = IntArray(fw * fh) { (0xFF shl 24) or (bgLum shl 16) or (bgLum shl 8) or bgLum }
-
-        for (fy in 0 until fh) {
-            for (fx in 0 until fw) {
-                val canonPt = H_frame_to_canon.transform(Point2D(fx.toDouble(), fy.toDouble()))
-                val cx = canonPt.x.toInt()
-                val cy = canonPt.y.toInt()
-
-                if (cx in 0 until cw && cy in 0 until ch) {
-                    val pixel = canonicalPixels[cy * cw + cx]
-                    frameData[fy * fw + fx] = pixel
-                }
-            }
-        }
-
-        // 4. Apply Blur if requested
-        if (config.blurRadius > 0) {
-            applyBoxBlur(frameData, fw, fh, config.blurRadius)
-        }
-
-        return ImageFrame(fw, fh, frameData)
+        return projectedCorners
     }
 
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LoopWithTooManyJumpStatements"
+    ) // test-support renderer, mirrors the printed card layout
     private fun renderCanonicalCard(config: SyntheticRenderConfig): IntArray {
         val cw = CardGeometry.CANONICAL_WIDTH
         val ch = CardGeometry.CANONICAL_HEIGHT
@@ -198,7 +248,11 @@ class SyntheticCardRenderer {
         for ((id, patchDef) in CardGeometry.PATCHES) {
             val lab = if (config.duplicateMismatchDeltaE > 0.0 && id in listOf("G2D", "G4D", "K5D", "K8D")) {
                 // Apply deliberate color shift on duplicate patch to trigger NONUNIFORM_PATCHES
-                Lab(patchDef.nominalLab.l + config.duplicateMismatchDeltaE, patchDef.nominalLab.a, patchDef.nominalLab.b)
+                Lab(
+                    patchDef.nominalLab.l + config.duplicateMismatchDeltaE,
+                    patchDef.nominalLab.a,
+                    patchDef.nominalLab.b
+                )
             } else {
                 patchDef.nominalLab
             }
@@ -268,7 +322,9 @@ class SyntheticCardRenderer {
         // 1. Horizontal blur
         val horizontal = IntArray(w * h)
         for (y in 0 until h) {
-            var sumR = 0; var sumG = 0; var sumB = 0
+            var sumR = 0
+            var sumG = 0
+            var sumB = 0
             for (i in -radius..radius) {
                 val px = temp[y * w + i.coerceIn(0, w - 1)]
                 sumR += (px shr 16) and 0xFF
@@ -288,7 +344,9 @@ class SyntheticCardRenderer {
 
         // 2. Vertical blur
         for (x in 0 until w) {
-            var sumR = 0; var sumG = 0; var sumB = 0
+            var sumR = 0
+            var sumG = 0
+            var sumB = 0
             for (i in -radius..radius) {
                 val px = horizontal[i.coerceIn(0, h - 1) * w + x]
                 sumR += (px shr 16) and 0xFF

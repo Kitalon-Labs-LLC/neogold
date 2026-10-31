@@ -54,7 +54,15 @@ class ResearchStorageEncryptionTest {
             .allowMainThreadQueries()
             .build()
 
-        val dummyTrustList = TrustList(1, 1, java.time.LocalDate.of(2026, 10, 1), java.time.LocalDate.of(2028, 10, 1), emptyList(), emptyList(), emptyList())
+        val dummyTrustList = TrustList(
+            1,
+            1,
+            java.time.LocalDate.of(2026, 10, 1),
+            java.time.LocalDate.of(2028, 10, 1),
+            emptyList(),
+            emptyList(),
+            emptyList()
+        )
         val pinHasher = Argon2PinHasher(FakePinHmacKeyProvider())
         val pinManager = ResearchPinManager(database.researchStudyDao(), database.auditEventDao(), pinHasher)
 
@@ -64,7 +72,9 @@ class ResearchStorageEncryptionTest {
             trustList = dummyTrustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(dummyTrustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
     }
 
@@ -124,7 +134,7 @@ class ResearchStorageEncryptionTest {
         )
 
         val captures = listOf(
-            ResearchCaptureInput("STERNUM", 1, plaintextJpegBytes)
+            ResearchCaptureInput("STERNUM", 1, plaintextJpegBytes, qualityPassed = true)
         )
 
         val result = repository.saveBlindedResearchSession(
@@ -154,7 +164,9 @@ class ResearchStorageEncryptionTest {
         val rawDiskBytes = rawDiskFile.readBytes()
 
         // 1. Asserts raw bytes are NOT plaintext JPEG (magic bytes are encrypted / scrambled)
-        assertThat(rawDiskBytes[0] == 0xFF.toByte() && rawDiskBytes[1] == 0xD8.toByte() && rawDiskBytes[2] == 0xFF.toByte())
+        assertThat(
+            rawDiskBytes[0] == 0xFF.toByte() && rawDiskBytes[1] == 0xD8.toByte() && rawDiskBytes[2] == 0xFF.toByte()
+        )
             .isFalse()
         assertThat(rawDiskBytes).isNotEqualTo(plaintextJpegBytes)
 
@@ -187,10 +199,10 @@ class ResearchStorageEncryptionTest {
         val scleraNoFlashBytes = "SCLERA_NOFLASH_IMAGE_BYTES".toByteArray()
 
         val protocolCaptures = listOf(
-            ResearchCaptureInput("STERNUM", 1, sternumBytes),
-            ResearchCaptureInput("FOREHEAD", 1, foreheadBytes),
-            ResearchCaptureInput("SCLERA_FLASH", 1, scleraFlashBytes),
-            ResearchCaptureInput("SCLERA_NOFLASH", 1, scleraNoFlashBytes)
+            ResearchCaptureInput("STERNUM", 1, sternumBytes, qualityPassed = true),
+            ResearchCaptureInput("FOREHEAD", 1, foreheadBytes, qualityPassed = true),
+            ResearchCaptureInput("SCLERA_FLASH", 1, scleraFlashBytes, qualityPassed = true),
+            ResearchCaptureInput("SCLERA_NOFLASH", 1, scleraNoFlashBytes, qualityPassed = true)
         )
 
         val result = repository.saveBlindedResearchSession(

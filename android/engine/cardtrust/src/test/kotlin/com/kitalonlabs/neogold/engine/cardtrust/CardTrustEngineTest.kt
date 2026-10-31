@@ -1,10 +1,12 @@
 package com.kitalonlabs.neogold.engine.cardtrust
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.time.LocalDate
+import java.util.Locale
 import java.util.Random
 
 /**
@@ -138,6 +140,26 @@ class CardTrustEngineTest {
         val result = verifier.verifyCardBatch(payloadBytes, evalDate)
 
         assertThat(result).isEqualTo(VerificationResult.Revoked)
+    }
+
+    /**
+     * The trust list decides which card batches verify (issuer and revocation checks), so a copy that is cut
+     * off at any point must be rejected outright, never half-accepted. Pins the "Unexpected EOF" paths of the
+     * JSON tokenizer (fail closed, doc 8 Section 5). No numbered test case covers truncation, so this cites
+     * none: it must not count as coverage for another case.
+     */
+    @Test
+    fun trustListCutOffAnywhereIsRejected() {
+        val json = findRepoFile("config/trust-list.json").readText(Charsets.UTF_8).trimEnd()
+
+        for (cut in 0 until json.length) {
+            assertThrows(IllegalArgumentException::class.java) { TrustListParser.parse(json.substring(0, cut)) }
+        }
+        for (input in listOf(" ", "{", "[", "{\"a\"", "{\"a\":")) {
+            assertThrows(IllegalArgumentException::class.java) { TrustListParser.parse(input) }
+        }
+        val eof = assertThrows(IllegalArgumentException::class.java) { TrustListParser.parse("") }
+        assertThat(eof).hasMessageThat().isEqualTo("Unexpected EOF")
     }
 
     // =========================================================================
@@ -520,7 +542,7 @@ class CardTrustEngineTest {
     private fun bytesToHex(bytes: ByteArray): String {
         val sb = StringBuilder(bytes.size * 2)
         for (b in bytes) {
-            sb.append(String.format("%02x", b.toInt() and 0xFF))
+            sb.append(String.format(Locale.ROOT, "%02x", b.toInt() and 0xFF))
         }
         return sb.toString()
     }
@@ -530,10 +552,9 @@ class CardTrustEngineTest {
             File(relative),
             File("../$relative"),
             File("../../$relative"),
-            File("../../../$relative"),
-            File("d:/Project/neogold-android/$relative")
+            File("../../../$relative")
         )
         return candidates.firstOrNull { it.exists() }
-            ?: throw IllegalStateException("Could not find required file '$relative'. Checked: $candidates")
+            ?: error("Could not find required file '$relative'. Checked: $candidates")
     }
 }

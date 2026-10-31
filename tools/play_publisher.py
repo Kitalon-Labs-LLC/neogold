@@ -6,7 +6,10 @@ Supports:
 - Publishing to internal, alpha, beta, or production track (--track)
 - Setting in-app update priority (--update-priority 0..5)
 - Reading credentials from ANDROID_PUBLISHER_CREDENTIALS (env or arg)
-- Dry-run validation when credentials are not supplied or --dry-run is set.
+- Dry-run validation only when --dry-run is set.
+
+Fails closed (BUG-2026-092): without credentials, or without the Google API client library, nothing is published and the exit
+code is not 0. A release job must never report a publish that did not happen.
 
 Doc 12 Section 4, Section 6.2, TC-OPS-02, TC-OPS-03, TC-OPS-10.
 """
@@ -19,6 +22,8 @@ import zipfile
 
 VALID_TRACKS = {"internal", "alpha", "beta", "production"}
 DEFAULT_PACKAGE_NAME = "com.kitalonlabs.neogold"
+EXIT_NO_CREDENTIALS = 2
+EXIT_NO_CLIENT_LIBRARY = 3
 
 
 def inspect_bundle(bundle_path: Path) -> dict:
@@ -54,10 +59,7 @@ def find_bundle_in_dir(artifact_dir: Path) -> Path:
     if not aabs:
         raise FileNotFoundError(f"No .aab file found in artifact directory: {artifact_dir}")
     if len(aabs) > 1:
-        # Prefer app-release.aab if multiple
-        for a in aabs:
-            if a.name == "app-release.aab":
-                return a
+        raise ValueError(f"More than one .aab file in {artifact_dir}: {sorted(a.name for a in aabs)}; publish exactly one")
     return aabs[0]
 
 
@@ -77,9 +79,15 @@ def publish_to_play(
     print(f"  Track: {track}")
     print(f"  In-App Update Priority: {update_priority}")
 
-    if dry_run or not credentials_json:
-        if not credentials_json and not dry_run:
-            print("WARNING: ANDROID_PUBLISHER_CREDENTIALS not set; falling back to dry-run validation.", file=sys.stderr)
+    if not dry_run and not credentials_json:
+        print(
+            "ERROR: ANDROID_PUBLISHER_CREDENTIALS is not set; nothing was published. "
+            "Pass --dry-run to validate the bundle only.",
+            file=sys.stderr,
+        )
+        return EXIT_NO_CREDENTIALS
+
+    if dry_run:
         print("\nDRY-RUN VALIDATION SUCCESSFUL:")
         print(f"  - Bundle verified: {bundle_info['filename']}")
         print(f"  - Track '{track}' ready for release")
@@ -151,9 +159,12 @@ def publish_to_play(
         return 0
 
     except ImportError:
-        print("INFO: googleapiclient library not installed in this environment; simulated credentials validation passed.")
-        print(f"SUCCESS (Simulated): Release {bundle_info['filename']} staged for '{track}' with priority {update_priority}.")
-        return 0
+        print(
+            "ERROR: google-api-python-client and google-auth are not installed; nothing was published. "
+            "Install the hash-locked versions in the release job (doc 12 Section 4).",
+            file=sys.stderr,
+        )
+        return EXIT_NO_CLIENT_LIBRARY
     except Exception as e:
         print(f"ERROR: Play Publisher API call failed: {e}", file=sys.stderr)
         return 1

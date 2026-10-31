@@ -2,11 +2,11 @@ package com.kitalonlabs.neogold.feature.screening.domain
 
 import com.kitalonlabs.neogold.core.security.integrity.IntegrityChecker
 import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
-import com.kitalonlabs.neogold.engine.triage.TriageAction
 import com.kitalonlabs.neogold.engine.triage.TriageEngine
 import com.kitalonlabs.neogold.engine.triage.TriageInputs
 import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
 import com.kitalonlabs.neogold.engine.triage.TriageResult
+import com.kitalonlabs.neogold.engine.vision.QualityGateResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Quality -> BloodTestFallback: failed 3 times
  * Quality -> Analysis: passed
  * Analysis -> Result: estimate & triage computed
+ * Result -> Result: the optional forehead photo is added and the decision is made again from both sites (FR-15)
  * Result -> Saved: session logged
  * UrgentReferral -> Saved
  * CannotScreen -> Saved
@@ -34,12 +35,20 @@ import kotlinx.coroutines.flow.asStateFlow
  * Blocked -> [*]
  * Saved -> [*]
  *
+ * Every clinical decision, the hard rules included, is made by [TriageEngine] and nowhere else, so the engine's first step
+ * (triage switched on, signed for a public build, not expired) applies to every path (BUG-2026-020). The machine invents no
+ * input and no version: when it needs a value it was not given, it stays where it is.
+ *
  * The UI only renders state; it never decides clinical flow.
  */
 class ScreeningStateMachine(
-    initialState: ScreeningState = ScreeningState.Initial,
-    private val integrityChecker: IntegrityChecker = IntegrityChecker { true }
+    private val integrityChecker: IntegrityChecker,
+    initialState: ScreeningState = ScreeningState.Initial
 ) {
+    // Remembered from EvaluateRules, for the quality fallback after the third failed capture.
+    private var triageEngine: TriageEngine? = null
+    private var versions: VersionsRecord? = null
+
     private val _state = MutableStateFlow<ScreeningState>(initialState)
     val state: StateFlow<ScreeningState> = _state.asStateFlow()
 
@@ -58,6 +67,8 @@ class ScreeningStateMachine(
             is ScreeningEvent.CardVerified -> handleCardVerified(event.verificationResult)
             is ScreeningEvent.FrameCaptured -> handleFrameCaptured(event)
             is ScreeningEvent.AnalysisFinished -> handleAnalysisFinished(event.intermediateData)
+            is ScreeningEvent.AnalysisFailed -> handleAnalysisFailed()
+            is ScreeningEvent.ForeheadAdded -> handleForeheadAdded(event.intermediateData)
             is ScreeningEvent.SaveSession -> handleSaveSession(event.sessionId)
             is ScreeningEvent.Reset -> handleReset()
         }
@@ -66,18 +77,10 @@ class ScreeningStateMachine(
     }
 
     private fun handleStartScreening(): ScreeningState {
+        triageEngine = null
+        versions = null
         if (!integrityChecker.isScreeningAllowed()) {
-            return ScreeningState.Blocked(
-                inputs = ScreeningInputs(
-                    gestationalAgeWeeks = 38,
-                    ageHours = 48.0,
-                    dangerSigns = false,
-                    jaundiceOnsetUnder24h = false,
-                    priorPhototherapy = false,
-                    guardianConsentConfirmed = false
-                ),
-                reason = CardBlockReason.ASSET_INTEGRITY_COMPROMISED
-            )
+            return ScreeningState.Blocked(inputs = null, reason = CardBlockReason.ASSET_INTEGRITY_COMPROMISED)
         }
         return ScreeningState.Inputs()
     }
@@ -94,11 +97,13 @@ class ScreeningStateMachine(
         return ScreeningState.RuleCheck(inputs)
     }
 
-    private fun handleEvaluateRules(triageEngine: TriageEngine, versions: VersionsRecord): ScreeningState {
+    @Suppress("ReturnCount") // each early exit is a different state
+    private fun handleEvaluateRules(engine: TriageEngine, recordVersions: VersionsRecord): ScreeningState {
         val current = _state.value
         val inputs = when (current) {
             is ScreeningState.RuleCheck -> current.inputs
-            is ScreeningState.Inputs -> current.inputs ?: return current
+            // answers without the guardian's consent never reach the rules, and so never the camera (TC-UI-13)
+            is ScreeningState.Inputs -> current.inputs?.takeIf { it.guardianConsentConfirmed } ?: return current
             else -> return current
         }
 
@@ -106,64 +111,19 @@ class ScreeningStateMachine(
             return ScreeningState.Blocked(inputs, CardBlockReason.ASSET_INTEGRITY_COMPROMISED)
         }
 
-        // Evaluate hard rules R1 to R5 (first match wins, doc 4 Section 6.2)
-        if (inputs.dangerSigns) {
-            val result = TriageResult.Action(
-                action = TriageAction.REFER_URGENT,
-                reasonCode = TriageReasonCode.R1,
-                thresholdUsed = null,
-                interval = null,
-                configVersion = triageEngine.config.configVersion
-            )
-            return ScreeningState.UrgentReferral(inputs, TriageReasonCode.R1, result, versions)
-        }
+        triageEngine = engine
+        versions = recordVersions
 
-        if (inputs.jaundiceOnsetUnder24h) {
-            val result = TriageResult.Action(
-                action = TriageAction.REFER_URGENT,
-                reasonCode = TriageReasonCode.R2,
-                thresholdUsed = null,
-                interval = null,
-                configVersion = triageEngine.config.configVersion
-            )
-            return ScreeningState.UrgentReferral(inputs, TriageReasonCode.R2, result, versions)
+        // Availability and the hard rules R1 to R5 (first match wins, doc 4 Section 6.2) are decided by the engine.
+        return when (val decision = engine.evaluateBeforeCapture(inputs.toTriageInputs())) {
+            null -> ScreeningState.CardCheck(inputs)
+            is TriageResult.Unavailable -> ScreeningState.TriageUnavailable(inputs, decision, recordVersions)
+            is TriageResult.Action -> when (decision.reasonCode) {
+                TriageReasonCode.R1, TriageReasonCode.R2 ->
+                    ScreeningState.UrgentReferral(inputs, decision.reasonCode, decision, recordVersions)
+                else -> ScreeningState.CannotScreen(inputs, decision.reasonCode, decision, recordVersions)
+            }
         }
-
-        if (inputs.gestationalAgeWeeks < triageEngine.config.scope.minGestationalAgeWeeks) {
-            val result = TriageResult.Action(
-                action = TriageAction.CANNOT_SCREEN_BLOOD_TEST,
-                reasonCode = TriageReasonCode.R3,
-                thresholdUsed = null,
-                interval = null,
-                configVersion = triageEngine.config.configVersion
-            )
-            return ScreeningState.CannotScreen(inputs, TriageReasonCode.R3, result, versions)
-        }
-
-        if (inputs.priorPhototherapy) {
-            val result = TriageResult.Action(
-                action = TriageAction.CANNOT_SCREEN_BLOOD_TEST,
-                reasonCode = TriageReasonCode.R4,
-                thresholdUsed = null,
-                interval = null,
-                configVersion = triageEngine.config.configVersion
-            )
-            return ScreeningState.CannotScreen(inputs, TriageReasonCode.R4, result, versions)
-        }
-
-        if (inputs.ageHours > triageEngine.config.scope.maxAgeHours) {
-            val result = TriageResult.Action(
-                action = TriageAction.CANNOT_SCREEN_CLINICAL_REVIEW,
-                reasonCode = TriageReasonCode.R5,
-                thresholdUsed = null,
-                interval = null,
-                configVersion = triageEngine.config.configVersion
-            )
-            return ScreeningState.CannotScreen(inputs, TriageReasonCode.R5, result, versions)
-        }
-
-        // No hard rule fired -> proceed to card check
-        return ScreeningState.CardCheck(inputs)
     }
 
     private fun handleCardVerified(
@@ -206,6 +166,9 @@ class ScreeningStateMachine(
         }
     }
 
+    @Suppress(
+        "ReturnCount"
+    ) // each early exit is a different state: a passed frame, a retake, or the blood-test fallback
     private fun handleFrameCaptured(event: ScreeningEvent.FrameCaptured): ScreeningState {
         val current = _state.value
         val (inputs, cardBatch, attempt) = when (current) {
@@ -226,7 +189,7 @@ class ScreeningStateMachine(
 
         // Quality check failed
         val primaryFailure = quality.failureReasons.firstOrNull()
-        if (attempt < 3) {
+        if (attempt < MAX_CAPTURE_ATTEMPTS) {
             // Loop back to capture with attempt incremented
             return ScreeningState.Capture(
                 inputs = inputs,
@@ -236,31 +199,11 @@ class ScreeningStateMachine(
             )
         }
 
-        // 3 failed attempts: Blood test fallback (QUALITY_FALLBACK, doc 4 Section 6.2)
-        val fallbackVersions = event.fallbackVersions ?: VersionsRecord(
-            appVersion = "1.0.0",
-            modelVersion = "unknown",
-            configVersion = "unknown",
-            cardBatchId = cardBatch.batchId,
-            deviceModel = "unknown",
-            deviceManufacturer = "unknown",
-            osVersion = "unknown"
-        )
-
-        val fallbackResult = TriageResult.Action(
-            action = TriageAction.BLOOD_TEST_TODAY,
-            reasonCode = TriageReasonCode.QUALITY_FALLBACK,
-            thresholdUsed = null,
-            interval = null,
-            configVersion = fallbackVersions.configVersion
-        )
-
-        return ScreeningState.BloodTestFallback(
-            inputs = inputs,
-            triageResult = fallbackResult,
-            versions = fallbackVersions,
-            lastQualityResult = quality
-        )
+        // 3 failed attempts: the engine decides the fallback too (QUALITY_FALLBACK, doc 4 Section 6.2). It needs the engine
+        // and versions that EvaluateRules gave; without them nothing is made up and the state stays as it is.
+        val engine = triageEngine ?: return current
+        val recordVersions = (event.fallbackVersions ?: versions)?.copy(cardBatchId = cardBatch.batchId) ?: return current
+        return fallbackState(engine, inputs, recordVersions, quality)
     }
 
     private fun handleAnalysisFinished(intermediateData: ScreeningIntermediateData): ScreeningState {
@@ -278,6 +221,41 @@ class ScreeningStateMachine(
             versions = intermediateData.versions,
             intermediateData = intermediateData
         )
+    }
+
+    /** A result made from the sternum photo is replaced by the one made from both sites; any other state is left alone. */
+    private fun handleForeheadAdded(intermediateData: ScreeningIntermediateData): ScreeningState {
+        val current = _state.value as? ScreeningState.Result ?: return _state.value
+        return current.copy(
+            triageResult = intermediateData.triageResult,
+            intermediateData = intermediateData
+        )
+    }
+
+    private fun handleAnalysisFailed(): ScreeningState {
+        val current = _state.value
+        val (inputs, cardBatch, quality) = when (current) {
+            is ScreeningState.Analysis -> Triple(current.inputs, current.cardBatch, current.qualityResult)
+            is ScreeningState.Capture -> Triple(current.inputs, current.cardBatch, null)
+            else -> return current
+        }
+        val engine = triageEngine
+        val recordVersions = versions?.copy(cardBatchId = cardBatch.batchId)
+        if (engine == null || recordVersions == null) return current
+        return fallbackState(engine, inputs, recordVersions, quality)
+    }
+
+    /** The engine's decision when no usable photo exists: a blood test, or "triage unavailable". */
+    private fun fallbackState(
+        engine: TriageEngine,
+        inputs: ScreeningInputs,
+        recordVersions: VersionsRecord,
+        quality: QualityGateResult?
+    ): ScreeningState = when (
+        val decision = engine.evaluate(inputs.toTriageInputs().copy(qualityFailedAttempts = MAX_CAPTURE_ATTEMPTS))
+    ) {
+        is TriageResult.Unavailable -> ScreeningState.TriageUnavailable(inputs, decision, recordVersions)
+        is TriageResult.Action -> ScreeningState.BloodTestFallback(inputs, decision, recordVersions, quality)
     }
 
     private fun handleSaveSession(sessionId: String): ScreeningState {
@@ -307,6 +285,12 @@ class ScreeningStateMachine(
                 triageResult = current.triageResult,
                 versions = current.versions
             )
+            is ScreeningState.TriageUnavailable -> ScreeningResultSummary(
+                sessionId = sessionId,
+                inputs = current.inputs,
+                triageResult = current.triageResult,
+                versions = current.versions
+            )
             else -> return current
         }
 
@@ -314,6 +298,21 @@ class ScreeningStateMachine(
     }
 
     private fun handleReset(): ScreeningState {
+        triageEngine = null
+        versions = null
         return ScreeningState.Initial
+    }
+
+    private fun ScreeningInputs.toTriageInputs() = TriageInputs(
+        dangerSigns = dangerSigns,
+        jaundiceOnsetUnder24h = jaundiceOnsetUnder24h,
+        gestationalAgeWeeks = gestationalAgeWeeks,
+        priorPhototherapy = priorPhototherapy,
+        ageHours = ageHours
+    )
+
+    private companion object {
+        /** Three failed captures send the worker to a blood test (doc 4 Section 6.2, TC-CAP-14). */
+        const val MAX_CAPTURE_ATTEMPTS = 3
     }
 }

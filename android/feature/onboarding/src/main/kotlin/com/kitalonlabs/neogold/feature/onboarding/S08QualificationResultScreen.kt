@@ -29,9 +29,9 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcon
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
-import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
 import com.kitalonlabs.neogold.core.designsystem.theme.LocalTriageColors
+import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult
 import com.kitalonlabs.neogold.engine.camera.qualification.QualificationStatus
 

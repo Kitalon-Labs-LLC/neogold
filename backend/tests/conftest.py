@@ -17,6 +17,9 @@ from cryptography.hazmat.primitives.asymmetric import ec, utils
 from cryptography.x509.oid import NameOID
 from fastapi.testclient import TestClient
 
+# The server refuses to start without K12 (BUG-2026-063); the tests use a throwaway one. Set before app.config is imported.
+os.environ.setdefault("ENROLLMENT_CODE_SECRET", "test-only-" + "0123456789abcdef" * 3)
+
 # Ensure backend is on sys.path
 backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:

@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // DER and JOSE byte layout (RFC 7515 Section 3.4)
+
 package com.kitalonlabs.neogold.sync.research.crypto
 
 import java.io.ByteArrayOutputStream
@@ -12,15 +14,9 @@ object JoseSignatureConverter {
 
         var offset = 1
         val seqLen = derBytes[offset++].toInt() and 0xFF
-        val actualSeqLen = if (seqLen and 0x80 != 0) {
-            val numBytes = seqLen and 0x7F
-            var len = 0
-            for (i in 0 until numBytes) {
-                len = (len shl 8) or (derBytes[offset++].toInt() and 0xFF)
-            }
-            len
-        } else {
-            seqLen
+        if (seqLen and 0x80 != 0) {
+            // Long-form length: skip its bytes, the content length itself is not needed.
+            offset += seqLen and 0x7F
         }
 
         require(derBytes[offset++] == 0x02.toByte()) { "Expected DER INTEGER for R" }

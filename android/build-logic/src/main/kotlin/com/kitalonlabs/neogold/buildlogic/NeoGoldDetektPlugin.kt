@@ -18,6 +18,13 @@ class NeoGoldDetektPlugin : Plugin<Project> {
             extensions.configure<DetektExtension> {
                 buildUponDefaultConfig = true
                 allRules = false
+                val commonConfigFile = rootProject.file("config/detekt/detekt.yml")
+                val engineConfigFile = rootProject.file("config/detekt/detekt-engine.yml")
+                val configFiles = mutableListOf(commonConfigFile)
+                if (path.startsWith(":engine:") && engineConfigFile.exists()) {
+                    configFiles += engineConfigFile
+                }
+                config.setFrom(configFiles)
             }
 
             tasks.withType<Detekt>().configureEach {

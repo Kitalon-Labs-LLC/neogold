@@ -1,10 +1,9 @@
 package com.kitalonlabs.neogold.core.designsystem.components.organisms
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,11 +20,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
@@ -34,12 +37,34 @@ import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgEstimate
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.core.designsystem.theme.LocalTriageColors
 
-enum class TriageUiAction {
-    REFER_URGENT,
-    BLOOD_TEST,
-    RECHECK,
-    NO_FURTHER_ACTION,
-    CANNOT_SCREEN
+/** Which colour family a result uses (doc 6 Section 3). The composable resolves it against the theme. */
+internal enum class TriageRole { URGENT, BLOOD_TEST, RECHECK, NO_ACTION }
+
+/**
+ * The redundant signals of one result, as plain values so a test can check them without drawing anything (TC-UI-01,
+ * BUG-2026-050): the colour family, the icon, the border width and style, and the words.
+ */
+internal data class TriageSignalSpec(
+    val role: TriageRole,
+    val icon: ImageVector,
+    val borderWidthDp: Int,
+    val dashedBorder: Boolean,
+    @param:StringRes val wordsRes: Int
+)
+
+/** Doc 6 Section 3: red/octagon/4 dp solid, orange/blood drop/4 dp solid, blue/clock/2 dp solid, slate/eye/2 dp DASHED. */
+internal fun triageSignalSpec(action: TriageUiAction): TriageSignalSpec = when (action) {
+    TriageUiAction.REFER_URGENT ->
+        TriageSignalSpec(TriageRole.URGENT, NgIcons.WarningOctagon, 4, false, R.string.action_refer_urgent)
+    TriageUiAction.BLOOD_TEST ->
+        TriageSignalSpec(TriageRole.BLOOD_TEST, NgIcons.BloodDrop, 4, false, R.string.action_blood_test)
+    TriageUiAction.RECHECK ->
+        TriageSignalSpec(TriageRole.RECHECK, NgIcons.Clock, 2, false, R.string.action_recheck)
+    TriageUiAction.NO_FURTHER_ACTION ->
+        TriageSignalSpec(TriageRole.NO_ACTION, NgIcons.Eye, 2, true, R.string.action_no_further)
+    // "Cannot screen" is a neutral gray card with the block icon (doc 6 Section 3)
+    TriageUiAction.CANNOT_SCREEN ->
+        TriageSignalSpec(TriageRole.NO_ACTION, NgIcons.Block, 2, false, R.string.cannot_screen)
 }
 
 /**
@@ -67,48 +92,38 @@ fun NgTriageCard(
 ) {
     val triageColors = LocalTriageColors.current
 
-    val (solidHeaderColor, bodyTintColor, bodyTextColor, icon, actionText, borderStroke) = when (action) {
-        TriageUiAction.REFER_URGENT -> TriageCardStyle(
-            solidHeaderColor = triageColors.urgentSolid,
-            bodyTintColor = triageColors.urgentTint,
-            bodyTextColor = triageColors.urgentText,
-            icon = NgIcons.WarningOctagon,
-            actionText = stringResource(R.string.action_refer_urgent),
-            borderStroke = BorderStroke(4.dp, triageColors.urgentSolid)
+    val spec = triageSignalSpec(action)
+    val (solid, tint, text) = when (spec.role) {
+        TriageRole.URGENT -> Triple(triageColors.urgentSolid, triageColors.urgentTint, triageColors.urgentText)
+        TriageRole.BLOOD_TEST -> Triple(
+            triageColors.bloodTestSolid,
+            triageColors.bloodTestTint,
+            triageColors.bloodTestText
         )
-        TriageUiAction.BLOOD_TEST -> TriageCardStyle(
-            solidHeaderColor = triageColors.bloodTestSolid,
-            bodyTintColor = triageColors.bloodTestTint,
-            bodyTextColor = triageColors.bloodTestText,
-            icon = NgIcons.BloodDrop,
-            actionText = stringResource(R.string.action_blood_test),
-            borderStroke = BorderStroke(4.dp, triageColors.bloodTestSolid)
-        )
-        TriageUiAction.RECHECK -> TriageCardStyle(
-            solidHeaderColor = triageColors.recheckSolid,
-            bodyTintColor = triageColors.recheckTint,
-            bodyTextColor = triageColors.recheckText,
-            icon = NgIcons.Clock,
-            actionText = stringResource(R.string.action_recheck, recheckHours),
-            borderStroke = BorderStroke(2.dp, triageColors.recheckSolid)
-        )
-        TriageUiAction.NO_FURTHER_ACTION -> TriageCardStyle(
-            solidHeaderColor = triageColors.noActionSolid,
-            bodyTintColor = triageColors.noActionTint,
-            bodyTextColor = triageColors.noActionText,
-            icon = NgIcons.Eye,
-            actionText = stringResource(R.string.action_no_further),
-            borderStroke = BorderStroke(2.dp, triageColors.noActionSolid)
-        )
-        TriageUiAction.CANNOT_SCREEN -> TriageCardStyle(
-            solidHeaderColor = triageColors.noActionSolid,
-            bodyTintColor = triageColors.noActionTint,
-            bodyTextColor = triageColors.noActionText,
-            icon = NgIcons.Block,
-            actionText = stringResource(R.string.cannot_screen),
-            borderStroke = BorderStroke(2.dp, triageColors.noActionSolid)
-        )
+        TriageRole.RECHECK -> Triple(triageColors.recheckSolid, triageColors.recheckTint, triageColors.recheckText)
+        TriageRole.NO_ACTION -> Triple(triageColors.noActionSolid, triageColors.noActionTint, triageColors.noActionText)
     }
+    val style = TriageCardStyle(
+        solidHeaderColor = solid,
+        bodyTintColor = tint,
+        bodyTextColor = text,
+        icon = spec.icon,
+        actionText = if (action == TriageUiAction.RECHECK) {
+            stringResource(spec.wordsRes, recheckHours)
+        } else {
+            stringResource(spec.wordsRes)
+        },
+        // a dashed border is drawn, not set: BorderStroke has no dash (BUG-2026-050)
+        borderStroke = if (spec.dashedBorder) null else BorderStroke(spec.borderWidthDp.dp, solid),
+        dashedWidthDp = if (spec.dashedBorder) spec.borderWidthDp else 0
+    )
+
+    val solidHeaderColor = style.solidHeaderColor
+    val bodyTintColor = style.bodyTintColor
+    val bodyTextColor = style.bodyTextColor
+    val icon = style.icon
+    val actionText = style.actionText
+    val borderStroke = style.borderStroke
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Suggested next step label (PRD D11, TC-UI-14)
@@ -125,7 +140,9 @@ fun NgTriageCard(
             shape = RoundedCornerShape(CardCornerRadius),
             border = borderStroke,
             colors = CardDefaults.cardColors(containerColor = bodyTintColor),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .dashedOutline(style.dashedWidthDp, solidHeaderColor)
         ) {
             Column {
                 // Solid Header (Color + Icon + Action Words)
@@ -201,5 +218,27 @@ private data class TriageCardStyle(
     val bodyTextColor: Color,
     val icon: ImageVector,
     val actionText: String,
-    val borderStroke: BorderStroke
+    val borderStroke: BorderStroke?,
+    val dashedWidthDp: Int
 )
+
+/** Draws a dashed rounded outline of [widthDp] on top of the content; nothing when it is 0. */
+private fun Modifier.dashedOutline(widthDp: Int, color: Color): Modifier =
+    if (widthDp <= 0) {
+        this
+    } else {
+        drawWithContent {
+            drawContent()
+            val strokeWidth = widthDp.dp.toPx()
+            val dash = DASH_ON_DP.dp.toPx()
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
+                size = Size(size.width - strokeWidth, size.height - strokeWidth),
+                cornerRadius = CornerRadius(CardCornerRadius.toPx()),
+                style = Stroke(width = strokeWidth, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)))
+            )
+        }
+    }
+
+private const val DASH_ON_DP = 8

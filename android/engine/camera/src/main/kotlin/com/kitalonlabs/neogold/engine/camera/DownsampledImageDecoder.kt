@@ -46,7 +46,7 @@ object DownsampledImageDecoder {
         }
 
         val bitmap = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size, decodeOptions)
-            ?: throw IllegalStateException("Failed to decode JPEG byte array into Bitmap")
+            ?: error("Failed to decode JPEG byte array into Bitmap")
 
         try {
             val w = bitmap.width

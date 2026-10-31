@@ -28,7 +28,7 @@ class FakeMasterKeyProvider : MasterKeyProvider {
         val masterKey = getOrCreateMasterKey(alias)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, masterKey)
-        val iv = cipher.iv ?: throw IllegalStateException("Cipher IV was null")
+        val iv = cipher.iv ?: error("Cipher IV was null")
         val ciphertext = cipher.doFinal(plaintext)
 
         val result = ByteArray(iv.size + ciphertext.size)
@@ -37,6 +37,7 @@ class FakeMasterKeyProvider : MasterKeyProvider {
         return result
     }
 
+    @Suppress("TooGenericExceptionCaught") // any key store failure is key loss: fail closed with a typed exception
     override fun unwrap(alias: String, wrappedData: ByteArray): ByteArray {
         if (!hasMasterKey(alias)) {
             throw KeystoreLossException("Master key '$alias' missing from Keystore")

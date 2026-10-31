@@ -13,7 +13,6 @@ import com.kitalonlabs.neogold.core.security.DefaultEncryptedFileStore
 import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.core.security.FakeMasterKeyProvider
-import com.kitalonlabs.neogold.core.security.export.ExportCryptoEngine
 import com.kitalonlabs.neogold.decrypt.DecryptEngine
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -24,11 +23,8 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.nio.charset.StandardCharsets
-import java.util.UUID
 
 @RunWith(RobolectricTestRunner::class)
 class ResearchExportManagerTest {
@@ -41,7 +37,7 @@ class ResearchExportManagerTest {
     private lateinit var encryptedFileStore: EncryptedFileStore
     private lateinit var exportManager: ResearchExportManager
 
-    private val keyPair = ExportCryptoEngine.generateKeyPair()
+    private val keyPair = DecryptEngine.generateKeyPair()
     private val studyPrivateKey = keyPair.first
     private val studyPublicKey = keyPair.second
 
@@ -274,7 +270,9 @@ class ResearchExportManagerTest {
         assertThat(decryptedTsb).contains("TSB-1,SKP-0142,SESS-1,16.2")
 
         val decryptedImage = File(decryptedOutDir, "images/CAP-1.jpg").readBytes()
-        assertThat(decryptedImage).isEqualTo(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 0x01, 0x02, 0x03))
+        assertThat(
+            decryptedImage
+        ).isEqualTo(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 0x01, 0x02, 0x03))
 
         // Check audit event logged in DB
         val auditEvents = database.auditEventDao().getEventsSince(0)

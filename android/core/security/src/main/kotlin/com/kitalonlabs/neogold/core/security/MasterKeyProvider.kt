@@ -6,8 +6,6 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
-import android.security.keystore.StrongBoxUnavailableException
-import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.KeyStoreException
@@ -78,12 +76,9 @@ class AndroidMasterKeyProvider(
         if (hasStrongBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
                 return generateKeyWithSpec(alias, useStrongBox = true)
-            } catch (e: Exception) {
-                if (e is StrongBoxUnavailableException || e is ProviderException) {
-                    // Fallback to standard TEE
-                    return generateKeyWithSpec(alias, useStrongBox = false)
-                }
-                throw e
+            } catch (_: ProviderException) {
+                // StrongBoxUnavailableException is a ProviderException: fall back to the standard TEE.
+                return generateKeyWithSpec(alias, useStrongBox = false)
             }
         }
 
@@ -122,6 +117,7 @@ class AndroidMasterKeyProvider(
         return result
     }
 
+    @Suppress("TooGenericExceptionCaught") // any key store failure is key loss: fail closed with a typed exception
     override fun unwrap(alias: String, wrappedData: ByteArray): ByteArray {
         if (wrappedData.size < GCM_IV_LENGTH_BYTES + GCM_TAG_LENGTH_BYTES) {
             throw KeystoreLossException("Wrapped data too short (${wrappedData.size} bytes)")
@@ -157,7 +153,10 @@ class AndroidMasterKeyProvider(
         } catch (e: UnrecoverableKeyException) {
             throw KeystoreLossException("Master key '$alias' unrecoverable during decryption", e)
         } catch (e: GeneralSecurityException) {
-            throw KeystoreLossException("Failed to unwrap data with master key '$alias': authentication failed or key lost", e)
+            throw KeystoreLossException(
+                "Failed to unwrap data with master key '$alias': authentication failed or key lost",
+                e
+            )
         } catch (e: Exception) {
             throw KeystoreLossException("Unexpected error unwrapping data with master key '$alias'", e)
         }

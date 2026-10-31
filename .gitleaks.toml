@@ -1,0 +1,44 @@
+# Gate S9 (secrets scan) configuration. Used by .github/workflows/android-ci.yml.
+# Start from the default ruleset and add only triaged, exact-match allowlist entries.
+# Every entry needs a reason. Never allowlist a whole path or a whole rule.
+
+title = "NeoGold gitleaks configuration"
+
+[extend]
+useDefault = true
+
+# BUG-2026-018, triaged 2026-10-26 by reading gitleaks v8.30.1 output (secrets redacted).
+# The generic-api-key rule matched prose, not credentials. The rule captured:
+#   - the identifier `DEFAULT_TEST_K3_PRIVATE_HEX` (a constant NAME in the defect log), and
+#   - `FORWARDED_ALLOW_IPS=172.30.0.10` (an env var name and the internal Docker network
+#     address of the Caddy container, in a compose comment and its copy in the runbook).
+# Both conditions must hold: the file is one of these, AND the captured text is exactly one of
+# these strings. A real key in the same file does not match, so it is still reported.
+[[allowlists]]
+description = "Constant name and internal Docker IP captured from docs and a compose comment (BUG-2026-018)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = [
+  '''^docs/11_Bug_Defect_Log\.md$''',
+  '''^docs/12_Deployment_Runbook\.md$''',
+  '''^backend/deploy/docker-compose\.yml$''',
+]
+regexTarget = "secret"
+regexes = [
+  '''^DEFAULT_TEST_K3_PRIVATE_HEX$''',
+  '''^FORWARDED_ALLOW_IPS=172\.30\.0\.10$''',
+]
+
+# BUG-2026-083 item 27: the Tink 1.7.0 compatibility fixture holds a throwaway X25519 key made for this test only (it protects
+# nothing; the fixture's plaintext is a sentence saying so). Exact file AND exact value, so any other key still matches.
+[[allowlists]]
+description = "Synthetic test key in the Tink 1.7.0 export fixture (BUG-2026-083 item 27)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = [
+  '''^android/core/security/src/test/resources/export/legacy-tink-1\.7\.0\.properties$''',
+]
+regexTarget = "secret"
+regexes = [
+  '''^j3DD/h2VccIM7AZwB84tNeobOn3Mmw53i1hMlBJ5Sb8=$''',
+]

@@ -19,8 +19,8 @@ import com.kitalonlabs.neogold.sync.research.crypto.Base64Url
 import com.kitalonlabs.neogold.sync.research.crypto.ClockManager
 import com.kitalonlabs.neogold.sync.research.crypto.DeviceAssertionMinter
 import com.kitalonlabs.neogold.sync.research.crypto.DeviceKeyManager
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,9 +29,23 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.BufferedSink
 import okio.source
-import java.io.IOException
 import java.io.InputStream
 
+/**
+ * The API base URL, always ending in `/v1`: what the server is configured with as its public base URL and what the
+ * device assertion's `aud` claim must equal (doc 7 Section 4.2). The study profile gives a host, with or without it.
+ */
+internal fun apiBaseUrl(baseUrl: String): String {
+    // A parsed address has its scheme and host in lower case and its default port dropped, which is how the server
+    // compares them; an address that does not parse is left as it is and fails later.
+    val base = (baseUrl.trim().toHttpUrlOrNull()?.toString() ?: baseUrl).trimEnd('/')
+    return if (base.endsWith("/v1")) base else "$base/v1"
+}
+
+/** The URL of [path] on the API: [apiBaseUrl] plus the path, which is also the token's `htu`. */
+internal fun requestUrl(baseUrl: String, path: String): String = "${apiBaseUrl(baseUrl)}/${path.trimStart('/')}"
+
+@Suppress("TooManyFunctions") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
 class ResearchApiClient(
     private val okHttpClient: OkHttpClient,
     val clockManager: ClockManager = ClockManager(),
@@ -64,7 +78,10 @@ class ResearchApiClient(
         enrollmentRequest: EnrollmentRequest
     ): EnrollmentResponse {
         val url = normalizeUrl(baseUrl, "/enrollments")
-        val bodyBytes = json.encodeToString(EnrollmentRequest.serializer(), enrollmentRequest).toByteArray(Charsets.UTF_8)
+        val bodyBytes = json.encodeToString(
+            EnrollmentRequest.serializer(),
+            enrollmentRequest
+        ).toByteArray(Charsets.UTF_8)
         val request = Request.Builder()
             .url(url)
             .post(bodyBytes.toRequestBody(jsonMediaType))
@@ -202,6 +219,7 @@ class ResearchApiClient(
     }
 
     // 8. PUT /sessions/{session_id}/captures/{capture_id}/image
+    @Suppress("LongParameterList") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
     suspend fun putCaptureImage(
         baseUrl: String,
         deviceId: String,
@@ -282,25 +300,18 @@ class ResearchApiClient(
         return json.decodeFromString(TsbReceipt.serializer(), responseStr)
     }
 
-    private fun normalizeUrl(baseUrl: String, path: String): String {
-        val base = baseUrl.trimEnd('/')
-        val cleanPath = path.trimStart('/')
-        return if (base.endsWith("/v1")) {
-            "$base/$cleanPath"
-        } else {
-            "$base/v1/$cleanPath"
-        }
-    }
+    private fun normalizeUrl(baseUrl: String, path: String): String = requestUrl(baseUrl, path)
 
     private fun executeCall(request: Request): String {
         val response = okHttpClient.newCall(request).execute()
-        val bodyStr = response.body?.string() ?: ""
+        val bodyStr = response.boundedText()
         if (!response.isSuccessful) {
             handleErrorResponse(response, bodyStr)
         }
         return bodyStr
     }
 
+    @Suppress("LongParameterList") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
     private fun executeAuthenticatedCall(
         baseUrl: String,
         deviceId: String,
@@ -316,7 +327,7 @@ class ResearchApiClient(
         val token = DeviceAssertionMinter.mintToken(
             deviceId = deviceId,
             keyAlias = keyAlias,
-            baseAudUrl = baseUrl,
+            baseAudUrl = apiBaseUrl(baseUrl),
             httpMethod = method,
             requestUrl = requestUrl,
             bodyBytes = bodyBytes,
@@ -342,7 +353,7 @@ class ResearchApiClient(
         }
 
         val response = okHttpClient.newCall(reqBuilder.build()).execute()
-        val bodyStr = response.body?.string() ?: ""
+        val bodyStr = response.boundedText()
 
         if (!response.isSuccessful) {
             val problem = tryParseProblem(bodyStr, response.code)
@@ -382,6 +393,7 @@ class ResearchApiClient(
         return bodyStr
     }
 
+    @Suppress("LongParameterList") // REST client; signatures mirror docs/api/openapi.yaml and are reworked in C4
     private fun executeAuthenticatedImageCall(
         baseUrl: String,
         deviceId: String,
@@ -398,7 +410,7 @@ class ResearchApiClient(
         val token = DeviceAssertionMinter.mintToken(
             deviceId = deviceId,
             keyAlias = keyAlias,
-            baseAudUrl = baseUrl,
+            baseAudUrl = apiBaseUrl(baseUrl),
             httpMethod = "PUT",
             requestUrl = requestUrl,
             bodyBytes = null,
@@ -427,7 +439,7 @@ class ResearchApiClient(
             .build()
 
         val response = okHttpClient.newCall(request).execute()
-        val bodyStr = response.body?.string() ?: ""
+        val bodyStr = response.boundedText()
 
         if (!response.isSuccessful) {
             val problem = tryParseProblem(bodyStr, response.code)
@@ -474,19 +486,38 @@ class ResearchApiClient(
         throw ApiException(response.code, problem, response.headers)
     }
 
+    private fun httpTitle(statusCode: Int): String = "HTTP $statusCode"
+
     private fun tryParseProblem(bodyStr: String, statusCode: Int): Problem {
         return try {
             json.decodeFromString(Problem.serializer(), bodyStr)
         } catch (_: Exception) {
             Problem(
                 type = "https://neogold.example/problems/server-error",
-                title = "HTTP $statusCode",
+                title = httpTitle(statusCode),
                 status = statusCode,
                 code = if (statusCode >= 500) ErrorCode.SERVER_ERROR else "HTTP_$statusCode",
                 retryable = statusCode >= 500,
                 request_id = "unknown",
-                detail = bodyStr.take(200)
+                detail = bodyStr.take(MAX_ERROR_DETAIL_CHARS)
             )
         }
     }
 }
+
+private const val MAX_ERROR_DETAIL_CHARS = 200
+
+/**
+ * The response body as text, read at most [MAX_RESPONSE_BYTES]. Every answer of the study server is a small JSON document,
+ * so a larger one is not an answer; reading it whole could use up the memory of a 2 GB phone (BUG-2026-083 item 34).
+ */
+internal fun okhttp3.Response.boundedText(): String {
+    val body = body ?: return ""
+    if (body.contentLength() > MAX_RESPONSE_BYTES) throw java.io.IOException("Response is too large")
+    val bytes = peekBody(MAX_RESPONSE_BYTES + 1).bytes()
+    if (bytes.size > MAX_RESPONSE_BYTES) throw java.io.IOException("Response is too large")
+    return String(bytes, Charsets.UTF_8)
+}
+
+/** The largest answer of the study server the app reads (1 MiB; the largest documented answer is a few kilobytes). */
+internal const val MAX_RESPONSE_BYTES = 1L * 1024 * 1024

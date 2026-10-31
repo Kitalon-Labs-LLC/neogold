@@ -126,6 +126,20 @@ class EstimationModelParserTest {
     }
 
     @Test
+    fun testModelCutOffAnywhereThrowsSyntaxError() {
+        // TC-EST-06: a model that is cut off at any point is rejected with the typed error, never
+        // half-accepted (the screening flow then falls back to a blood test).
+        val json = syntheticModelFile.readText().trimEnd()
+
+        for (cut in 0 until json.length) {
+            val ex = assertThrows(EstimationException.InvalidModelException::class.java) {
+                EstimationModelParser.parse(json.substring(0, cut))
+            }
+            assertThat(ex.reason).isEqualTo(EstimationException.InvalidModelException.Reason.SYNTAX_ERROR)
+        }
+    }
+
+    @Test
     fun testUnsupportedVersionThrows() {
         val validJson = syntheticModelFile.readText()
         val badVersion = validJson.replace("\"modelVersion\": \"1.0.0-synthetic\"", "\"modelVersion\": \"beta-1\"")

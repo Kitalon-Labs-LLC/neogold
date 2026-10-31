@@ -227,6 +227,30 @@ Components live in `:core:designsystem` (atoms, molecules) and the feature modul
 | R08 | Study server enrollment (scan signed study QR, enter one-time code, confirm study name and server) | Join study | NG-042 |
 | R09 | Leave study (confirm) | Leave study | NG-042 |
 
+### 5.0 First-run screens S05 to S08 (package C1)
+
+- **S05** shows what the device check found: memory, camera level, and whether the model is on the tested list.
+- **S06** opens the camera and reads the QR on the card. While it looks it says so and Continue is off. Once a card is read it is checked once, against the signed trust list: signature, issuer, purpose, expiry and revocation. A card that passes shows "Card verified: Batch ..." and Continue turns on; a card that fails shows why (`card_invalid`, expired, withdrawn, not a NeoGold card), stores nothing, and "Scan again" returns to looking. Nothing on this screen is a placeholder: no batch is shown that was not read.
+- **S07** takes three photos of the card with the camera, one per tap. After each photo the quality gate runs; a photo without the card, or blurred, glared or badly lit, shows the reason and is asked for again, and it does not count against the phone. Only three good photos are judged, against the colors of the batch S06 verified, and the verdict is the measured one.
+- **S08** shows the measured result. A phone qualified more than 30 days ago, on another OS build, or with no stored qualification starts at S06 again, which says why (TC-DEV-07). Screening is offered only on a phone whose active qualification is `QUALIFIED` and not due; a research-only phone never gets it (TC-DEV-05).
+- **The photos** leave out the skin check on the card's window: they show the card on a table, not a baby.
+- **A card that fails stops onboarding** (decision for v1.0): a phone is qualified only against a verified card, so an invalid or expired card cannot be used to start. What a research session does with an unverified or expired card (TC-CARD-02, TC-CARD-05) is package C2.
+- **Camera access.** If the camera permission is missing, S06 and S07 show "Camera access is needed" with Allow camera and Open settings; if the camera cannot be opened they show "The camera could not be opened" with Try again.
+- Their text is in `feature/onboarding/src/main/res` and `engine/camera/src/main/res` (EN and BN; Bangla is a draft for the nurse panel).
+
+### 5.1 System screens
+
+These stand in for the app when something underneath it cannot be trusted. They show no clinical content, no result and no register number. Their text is in the app module's own strings (`app/src/main/res/values` and `values-bn`; Bangla is a draft for the nurse panel, like the rest) and `tools/check_strings.py` checks it.
+
+| Screen | When | Actions |
+|---|---|---|
+| Opening saved data | While the keys are checked and the database opens, a moment at every start | None |
+| Saved data could not be opened | A Keystore key is gone, or the database does not open with its key (doc 8 Section 5.1) | Try again, or Reset saved data, which asks "Reset saved data?" first and says that research items not yet sent are lost with it. Nothing is deleted before the user confirms |
+| Screening and research are turned off | The app's own files failed the startup check, or the build carries a development key (doc 8 Section 6.5). It replaces every screening and research screen | None. The user installs the app again from the official source |
+| Deleting all data | While S25 runs, and afterwards if something could not be removed (doc 8 Section 7.3) | Try again, or Close |
+
+S25 also says how many research items the study has not acknowledged, because deleting all data loses them.
+
 ---
 
 ## 6. Key Flows
@@ -265,6 +289,16 @@ Gestational age is collected on S10, so the gestational age check needs no extra
 ### 6.2 Research session
 
 `R01 Unlock` → `R02 Study home` → `R03 Participant code + consent ID` → `S10 to S13 inputs` → `R04 Captures: sternum, forehead, sclera flash, sclera no-flash (estimate hidden)` → `R05 TSB value and draw time (now or later)` → `R06 Complete` → outbox.
+
+R03 starts with no birth time and no age. The age on the record is worked out from the birth time when the session is saved, rounded down to a tenth of an hour (toward the younger age); the form refuses an age over 719 hours with a message (the limit in doc 7 is 720, and one hour is left for the captures), and a birth time after the save time is refused. The card named in the record is the one of the phone's active device profile, which is not necessarily the card in the photo; if that card has expired the record says `EXPIRED` and the quality check gets no reference colors; a photo taken with no card to compare with is recorded as not passed, with the reason `NO_REFERENCE_CARD`, and the worker is not stopped. A card is valid through the whole day it expires on.
+
+**R01 to R06 as built (package C2).** R01 reads the study QR with the camera, shows which study it names, and asks for the PIN (typed twice when enrolling); a wrong PIN says how many tries are left, and five wrong PINs lock the study for a minute. A message from the last visit is cleared on entry. R02 shows the study, the site, the pending uploads, and the status of the card the phone holds (VERIFIED, EXPIRED or UNVERIFIED), not the status of the last session. R03 asks for the participant code, the consent form ID, the birth time (no default), the gestational age and the three safety answers (no default), in the clinical wording of the signed config. R04 takes the four photos with the camera, checks each one, and offers a retake for a quality problem; the estimate is never made. R05 takes the TSB now or later. R06 shows the code, the number of photos and the card status. Every message on these screens is in English and in Bangla (the Bangla is a draft for the nurse panel); R07 is the export (package C3) with the study server card (package C4); R08 and R09 are described next. The screens hide from recent apps (`FLAG_SECURE`) and return to R01 when the session locks.
+
+**R07 to R09 as built (package C4).** Below the export, R07 shows the study server card. A phone that is set up on the server shows how many items are waiting to upload (or that all are uploaded), **Upload now** and **Leave study**; a phone that is not shows why uploading does not happen and **Join study server**. R08 scans the signed study QR again and shows the study, the partner and the server it names; it refuses a QR of another study, takes the one-time code (three groups of four, checked on the screen before anything is sent) and asks for a confirmation that names the study, the partner and the server. R09 shows what stays on the phone, how many items have not been uploaded, and asks for the research PIN again (a wrong PIN counts toward the same lockout as at R01). Leaving only disconnects the server: the study, its sessions and its photos stay on the phone for export. Every message on R07 to R09 is a typed message in English and Bangla (the Bangla is a draft for the nurse panel); a server's own words, its address on an error, and the code are never shown or logged. R08 and R09 hide from recent apps (`FLAG_SECURE`) like R01.
+
+**Screening flow as built (package E1).** S10 starts with no birth time and no gestational age: Next stays off until the worker sets both. A baby over 14 days goes on to the rules, where R5 sends it to a doctor's review. S11, S12 and S13 collect the three safety answers and the triage engine applies the hard rules in its own order (first match wins). An answer that settles the outcome is decided at once: a "yes" to danger signs (R1) at S12 shows "Refer urgently now" without S13, and a "yes" to early jaundice (R2) is decided once the danger-signs answer is in. The screening in progress is kept by the app, so rotating the phone or the app lock does not lose it; after a restart the screens return to Home. A rule outcome (S14) and every other result (S20) show the same card: the action's words, the next-step line of Section 3, a short reason only for "cannot screen", the blood-test reminder and the versions of the files that were used. No cause is named (the app does not diagnose). S16 uses the camera with live card detection; a photo the quality gate refuses goes to S17 with the reason, and the third refusal is a blood test. S19 gives up after 10 seconds with a blood test. The optional forehead photo is offered at S18 (see "S18 as built" below).
+
+**S18 as built.** After a chest photo that passes the quality gate, and before any result is shown, S18 offers the forehead photo when the model has a forehead site. "Add forehead photo" opens the camera and, once the photo is analysed, the result comes from both sites; "Skip forehead photo" shows the result from the chest photo. A forehead photo that cannot be used says so on S18 and offers another try (three at most) or going on without it; the result from the chest photo stays as it is. A forehead photo can only raise the level of care: if the decision made from both sites is less careful than the one made from the chest photo (a less urgent action, or a later recheck), the chest result is kept. Back on S18 and the button on the analysing screen mean "go on without it"; the result is shown, never thrown away unseen. Nothing is saved before the worker has chosen.
 
 ---
 
@@ -385,7 +419,7 @@ All numbers in the wireframes are illustrative, not clinical values. The range b
 | Confirmation | Only for destructive actions (delete all, abandon a research session). Never for saving |
 | Errors | Say what happened and what to do, in one sentence each. No error codes on screen; codes go to the local log |
 | Loading | Analysis shows a simple progress indicator; if it exceeds 10 s, show "Taking longer than usual" and offer "Blood test today" as the safe exit |
-| Notifications | Recheck reminders only, with no baby details on the lock screen ("A NeoGold recheck is due") |
+| Notifications | Recheck reminders only, with no baby details on the lock screen. Title "NeoGold", text "A recheck is due" (same as TC-LOG-09 and doc 8 Section 6; Android already labels the notification with the app, so the text does not repeat the name). Decided 2026-10-27 to settle the earlier wording "A NeoGold recheck is due"; no clinical content either way |
 | Research visibility | A persistent "Research mode" bar on every research screen so screening and research are never confused |
 | Session timeout | Research mode locks after 5 minutes of inactivity |
 

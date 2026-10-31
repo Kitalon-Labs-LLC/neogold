@@ -20,7 +20,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import java.io.File
 import java.util.UUID
 
 /**
@@ -135,7 +134,7 @@ class ResearchPinSecurityTest {
         )
 
         // 1. Enter 4 wrong PINs
-        for (i in 1..4) {
+        repeat(4) {
             val res = pinManager.verifyPin(studyId, "999888", now)
             assertThat(res).isInstanceOf(PinCheckResult.WrongPin::class.java)
             now += 1000L
@@ -168,7 +167,7 @@ class ResearchPinSecurityTest {
         now += 61_000L
 
         // Continue to 10 wrong attempts (5 more)
-        for (i in 6..9) {
+        repeat(4) {
             val res = pinManager.verifyPin(studyId, "999888", now)
             assertThat(res).isInstanceOf(PinCheckResult.WrongPin::class.java)
             now += 1000L
@@ -182,7 +181,7 @@ class ResearchPinSecurityTest {
         now += (15 * 60_000L) + 1000L
 
         // Continue to 15 wrong attempts (5 more)
-        for (i in 11..14) {
+        repeat(4) {
             pinManager.verifyPin(studyId, "999888", now)
             now += 1000L
         }
@@ -227,6 +226,48 @@ class ResearchPinSecurityTest {
 
         // On legitimate phone with correct key, correct PIN verifies
         assertThat(pinHasher.verifyPin(correctPin, salt, legitimateHash)).isTrue()
+    }
+
+    /**
+     * TC-RSH-06 (key loss): a PIN hash whose Keystore key K9 is gone cannot be checked. The result says so, the failure
+     * counter does not move and no lockout starts, however often the correct PIN is entered (BUG-2026-011).
+     */
+    @Test
+    fun tcRsh06_lostVerifierKeyIsNotAWrongPin() = runBlocking {
+        val studyId = UUID.randomUUID().toString()
+        val correctPin = "839174"
+        val salt = pinHasher.generateSalt()
+        val hash = pinHasher.hashPin(correctPin, salt)
+        database.researchStudyDao().insert(
+            ResearchStudyEntity(
+                id = studyId,
+                studyCode = "SKP01",
+                siteCode = "SKP01",
+                displayName = "Sakhipur Study",
+                serverUrl = "https://intake.neogold.example.bd/v1",
+                deviceKeyAlias = null,
+                serverDeviceId = null,
+                pinHash = hash,
+                pinSalt = salt,
+                failedPinAttempts = 2,
+                lockedUntil = null,
+                timestampPrecision = "DAY_PLUS_OFFSETS",
+                timeZone = "Asia/Dhaka",
+                dataGeneration = null,
+                localRetentionAfterAckDays = 14,
+                status = "ACTIVE",
+                enrolledAt = 1_000_000L
+            )
+        )
+
+        hmacKeyProvider.deleteKey()
+
+        repeat(8) {
+            assertThat(pinManager.verifyPin(studyId, correctPin, 2_000_000L)).isEqualTo(PinCheckResult.VerifierKeyLost)
+        }
+        val after = database.researchStudyDao().getStudyById(studyId)!!
+        assertThat(after.failedPinAttempts).isEqualTo(2)
+        assertThat(after.lockedUntil).isNull()
     }
 
     /**

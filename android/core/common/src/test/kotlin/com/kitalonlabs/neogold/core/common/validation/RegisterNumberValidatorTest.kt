@@ -22,8 +22,8 @@ class RegisterNumberValidatorTest {
         assertThat(RegisterNumberValidator.isValid("REG-1")).isTrue()
         assertThat(RegisterNumberValidator.isValid("A/B/C-123")).isTrue()
         assertThat(RegisterNumberValidator.isValid(null)).isTrue() // optional
-        assertThat(RegisterNumberValidator.isValid("")).isTrue()   // optional
-        assertThat(RegisterNumberValidator.isValid("   ")).isTrue()// optional
+        assertThat(RegisterNumberValidator.isValid("")).isTrue() // optional
+        assertThat(RegisterNumberValidator.isValid("   ")).isTrue() // optional
     }
 
     /**

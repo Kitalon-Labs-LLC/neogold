@@ -32,6 +32,12 @@ class FakeNeoGoldDataStore : NeoGoldDataStore {
         activeDeviceProfileIdFlow.value = profileId
     }
 
+    val qualificationBuildFingerprintFlow = MutableStateFlow<String?>(null)
+    override val qualificationBuildFingerprint: Flow<String?> = qualificationBuildFingerprintFlow
+    override suspend fun setQualificationBuildFingerprint(fingerprint: String?) {
+        qualificationBuildFingerprintFlow.value = fingerprint
+    }
+
     val screeningRetentionDaysFlow = MutableStateFlow(90)
     override val screeningRetentionDays: Flow<Int> = screeningRetentionDaysFlow
     override suspend fun setScreeningRetentionDays(days: Int) {
@@ -73,6 +79,7 @@ class FakeNeoGoldDataStore : NeoGoldDataStore {
         safetyAckVersionFlow.value = 0
         onboardingCompleteFlow.value = false
         activeDeviceProfileIdFlow.value = null
+        qualificationBuildFingerprintFlow.value = null
         screeningRetentionDaysFlow.value = 90
         registerNumberRetentionDaysFlow.value = 90
         keepScreeningLogFlow.value = true

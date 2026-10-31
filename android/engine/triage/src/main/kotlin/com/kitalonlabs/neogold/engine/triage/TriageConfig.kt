@@ -1,3 +1,7 @@
+@file:Suppress(
+    "MagicNumber"
+) // gestational age band boundaries (doc 4 Section 6); they stay literal so a search finds them
+
 package com.kitalonlabs.neogold.engine.triage
 
 import java.time.LocalDate
@@ -74,6 +78,6 @@ data class TriageConfig(
     fun thresholdTableFor(gaWeeks: Int): List<Pair<Double, Double>> {
         val band = bandForGestationalAge(gaWeeks)
         return phototherapyThresholds[band]
-            ?: throw IllegalStateException("Missing threshold table for band '$band'")
+            ?: error("Missing threshold table for band '$band'")
     }
 }

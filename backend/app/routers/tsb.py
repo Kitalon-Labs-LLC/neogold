@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, Path, Request, Response, status
@@ -28,6 +27,7 @@ from app.models.db import (
 from app.models.db import (
     Session as DbSession,
 )
+from app.study_time import study_today
 
 router = APIRouter(tags=["Measurements"])
 
@@ -65,7 +65,7 @@ def put_tsb_measurement(
     site = db.execute(select(Site).where(Site.id == device.site_id)).scalar_one()
     study = db.execute(select(Study).where(Study.id == site.study_id)).scalar_one()
 
-    today = datetime.datetime.now(datetime.UTC).date()
+    today = study_today(study.time_zone)
 
     # 1. Resolve participant
     canonical_participant = None
@@ -91,7 +91,8 @@ def put_tsb_measurement(
     if body.session_id is not None:
         session_row = db.execute(select(DbSession).where(DbSession.id == body.session_id)).scalar_one_or_none()
         if not session_row:
-            raise SessionUnknownError(f"Session {body.session_id} not found")
+            # a session before the TSB value that names it is 422, not 404 (doc 7 Section 3 order 4, BUG-2026-095)
+            raise SessionUnknownError(f"Session {body.session_id} not found", status=422)
         if session_row.participant_id != canonical_participant.id:
             raise ValidationFailedError("Session does not belong to the same participant")
 

@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // range checks mirror the SQL CHECK constraints in doc 5
+
 package com.kitalonlabs.neogold.core.data.local.entity
 
 import androidx.room.ColumnInfo
@@ -97,12 +99,20 @@ data class ScreeningSessionEntity(
     init {
         // Enforce CHECK constraints in Kotlin as defined in doc 5 Section 2.2
         require(ageHours in 0.0..720.0) { "CHECK constraint failed: age_hours ($ageHours) must be in 0.0..720.0" }
-        require(gestationalAgeWeeks in 22..44) { "CHECK constraint failed: gestational_age_weeks ($gestationalAgeWeeks) must be between 22 and 44" }
+        require(
+            gestationalAgeWeeks in 22..44
+        ) { "CHECK constraint failed: gestational_age_weeks ($gestationalAgeWeeks) must be between 22 and 44" }
         if (mode == "SCREENING") {
-            require(participantId == null) { "CHECK constraint failed: screening sessions cannot link to a participant" }
+            require(
+                participantId == null
+            ) { "CHECK constraint failed: screening sessions cannot link to a participant" }
         } else if (mode == "RESEARCH") {
-            require(participantId != null) { "CHECK constraint failed: research sessions always belong to a participant" }
-            require(registerNumber == null) { "CHECK constraint failed: research sessions cannot have a register number" }
+            require(
+                participantId != null
+            ) { "CHECK constraint failed: research sessions always belong to a participant" }
+            require(
+                registerNumber == null
+            ) { "CHECK constraint failed: research sessions cannot have a register number" }
         }
     }
 }

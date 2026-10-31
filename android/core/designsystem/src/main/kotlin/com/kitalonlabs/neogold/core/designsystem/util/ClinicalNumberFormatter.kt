@@ -50,7 +50,7 @@ object ClinicalNumberFormatter {
         val sb = StringBuilder(input.length)
         for (ch in input) {
             val idx = ch - '0'
-            if (idx in 0..9) {
+            if (idx in BANGLA_DIGITS.indices) {
                 sb.append(BANGLA_DIGITS[idx])
             } else {
                 sb.append(ch)

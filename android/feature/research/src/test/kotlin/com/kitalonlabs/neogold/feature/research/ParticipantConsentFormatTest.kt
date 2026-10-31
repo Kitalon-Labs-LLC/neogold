@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.feature.research
 
+import androidx.room.Room
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
@@ -21,7 +22,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import java.io.File
-import androidx.room.Room
 
 /**
  * Verification of consent form ID and participant code formatting
@@ -43,7 +43,11 @@ class ParticipantConsentFormatTest {
 
         val fakeMasterKey = FakeMasterKeyProvider()
         val fileKeysetProvider = DefaultFileKeysetProvider(context, fakeMasterKey, File(context.filesDir, "file_keys"))
-        val encryptedFileStore = DefaultEncryptedFileStore(context, fileKeysetProvider, File(context.filesDir, "test_images"))
+        val encryptedFileStore = DefaultEncryptedFileStore(
+            context,
+            fileKeysetProvider,
+            File(context.filesDir, "test_images")
+        )
 
         val dummyTrustList = TrustList(
             schemaVersion = 1,
@@ -64,7 +68,9 @@ class ParticipantConsentFormatTest {
             trustList = dummyTrustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(dummyTrustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
 
         // Seed active research study
@@ -114,10 +120,10 @@ class ParticipantConsentFormatTest {
         // 2. Malformed consent IDs -> rejected
         val malformedIds = listOf(
             "skp-consent-01", // lowercase
-            "S-1",            // prefix too short (< 2 chars)
+            "S-1", // prefix too short (< 2 chars)
             "TOOLONGPREFIX-01", // prefix too long (> 5 chars)
             "SKP@CONSENT#01", // invalid special characters
-            "SKP-A"           // suffix too short (< 2 chars)
+            "SKP-A" // suffix too short (< 2 chars)
         )
         for (malformed in malformedIds) {
             assertThat(ResearchFormats.isValidConsentFormId(malformed)).isFalse()
@@ -161,13 +167,13 @@ class ParticipantConsentFormatTest {
 
         // Additional invalid code test vectors
         val invalidCodes = listOf(
-            "skp-0142",         // lowercase
-            "A-100",            // prefix < 2 chars
-            "TOOLONG-100",      // prefix > 5 chars
-            "SKP-12",           // numeric suffix < 3 digits
-            "SKP-1234567",      // numeric suffix > 6 digits
-            "SKP_0142",         // underscore instead of hyphen
-            "SKP-014A"          // non-numeric suffix
+            "skp-0142", // lowercase
+            "A-100", // prefix < 2 chars
+            "TOOLONG-100", // prefix > 5 chars
+            "SKP-12", // numeric suffix < 3 digits
+            "SKP-1234567", // numeric suffix > 6 digits
+            "SKP_0142", // underscore instead of hyphen
+            "SKP-014A" // non-numeric suffix
         )
         for (invalid in invalidCodes) {
             assertThat(ResearchFormats.isValidParticipantCode(invalid)).isFalse()

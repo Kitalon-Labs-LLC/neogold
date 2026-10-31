@@ -1,6 +1,7 @@
+@file:Suppress("MagicNumber") // gestational age stepper bounds; the first-tap value is revisited in E1
+
 package com.kitalonlabs.neogold.core.designsystem.components.atoms
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,10 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
@@ -21,10 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.kitalonlabs.neogold.core.designsystem.theme.MinTouchTarget
 
 /**
@@ -40,7 +37,6 @@ fun NgNumberStepper(
     range: IntRange = 22..44,
     unselectedPlaceholder: String = "--"
 ) {
-    val currentVal = value ?: 38
     val canDecrement = value != null && value > range.first
     val canIncrement = value != null && value < range.last
 

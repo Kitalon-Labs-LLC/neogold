@@ -1,7 +1,17 @@
+@file:Suppress(
+    "MaxLineLength",
+    "MagicNumber"
+) // hardcoded UI text (F1) and placeholder session values, both replaced by the wiring in B1 and E1
+
 package com.kitalonlabs.neogold
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,30 +35,54 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.designsystem.components.organisms.TriageUiAction
 import com.kitalonlabs.neogold.core.designsystem.theme.NeoGoldTheme
-import com.kitalonlabs.neogold.core.security.AndroidMasterKeyProvider
-import com.kitalonlabs.neogold.core.security.DefaultDatabaseKeyProvider
 import com.kitalonlabs.neogold.core.security.applock.AppLockManager
 import com.kitalonlabs.neogold.core.security.crash.CrashReportManager
 import com.kitalonlabs.neogold.core.security.privacy.SecureScreenHelper
-import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
+import com.kitalonlabs.neogold.engine.camera.device.DeviceChecker
+import com.kitalonlabs.neogold.engine.camera.model.CaptureMetadata
+import com.kitalonlabs.neogold.engine.camera.ui.CameraPermissionState
+import com.kitalonlabs.neogold.engine.camera.ui.LocalCameraPermission
+import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
+import com.kitalonlabs.neogold.engine.cardtrust.VerificationResult
+import com.kitalonlabs.neogold.engine.vision.ImageFrame
 import com.kitalonlabs.neogold.feature.log.S21LogScreen
 import com.kitalonlabs.neogold.feature.log.S22SessionDetailScreen
 import com.kitalonlabs.neogold.feature.log.ScreeningLogExportManager
+import com.kitalonlabs.neogold.feature.onboarding.domain.CardScanState
+import com.kitalonlabs.neogold.feature.onboarding.domain.QualificationState
+import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
+import com.kitalonlabs.neogold.feature.research.export.ExportDestination
+import com.kitalonlabs.neogold.feature.research.export.ExportFileRemains
+import com.kitalonlabs.neogold.feature.research.export.ExportProgress
+import com.kitalonlabs.neogold.feature.research.export.PendingPick
+import com.kitalonlabs.neogold.feature.research.export.ResearchExportManager
+import com.kitalonlabs.neogold.feature.research.export.exportFileName
+import com.kitalonlabs.neogold.feature.research.ui.ResearchViewModel
+import com.kitalonlabs.neogold.feature.research.ui.StudyServerViewModel
 import com.kitalonlabs.neogold.feature.result.S20ResultScreen
+import com.kitalonlabs.neogold.feature.screening.domain.ScreeningFlow
+import com.kitalonlabs.neogold.feature.screening.domain.ScreeningState
 import com.kitalonlabs.neogold.feature.screening.ui.S09HomeScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S10BirthTimeGaScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S10aGuardianConsentScreen
@@ -60,7 +95,15 @@ import com.kitalonlabs.neogold.feature.screening.ui.S16CameraScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S17PhotoProblemScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S18ForeheadPhotoScreen
 import com.kitalonlabs.neogold.feature.screening.ui.S19AnalyzingScreen
+import com.kitalonlabs.neogold.feature.screening.ui.nextStepText
+import com.kitalonlabs.neogold.feature.screening.ui.reasonText
+import com.kitalonlabs.neogold.integrity.VerifiedAssets
 import com.kitalonlabs.neogold.navigation.Destinations
+import com.kitalonlabs.neogold.onboarding.FirstRunState
+import com.kitalonlabs.neogold.onboarding.OnboardingServices
+import com.kitalonlabs.neogold.storage.StorageState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
@@ -68,9 +111,60 @@ class MainActivity : FragmentActivity() {
     internal val appLockManager = AppLockManager()
     private lateinit var dataStore: NeoGoldDataStore
 
+    private val container: NeoGoldContainer
+        get() = (application as NeoGoldApplication).container
+
+    /**
+     * The "save the export" picker belongs to the activity, not to a screen: when the research session locks while the picker
+     * is open the screen is gone, and the empty document the picker already created is deleted here (BUG-083 item 30).
+     */
+    private val pendingExportPick = PendingPick<Uri> { uri ->
+        // not cancelled with the activity: the empty document is deleted even when the activity is leaving
+        lifecycleScope.launch(
+            Dispatchers.IO + NonCancellable
+        ) { ExportDestination.forUri(contentResolver, uri).discard() }
+    }
+
+    /**
+     * Lint asks for androidx.fragment 1.3.0 or newer (the app resolves 1.2.5, through the biometric library) because older
+     * FragmentActivity versions mishandle the results of permission requests made through the ActivityResult API. This
+     * launcher is only the document picker; the camera permission is asked with ActivityCompat and its own request code.
+     * Raising the fragment version is a dependency change and waits for the owner (BUG-2026-083 item 30).
+     */
+    @SuppressLint("InvalidFragmentVersionForActivityResult")
+    private val exportPickerLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri -> pendingExportPick.deliver(uri) }
+    private val exportPicker = ExportPicker(pendingExportPick) { exportPickerLauncher.launch(it) }
+
+    /** Whether the camera may be used. The screens that open it read this through [LocalCameraPermission]. */
+    private var cameraGranted by mutableStateOf(false)
+
+    private fun cameraPermissionState() = CameraPermissionState(
+        granted = cameraGranted,
+        request = { ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), CAMERA_REQUEST_CODE) },
+        openSettings = {
+            startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+            )
+        }
+    )
+
+    private fun observeAppLockSetting() {
+        lifecycleScope.launch {
+            dataStore.appLockEnabled.collect { enabled ->
+                appLockManager.isAppLockEnabled = enabled
+            }
+        }
+    }
+
+    private fun hasCameraPermission() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dataStore = DefaultNeoGoldDataStore(applicationContext)
+        dataStore = container.dataStore
+        cameraGranted = hasCameraPermission()
 
         // Privacy controls: Prevent recents snapshot on API 33+ (TC-PRIV-02, doc 8 Section 6.1)
         SecureScreenHelper.setRecentsScreenshotEnabled(this, false)
@@ -78,82 +172,103 @@ class MainActivity : FragmentActivity() {
         // Overlay protection on API 26..30 (doc 8 Section 6.1)
         SecureScreenHelper.setFilterTouchesWhenObscured(window, true)
 
-        lifecycleScope.launch {
-            dataStore.appLockEnabled.collect { enabled ->
-                appLockManager.isAppLockEnabled = enabled
-            }
-        }
+        observeAppLockSetting()
 
         setContent {
-            NeoGoldTheme {
-                val navController = rememberNavController()
-                val isLocked by appLockManager.isLocked.collectAsState()
-                var showCrashDialog by remember {
-                    mutableStateOf<Boolean>(CrashReportManager.hasPendingReport(this@MainActivity))
-                }
-
-                DisposableEffect(navController) {
-                    val listener = androidx.navigation.NavController.OnDestinationChangedListener { _, destination, _ ->
-                        val secure = SecureScreenHelper.isDestinationSecure(destination.route)
-                        SecureScreenHelper.setSecureScreen(window, secure)
+            val cameraPermission = remember(cameraGranted) { cameraPermissionState() }
+            CompositionLocalProvider(LocalCameraPermission provides cameraPermission) {
+                NeoGoldTheme {
+                    val navController = rememberNavController()
+                    val isLocked by appLockManager.isLocked.collectAsState()
+                    var showCrashDialog by remember {
+                        mutableStateOf<Boolean>(CrashReportManager.hasPendingReport(this@MainActivity))
                     }
-                    navController.addOnDestinationChangedListener(listener)
-                    onDispose {
-                        navController.removeOnDestinationChangedListener(listener)
+
+                    DisposableEffect(navController) {
+                        val listener = androidx.navigation.NavController.OnDestinationChangedListener { _, destination, _ ->
+                            val secure = SecureScreenHelper.isDestinationSecure(destination.route)
+                            SecureScreenHelper.setSecureScreen(window, secure)
+                        }
+                        navController.addOnDestinationChangedListener(listener)
+                        onDispose {
+                            navController.removeOnDestinationChangedListener(listener)
+                        }
                     }
-                }
 
-                if (showCrashDialog) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            CrashReportManager.clearReport(this@MainActivity)
-                            showCrashDialog = false
-                        },
-                        title = { Text("Share Crash Report?") },
-                        text = {
-                            Text("NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report.")
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    CrashReportManager.shareReport(this@MainActivity)
-                                    CrashReportManager.clearReport(this@MainActivity)
-                                    showCrashDialog = false
-                                }
-                            ) {
-                                Text("Share")
+                    if (showCrashDialog) {
+                        CrashReportDialog(
+                            onShare = { CrashReportManager.shareReport(this@MainActivity) },
+                            onFinished = {
+                                CrashReportManager.clearReport(this@MainActivity)
+                                showCrashDialog = false
                             }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    CrashReportManager.clearReport(this@MainActivity)
-                                    showCrashDialog = false
-                                }
-                            ) {
-                                Text("Dismiss")
-                            }
-                        }
-                    )
-                }
-
-                if (isLocked) {
-                    AppLockScreen(
-                        onUnlock = {
-                            appLockManager.authenticate(
-                                activity = this@MainActivity,
-                                onSuccess = {},
-                                onError = { _, _ -> }
-                            )
-                        }
-                    )
-                } else {
-                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        NeoGoldNavHost(
-                            navController = navController,
-                            dataStore = dataStore,
-                            modifier = Modifier.padding(innerPadding)
                         )
+                    }
+
+                    if (isLocked) {
+                        AppLockScreen(
+                            onUnlock = {
+                                appLockManager.authenticate(
+                                    activity = this@MainActivity,
+                                    onSuccess = {},
+                                    onError = { _, _ -> }
+                                )
+                            }
+                        )
+                    } else {
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize().then(testIds(container.isDebuggable))
+                        ) { innerPadding ->
+                            val storageState by container.storage.state.collectAsState()
+                            val deleteState by container.deleteState.collectAsState()
+                            val content = Modifier.padding(innerPadding)
+
+                            when {
+                                deleteState is DeleteState.Deleting -> DeletingAllDataScreen(content)
+                                deleteState is DeleteState.Incomplete -> DeleteIncompleteScreen(
+                                    incomplete = (deleteState as DeleteState.Incomplete).items,
+                                    onRetry = container::startDeleteAll,
+                                    onClose = container::restartAfterIncompleteDelete,
+                                    modifier = content
+                                )
+                                else -> when (val state = storageState) {
+                                    StorageState.Opening -> StorageOpeningScreen(content)
+                                    StorageState.Unreadable -> StorageUnreadableScreen(
+                                        onTryAgain = { container.applicationScope.launch { container.storage.open() } },
+                                        onReset = { container.applicationScope.launch { container.storage.resetAndOpen() } },
+                                        modifier = content
+                                    )
+                                    is StorageState.Ready -> OpenWhenOnboardingIsKnown(
+                                        database = state.database,
+                                        modifier = content
+                                    ) { onboarding, firstRun ->
+                                        NeoGoldNavHost(
+                                            navController = navController,
+                                            dataStore = dataStore,
+                                            database = state.database,
+                                            assets = container.assets,
+                                            appVersion = BuildConfig.VERSION_NAME,
+                                            configAllowsScreening = container.screeningAvailable(),
+                                            unsentResearchItems = container::unsentResearchItems,
+                                            onDeleteAllData = container::startDeleteAll,
+                                            onboarding = onboarding,
+                                            modifier = content,
+                                            firstRun = firstRun,
+                                            research = container.researchViewModel(state.database),
+                                            studyServer = container.studyServerViewModel(state.database),
+                                            screeningHolder = container.screeningHolder,
+                                            newScreening = container::newScreening,
+                                            screeningCardCheck = { container.screeningCardCheck(state.database) },
+                                            activeDeviceProfileId = { container.activeDeviceProfileId(state.database) },
+                                            researchCaptureSetup = { container.researchCaptureSetup(state.database) },
+                                            researchCardStatus = { container.researchCardStatus(state.database) },
+                                            researchExport = container.researchExportManager(state.database),
+                                            exportPicker = exportPicker
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -162,6 +277,8 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        container.researchSession.onAppForegrounded() // the research session asks for the PIN again after 5 minutes away
+        cameraGranted = hasCameraPermission() // the user may have changed it in the system settings
         appLockManager.onAppForegrounded()
         if (appLockManager.isLocked.value) {
             appLockManager.authenticate(
@@ -174,7 +291,15 @@ class MainActivity : FragmentActivity() {
 
     override fun onStop() {
         super.onStop()
+        container.researchSession.onAppBackgrounded()
         appLockManager.onAppBackgrounded()
+    }
+
+    // The system permission dialog is asked for with a small request code and answered here, not through the
+    // activity-result registry: the registry's request codes do not fit what FragmentActivity accepts for permissions.
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CAMERA_REQUEST_CODE) cameraGranted = hasCameraPermission()
     }
 
     @Deprecated("Deprecated in Java")
@@ -185,6 +310,66 @@ class MainActivity : FragmentActivity() {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
     }
+
+    private companion object {
+        const val CAMERA_REQUEST_CODE = 41
+    }
+}
+
+/**
+ * Builds the first-run services for [database] and finds where the app opens, then shows [content]. While that is
+ * being read the "opening" screen is shown, so the navigation graph never starts on a guess.
+ */
+@Composable
+private fun OpenWhenOnboardingIsKnown(
+    database: NeoGoldDatabase,
+    modifier: Modifier,
+    content: @Composable (OnboardingServices, FirstRunState) -> Unit
+) {
+    val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    val services = remember(database) { (appContext as NeoGoldApplication).container.onboardingServices(database) }
+    val firstRun by androidx.compose.runtime.produceState<FirstRunState?>(null, services) {
+        value = services.firstRunState()
+    }
+    val state = firstRun
+    if (state == null) StorageOpeningScreen(modifier) else content(services, state)
+}
+
+/**
+ * In a debuggable build, makes the screens' test tags visible to UI automation (Maestro's `id:`) as resource ids. A
+ * release build does not expose them.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+private fun testIds(debuggable: Boolean): Modifier =
+    if (debuggable) Modifier.semantics { testTagsAsResourceId = true } else Modifier
+
+/** Asks whether to share the report of the previous crash (no personal data or exception messages are in it). */
+@Composable
+private fun CrashReportDialog(onShare: () -> Unit, onFinished: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onFinished,
+        title = { Text(stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_title)) },
+        text = {
+            Text(
+                stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_body)
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onShare()
+                    onFinished()
+                }
+            ) {
+                Text(stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_share))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onFinished) {
+                Text(stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.crash_report_dismiss))
+            }
+        }
+    )
 }
 
 @Composable
@@ -199,66 +384,154 @@ private fun AppLockScreen(onUnlock: () -> Unit) {
             modifier = Modifier.padding(24.dp)
         ) {
             Text(
-                text = "NeoGold is Locked",
+                text = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.lock_title),
                 style = MaterialTheme.typography.headlineMedium
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Device authentication is required to access patient screening and records.",
+                text = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.lock_body),
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onUnlock) {
-                Text(text = "Unlock")
+                Text(text = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.lock_unlock))
             }
         }
     }
 }
 
+/**
+ * The app's navigation graph. There are no defaults for what must come from the container: the database, the
+ * integrity result and the triage switch are passed in, so a caller cannot forget them and get a fail-open screen.
+ *
+ * @param assets the startup check of the bundled files; screening and research screens show a block screen unless it
+ * is valid (BUG-2026-007). Saved records take the config and model versions from it.
+ * @param configAllowsScreening whether screening is offered today: the signed config says so, it is not past `validUntil`,
+ * and the app really computes a result (`NeoGoldContainer.screeningAvailable`). The screening screens are not
+ * reachable otherwise.
+ * @param unsentResearchItems asks how many research items the study has not acknowledged, for S25's warning
+ * @param research the research session over this database; null when the bundle did not verify, and then no research
+ * screen opens
+ * @param studyServer joining, leaving and uploading to the study server (R07 to R09); null when [research] is, and when
+ * the bundle did not verify
+ * @param screeningHolder the screening in progress, kept across rotation and the app lock
+ * @param newScreening starts a screening over the verified bundle, or null when there is none to run on
+ * @param screeningCardCheck checks the card the phone works with against the trust list
+ * @param activeDeviceProfileId the phone's active device profile, for the saved record
+ * @param researchCaptureSetup the camera step and the signed card bytes for one research photo session (R04)
+ */
 @Composable
+@Suppress(
+    "LongParameterList"
+) // the container's pieces, passed in and not defaulted; shrinks with the per-screen ViewModels (E1)
 fun NeoGoldNavHost(
     navController: NavHostController,
-    modifier: Modifier = Modifier,
-    dataStore: NeoGoldDataStore = DefaultNeoGoldDataStore(androidx.compose.ui.platform.LocalContext.current),
-    database: NeoGoldDatabase? = null,
-    startDestination: String = Destinations.S01_LANGUAGE,
-    triageEnabled: Boolean = false
+    dataStore: NeoGoldDataStore,
+    database: NeoGoldDatabase,
+    assets: VerifiedAssets,
+    appVersion: String,
+    configAllowsScreening: Boolean,
+    unsentResearchItems: suspend () -> Int,
+    onDeleteAllData: () -> Unit,
+    onboarding: OnboardingServices,
+    firstRun: FirstRunState,
+    research: ResearchViewModel?,
+    studyServer: StudyServerViewModel?,
+    screeningHolder: ScreeningHolder,
+    newScreening: () -> ScreeningFlow?,
+    screeningCardCheck: suspend () -> VerificationResult<CardBatchPayload>,
+    activeDeviceProfileId: suspend () -> String?,
+    researchCaptureSetup: suspend () -> NeoGoldContainer.ResearchCaptureSetup,
+    researchCardStatus: suspend () -> CardTrustStatus,
+    researchExport: ResearchExportManager,
+    exportPicker: ExportPicker,
+    modifier: Modifier = Modifier
 ) {
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-    var lastQualificationResult by remember { mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null) }
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val db = remember(database) {
-        database ?: run {
-            val masterKey = AndroidMasterKeyProvider(context.applicationContext)
-            val keyProvider = DefaultDatabaseKeyProvider(context.applicationContext, masterKey)
-            NeoGoldDatabase.buildDatabase(context.applicationContext, keyProvider)
+    var lastQualificationResult by remember {
+        mutableStateOf<com.kitalonlabs.neogold.engine.camera.qualification.QualificationResult?>(null)
+    }
+    // Screening needs the config's switch AND a phone whose camera was measured to qualify and is not due again
+    // (H5, TC-DEV-05). A phone that is research-only, or has no profile, never gets it.
+    var qualifiedForScreening by remember { mutableStateOf(firstRun.screeningEligible) }
+    val triageEnabled = configAllowsScreening && qualifiedForScreening
+    // A research session in progress: the signed bytes of the card the photos were taken with, and the blood test
+    // value entered with them (R04 to R06). Neither is kept after R06.
+    var researchCardBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var researchTsbEntered by remember { mutableStateOf<Pair<Double, String>?>(null) }
+    val researchUnlocked by (research?.isUnlocked ?: remember { kotlinx.coroutines.flow.MutableStateFlow(false) })
+        .collectAsState()
+    // The research session locks itself (5 minutes away, screen off, Lock): whichever research screen is open, the
+    // next one is R01 and nothing of the session in progress is kept.
+    androidx.compose.runtime.LaunchedEffect(researchUnlocked) {
+        val route = navController.currentDestination?.route
+        val insideSession = route != null && route.startsWith("r0") && route != Destinations.R01_RESEARCH_UNLOCK
+        if (!researchUnlocked && insideSession) {
+            research?.clearSessionState()
+            studyServer?.clearScan()
+            researchCardBytes = null
+            researchTsbEntered = null
+            navController.navigate(Destinations.R01_RESEARCH_UNLOCK) {
+                popUpTo(Destinations.R02_STUDY_HOME) { inclusive = true }
+            }
         }
     }
+    // The card S06 verified, which S07 qualifies the camera against.
+    var scannedBatchId by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val db = database
 
-    // Screening session flow state
-    var sessionAgeHours by remember { androidx.compose.runtime.mutableDoubleStateOf(0.0) }
-    var sessionGaWeeks by remember { androidx.compose.runtime.mutableIntStateOf(38) }
-    var sessionBirthTimeMs by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
-    var sessionRuleOutcome by remember { mutableStateOf<String?>(null) }
-    var sessionTriageAction by remember { mutableStateOf(TriageUiAction.CANNOT_SCREEN) }
-    var sessionReasonCodes by remember { mutableStateOf<List<String>>(emptyList()) }
-    var sessionEstimatedLow by remember { mutableStateOf<Double?>(null) }
-    var sessionEstimatedHigh by remember { mutableStateOf<Double?>(null) }
-    var sessionThreshold by remember { mutableStateOf<Double?>(null) }
-    var sessionRecheckHours by remember { androidx.compose.runtime.mutableIntStateOf(24) }
-    var sessionCapturesCount by remember { androidx.compose.runtime.mutableIntStateOf(0) }
-    var lastQualityReason by remember { mutableStateOf<com.kitalonlabs.neogold.engine.vision.QualityReasonCode?>(null) }
+    // The screening in progress. It holds the worker's answers (none pre-filled) and the engine's decisions; the screens only
+    // show its state (package E1). A photo waits here in memory between S16 and the end of the analysis and is never written.
+    var screening by screeningHolder::flow
+    var pendingPhoto by remember { mutableStateOf<Pair<ImageFrame, CaptureMetadata?>?>(null) }
 
     // Log & Session detail state
     var selectedSessionIdForDetail by remember { mutableStateOf<String?>(null) }
     var logSessions by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
     var dueRechecks by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
 
+    val integrity = assets.integrity
+    val bundleUsable = integrity.isScreeningAllowed
+
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = firstRun.startDestination,
         modifier = modifier
     ) {
+        // Research runs only on files that passed the startup check (BUG-2026-007, TC-SEC-09).
+        fun NavGraphBuilder.researchComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(NavBackStackEntry) -> Unit
+        ) = composable(route) { entry ->
+            if (bundleUsable) content(entry) else IntegrityBlockedScreen(integrity)
+        }
+
+        // Screening needs the same, and a switch that is on today (TC-TRI-26): with triage off no screening screen
+        // is reachable, whichever button or saved recheck leads to it, and Home is where the user lands.
+        fun NavGraphBuilder.screeningComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(NavBackStackEntry) -> Unit
+        ) = composable(route) { entry ->
+            when {
+                !bundleUsable -> IntegrityBlockedScreen(integrity)
+                !triageEnabled -> {
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
+                    }
+                    Box(modifier = Modifier.fillMaxSize())
+                }
+                // A screening that was lost (the process was restarted) cannot go on; Home is where the worker starts again
+                screening == null -> {
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
+                    }
+                    Box(modifier = Modifier.fillMaxSize())
+                }
+                else -> content(entry)
+            }
+        }
+
         // S01 to S08 Onboarding & Qualification
         composable(Destinations.S01_LANGUAGE) {
             val currentLang by dataStore.language.collectAsState(initial = "bn")
@@ -294,21 +567,53 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S06_CARD_SCAN) {
-            com.kitalonlabs.neogold.feature.onboarding.S06CardScanScreen(
-                onContinue = {
-                    navController.navigate(Destinations.S07_QUALIFICATION)
-                }
-            )
+        // The card is checked against the signed trust list and the camera is qualified on the card it names, so both
+        // need a bundle that verified (BUG-2026-007).
+        researchComposable(Destinations.S06_CARD_SCAN) {
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
+            val state = remember(onboarding) { onboarding.cardScan?.let { CardScanState(it, scope) } }
+            if (state != null) {
+                com.kitalonlabs.neogold.feature.onboarding.S06CardScanScreen(
+                    state = state,
+                    onContinue = { batchId ->
+                        scannedBatchId = batchId
+                        navController.navigate(Destinations.S07_QUALIFICATION)
+                    },
+                    requalification = firstRun.requalification
+                )
+            } else {
+                IntegrityBlockedScreen(integrity)
+            }
         }
 
-        composable(Destinations.S07_QUALIFICATION) {
-            com.kitalonlabs.neogold.feature.onboarding.S07QualificationScreen(
-                onQualificationComplete = { res ->
-                    lastQualificationResult = res
-                    navController.navigate(Destinations.S08_QUALIFICATION_RESULT)
+        researchComposable(Destinations.S07_QUALIFICATION) {
+            val batchId = scannedBatchId
+            if (batchId == null) {
+                // The flow was interrupted (the app was closed and reopened here): start again from the card.
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    navController.navigate(Destinations.S06_CARD_SCAN) {
+                        popUpTo(Destinations.S06_CARD_SCAN) { inclusive = true }
+                    }
                 }
-            )
+                Box(modifier = Modifier.fillMaxSize())
+            } else {
+                val scope = androidx.compose.runtime.rememberCoroutineScope()
+                val state = remember(batchId) {
+                    QualificationState(
+                        service = onboarding.qualification,
+                        capabilities = DeviceChecker.checkDevice(context).capabilities,
+                        cardBatchId = batchId,
+                        scope = scope
+                    )
+                }
+                com.kitalonlabs.neogold.feature.onboarding.S07QualificationScreen(
+                    state = state,
+                    onQualificationComplete = { res ->
+                        lastQualificationResult = res
+                        navController.navigate(Destinations.S08_QUALIFICATION_RESULT)
+                    }
+                )
+            }
         }
 
         composable(Destinations.S08_QUALIFICATION_RESULT) {
@@ -321,9 +626,8 @@ fun NeoGoldNavHost(
                             dataStore.setActiveDeviceProfileId(result.profile.id)
                             dataStore.setOnboardingComplete(true)
                         }
-                        navController.navigate(Destinations.S09_HOME) {
-                            popUpTo(Destinations.S01_LANGUAGE) { inclusive = true }
-                        }
+                        qualifiedForScreening = result.isQualified
+                        navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
                     }
                 )
             } else {
@@ -344,41 +648,32 @@ fun NeoGoldNavHost(
                 logSessions.count { it.createdAt >= oneDayAgo }
             }
 
+            // A new screening starts from nothing: the flow of the last one is dropped with its answers and any photo
+            val startScreening = {
+                screening = newScreening()
+                pendingPhoto = null
+                if (screening != null) navController.navigate(Destinations.S10A_GUARDIAN_CONSENT)
+            }
             S09HomeScreen(
                 triageEnabled = triageEnabled,
                 todayScreeningsCount = todayCount,
                 dueRechecks = dueRechecks,
-                onNewScreeningClicked = {
-                    sessionAgeHours = 0.0
-                    sessionGaWeeks = 38
-                    sessionBirthTimeMs = 0L
-                    sessionRuleOutcome = null
-                    sessionTriageAction = TriageUiAction.CANNOT_SCREEN
-                    sessionReasonCodes = emptyList()
-                    sessionEstimatedLow = null
-                    sessionEstimatedHigh = null
-                    sessionThreshold = null
-                    sessionRecheckHours = 24
-                    sessionCapturesCount = 0
-                    lastQualityReason = null
-                    navController.navigate(Destinations.S10A_GUARDIAN_CONSENT)
-                },
+                onNewScreeningClicked = startScreening,
                 onScreeningLogClicked = {
                     navController.navigate(Destinations.S21_LOG)
                 },
                 onSettingsClicked = {
                     navController.navigate(Destinations.S23_SETTINGS)
                 },
-                onRecheckClicked = { _ ->
-                    navController.navigate(Destinations.S10A_GUARDIAN_CONSENT)
-                }
+                onRecheckClicked = { _ -> startScreening() }
             )
         }
 
-        // S10a to S20 Screening Flow
-        composable(Destinations.S10A_GUARDIAN_CONSENT) {
+        // S10a to S20 Screening Flow. Every route reads the flow; with none (the bundle is not usable) a route shows nothing.
+        screeningComposable(Destinations.S10A_GUARDIAN_CONSENT) {
             S10aGuardianConsentScreen(
                 onConsentConfirmed = {
+                    screening?.begin(guardianConsentConfirmed = true)
                     navController.navigate(Destinations.S10_BIRTH_TIME_GA)
                 },
                 onBack = {
@@ -387,12 +682,10 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S10_BIRTH_TIME_GA) {
+        screeningComposable(Destinations.S10_BIRTH_TIME_GA) {
             S10BirthTimeGaScreen(
-                onNext = { ageHours, gaWeeks, birthTimeMs ->
-                    sessionAgeHours = ageHours
-                    sessionGaWeeks = gaWeeks
-                    sessionBirthTimeMs = birthTimeMs
+                onNext = { ageHours, gaWeeks, _ ->
+                    screening?.answerAgeAndGestation(ageHours, gaWeeks)
                     navController.navigate(Destinations.S11_EARLY_JAUNDICE)
                 },
                 onBack = {
@@ -401,15 +694,12 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S11_EARLY_JAUNDICE) {
+        // S11 to S13 only collect answers. Which rule applies, and in what order, is the engine's to say once all are given.
+        screeningComposable(Destinations.S11_EARLY_JAUNDICE) {
             S11EarlyJaundiceScreen(
                 onAnswered = { isEarlyJaundice ->
-                    if (isEarlyJaundice) {
-                        sessionRuleOutcome = TriageReasonCode.R2
-                        navController.navigate(Destinations.S14_RULE_OUTCOME)
-                    } else {
-                        navController.navigate(Destinations.S12_DANGER_SIGNS)
-                    }
+                    screening?.answerEarlyJaundice(isEarlyJaundice)
+                    navController.navigate(Destinations.S12_DANGER_SIGNS)
                 },
                 onBack = {
                     navController.popBackStack()
@@ -417,12 +707,15 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S12_DANGER_SIGNS) {
+        screeningComposable(Destinations.S12_DANGER_SIGNS) {
             S12DangerSignsScreen(
                 onAnswered = { hasDangerSigns ->
-                    if (hasDangerSigns) {
-                        sessionRuleOutcome = TriageReasonCode.R1
-                        navController.navigate(Destinations.S14_RULE_OUTCOME)
+                    val flow = screening
+                    flow?.answerDangerSigns(hasDangerSigns)
+                    // danger signs, or early jaundice already answered, settle the outcome: no more questions
+                    val settled = flow?.decideEarly()
+                    if (settled != null) {
+                        navController.navigate(resultRouteFor(settled)) { popUpTo(Destinations.S09_HOME) }
                     } else {
                         navController.navigate(Destinations.S13_PHOTOTHERAPY)
                     }
@@ -433,20 +726,27 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S13_PHOTOTHERAPY) {
+        screeningComposable(Destinations.S13_PHOTOTHERAPY) {
             S13PhototherapyScreen(
                 onAnswered = { hadPhototherapy ->
-                    if (hadPhototherapy) {
-                        sessionRuleOutcome = TriageReasonCode.R4
-                        navController.navigate(Destinations.S14_RULE_OUTCOME)
-                    } else if (sessionGaWeeks < 35) {
-                        sessionRuleOutcome = TriageReasonCode.R3
-                        navController.navigate(Destinations.S14_RULE_OUTCOME)
-                    } else if (sessionAgeHours > 336.0) {
-                        sessionRuleOutcome = TriageReasonCode.R5
-                        navController.navigate(Destinations.S14_RULE_OUTCOME)
-                    } else {
-                        navController.navigate(Destinations.S15_CAPTURE_GUIDE)
+                    val flow = screening
+                    if (flow != null) {
+                        flow.answerPriorPhototherapy(hadPhototherapy)
+                        coroutineScope.launch {
+                            val after = flow.decide()
+                            val next = if (after is ScreeningState.CardCheck) {
+                                // no rule decided: the card the phone works with is checked against the trust list now
+                                flow.cardChecked(screeningCardCheck())
+                            } else {
+                                after
+                            }
+                            if (next is ScreeningState.Capture) {
+                                navController.navigate(Destinations.S15_CAPTURE_GUIDE)
+                            } else {
+                                // Back from a result goes Home, not into the questions again
+                                navController.navigate(resultRouteFor(next)) { popUpTo(Destinations.S09_HOME) }
+                            }
+                        }
                     }
                 },
                 onBack = {
@@ -455,59 +755,36 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S14_RULE_OUTCOME) {
-            val rule = sessionRuleOutcome ?: TriageReasonCode.R1
-            S14RuleOutcomeScreen(
-                ruleCode = rule,
-                onSaveToLog = { registerNumber ->
-                    coroutineScope.launch {
-                        val entity = ScreeningSessionEntity(
-                            id = java.util.UUID.randomUUID().toString(),
-                            mode = "SCREENING",
-                            status = "COMPLETED",
-                            createdAt = System.currentTimeMillis(),
-                            completedAt = System.currentTimeMillis(),
-                            ageHours = sessionAgeHours.coerceIn(0.0, 720.0),
-                            guardianConsentConfirmed = 1,
-                            gestationalAgeWeeks = sessionGaWeeks.coerceIn(22, 44),
-                            flagJaundiceUnder24h = if (rule == TriageReasonCode.R2) 1 else 0,
-                            flagDangerSigns = if (rule == TriageReasonCode.R1) 1 else 0,
-                            flagPriorPhototherapy = if (rule == TriageReasonCode.R4) 1 else 0,
-                            ruleOutcome = rule,
-                            triageAction = when (rule) {
-                                TriageReasonCode.R1, TriageReasonCode.R2 -> "REFER_URGENT"
-                                TriageReasonCode.R3, TriageReasonCode.R4 -> "BLOOD_TEST_TODAY"
-                                TriageReasonCode.R5 -> "CANNOT_SCREEN"
-                                else -> "CANNOT_SCREEN"
-                            },
-                            reasonCodes = "[\"$rule\"]",
-                            estimateMgDl = null,
-                            estimateLowMgDl = null,
-                            estimateHighMgDl = null,
-                            thresholdMgDl = null,
-                            recheckDueAt = null,
-                            captureAttempts = 0,
-                            registerNumber = registerNumber,
-                            registerNumberErasedAt = null,
-                            participantId = null,
-                            estimateHidden = 0,
-                            experimentalLabelShown = 1,
-                            deviceProfileId = null,
-                            cardBatchId = "NG-2026-001",
-                            appVersion = "1.0.0",
-                            modelVersion = null,
-                            configVersion = "2026.10.0"
-                        )
-                        db.screeningSessionDao().insert(entity)
-                        navController.navigate(Destinations.S09_HOME) {
-                            popUpTo(Destinations.S09_HOME) { inclusive = true }
+        // A hard rule decided before the camera (R1 to R5): the engine's answer, in doc 6 Section 3 wording
+        screeningComposable(Destinations.S14_RULE_OUTCOME) {
+            val flow = screening
+            val shown = flow?.currentState?.shownResult()
+            if (flow != null && shown != null) {
+                S14RuleOutcomeScreen(
+                    presentation = shown.presentation,
+                    shownAtMs = flow.decidedAtMs,
+                    appVersion = appVersion,
+                    modelVersion = shown.modelVersion,
+                    configVersion = shown.configVersion,
+                    cardBatchId = shown.cardBatchId,
+                    onSaveToLog = { registerNumber ->
+                        coroutineScope.launch {
+                            saveScreening(flow, registerNumber, activeDeviceProfileId(), db)
+                            navController.navigate(Destinations.S09_HOME) {
+                                popUpTo(Destinations.S09_HOME) { inclusive = true }
+                            }
                         }
                     }
+                )
+            } else {
+                // nothing to show for this state: Home, never an empty screen
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
                 }
-            )
+            }
         }
 
-        composable(Destinations.S15_CAPTURE_GUIDE) {
+        screeningComposable(Destinations.S15_CAPTURE_GUIDE) {
             S15CaptureGuideScreen(
                 onOpenCamera = {
                     navController.navigate(Destinations.S16_CAMERA)
@@ -518,11 +795,14 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S16_CAMERA) {
+        // The real camera: the photo is held in memory and analysed at S19. There is no stand-in photo (BUG-2026-003).
+        screeningComposable(Destinations.S16_CAMERA) {
             S16CameraScreen(
-                onCaptureCompleted = { _ ->
-                    sessionCapturesCount++
-                    navController.navigate(Destinations.S18_FOREHEAD_PHOTO)
+                onCaptureCompleted = { frame, metadata ->
+                    pendingPhoto = frame to metadata
+                    navController.navigate(Destinations.S19_ANALYZING) {
+                        popUpTo(Destinations.S16_CAMERA) { inclusive = true }
+                    }
                 },
                 onBack = {
                     navController.popBackStack()
@@ -530,17 +810,22 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S17_PHOTO_PROBLEM) {
+        // The photo was refused by the quality gate: the reason in words, and a retake (up to three, then a blood test)
+        screeningComposable(Destinations.S17_PHOTO_PROBLEM) {
+            val capture = screening?.currentState as? ScreeningState.Capture
             S17PhotoProblemScreen(
-                reason = lastQualityReason,
-                attempt = sessionCapturesCount,
+                reason = capture?.previousFailure,
+                attempt = (capture?.attempt ?: 1) - 1,
                 onRetake = {
-                    navController.navigate(Destinations.S16_CAMERA)
+                    navController.navigate(Destinations.S16_CAMERA) {
+                        popUpTo(Destinations.S17_PHOTO_PROBLEM) { inclusive = true }
+                    }
                 },
                 onFallbackToBloodTest = {
-                    sessionTriageAction = TriageUiAction.BLOOD_TEST
-                    sessionReasonCodes = listOf(TriageReasonCode.QUALITY_FALLBACK)
-                    navController.navigate(Destinations.S20_RESULT)
+                    val after = screening?.giveUp()
+                    if (after != null) {
+                        navController.navigate(resultRouteFor(after)) { popUpTo(Destinations.S09_HOME) }
+                    }
                 },
                 onBack = {
                     navController.popBackStack()
@@ -548,102 +833,142 @@ fun NeoGoldNavHost(
             )
         }
 
-        composable(Destinations.S18_FOREHEAD_PHOTO) {
+        // S18: the optional forehead photo (FR-15, NG-040). Offered after the chest photo has passed, before the result is
+        // shown; skipping, or a forehead photo that fails, leaves the result from the chest photo as it is.
+        screeningComposable(Destinations.S18_FOREHEAD_PHOTO) {
+            val flow = screening
             S18ForeheadPhotoScreen(
                 onAddForehead = {
-                    navController.navigate(Destinations.S16_CAMERA)
+                    if (flow?.startForeheadPhoto() == true) navController.navigate(Destinations.S16_CAMERA)
                 },
                 onSkipForehead = {
-                    navController.navigate(Destinations.S19_ANALYZING)
+                    flow?.skipForehead()
+                    navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
                 },
+                // Back is "go on without it": the result already exists and is never thrown away unseen
                 onBack = {
-                    navController.popBackStack()
-                }
+                    flow?.skipForehead()
+                    navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
+                },
+                photoProblem = (flow?.foreheadAttempts ?: 0) > 0,
+                canAdd = flow?.canAddForehead == true
             )
         }
 
-        composable(Destinations.S19_ANALYZING) {
+        screeningComposable(Destinations.S19_ANALYZING) {
+            val flow = screening
+            val photo = remember { pendingPhoto } // read once, when the screen is entered
+            val isForehead = remember { flow?.awaitingForehead == true } // the optional second photo, not the first
+            // the photo is dropped when the worker leaves this screen by any way
+            androidx.compose.runtime.DisposableEffect(Unit) { onDispose { pendingPhoto = null } }
             androidx.compose.runtime.LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(1200L) // Under 3s budget (NFR-02)
-                sessionTriageAction = TriageUiAction.NO_FURTHER_ACTION
-                sessionEstimatedLow = 8.2
-                sessionEstimatedHigh = 10.1
-                sessionThreshold = 12.0
-                navController.navigate(Destinations.S20_RESULT) {
-                    popUpTo(Destinations.S19_ANALYZING) { inclusive = true }
+                if (flow != null && photo == null) {
+                    // the screen was recreated and the photo with it: take another, which does not count as an attempt
+                    navController.navigate(
+                        Destinations.S16_CAMERA
+                    ) { popUpTo(Destinations.S19_ANALYZING) { inclusive = true } }
+                }
+                if (flow != null && photo != null && isForehead) {
+                    val outcome = flow.addForehead(photo.first)
+                    pendingPhoto = null // the photo is dropped as soon as the analysis is over
+                    if (outcome is ScreeningFlow.ForeheadOutcome.Added) {
+                        navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
+                    } else {
+                        // refused or not usable: the worker may try again or go on without it
+                        navController.navigate(Destinations.S18_FOREHEAD_PHOTO) {
+                            popUpTo(Destinations.S18_FOREHEAD_PHOTO) { inclusive = true }
+                        }
+                    }
+                } else if (flow != null && photo != null) {
+                    val after = flow.analyze(photo.first, photo.second)
+                    pendingPhoto = null // the photo is dropped as soon as the analysis is over
+                    if (after is ScreeningState.Capture) {
+                        navController.navigate(Destinations.S17_PHOTO_PROBLEM) {
+                            popUpTo(Destinations.S19_ANALYZING) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(routeAfterAnalysis(flow, after)) { popUpTo(Destinations.S09_HOME) }
+                    }
                 }
             }
             S19AnalyzingScreen(
                 onTimeoutFallback = {
-                    sessionTriageAction = TriageUiAction.BLOOD_TEST
-                    sessionReasonCodes = listOf(TriageReasonCode.QUALITY_FALLBACK)
-                    navController.navigate(Destinations.S20_RESULT) {
-                        popUpTo(Destinations.S19_ANALYZING) { inclusive = true }
+                    pendingPhoto = null
+                    if (isForehead) {
+                        // the optional photo is not worth waiting for: go on without it, the chest result is untouched
+                        flow?.skipForehead()
+                        navController.navigate(Destinations.S20_RESULT) { popUpTo(Destinations.S09_HOME) }
+                    } else {
+                        // the worker does not want to wait: a blood test, decided by the engine
+                        val after = flow?.giveUp()
+                        if (after != null) {
+                            navController.navigate(resultRouteFor(after)) { popUpTo(Destinations.S09_HOME) }
+                        }
                     }
+                },
+                fallbackLabel = if (isForehead) {
+                    com.kitalonlabs.neogold.core.designsystem.R.string.btn_skip_forehead
+                } else {
+                    com.kitalonlabs.neogold.core.designsystem.R.string.action_blood_test
                 }
             )
         }
 
-        composable(Destinations.S20_RESULT) {
-            S20ResultScreen(
-                action = sessionTriageAction,
-                nextStepText = when (sessionTriageAction) {
-                    TriageUiAction.REFER_URGENT -> "Refer urgently to neonatal inpatient unit"
-                    TriageUiAction.BLOOD_TEST -> "Order serum bilirubin test today"
-                    TriageUiAction.RECHECK -> "Recheck in 24 hours"
-                    TriageUiAction.NO_FURTHER_ACTION -> "Routine newborn care. Re-evaluate if jaundice deepens."
-                    TriageUiAction.CANNOT_SCREEN -> "Order serum bilirubin test today"
-                },
-                reasonText = if (sessionReasonCodes.isNotEmpty()) sessionReasonCodes.joinToString(", ") else null,
-                estimatedLow = sessionEstimatedLow,
-                estimatedHigh = sessionEstimatedHigh,
-                threshold = sessionThreshold,
-                recheckHours = sessionRecheckHours,
-                triageEnabled = triageEnabled,
-                onSaveToLog = { registerNumber ->
-                    coroutineScope.launch {
-                        val recheckDueTime = if (sessionTriageAction == TriageUiAction.RECHECK) {
-                            System.currentTimeMillis() + sessionRecheckHours * 3600 * 1000L
-                        } else null
-                        val entity = ScreeningSessionEntity(
-                            id = java.util.UUID.randomUUID().toString(),
-                            mode = "SCREENING",
-                            status = "COMPLETED",
-                            createdAt = System.currentTimeMillis(),
-                            completedAt = System.currentTimeMillis(),
-                            ageHours = sessionAgeHours.coerceIn(0.0, 720.0),
-                            guardianConsentConfirmed = 1,
-                            gestationalAgeWeeks = sessionGaWeeks.coerceIn(22, 44),
-                            flagJaundiceUnder24h = 0,
-                            flagDangerSigns = 0,
-                            flagPriorPhototherapy = 0,
-                            ruleOutcome = null,
-                            triageAction = sessionTriageAction.name,
-                            reasonCodes = if (sessionReasonCodes.isNotEmpty()) "[\"${sessionReasonCodes.joinToString("\",\"")}\"]" else null,
-                            estimateMgDl = if (sessionEstimatedLow != null && sessionEstimatedHigh != null) (sessionEstimatedLow!! + sessionEstimatedHigh!!) / 2.0 else null,
-                            estimateLowMgDl = sessionEstimatedLow,
-                            estimateHighMgDl = sessionEstimatedHigh,
-                            thresholdMgDl = sessionThreshold,
-                            recheckDueAt = recheckDueTime,
-                            captureAttempts = sessionCapturesCount,
-                            registerNumber = registerNumber,
-                            registerNumberErasedAt = null,
-                            participantId = null,
-                            estimateHidden = 0,
-                            experimentalLabelShown = 1,
-                            deviceProfileId = null,
-                            cardBatchId = "NG-2026-001",
-                            appVersion = "1.0.0",
-                            modelVersion = "1.0.0",
-                            configVersion = "2026.10.0"
-                        )
-                        db.screeningSessionDao().insert(entity)
+        screeningComposable(Destinations.S20_RESULT) {
+            val flow = screening
+            val shown = flow?.currentState?.shownResult()
+            if (flow != null && flow.shouldOfferForehead) {
+                // the worker has not yet chosen whether to add a forehead photo: the result shown is the final one
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    navController.navigate(Destinations.S18_FOREHEAD_PHOTO) { popUpTo(Destinations.S09_HOME) }
+                }
+            } else if (flow != null && shown != null) {
+                val presentation = shown.presentation
+                S20ResultScreen(
+                    action = presentation.uiAction,
+                    nextStepText = presentation.nextStepText(flow.decidedAtMs),
+                    reasonText = presentation.reasonText(),
+                    estimatedLow = presentation.interval?.lower,
+                    estimatedHigh = presentation.interval?.upper,
+                    threshold = presentation.thresholdMgDl,
+                    recheckHours = presentation.recheckHours ?: 0,
+                    triageEnabled = shown.triageAvailable,
+                    appVersion = appVersion,
+                    modelVersion = shown.modelVersion,
+                    configVersion = shown.configVersion,
+                    cardBatchId = shown.cardBatchId,
+                    onSaveToLog = { registerNumber ->
+                        coroutineScope.launch {
+                            saveScreening(flow, registerNumber, activeDeviceProfileId(), db)
+                            navController.navigate(Destinations.S09_HOME) {
+                                popUpTo(Destinations.S09_HOME) { inclusive = true }
+                            }
+                        }
+                    }
+                )
+            } else {
+                // A screening that was blocked (the card did not verify, the bundle is not intact) has no decision: the only
+                // thing to say is to use a blood test.
+                S20ResultScreen(
+                    action = TriageUiAction.CANNOT_SCREEN,
+                    nextStepText = stringResource(
+                        com.kitalonlabs.neogold.core.designsystem.R.string.next_use_blood_test
+                    ),
+                    reasonText = null,
+                    estimatedLow = null,
+                    estimatedHigh = null,
+                    threshold = null,
+                    triageEnabled = false,
+                    appVersion = appVersion,
+                    modelVersion = assets.modelVersion.orEmpty(),
+                    configVersion = assets.triageConfig?.configVersion.orEmpty(),
+                    onSaveToLog = {
                         navController.navigate(Destinations.S09_HOME) {
                             popUpTo(Destinations.S09_HOME) { inclusive = true }
                         }
                     }
-                }
-            )
+                )
+            }
         }
 
         // S21 to S25 Log & Settings
@@ -724,176 +1049,344 @@ fun NeoGoldNavHost(
                 },
                 onNavigateToDeleteData = {
                     navController.navigate(Destinations.S25_DELETE_DATA)
-                }
+                },
+                onNavigateToResearch = { navController.navigate(Destinations.R01_RESEARCH_UNLOCK) }
             )
         }
 
         composable(Destinations.S24_ABOUT) {
+            // everything on this screen comes from the one parsed model and config; nothing is guessed when they are missing
+            val model = assets.estimationEngine?.model
+            val summary = model?.trainingDataSummary
+            val unavailable = stringResource(com.kitalonlabs.neogold.core.designsystem.R.string.about_unavailable)
             com.kitalonlabs.neogold.feature.settings.S24AboutScreen(
+                appVersion = appVersion,
+                modelVersion = model?.modelVersion ?: unavailable,
+                configVersion = assets.triageConfig?.configVersion ?: unavailable,
+                dataSources = summary?.populations?.joinToString(", "),
+                sampleCount = summary?.sampleCount,
+                modelDescription = summary?.description,
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Destinations.S25_DELETE_DATA) {
+            // Delete all data removes the database, encrypted files, every key and the staging and crash files,
+            // then restarts the app empty (FR-33, TC-LOG-11). It also loses research items the study has not
+            // acknowledged, so the screen says how many (doc 8 Section 7.3).
+            val unsent by androidx.compose.runtime.produceState(initialValue = 0) { value = unsentResearchItems() }
             com.kitalonlabs.neogold.feature.settings.S25DeleteAllDataScreen(
-                onConfirmDelete = {
-                    coroutineScope.launch {
-                        dataStore.clearAll()
-                        navController.navigate(Destinations.S01_LANGUAGE) {
-                            popUpTo(0) { inclusive = true }
+                unsentResearchItems = unsent,
+                onConfirmDelete = onDeleteAllData,
+                onCancel = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // R01 to R09 Research Mode. Research needs the verified bundle and a research session over the open database
+        // (BUG-2026-007); the session locks itself after 5 minutes away or when the screen goes off, and every research
+        // screen then returns to R01.
+        fun NavGraphBuilder.researchSessionComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(ResearchViewModel) -> Unit
+        ) = researchComposable(route) { _ ->
+            val session = research
+            if (session != null) content(session) else IntegrityBlockedScreen(integrity)
+        }
+
+        researchSessionComposable(Destinations.R01_RESEARCH_UNLOCK) { session ->
+            val study by session.activeStudy.collectAsState()
+            val scanned by session.scannedProfile.collectAsState()
+            val lockedOut by session.isLockedOut.collectAsState()
+            val lockoutMinutes by session.lockoutMinutes.collectAsState()
+            val error by session.error.collectAsState()
+            val unlocked by session.isUnlocked.collectAsState()
+            val openHome = {
+                navController.navigate(Destinations.R02_STUDY_HOME) {
+                    popUpTo(Destinations.R01_RESEARCH_UNLOCK) { inclusive = true }
+                }
+            }
+            // A message from the last visit is not shown again.
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.clearError() }
+            // Already unlocked (Settings was opened again within the session): no second PIN.
+            androidx.compose.runtime.LaunchedEffect(unlocked) { if (unlocked) openHome() }
+
+            com.kitalonlabs.neogold.feature.research.ui.R01ResearchUnlockScreen(
+                scannedProfile = scanned,
+                existingStudyName = study?.displayName,
+                isLockedOut = lockedOut,
+                lockoutMinutes = lockoutMinutes,
+                error = error,
+                onQrScanned = session::onStudyQrScanned,
+                onUnlockWithPin = { pin -> session.unlockWithPin(pin) { openHome() } },
+                onEnrollWithPin = { pin, confirmPin ->
+                    session.enrollWithScannedProfile(pin, confirmPin) { openHome() }
+                }
+            )
+        }
+
+        researchSessionComposable(Destinations.R02_STUDY_HOME) { session ->
+            val study by session.activeStudy.collectAsState()
+            val pending by session.pendingUploadsCount.collectAsState()
+            // the card the phone works with, not the card of the last saved session (which is nothing before the first)
+            val cardStatus by androidx.compose.runtime.produceState(CardTrustStatus.UNVERIFIED) {
+                // the badge starts at UNVERIFIED and stays there if the storage is closing (a lock, a reset)
+                value = runCatching { researchCardStatus() }.getOrDefault(CardTrustStatus.UNVERIFIED)
+            }
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.refreshPendingUploads() }
+
+            study?.let {
+                com.kitalonlabs.neogold.feature.research.ui.R02StudyHomeScreen(
+                    studyName = it.displayName,
+                    studyCode = it.studyCode,
+                    siteCode = it.siteCode,
+                    cardStatus = cardStatus,
+                    pendingUploadsCount = pending,
+                    onNewParticipantSession = { navController.navigate(Destinations.R03_PARTICIPANT_CONSENT) },
+                    onEnterTsbClicked = { navController.navigate(Destinations.R05_TSB_ENTRY) },
+                    // locking turns the session state off, which sends every research screen back to R01
+                    onLockSession = session::lockResearchSession,
+                    onExportClicked = { navController.navigate(Destinations.R07_EXPORT_SYNC) }
+                )
+            }
+        }
+
+        researchSessionComposable(Destinations.R03_PARTICIPANT_CONSENT) { session ->
+            val study by session.activeStudy.collectAsState()
+            val error by session.error.collectAsState()
+            // a message from the last screen (a save error from R05, a PIN message from R01) is not shown here
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.clearError() }
+            com.kitalonlabs.neogold.feature.research.ui.R03ParticipantConsentScreen(
+                studyName = study?.displayName.orEmpty(),
+                error = error,
+                onContinueToCapture = { code, consentFormId, birthTime, ageHours, gestationalWeeks, early, danger, prior ->
+                    session.registerParticipantAndInputs(
+                        participantCode = code,
+                        consentFormId = consentFormId,
+                        birthTimeMillis = birthTime,
+                        ageHours = ageHours,
+                        gestationalAgeWeeks = gestationalWeeks,
+                        flagEarlyJaundice = early,
+                        flagDangerSigns = danger,
+                        flagPriorPhototherapy = prior,
+                        onSuccess = { navController.navigate(Destinations.R04_CAPTURE_PROTOCOL) }
+                    )
+                }
+            )
+        }
+
+        researchSessionComposable(Destinations.R04_CAPTURE_PROTOCOL) { session ->
+            val participant by session.currentParticipant.collectAsState()
+            val setup by androidx.compose.runtime.produceState<NeoGoldContainer.ResearchCaptureSetup?>(null) {
+                value = researchCaptureSetup()
+            }
+            val current = participant
+            val ready = setup
+            if (current != null && ready != null) {
+                com.kitalonlabs.neogold.feature.research.ui.R04ResearchCaptureScreen(
+                    participantCode = current.participantCode,
+                    processor = ready.processor,
+                    onProtocolCompleted = { captures ->
+                        researchCardBytes = ready.cardSignedBytes
+                        session.onCapturesCompleted(captures) { navController.navigate(Destinations.R05_TSB_ENTRY) }
+                    },
+                    onCancel = {
+                        session.clearSessionState()
+                        navController.popBackStack(Destinations.R02_STUDY_HOME, inclusive = false)
+                    }
+                )
+            }
+        }
+
+        researchSessionComposable(Destinations.R05_TSB_ENTRY) { session ->
+            val participant by session.currentParticipant.collectAsState()
+            val error by session.error.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(Unit) { session.clearError() }
+            val current = participant
+            val finish = { researchTsb: Pair<Double, String>? ->
+                researchTsbEntered = researchTsb
+                navController.navigate(Destinations.R06_SESSION_COMPLETE)
+            }
+            // With a session in progress this closes it. Opened from R02 there is none: the value is added to an earlier
+            // participant by their code (TC-RSH-11).
+            com.kitalonlabs.neogold.feature.research.ui.R05TsbEntryScreen(
+                initialParticipantCode = current?.participantCode,
+                isDeferredEntry = current == null,
+                saveError = error,
+                onSaveTsb = { code, tsbMgDl, drawTime, method ->
+                    if (current != null) {
+                        session.completeSessionWithTsb(tsbMgDl, drawTime, method, researchCardBytes) {
+                            finish(tsbMgDl to method)
+                        }
+                    } else {
+                        session.recordDeferredTsb(code, tsbMgDl, drawTime, method) {
+                            navController.popBackStack(Destinations.R02_STUDY_HOME, inclusive = false)
                         }
                     }
                 },
-                onCancel = {
-                    navController.popBackStack()
+                onSkipTsb = if (current != null) {
+                    { session.completeSessionWithTsb(null, null, null, researchCardBytes) { finish(null) } }
+                } else {
+                    null
                 }
             )
         }
 
-        // R01 to R09 Research Mode
-        composable(Destinations.R01_RESEARCH_UNLOCK) {
-            var isLockedOut by remember { mutableStateOf(false) }
-            var lockoutMinutes by remember { androidx.compose.runtime.mutableIntStateOf(0) }
-            var unlockErrorMessage by remember { mutableStateOf<String?>(null) }
-
-            com.kitalonlabs.neogold.feature.research.ui.R01ResearchUnlockScreen(
-                scannedProfile = null,
-                existingStudyName = null,
-                isLockedOut = isLockedOut,
-                lockoutMinutes = lockoutMinutes,
-                errorMessage = unlockErrorMessage,
-                onScanQrClicked = { /* QR scan integration */ },
-                onUnlockWithPin = { _ ->
-                    navController.navigate(Destinations.R02_STUDY_HOME)
-                },
-                onEnrollWithPin = { _, _ ->
-                    navController.navigate(Destinations.R02_STUDY_HOME)
-                }
-            )
-        }
-
-        composable(Destinations.R02_STUDY_HOME) {
-            com.kitalonlabs.neogold.feature.research.ui.R02StudyHomeScreen(
-                studyName = "NeoGold Clinical Validation Study",
-                studyCode = "DHK-01",
-                siteCode = "DMCH",
-                cardStatus = com.kitalonlabs.neogold.feature.research.data.CardTrustStatus.VERIFIED,
-                pendingUploadsCount = 0,
-                onNewParticipantSession = {
-                    navController.navigate(Destinations.R03_PARTICIPANT_CONSENT)
-                },
-                onEnterTsbClicked = {
-                    navController.navigate(Destinations.R05_TSB_ENTRY)
-                },
-                onLockSession = {
-                    navController.navigate(Destinations.R01_RESEARCH_UNLOCK) {
-                        popUpTo(Destinations.R02_STUDY_HOME) { inclusive = true }
+        researchSessionComposable(Destinations.R06_SESSION_COMPLETE) { session ->
+            val result by session.lastSessionResult.collectAsState()
+            result?.let {
+                com.kitalonlabs.neogold.feature.research.ui.R06SessionCompleteScreen(
+                    participantCode = it.participantCode,
+                    capturesCount = it.capturesCount,
+                    cardStatus = it.cardStatus,
+                    tsbEntered = it.tsbEntered,
+                    tsbMgDl = researchTsbEntered?.first,
+                    tsbMethod = researchTsbEntered?.second,
+                    onDoneClicked = {
+                        session.clearSessionState()
+                        researchCardBytes = null
+                        researchTsbEntered = null
+                        navController.popBackStack(Destinations.R02_STUDY_HOME, inclusive = false)
                     }
-                },
-                onExportClicked = {
-                    navController.navigate(Destinations.R07_EXPORT_SYNC)
-                }
-            )
+                )
+            }
         }
 
-        composable(Destinations.R03_PARTICIPANT_CONSENT) {
-            com.kitalonlabs.neogold.feature.research.ui.R03ParticipantConsentScreen(
-                studyName = "NeoGold Study",
-                onContinueToCapture = { code, _, _, _, _, _, _, _ ->
-                    navController.navigate(Destinations.R04_CAPTURE_PROTOCOL)
-                }
-            )
-        }
-
-        composable(Destinations.R04_CAPTURE_PROTOCOL) {
-            com.kitalonlabs.neogold.feature.research.ui.R04ResearchCaptureScreen(
-                participantCode = "SKP-0142",
-                onProtocolCompleted = { _ ->
-                    navController.navigate(Destinations.R05_TSB_ENTRY)
-                },
-                onCancel = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Destinations.R05_TSB_ENTRY) {
-            com.kitalonlabs.neogold.feature.research.ui.R05TsbEntryScreen(
-                initialParticipantCode = "SKP-0142",
-                isDeferredEntry = false,
-                onSaveTsb = { _, _, _, _ ->
-                    navController.navigate(Destinations.R06_SESSION_COMPLETE)
-                },
-                onSkipTsb = {
-                    navController.navigate(Destinations.R06_SESSION_COMPLETE)
-                }
-            )
-        }
-
-        composable(Destinations.R06_SESSION_COMPLETE) {
-            com.kitalonlabs.neogold.feature.research.ui.R06SessionCompleteScreen(
-                participantCode = "SKP-0142",
-                capturesCount = 4,
-                cardStatus = com.kitalonlabs.neogold.feature.research.data.CardTrustStatus.VERIFIED,
-                tsbEntered = true,
-                tsbMgDl = 14.2,
-                tsbMethod = "LAB",
-                onDoneClicked = {
-                    navController.navigate(Destinations.R02_STUDY_HOME) {
-                        popUpTo(Destinations.R02_STUDY_HOME) { inclusive = false }
-                    }
-                }
-            )
-        }
-
-        composable(Destinations.R07_EXPORT_SYNC) {
-            var exportProgress by remember { mutableStateOf<com.kitalonlabs.neogold.feature.research.export.ExportProgress?>(null) }
+        // R07: the encrypted export to a drive (C3) and, below it, the study server card (C4).
+        researchSessionComposable(Destinations.R07_EXPORT_SYNC) { session ->
+            val study by session.activeStudy.collectAsState()
+            val server = studyServer
+            val serverStudy = server?.study?.collectAsState()?.value
+            val serverPending = server?.pendingUploads?.collectAsState()?.value ?: 0
+            // read again whenever the screen opens: the study may have been joined or left, and uploads change the count
+            androidx.compose.runtime.LaunchedEffect(Unit) { server?.refresh() }
+            var exportProgress by remember { mutableStateOf<ExportProgress?>(null) }
             var isExporting by remember { mutableStateOf(false) }
             var exportCompleted by remember { mutableStateOf(false) }
+            var exportFailed by remember { mutableStateOf(false) }
+            var exportFileRemains by remember { mutableStateOf(false) }
+            // Tied to this screen: leaving it, or a lock that sends the worker back to R01, cancels the export, removes what
+            // it staged and discards the file it was writing.
+            val exportScope = androidx.compose.runtime.rememberCoroutineScope()
+            val contentResolver = androidx.compose.ui.platform.LocalContext.current.contentResolver
 
-            val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-                contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")
-            ) { uri ->
-                if (uri != null) {
-                    coroutineScope.launch {
-                        isExporting = true
-                        exportProgress = com.kitalonlabs.neogold.feature.research.export.ExportProgress(
-                            completedFiles = 0,
-                            totalFiles = 10,
-                            bytesProcessed = 0L,
-                            stage = com.kitalonlabs.neogold.feature.research.export.ExportStage.PREPARING,
-                            message = "Preparing export package..."
-                        )
+            // A place chosen after this screen was left, or after a lock, is deleted by the picker's owner; it is not used.
+            androidx.compose.runtime.DisposableEffect(Unit) { onDispose { exportPicker.pending.cancel() } }
+
+            fun startExport(uri: Uri) {
+                // a result that arrives after a lock (the picker was open when the screen turned off) is not acted on
+                if (isExporting || !session.isSessionOpen()) {
+                    exportPicker.pending.reject(uri)
+                    return
+                }
+                isExporting = true
+                exportFailed = false
+                exportFileRemains = false
+                exportProgress = null
+                exportScope.launch {
+                    val result = researchExport.exportToUri(
+                        contentResolver,
+                        uri,
+                        canContinue = session::isSessionOpen
+                    ) { exportProgress = it }
+                    isExporting = false
+                    result.onSuccess { exportCompleted = true }.onFailure {
+                        exportFailed = true
+                        exportFileRemains = it is ExportFileRemains
                     }
                 }
             }
 
-            com.kitalonlabs.neogold.feature.research.ui.R07ExportScreen(
-                studyCode = "DHK-01",
-                displayName = "NeoGold Clinical Validation Study",
-                hasExportKey = true,
-                exportProgress = exportProgress,
-                isExporting = isExporting,
-                exportCompleted = exportCompleted,
-                onChooseDestinationClicked = {
-                    exportLauncher.launch("neogold-export-DHK-01.zip")
-                },
-                onDoneClicked = {
+            study?.let {
+                com.kitalonlabs.neogold.feature.research.ui.R07ExportScreen(
+                    studyCode = it.studyCode,
+                    displayName = it.displayName,
+                    hasExportKey = it.exportPublicKey != null,
+                    exportProgress = exportProgress,
+                    isExporting = isExporting,
+                    exportCompleted = exportCompleted,
+                    exportFailed = exportFailed,
+                    exportFileRemains = exportFileRemains,
+                    showCloudSync = server != null,
+                    pendingUploadsCount = serverPending,
+                    serverDeviceId = serverStudy?.serverDeviceId,
+                    onUploadNowClicked = { server?.uploadNow() },
+                    onEnrollClicked = { navController.navigate(Destinations.R08_ENROLLMENT) },
+                    onLeaveStudyClicked = { navController.navigate(Destinations.R09_LEAVE_STUDY) },
+                    onChooseDestinationClicked = {
+                        exportPicker.pending.expect(::startExport)
+                        exportPicker.launch(exportFileName(it.studyCode, java.time.Instant.now()))
+                    },
+                    onDoneClicked = { navController.popBackStack() }
+                )
+            }
+        }
+        // R08 and R09 need the study server's view model as well as the research session; without both (the bundle did
+        // not verify) the block screen shows, like every research screen.
+        fun NavGraphBuilder.studyServerComposable(
+            route: String,
+            content: @Composable androidx.compose.animation.AnimatedContentScope.(StudyServerViewModel) -> Unit
+        ) = researchSessionComposable(route) { _ ->
+            val server = studyServer
+            if (server != null) content(server) else IntegrityBlockedScreen(integrity)
+        }
+
+        studyServerComposable(Destinations.R08_ENROLLMENT) { server ->
+            val scanned by server.scannedProfile.collectAsState()
+            val error by server.error.collectAsState()
+            val busy by server.isBusy.collectAsState()
+            // a scan or a message from the last visit is not shown again
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                server.clearScan()
+                server.clearError()
+                server.refresh()
+            }
+            com.kitalonlabs.neogold.feature.research.ui.R08EnrollmentScreen(
+                scannedProfile = scanned,
+                isEnrolling = busy,
+                error = error,
+                onQrScanned = server::onQrScanned,
+                onEnrollConfirmed = { code -> server.enroll(code) { navController.popBackStack() } },
+                onCancelClicked = {
+                    server.clearScan()
                     navController.popBackStack()
                 }
             )
         }
-        composable(Destinations.R08_ENROLLMENT) { PlaceholderScreen("R08: Study Enrollment") }
-        composable(Destinations.R09_LEAVE_STUDY) { PlaceholderScreen("R09: Leave Study") }
+
+        studyServerComposable(Destinations.R09_LEAVE_STUDY) { server ->
+            val study by server.study.collectAsState()
+            val pending by server.pendingUploads.collectAsState()
+            val error by server.error.collectAsState()
+            val busy by server.isBusy.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                server.clearError()
+                server.refresh()
+            }
+            // The device ID is gone once the phone has left: nothing to show but the way back.
+            val deviceId = study?.serverDeviceId
+            if (deviceId == null) {
+                androidx.compose.runtime.LaunchedEffect(Unit) { navController.popBackStack() }
+            } else {
+                com.kitalonlabs.neogold.feature.research.ui.R09LeaveStudyScreen(
+                    studyName = study?.displayName.orEmpty(),
+                    serverDeviceId = deviceId,
+                    serverHost = serverHostOf(study?.serverUrl),
+                    unsentItems = pending,
+                    isLeaving = busy,
+                    error = error,
+                    onLeaveConfirmed = { pin -> server.leave(pin) { navController.popBackStack() } },
+                    onCancelClicked = { navController.popBackStack() }
+                )
+            }
+        }
     }
 }
 
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = title)
-    }
-}
+/** The activity's "save the export" picker: ask for a place with [launch], answers go through [pending]. */
+class ExportPicker(val pending: PendingPick<Uri>, val launch: (String) -> Unit)
+
+/** The host of a study server's API address, for display: "https://intake.example.bd/v1/" shows as "intake.example.bd". */
+internal fun serverHostOf(serverUrl: String?): String =
+    serverUrl.orEmpty().substringAfter("://").substringBefore("/")

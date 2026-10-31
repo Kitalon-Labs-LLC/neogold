@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // sRGB transfer function (IEC 61966-2-1) and CIE Lab constants
+
 package com.kitalonlabs.neogold.engine.colorscience
 
 /**

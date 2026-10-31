@@ -1,6 +1,5 @@
 package com.kitalonlabs.neogold.engine.vision
 
-import com.kitalonlabs.neogold.engine.colorscience.ColorConversions
 import com.kitalonlabs.neogold.engine.colorscience.Lab
 import com.kitalonlabs.neogold.engine.colorscience.RectPx
 import com.kitalonlabs.neogold.engine.colorscience.RegionSampling
@@ -48,7 +47,7 @@ object CardSampler {
      * Samples all 23 patches on the canonical card.
      */
     fun samplePatches(card: CanonicalCardImage): Map<String, SampledPatch> {
-        val result = HashMap<String, SampledPatch>(23)
+        val result = HashMap<String, SampledPatch>(PATCH_COUNT)
 
         for ((id, patchDef) in CardGeometry.PATCHES) {
             val (pixels, satFraction) = extractRegionPixels(card, patchDef.innerSampleRect)
@@ -103,10 +102,10 @@ object CardSampler {
 
         // Skin plausibility evaluation
         val isPlausible = (meanLab.l in thresholds.minSkinL..thresholds.maxSkinL) &&
-                          (meanLab.a in thresholds.minSkinA..thresholds.maxSkinA) &&
-                          (meanLab.b in thresholds.minSkinB..thresholds.maxSkinB) &&
-                          (lumVariance <= thresholds.maxSkinVariance) &&
-                          (maxGradient <= thresholds.maxSkinEdgeGradient)
+            (meanLab.a in thresholds.minSkinA..thresholds.maxSkinA) &&
+            (meanLab.b in thresholds.minSkinB..thresholds.maxSkinB) &&
+            (lumVariance <= thresholds.maxSkinVariance) &&
+            (maxGradient <= thresholds.maxSkinEdgeGradient)
 
         return SkinWindowSample(
             innerRect = innerRect,
@@ -119,3 +118,5 @@ object CardSampler {
         )
     }
 }
+
+private const val PATCH_COUNT = 23

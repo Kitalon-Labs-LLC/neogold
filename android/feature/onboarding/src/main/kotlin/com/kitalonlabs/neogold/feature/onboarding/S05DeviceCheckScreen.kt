@@ -38,8 +38,8 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcon
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgTextButton
-import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
+import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import com.kitalonlabs.neogold.engine.camera.device.DeviceChecker
 import com.kitalonlabs.neogold.engine.camera.device.DeviceCompatibilityReport
 import com.kitalonlabs.neogold.engine.camera.device.DeviceSupportStatus
@@ -129,8 +129,6 @@ private fun DeviceSpecsCard(report: DeviceCompatibilityReport) {
         stringResource(R.string.s05_status_untested)
     }
 
-    val ramText = "${ClinicalNumberFormatter.formatInteger(report.capabilities.ramMb)} MB"
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -168,7 +166,7 @@ private fun DeviceSpecsCard(report: DeviceCompatibilityReport) {
             Spacer(modifier = Modifier.height(Dimens.SpacingSm))
 
             Text(
-                text = stringResource(R.string.s05_ram, ramText),
+                text = stringResource(R.string.s05_ram, report.capabilities.ramMb),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -257,7 +255,7 @@ private fun SupportedDevicesDialog(onDismiss: () -> Unit) {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "Tested Matrix Models (doc 1 Section 13.5):",
+                    text = stringResource(R.string.device_check_tested_models),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )

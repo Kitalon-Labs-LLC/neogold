@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // 6-term root-polynomial feature vector, 3 output channels (doc 4 Section 5.4)
+
 package com.kitalonlabs.neogold.engine.colorscience
 
 /**
@@ -60,17 +62,21 @@ class RootPolynomialCorrectionModel(
         val gb = StrictMath.sqrt(g * b)
         val br = StrictMath.sqrt(b * r)
 
-        val f0 = r; val f1 = g; val f2 = b
-        val f3 = rg; val f4 = gb; val f5 = br
+        val f0 = r
+        val f1 = g
+        val f2 = b
+        val f3 = rg
+        val f4 = gb
+        val f5 = br
 
         val x = f0 * matrix[0, 0] + f1 * matrix[1, 0] + f2 * matrix[2, 0] +
-                f3 * matrix[3, 0] + f4 * matrix[4, 0] + f5 * matrix[5, 0]
+            f3 * matrix[3, 0] + f4 * matrix[4, 0] + f5 * matrix[5, 0]
 
         val y = f0 * matrix[0, 1] + f1 * matrix[1, 1] + f2 * matrix[2, 1] +
-                f3 * matrix[3, 1] + f4 * matrix[4, 1] + f5 * matrix[5, 1]
+            f3 * matrix[3, 1] + f4 * matrix[4, 1] + f5 * matrix[5, 1]
 
         val z = f0 * matrix[0, 2] + f1 * matrix[1, 2] + f2 * matrix[2, 2] +
-                f3 * matrix[3, 2] + f4 * matrix[4, 2] + f5 * matrix[5, 2]
+            f3 * matrix[3, 2] + f4 * matrix[4, 2] + f5 * matrix[5, 2]
 
         return Xyz(
             x = StrictMath.max(0.0, x),

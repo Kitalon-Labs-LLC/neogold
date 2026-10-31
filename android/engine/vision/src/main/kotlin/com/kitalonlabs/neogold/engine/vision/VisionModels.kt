@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // default threshold table (doc 4 Section 5.2), canonical card size and luma weights
+
 package com.kitalonlabs.neogold.engine.vision
 
 import com.kitalonlabs.neogold.engine.colorscience.ColorConversions
@@ -103,7 +105,9 @@ class ImageFrame(
 ) {
     init {
         require(width > 0 && height > 0) { "Dimensions must be positive ($width x $height)" }
-        require(data.size >= width * height) { "Data size (${data.size}) must match at least width*height (${width * height})" }
+        require(
+            data.size >= width * height
+        ) { "Data size (${data.size}) must match at least width*height (${width * height})" }
     }
 
     fun getPixel(x: Int, y: Int): Int {

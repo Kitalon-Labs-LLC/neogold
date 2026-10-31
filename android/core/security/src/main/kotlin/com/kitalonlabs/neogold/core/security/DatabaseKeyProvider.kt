@@ -81,7 +81,9 @@ class DefaultDatabaseKeyProvider(
             val unwrapped = masterKeyProvider.unwrap(MasterKeyProvider.ALIAS_DB_MASTER, wrappedBytes)
             if (unwrapped.size != KEY_SIZE_BYTES) {
                 Arrays.fill(unwrapped, 0.toByte())
-                throw KeystoreLossException("Unwrapped SQLCipher database key has invalid size (${unwrapped.size} bytes; expected $KEY_SIZE_BYTES)")
+                throw KeystoreLossException(
+                    "Unwrapped SQLCipher database key has invalid size (${unwrapped.size} bytes; expected $KEY_SIZE_BYTES)"
+                )
             }
             return unwrapped
         }

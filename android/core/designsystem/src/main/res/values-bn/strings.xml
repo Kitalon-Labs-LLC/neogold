@@ -5,6 +5,10 @@
     <string name="action_recheck">%d ঘণ্টা পর আবার পরীক্ষা করুন</string>
     <string name="action_no_further">এই পরীক্ষা থেকে আর কিছু করার নেই</string>
     <string name="next_no_further">নিয়মিত যত্ন চালিয়ে যান। বিপদচিহ্নের দিকে নজর রাখুন।</string>
+    <string name="next_blood_test">আজই রক্ত পরীক্ষার জন্য পাঠান।</string>
+    <string name="next_use_blood_test">রক্ত পরীক্ষা করান।</string>
+    <string name="next_doctor_review">এই শিশুকে ডাক্তার দেখাতে হবে।</string>
+    <string name="next_recheck">%1$s সময়ে আবার দেখুন। বিপদচিহ্ন দেখা দিলে আরও আগে ফিরে আসুন।</string>
     <string name="confirm_blood">সবসময় রক্ত পরীক্ষা করে নিশ্চিত হোন।</string>
     <string name="experimental">পরীক্ষামূলক। বাংলাদেশে এখনো যাচাই করা হয়নি।</string>
     <string name="cannot_screen">নিওগোল্ড এই শিশুকে পরীক্ষা করতে পারবে না। রক্ত পরীক্ষা করান।</string>
@@ -17,6 +21,7 @@
     <string name="danger_arching">পিঠ বা ঘাড় পেছনে বেঁকে যাওয়া</string>
     <string name="q_phototherapy">শিশুকে কি আগে ফটোথেরাপি (আলোর চিকিৎসা) দেওয়া হয়েছে?</string>
     <string name="birth_time">শিশুর জন্ম কখন হয়েছে?</string>
+    <string name="birth_time_not_set">এখনো দেওয়া হয়নি। জন্মের সময় দিতে ছুঁয়ে দেখুন।</string>
     <string name="ga_label">গর্ভকাল (সপ্তাহ)</string>
     <string name="place_card">কার্ডটি শিশুর বুকের ওপর রাখুন</string>
     <string name="hold_still">ফোন স্থির রাখুন</string>
@@ -94,7 +99,7 @@
     <string name="s08_title">যাচাই সম্পন্ন হয়েছে</string>
     <string name="s08_repeatability">পুনরাবৃত্তি: %s</string>
     <string name="s08_uniformity">অভিন্নতা: %s</string>
-    <string name="s08_accuracy">সাদৃশ্য: %s</string>
+    <string name="s08_accuracy">রঙের পার্থক্য: %s</string>
     <string name="s08_btn_get_started">শুরু করুন</string>
 
     <!-- Settings S23 to S25 -->
@@ -115,8 +120,8 @@
     <string name="about_version">অ্যাপ %1$s • মডেল %2$s • কনফিগ %3$s</string>
     <string name="about_model_card_title">মডেল সারসংক্ষেপ</string>
     <string name="about_license_title">ওপেন সোর্স লাইসেন্স</string>
-    <string name="about_intended_use">উদ্দেশ্য: প্রশিক্ষিত স্বাস্থ্যকর্মীদের সিদ্ধান্ত সহায়তা। নিওগোল্ড একটি স্ক্রিনিং সহায়ক ব্যবস্থা।</string>
-    <string name="about_limitations">সীমাবদ্ধতা: শুধুমাত্র ৩৫ সপ্তাহ বা তার পরে জন্ম নেওয়া এবং ১৪ দিন পর্যন্ত বয়সী নবজাতকদের জন্য প্রযোজ্য যাদের পূর্বে ফটোথেরাপি দেওয়া হয়নি।</string>
+    <string name="about_intended_use">উদ্দেশ্য: প্রশিক্ষিত স্বাস্থ্যকর্মীদের সিদ্ধান্ত সহায়তা। নিওগোল্ড পরবর্তী ধাপ সুপারিশ করে; সিদ্ধান্ত নেন স্বাস্থ্যকর্মী।</string>
+    <string name="about_limitations">সীমাবদ্ধতা: 35 সপ্তাহ বা তার পরে জন্ম নেওয়া এবং 14 দিন পর্যন্ত বয়সী নবজাতকের জন্য, আগে ফটোথেরাপি হয়নি এমন। এখনো যাচাই করা হয়নি।</string>
 
     <!-- S25 Delete Data -->
     <string name="delete_data_title">সকল তথ্য মুছে ফেলবেন?</string>
@@ -161,6 +166,7 @@
 
     <!-- S10 Birth time & Stepper -->
     <string name="birth_time_future_error">জন্মের সময় বর্তমান সময়ের চেয়ে পরে হতে পারে না।</string>
+    <string name="birth_time_too_old_error">বয়স ৩০ দিন বা তার বেশি। জন্মের সময় আবার দেখুন।</string>
     <string name="birth_age_hours_display">এখন বয়স: %d ঘণ্টা</string>
 
     <!-- S14 Rule outcomes -->
@@ -188,6 +194,8 @@
     <string name="forehead_photo_desc">শিশুর কপালে কার্ড রেখে দ্বিতীয় ছবি তুললে অনুমানে অতিরিক্ত সাহায্য করে।</string>
     <string name="btn_add_forehead">কপালের ছবি যোগ করুন</string>
     <string name="btn_skip_forehead">কপালের ছবি বাদ দিন</string>
+    <string name="forehead_photo_problem">কপালের ছবিটি ব্যবহার করা যায়নি। কার্ডটি কপালে সমতলভাবে রেখে আবার তুলুন, অথবা ছবি ছাড়াই এগিয়ে যান।</string>
+    <string name="forehead_photo_limit">তিনবার চেষ্টা করেও কপালের ছবি ব্যবহার করা যায়নি। ছবি ছাড়াই এগিয়ে যান।</string>
 
     <!-- S19 Analyzing -->
     <string name="analyzing_title">ছবি বিশ্লেষণ করা হচ্ছে...</string>
@@ -207,6 +215,58 @@
     <string name="session_detail_title">স্ক্রীনিং বিবরণ</string>
 
     <!-- Notifications NG-048, TC-LOG-09 -->
-    <string name="notif_recheck_title">নিওগোল্ড</string>
-    <string name="notif_recheck_body">একটি ফলোআপ পরীক্ষা নির্ধারিত আছে</string>
+
+    <!-- Package F1: strings moved out of Kotlin literals -->
+    <string name="crash_report_title">ক্র্যাশ রিপোর্ট পাঠাবেন?</string>
+    <string name="crash_report_body">নিওগোল্ড আগের বার চলার সময় একটি অপ্রত্যাশিত ত্রুটির মুখোমুখি হয়েছিল। এই রিপোর্টে কোনো ব্যক্তিগত তথ্য বা ত্রুটির বার্তা নেই।</string>
+    <string name="crash_report_share">পাঠান</string>
+    <string name="crash_report_dismiss">বাদ দিন</string>
+    <string name="lock_title">নিওগোল্ড লক করা আছে</string>
+    <string name="lock_body">রোগীর স্ক্রিনিং ও রেকর্ড দেখতে ডিভাইসের যাচাই প্রয়োজন।</string>
+    <string name="lock_unlock">আনলক করুন</string>
+    <string name="result_estimated_range">অনুমানিত পরিসর</string>
+    <string name="result_threshold">সীমা: %1$s %2$s</string>
+    <string name="version_line_card">অ্যাপ %1$s • মডেল %2$s • কনফিগ %3$s • কার্ড %4$s</string>
+    <string name="step_of">ধাপ %1$s / %2$s</string>
+    <string name="age_now_hours">এখনকার বয়স: %1$s ঘণ্টা</string>
+    <string name="research_participant">অংশগ্রহণকারী: %1$s</string>
+    <string name="research_mode_badge">গবেষণা মোড</string>
+    <string name="research_consent_study">সম্মতিপত্র: %1$s • স্টাডি: %2$s</string>
+    <string name="log_row_age">বয়স: %1$s ঘণ্টা • %2$s</string>
+    <string name="log_row_register">রেজিস্টার: %1$s</string>
+    <string name="manual_capture">নিজে ছবি তুলুন</string>
+    <string name="log_ga_age">গর্ভকাল %1$s সপ্তাহ • %2$s ঘণ্টা</string>
+    <string name="device_check_tested_models">পরীক্ষার জন্য পরিকল্পিত মডেল (এখনো পরীক্ষা হয়নি):</string>
+    <string name="register_example">যেমন 12/345 বা OPD-2027-15</string>
+    <string name="notification_title">নিওগোল্ড</string>
+    <string name="recheck_notification_text">আবার পরীক্ষার সময় হয়েছে</string>
+    <string name="home_recent_reg">রেজি. %1$s • বয়স %2$s ঘণ্টা</string>
+    <string name="home_recent_session">সেশন • বয়স %1$s ঘণ্টা</string>
+    <string name="ga_select_hint">পূর্ণ সপ্তাহ বেছে নিন (22 থেকে 44)</string>
+    <string name="consent_explanation">স্ক্রিনিংয়ের জন্য বাবা-মা বা যত্নদাতার স্পষ্ট সম্মতি প্রয়োজন। কোনো নাম বা ব্যক্তিগত পরিচয় সংরক্ষণ করা হয় না।</string>
+    <string name="btn_return_home">হোমে ফিরে যান</string>
+    <string name="delete_permanent_title">স্থায়ীভাবে মুছে ফেলা</string>
+    <string name="detail_clinical_info">ক্লিনিক্যাল তথ্য</string>
+    <string name="detail_date_time">তারিখ ও সময়</string>
+    <string name="detail_register_no">রেজিস্টার নম্বর</string>
+    <string name="detail_none">নেই</string>
+    <string name="detail_gestational_age">গর্ভকাল</string>
+    <string name="detail_weeks">%1$s সপ্তাহ</string>
+    <string name="detail_age_at_screening">স্ক্রিনিংয়ের সময় বয়স</string>
+    <string name="detail_hours">%1$s ঘণ্টা</string>
+    <string name="detail_estimated_bilirubin">অনুমানিত বিলিরুবিন</string>
+    <string name="detail_mgdl">%1$s mg/dL</string>
+    <string name="detail_treatment_threshold">চিকিৎসার সীমা</string>
+    <string name="detail_reason_codes">কারণের কোড</string>
+    <string name="detail_traceability">ট্রেসযোগ্যতা ও সংস্করণ</string>
+    <string name="detail_app_version">অ্যাপ সংস্করণ</string>
+    <string name="detail_model_version">মডেল সংস্করণ</string>
+    <string name="detail_config_version">কনফিগ সংস্করণ</string>
+    <string name="detail_card_batch">কার্ড ব্যাচ আইডি</string>
+    <string name="detail_session_id">সেশন আইডি</string>
+    <string name="detail_not_available">প্রযোজ্য নয়</string>
+    <string name="about_data_sources">তথ্যের উৎস: %1$s (%2$s নমুনা)।</string>
+    <string name="about_data_sources_unknown">তথ্যের উৎস: পাওয়া যায়নি।</string>
+    <string name="about_unavailable">পাওয়া যায়নি</string>
+    <string name="about_model_note">%1$s</string>
 </resources>

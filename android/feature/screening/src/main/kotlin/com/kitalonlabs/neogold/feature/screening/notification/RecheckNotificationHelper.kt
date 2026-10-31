@@ -1,13 +1,16 @@
 package com.kitalonlabs.neogold.feature.screening.notification
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.kitalonlabs.neogold.core.designsystem.R
 
 /**
  * Handles scheduling and displaying local recheck notifications (NG-048, FR-36, NFR-13, TC-LOG-09).
@@ -47,8 +50,8 @@ object RecheckNotificationHelper {
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("NeoGold")
-            .setContentText("A recheck is due")
+            .setContentTitle(context.getString(R.string.notification_title))
+            .setContentText(context.getString(R.string.recheck_notification_text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
@@ -61,14 +64,27 @@ object RecheckNotificationHelper {
     }
 
     /**
-     * Shows the notification if permissions allow.
+     * Shows the notification only if the user has allowed notifications. When they are blocked,
+     * nothing is posted and the app carries on: the Home screen due list still shows the recheck
+     * (FR-36, TC-LOG-09; BUG-2026-034).
      */
     fun showRecheckNotification(context: Context, contentIntent: PendingIntent? = null) {
+        // POST_NOTIFICATIONS is a runtime permission from API 33. Earlier versions have no such
+        // permission, so there the only switch is the user's notification setting.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+        } else if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            return
+        }
         try {
             val notification = buildNotification(context, contentIntent)
             NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
         } catch (_: SecurityException) {
-            // Notification permission blocked on API 33+ (handled gracefully by Home screen due list)
+            // The permission can still be revoked between the check and the call.
         }
     }
 }

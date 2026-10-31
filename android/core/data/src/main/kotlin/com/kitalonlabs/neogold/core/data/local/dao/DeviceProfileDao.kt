@@ -15,8 +15,12 @@ interface DeviceProfileDao {
     @Update
     suspend fun update(profile: DeviceProfileEntity)
 
-    @Query("SELECT * FROM device_profile WHERE status = 'ACTIVE' LIMIT 1")
+    @Query("SELECT * FROM device_profile WHERE status = 'ACTIVE' ORDER BY calibrated_at DESC LIMIT 1")
     suspend fun getActiveProfile(): DeviceProfileEntity?
+
+    /** Retires every active profile except [keepId], which is how a new profile replaces the old one without a gap. */
+    @Query("UPDATE device_profile SET status = 'SUPERSEDED' WHERE status = 'ACTIVE' AND id != :keepId")
+    suspend fun supersedeOtherProfiles(keepId: String)
 
     @Query("SELECT * FROM device_profile WHERE id = :id")
     suspend fun getProfileById(id: String): DeviceProfileEntity?

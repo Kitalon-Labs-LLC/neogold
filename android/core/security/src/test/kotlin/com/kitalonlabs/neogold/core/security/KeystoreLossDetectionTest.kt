@@ -3,13 +3,13 @@ package com.kitalonlabs.neogold.core.security
 import android.content.Context
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import java.io.File
-import org.junit.Assert.assertThrows
 
 @RunWith(RobolectricTestRunner::class)
 class KeystoreLossDetectionTest {

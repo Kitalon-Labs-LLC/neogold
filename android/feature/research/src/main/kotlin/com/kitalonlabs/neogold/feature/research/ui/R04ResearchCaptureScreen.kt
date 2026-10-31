@@ -27,82 +27,92 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
+import com.kitalonlabs.neogold.engine.camera.host.CameraMode
+import com.kitalonlabs.neogold.engine.camera.host.CameraSession
+import com.kitalonlabs.neogold.engine.camera.ui.CameraPreviewHost
+import com.kitalonlabs.neogold.engine.vision.QualityReasonCode
+import com.kitalonlabs.neogold.feature.research.capture.CaptureTooLargeException
+import com.kitalonlabs.neogold.feature.research.capture.ProcessedCapture
+import com.kitalonlabs.neogold.feature.research.capture.ResearchCaptureProcessor
 import com.kitalonlabs.neogold.feature.research.data.ResearchCaptureInput
-
-data class ProtocolStep(
-    val siteCode: String,
-    val siteDisplayName: String,
-    val guidance: String,
-    val isFlash: Boolean
-)
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
+import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 val RESEARCH_PROTOCOL_STEPS = listOf(
+    ProtocolStep("STERNUM", ResearchR.string.r04_site_sternum, ResearchR.string.r04_guidance_sternum, isFlash = false),
     ProtocolStep(
-        siteCode = "STERNUM",
-        siteDisplayName = "Sternum",
-        guidance = "Place the NeoGold card flat on the infant's sternum with the skin window clear. Hold phone 15–20 cm above the card parallel to the surface.",
+        "FOREHEAD",
+        ResearchR.string.r04_site_forehead,
+        ResearchR.string.r04_guidance_forehead,
         isFlash = false
     ),
     ProtocolStep(
-        siteCode = "FOREHEAD",
-        siteDisplayName = "Forehead",
-        guidance = "Place the card gently on the infant's forehead. Keep the camera parallel to the card under ambient lighting.",
-        isFlash = false
-    ),
-    ProtocolStep(
-        siteCode = "SCLERA_FLASH",
-        siteDisplayName = "Sclera (Flash)",
-        guidance = "Point camera at eye with card adjacent. Flash will fire to capture calibrated scleral reflection.",
+        "SCLERA_FLASH",
+        ResearchR.string.r04_site_sclera_flash,
+        ResearchR.string.r04_guidance_sclera_flash,
         isFlash = true
     ),
     ProtocolStep(
-        siteCode = "SCLERA_NOFLASH",
-        siteDisplayName = "Sclera (Ambient / No Flash)",
-        guidance = "Keep camera positioned at eye with card adjacent under ambient lighting without flash.",
+        "SCLERA_NOFLASH",
+        ResearchR.string.r04_site_sclera_ambient,
+        ResearchR.string.r04_guidance_sclera_ambient,
         isFlash = false
     )
 )
 
+private enum class CaptureProblem { FAILED, TOO_LARGE }
+
 /**
  * R04: Research Capture Protocol Screen (FR-27, NG-030, NG-041, doc 6 Section 5).
- * Guides 4-site capture: Sternum, Forehead, Sclera Flash, Sclera No-Flash.
+ * Guides 4-site capture: Sternum, Forehead, Sclera Flash, Sclera No-Flash, with the phone's own camera.
  * STRICTLY BLINDED: No estimate, triage category, rule outcome, or threshold is ever rendered
- * or exposed in the accessibility tree (FR-27, TC-RSH-10).
+ * or exposed in the accessibility tree (FR-27, TC-RSH-10). The only thing said about a photo is a quality problem the
+ * health worker can fix by retaking it.
+ *
+ * Every photo is checked, sanitized and sized by [processor]; a photo with a quality problem is offered for a retake and
+ * can still be kept, because research continues with the card and the light that are there (TC-CARD-02).
  */
 @Composable
 fun R04ResearchCaptureScreen(
     participantCode: String,
+    processor: ResearchCaptureProcessor,
     onProtocolCompleted: (List<ResearchCaptureInput>) -> Unit,
     onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-    // Injected mock image generator or real camera capture callback
-    onCaptureImage: (site: String, isFlash: Boolean) -> ByteArray = { site, _ ->
-        // Synthetic mock image bytes for research testing harness
-        "MOCK_IMAGE_DATA_FOR_${site}_${System.currentTimeMillis()}".toByteArray()
-    }
+    modifier: Modifier = Modifier
 ) {
     var currentStepIndex by remember { mutableIntStateOf(0) }
     val capturedItems = remember { mutableStateListOf<ResearchCaptureInput>() }
+    var session by remember { mutableStateOf<CameraSession?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var pending by remember { mutableStateOf<ProcessedCapture?>(null) }
+    var problem by remember { mutableStateOf<CaptureProblem?>(null) }
+    var attempt by remember { mutableIntStateOf(1) }
+    val scope = rememberCoroutineScope()
 
-    val currentStep = if (currentStepIndex < RESEARCH_PROTOCOL_STEPS.size) {
-        RESEARCH_PROTOCOL_STEPS[currentStepIndex]
-    } else {
-        null
+    val currentStep = RESEARCH_PROTOCOL_STEPS.getOrNull(currentStepIndex)
+
+    fun keep(capture: ResearchCaptureInput) {
+        capturedItems.add(capture)
+        pending = null
+        attempt = 1
+        currentStepIndex++
     }
 
     Column(
@@ -113,14 +123,13 @@ fun R04ResearchCaptureScreen(
             .verticalScroll(rememberScrollState())
             .testTag("r04_screen")
     ) {
-        // Persistent Research Mode Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(ResearchR.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.testTag("r04_research_badge")
@@ -137,7 +146,7 @@ fun R04ResearchCaptureScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "4-Site Research Protocol",
+            text = stringResource(ResearchR.string.r04_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -145,93 +154,31 @@ fun R04ResearchCaptureScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Step Progress Indicator
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .testTag("r04_step_indicator"),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            RESEARCH_PROTOCOL_STEPS.forEachIndexed { index, step ->
-                val isCompleted = index < capturedItems.size
-                val isCurrent = index == currentStepIndex
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(
-                                when {
-                                    isCompleted -> MaterialTheme.colorScheme.primary
-                                    isCurrent -> MaterialTheme.colorScheme.primaryContainer
-                                    else -> MaterialTheme.colorScheme.surfaceVariant
-                                }
-                            )
-                            .border(
-                                width = if (isCurrent) 2.dp else 1.dp,
-                                color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                                shape = CircleShape
-                            )
-                    ) {
-                        if (isCompleted) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        } else {
-                            Text(
-                                text = "${index + 1}",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = step.siteDisplayName.split(" ").first(),
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                        color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
+        StepIndicator(currentStepIndex = currentStepIndex, completed = capturedItems.size)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         if (currentStep != null) {
             Card(
                 shape = RoundedCornerShape(CardCornerRadius),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("r04_instruction_card")
+                modifier = Modifier.fillMaxWidth().testTag("r04_instruction_card")
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Step ${currentStepIndex + 1} of ${RESEARCH_PROTOCOL_STEPS.size}",
+                        text = stringResource(
+                            ResearchR.string.r04_step_of,
+                            currentStepIndex + 1,
+                            RESEARCH_PROTOCOL_STEPS.size
+                        ),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = currentStep.siteDisplayName,
+                        text = stringResource(currentStep.siteNameRes),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -239,77 +186,92 @@ fun R04ResearchCaptureScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = currentStep.guidance,
+                        text = stringResource(currentStep.guidanceRes),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Simulated Camera Viewfinder Frame
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .height(260.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                            .testTag("r04_viewfinder")
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = NgIcons.Eye,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Camera Ready • Card Detection Active",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        CameraPreviewHost(
+                            mode = CameraMode.Stills,
+                            onSession = { session = it },
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            NgPrimaryButton(
-                text = "Capture ${currentStep.siteDisplayName}",
-                onClick = {
-                    val bytes = onCaptureImage(currentStep.siteCode, currentStep.isFlash)
-                    capturedItems.add(
-                        ResearchCaptureInput(
-                            site = currentStep.siteCode,
-                            attemptNumber = 1,
-                            imageBytes = bytes
-                        )
+            val issue = pending
+            if (issue != null) {
+                QualityDecision(
+                    problems = issue.qualityProblems,
+                    onRetake = {
+                        pending = null
+                        attempt++
+                    },
+                    onKeep = { keep(issue.input) }
+                )
+            } else {
+                problem?.let {
+                    Text(
+                        text = stringResource(
+                            if (it == CaptureProblem.TOO_LARGE) ResearchR.string.r04_too_large else ResearchR.string.r04_capture_failed
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp).testTag("r04_error")
                     )
-                    currentStepIndex++
-                },
-                modifier = Modifier.testTag("r04_capture_button")
-            )
+                }
+                NgPrimaryButton(
+                    text = if (busy) {
+                        stringResource(ResearchR.string.r04_capturing)
+                    } else {
+                        stringResource(ResearchR.string.r04_capture_button, stringResource(currentStep.siteNameRes))
+                    },
+                    enabled = session != null && !busy,
+                    onClick = {
+                        val open = session ?: return@NgPrimaryButton
+                        busy = true
+                        problem = null
+                        scope.launch {
+                            try {
+                                val result = processor.capture(open, currentStep.siteCode, attempt, currentStep.isFlash)
+                                if (result.qualityProblems.isEmpty()) keep(result.input) else pending = result
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (_: CaptureTooLargeException) {
+                                problem = CaptureProblem.TOO_LARGE
+                            } catch (_: Exception) {
+                                problem = CaptureProblem.FAILED
+                            } finally {
+                                busy = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.testTag("r04_capture_button")
+                )
+            }
         } else {
-            // All 4 captures completed
             Card(
                 shape = RoundedCornerShape(CardCornerRadius),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("r04_complete_card")
+                modifier = Modifier.fillMaxWidth().testTag("r04_complete_card")
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
@@ -318,14 +280,14 @@ fun R04ResearchCaptureScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "All 4 Protocol Captures Recorded",
+                        text = stringResource(ResearchR.string.r04_complete_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Images have been secured in memory. Next, record paired TSB measurement.",
+                        text = stringResource(ResearchR.string.r04_complete_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -335,10 +297,8 @@ fun R04ResearchCaptureScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             NgPrimaryButton(
-                text = "Continue to TSB Entry",
-                onClick = {
-                    onProtocolCompleted(capturedItems.toList())
-                },
+                text = stringResource(ResearchR.string.r04_continue_tsb),
+                onClick = { onProtocolCompleted(capturedItems.toList()) },
                 modifier = Modifier.testTag("r04_proceed_button")
             )
         }
@@ -346,9 +306,107 @@ fun R04ResearchCaptureScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         NgSecondaryButton(
-            text = "Cancel Session",
+            text = stringResource(ResearchR.string.r04_cancel),
             onClick = onCancel,
             modifier = Modifier.testTag("r04_cancel_button")
         )
     }
+}
+
+@Composable
+private fun StepIndicator(currentStepIndex: Int, completed: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("r04_step_indicator"),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RESEARCH_PROTOCOL_STEPS.forEachIndexed { index, step ->
+            val isCompleted = index < completed
+            val isCurrent = index == currentStepIndex
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isCompleted -> MaterialTheme.colorScheme.primary
+                                isCurrent -> MaterialTheme.colorScheme.primaryContainer
+                                else -> MaterialTheme.colorScheme.surfaceVariant
+                            }
+                        )
+                        .border(
+                            width = if (isCurrent) 2.dp else 1.dp,
+                            color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                            shape = CircleShape
+                        )
+                ) {
+                    if (isCompleted) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "${index + 1}",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isCurrent) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(step.siteNameRes).substringBefore(" ("),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    color = if (isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/** The photo has a quality problem the health worker can fix: say which, and let them retake it or keep it. */
+@Composable
+private fun QualityDecision(problems: List<QualityReasonCode>, onRetake: () -> Unit, onKeep: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().testTag("r04_quality_issue")) {
+        Text(
+            text = stringResource(ResearchR.string.r04_quality_issue, stringResource(reasonText(problems.first()))),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        NgPrimaryButton(
+            text = stringResource(ResearchR.string.r04_retake),
+            onClick = onRetake,
+            modifier = Modifier.testTag("r04_retake_button")
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        NgSecondaryButton(
+            text = stringResource(ResearchR.string.r04_keep),
+            onClick = onKeep,
+            modifier = Modifier.testTag("r04_keep_button")
+        )
+    }
+}
+
+private fun reasonText(reason: QualityReasonCode): Int = when (reason) {
+    QualityReasonCode.NO_CARD -> R.string.retake_no_card
+    QualityReasonCode.CARD_ANGLE -> R.string.retake_card_angle
+    QualityReasonCode.NONUNIFORM_PATCHES -> R.string.retake_nonuniform_patches
+    QualityReasonCode.BLUR -> R.string.retake_blur
+    QualityReasonCode.GLARE -> R.string.retake_glare
+    QualityReasonCode.UNDEREXPOSED -> R.string.retake_underexposed
+    QualityReasonCode.OVEREXPOSED -> R.string.retake_overexposed
+    QualityReasonCode.UNEVEN_LIGHT -> R.string.retake_uneven_light
+    QualityReasonCode.HIGH_RESIDUAL -> R.string.retake_high_residual
+    QualityReasonCode.WINDOW_NOT_SKIN -> R.string.retake_window_not_skin
 }

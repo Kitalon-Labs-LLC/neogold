@@ -1,7 +1,9 @@
 package com.kitalonlabs.neogold.core.security
 
 import android.content.Context
+import timber.log.Timber
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 
 sealed interface KeystoreHealthStatus {
     object Healthy : KeystoreHealthStatus
@@ -32,19 +34,25 @@ class DefaultKeystoreRecoveryManager(
     private val databaseName: String = "neogold.db"
 ) : KeystoreRecoveryManager {
 
+    @Suppress("TooGenericExceptionCaught") // a probe that fails in any way means the stores cannot be trusted
     override fun checkKeystoreHealth(): KeystoreHealthStatus {
-        try {
+        return try {
             if (databaseKeyProvider.hasWrappedKey()) {
                 databaseKeyProvider.verifyKeyDecryption()
             }
             if (fileKeysetProvider.hasWrappedKeyset()) {
                 fileKeysetProvider.verifyKeysetDecryption()
             }
-            return KeystoreHealthStatus.Healthy
+            KeystoreHealthStatus.Healthy
         } catch (e: KeystoreLossException) {
-            return KeystoreHealthStatus.LossDetected(e.message ?: "Keystore key missing or unrecoverable", e)
-        } catch (e: Throwable) {
-            return KeystoreHealthStatus.LossDetected("Keystore error: ${e.message}", e)
+            Timber.w("Keystore health probe found a lost key: %s", e.javaClass.name)
+            KeystoreHealthStatus.LossDetected(e.message ?: "Keystore key missing or unrecoverable", e)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Not Throwable: an OutOfMemoryError is not a lost key. Class name only, never the message (doc 8 6.6).
+            Timber.w("Keystore health probe failed: %s", e.javaClass.name)
+            KeystoreHealthStatus.LossDetected("Keystore error: ${e.javaClass.simpleName}", e)
         }
     }
 

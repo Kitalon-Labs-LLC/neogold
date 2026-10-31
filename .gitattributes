@@ -1,0 +1,2 @@
+# The bundle manifest vector is hashed byte for byte, so no checkout may change its line endings.
+testdata/bundle-manifest/* -text

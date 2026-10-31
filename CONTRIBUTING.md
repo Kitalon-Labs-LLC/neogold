@@ -18,16 +18,18 @@ NeoGold software is licensed under the [MIT License](LICENSE). However, per **Se
 | Branch | Purpose | Lifetime |
 |---|---|---|
 | `main` | Stable, reviewed code. Every commit on `main` has passed CI and two-person review. Release tags `vX.Y.Z` are cut from here (or from `release/X.Y`). | Permanent |
-| `dev` | Integration branch. All day-to-day work lands here first. | Permanent |
-| `pNN-short-name` | One work package (e.g., `p16-sync-client`). Branched from `dev`, merged back into `dev` by pull request. | Deleted on merge |
-| `fix/short-name`, `docs/short-name`, `chore/short-name` | Small changes outside a work package. Branched from `dev`, merged into `dev`. | Deleted on merge |
+| `dev` | Integration branch. The repository owner commits and pushes here directly; CI runs on every push. All other contributors land work here by pull request. | Permanent |
+| `pNN-short-name` | One work package (e.g., `p16-sync-client`) from an outside contributor. Branched from `dev`, merged back into `dev` by pull request. The owner works on `dev` and does not need one. | Deleted on merge |
+| `fix/short-name`, `docs/short-name`, `chore/short-name` | Small changes outside a work package, from an outside contributor. Branched from `dev`, merged into `dev`. | Deleted on merge |
 | `release/X.Y` | Cut from `main` at code freeze (doc 12 Section 2). Fixes land on `dev` first and are cherry-picked. | Kept for the life of the release |
 | `hotfix/X.Y.Z-description` | Branched from `release/X.Y`; merged into the release branch and back into `dev`. | Deleted on merge |
 
 Rules:
 
-- **Never commit directly to `main` or `dev`.** Everything arrives by pull request.
-- **Feature branches target `dev`**, not `main`. Do not stack a new work package on an unmerged one; merge the previous package into `dev` first.
+- **Never commit directly to `main`.** It moves only by a pull request from `dev`. The repository owner commits to `dev` directly (decided 2026-10-27); every other contributor opens a pull request into `dev`.
+- **Never force-push** `dev` or `main`.
+- **No AI attribution on any commit.** No `Co-Authored-By` trailer naming an AI tool, no vendor address, no "Generated with" footer. `tools/check_commit_attribution.py` enforces it in CI; `git config core.hooksPath tools/hooks` also checks it before each local commit.
+- **Contributor branches target `dev`**, not `main`. Do not stack a new work package on an unmerged one; merge the previous package into `dev` first.
 - **`dev` is promoted to `main`** by a pull request from `dev` to `main` once `dev` is green and the milestone is reviewed.
 - **Branches are short-lived.** The repository deletes head branches automatically on merge. A branch with no open pull request should not exist on the remote.
 
@@ -39,7 +41,7 @@ Every task or work package must follow these steps:
 
 1. **Read First:** Read all referenced sections in `docs/` and `CLAUDE.md`. Do not skim; details are regulatory and clinical requirements.
 2. **Plan & Align:** List files to create/change, tests by `TC-` ID, open questions, and hazards/risks. Stop and get approval before implementation.
-3. **Branch & Small Commits:** Create the branch `pNN-short-name` from an up-to-date `dev` and make incremental commits.
+3. **Small Commits:** Make incremental commits. The owner commits on `dev`; an outside contributor creates the branch `pNN-short-name` from an up-to-date `dev`.
 4. **Test-First for Pure Engines:** For engine modules (`colorscience`, `estimation`, `triage`, `cardtrust`), write unit tests cited by `TC-` ID from `docs/10_Test_Cases.md` before writing the engine code.
 5. **Run Local Checks:** Run the relevant test suites and verify traceability:
    ```bash
@@ -47,7 +49,7 @@ Every task or work package must follow these steps:
    ```
 6. **Mandatory Reviewers:** Run the `safety-reviewer` subagent on any change touching clinical logic, triage, configs, or quality gates, and `privacy-security-reviewer` on data layer, permissions, network, or crypto.
 7. **Documentation Updates:** Update docs, schemas, and `CLAUDE.md` command tables if anything changed.
-8. **Pull Request:** Open a PR against `dev` for review. Two-person review is required before merging. The branch is deleted once merged.
+8. **Land it:** The owner pushes to `dev` once the local checks pass. An outside contributor opens a PR against `dev`; two-person review is required before merging, and the branch is deleted once merged. Promotion from `dev` to `main` is always a PR with two-person review.
 
 ---
 
@@ -59,4 +61,17 @@ Every pull request must fulfill:
 - [ ] No patient data (no real newborn data, photos, names, or identifiers) anywhere in tests, fixtures, or code.
 - [ ] Documentation updated in the same PR to match any behavioral changes.
 - [ ] CI checks pass green.
-- [ ] PR description details manual verification steps for the second approver.
+- [ ] PR description (or the commit message, for the owner) details manual verification steps for the second approver.
+- [ ] No AI attribution in any commit message.
+
+---
+
+## 5. Static Analysis (detekt)
+
+`./gradlew detekt` runs on every Android module in CI, and one finding fails the build. The rules and thresholds are in `android/config/detekt/detekt.yml`; the four pure engines add `detekt-engine.yml`, which bans importing `java.lang.Math` and the `kotlin.math` functions that `StrictMath` replaces. A direct call such as `Math.pow(x, 2.0)` needs no import, so only `tools/check_strictmath.py` catches it (BUG-2026-047).
+
+- **Fix, do not baseline.** There is no baseline file. Unused code, swallowed exceptions, locale-dependent formatting and similar findings are fixed.
+- **Suppress with a reason.** Use `@Suppress("Rule") // why` on the smallest scope. A temporary suppression names the package that removes it. Numbers that are a published standard, a byte layout or the clinical rule stay literal, with a file-level `@Suppress("MagicNumber")` that names the source.
+- **Size and branching limits** (`LongMethod` 120, `CyclomaticComplexMethod` 25, `NestedBlockDepth` 5, 3 returns or throws per function, 8 function and 10 constructor parameters, 15 functions per type, 140 characters per line) sit where the code is today. They stop new growth and are lowered as the packages that rewrite the suppressed functions land.
+- **Formatting is automatic:** `./gradlew :<module>:detekt --auto-correct`. The flag applies to the task right before it, so repeat it for every module you list. Run it twice: the second pass fixes what the first one exposed.
+- **Do not split a hardcoded UI string with `+` to satisfy the line limit.** `tools/check_strings.py` counts string literals, and its baseline can only shrink.

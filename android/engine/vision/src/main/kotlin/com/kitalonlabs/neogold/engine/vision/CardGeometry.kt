@@ -27,10 +27,10 @@ object CardGeometry {
 
     // Marker centers in canonical pixels
     val MARKER_CENTERS = mapOf(
-        0 to Point2D(110.0, 110.0),   // Top-Left (TL): x=30+80, y=30+80
-        1 to Point2D(1090.0, 110.0),  // Top-Right (TR): x=1010+80, y=30+80
-        2 to Point2D(1090.0, 650.0),  // Bottom-Right (BR): x=1010+80, y=570+80
-        3 to Point2D(110.0, 650.0)    // Bottom-Left (BL): x=30+80, y=570+80
+        0 to Point2D(110.0, 110.0), // Top-Left (TL): x=30+80, y=30+80
+        1 to Point2D(1090.0, 110.0), // Top-Right (TR): x=1010+80, y=30+80
+        2 to Point2D(1090.0, 650.0), // Bottom-Right (BR): x=1010+80, y=570+80
+        3 to Point2D(110.0, 650.0) // Bottom-Left (BL): x=30+80, y=570+80
     )
 
     // Marker bounding boxes in canonical pixels
@@ -43,6 +43,7 @@ object CardGeometry {
 
     // Punched skin window: 24 mm x 24 mm at x=36 mm, y=26 mm
     val WINDOW_OUTER_RECT = RectPx(360, 260, 240, 240)
+
     // Inner 70% linear region: 16.8 mm x 16.8 mm at x=39.6 mm, y=29.6 mm
     val WINDOW_INNER_RECT = RectPx(396, 296, 168, 168)
 
@@ -54,7 +55,7 @@ object CardGeometry {
         Pair("G2", "G2D"), // Gray 77 (top center vs bottom right)
         Pair("G4", "G4D"), // Gray 51 (top left vs bottom right)
         Pair("K5", "K5D"), // Medium skin, mid-yellow (top right vs bottom left)
-        Pair("K8", "K8D")  // Dark skin, mid-yellow (top center vs bottom left)
+        Pair("K8", "K8D") // Dark skin, mid-yellow (top center vs bottom left)
     )
 
     // Gray ramp patches (ordered lightest G1 to darkest G7)

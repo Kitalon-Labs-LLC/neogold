@@ -13,7 +13,8 @@ class MonotonePiecewiseLinear(
                 "Knots x coordinates must be strictly increasing: knots[$i].x=${knots[i].first} >= knots[${i + 1}].x=${knots[i + 1].first}"
             }
             require(knots[i].second <= knots[i + 1].second) {
-                "Knots y coordinates must be monotonically non-decreasing: knots[$i].y=${knots[i].second} > knots[${i + 1}].y=${knots[i + 1].second}"
+                "Knots y coordinates must be monotonically non-decreasing: " +
+                    "knots[$i].y=${knots[i].second} > knots[${i + 1}].y=${knots[i + 1].second}"
             }
         }
     }
@@ -138,7 +139,7 @@ object MonotonicLinearizer {
                 finalKnots.add(k)
             } else {
                 val prev = finalKnots.last()
-                val x = if (k.first <= prev.first) prev.first + 1e-6 else k.first
+                val x = if (k.first <= prev.first) prev.first + KNOT_X_NUDGE else k.first
                 val y = if (k.second < prev.second) prev.second else k.second
                 finalKnots.add(x to y)
             }
@@ -179,3 +180,6 @@ class PerChannelLinearizer(
         }
     }
 }
+
+/** Smallest x step used to keep knot x coordinates strictly increasing. */
+private const val KNOT_X_NUDGE = 1e-6

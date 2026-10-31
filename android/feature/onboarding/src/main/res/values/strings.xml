@@ -1,0 +1,23 @@
+<resources>
+    <!-- S06 Card scan (C1) -->
+    <string name="s06_looking">Looking for the QR code…</string>
+    <string name="s06_checking">Checking the card…</string>
+    <string name="s06_card_expired">This card has expired. Use a card from a newer batch.</string>
+    <string name="s06_card_revoked">This card batch has been withdrawn. Use a card from a newer batch.</string>
+    <string name="s06_card_unreadable">That QR code is not a NeoGold card. Try again, or use another card.</string>
+    <string name="s06_card_not_saved">The card could not be saved on this phone. Try again.</string>
+    <string name="s06_scan_again">Scan again</string>
+    <string name="s06_verified_badge">VERIFIED</string>
+
+    <!-- S07 Camera qualification (C1) -->
+    <string name="s07_checking">Checking the photo…</string>
+    <string name="s07_judging">Checking how this phone\'s camera sees colors…</string>
+    <string name="s07_retake_no_card">The card was not found. Lay the card flat on a table and make sure all 4 corners can be seen.</string>
+    <string name="s07_not_saved">The result could not be saved on this phone. Take the 3 photos again.</string>
+    <string name="s07_photo_failed">The photo could not be taken. Try again.</string>
+    <string name="s07_card_missing">The scanned card is not saved on this phone. Go back and scan it again.</string>
+
+    <!-- Re-qualification (NG-044) -->
+    <string name="requalify_30_days">This phone\'s camera was last checked more than 30 days ago. Check it again to keep screening.</string>
+    <string name="requalify_os_changed">This phone\'s software was updated. Check the camera again to keep screening.</string>
+</resources>

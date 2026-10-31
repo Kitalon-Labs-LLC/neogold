@@ -154,7 +154,9 @@ class DataPurgeManagerTest {
         assertThat(fileKeysetProvider.hasWrappedKeyset()).isTrue()
 
         // 2. Perform Delete All Data (FR-33)
-        val freshDb = purgeManager.deleteAllData()
+        val purged = purgeManager.deleteAllData()
+        val freshDb = purged.database
+        assertThat(purged.incomplete).isEmpty()
 
         // 3. Verify files and preferences wiped
         assertThat(encryptedFileStore.exists(imageFileName)).isFalse()
@@ -171,5 +173,47 @@ class DataPurgeManagerTest {
         assertThat(auditEvents[0].details).contains("USER_ACTION_FR_33")
 
         freshDb.close()
+    }
+
+    private class RecordingWiper(
+        override val name: String,
+        private val result: Boolean,
+        private val failure: Exception? = null
+    ) : DataWiper {
+        var ran = false
+
+        override fun wipe(): Boolean {
+            ran = true
+            failure?.let { throw it }
+            return result
+        }
+    }
+
+    @Test
+    fun tcLog11_everyWiperRuns_andOneThatFailsIsNamedInsteadOfHidden() = runTest(testDispatcher) {
+        val keysGone = RecordingWiper("keystore-keys", result = true)
+        val stagingStuck = RecordingWiper("export-staging", result = false)
+        val crashes = RecordingWiper("crash-reports", result = true, failure = IllegalStateException("boom"))
+        val manager = DefaultDataPurgeManager(
+            context = context,
+            database = database,
+            databaseKeyProvider = databaseKeyProvider,
+            fileKeysetProvider = fileKeysetProvider,
+            encryptedFileStore = encryptedFileStore,
+            dataStore = dataStore,
+            databaseName = "purge_test.db",
+            openHelperFactory = androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory(),
+            wipers = listOf(keysGone, stagingStuck, crashes)
+        )
+
+        val purged = manager.deleteAllData()
+
+        assertThat(listOf(keysGone.ran, stagingStuck.ran, crashes.ran)).containsExactly(true, true, true)
+        assertThat(purged.incomplete).containsExactly("export-staging", "crash-reports").inOrder()
+        val audit = purged.database.auditEventDao().getEventsByType("DATA_DELETED")
+        assertThat(audit).hasSize(1)
+        assertThat(audit[0].details).contains("export-staging")
+        assertThat(audit[0].details).doesNotContain("boom")
+        purged.database.close()
     }
 }

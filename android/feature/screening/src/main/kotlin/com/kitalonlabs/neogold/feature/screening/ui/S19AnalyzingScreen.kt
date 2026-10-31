@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.feature.screening.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -39,12 +40,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun S19AnalyzingScreen(
     onTimeoutFallback: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    @StringRes fallbackLabel: Int = R.string.action_blood_test
 ) {
     var isTakingLong by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(4000L) // 4 seconds threshold for slow analysis warning
+        delay(SLOW_ANALYSIS_WARNING_MS)
         isTakingLong = true
     }
 
@@ -101,7 +103,7 @@ fun S19AnalyzingScreen(
                     )
                 ) {
                     Text(
-                        text = stringResource(R.string.action_blood_test),
+                        text = stringResource(fallbackLabel),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -110,3 +112,6 @@ fun S19AnalyzingScreen(
         }
     }
 }
+
+/** After this long the screen explains that analysis is slower than usual. */
+private const val SLOW_ANALYSIS_WARNING_MS = 4_000L

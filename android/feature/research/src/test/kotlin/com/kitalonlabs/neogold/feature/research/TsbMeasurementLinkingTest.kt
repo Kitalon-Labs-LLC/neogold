@@ -46,9 +46,21 @@ class TsbMeasurementLinkingTest {
 
         val fakeMasterKey = FakeMasterKeyProvider()
         val fileKeysetProvider = DefaultFileKeysetProvider(context, fakeMasterKey, File(context.filesDir, "file_keys"))
-        val encryptedFileStore = DefaultEncryptedFileStore(context, fileKeysetProvider, File(context.filesDir, "test_images"))
+        val encryptedFileStore = DefaultEncryptedFileStore(
+            context,
+            fileKeysetProvider,
+            File(context.filesDir, "test_images")
+        )
 
-        val dummyTrustList = TrustList(1, 1, java.time.LocalDate.of(2026, 10, 1), java.time.LocalDate.of(2028, 10, 1), emptyList(), emptyList(), emptyList())
+        val dummyTrustList = TrustList(
+            1,
+            1,
+            java.time.LocalDate.of(2026, 10, 1),
+            java.time.LocalDate.of(2028, 10, 1),
+            emptyList(),
+            emptyList(),
+            emptyList()
+        )
         val pinHasher = Argon2PinHasher(FakePinHmacKeyProvider())
         val pinManager = ResearchPinManager(database.researchStudyDao(), database.auditEventDao(), pinHasher)
 
@@ -58,7 +70,9 @@ class TsbMeasurementLinkingTest {
             trustList = dummyTrustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(dummyTrustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
 
         // Seed study
@@ -178,7 +192,7 @@ class TsbMeasurementLinkingTest {
             flagEarlyJaundice = false,
             flagDangerSigns = false,
             flagPriorPhototherapy = false,
-            captures = listOf(ResearchCaptureInput("STERNUM", 1, "STERNUM_IMAGE".toByteArray())),
+            captures = listOf(ResearchCaptureInput("STERNUM", 1, "STERNUM_IMAGE".toByteArray(), qualityPassed = true)),
             cardBatchBytes = null,
             tsbInput = null // No initial TSB
         )

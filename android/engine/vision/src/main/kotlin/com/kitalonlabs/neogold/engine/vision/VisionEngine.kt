@@ -42,9 +42,10 @@ class VisionEngine(
             peakAllocationBytes = currentTotal
         }
 
-        // 1. Detect corner markers
+        // 1. Detect corner markers. An ID reported twice cannot be told apart (two cards in view, or a false
+        // detection), so it counts as missing and is never guessed, whichever detector reported it (ADR-018).
         val detectedList = markerDetector.detectMarkers(frame)
-        val markerMap = detectedList.associateBy { it.id }
+        val markerMap = detectedList.groupBy { it.id }.filterValues { it.size == 1 }.mapValues { it.value.single() }
 
         // Check if all 4 corner markers (0=TL, 1=TR, 2=BR, 3=BL) are found
         val hasAllFour = markerMap.keys.containsAll(listOf(0, 1, 2, 3))
@@ -68,20 +69,20 @@ class VisionEngine(
             markerMap.getValue(0).center, // TL
             markerMap.getValue(1).center, // TR
             markerMap.getValue(2).center, // BR
-            markerMap.getValue(3).center  // BL
+            markerMap.getValue(3).center // BL
         )
 
         val dstCenters = listOf(
             CardGeometry.MARKER_CENTERS.getValue(0), // (110, 110)
             CardGeometry.MARKER_CENTERS.getValue(1), // (1090, 110)
             CardGeometry.MARKER_CENTERS.getValue(2), // (1090, 650)
-            CardGeometry.MARKER_CENTERS.getValue(3)  // (110, 650)
+            CardGeometry.MARKER_CENTERS.getValue(3) // (110, 650)
         )
 
         // 3. Estimate homography & tilt angle
         val tiltAngleDeg = Homography.estimateTiltAngleDegrees(srcCenters)
 
-        val H_canon_to_frame = try {
+        val canonToFrame = try {
             Homography.findHomography(dstCenters, srcCenters)
         } catch (_: Exception) {
             val failedDetection = CardDetectionResult(
@@ -99,13 +100,13 @@ class VisionEngine(
 
         val detectionResult = CardDetectionResult(
             markers = markerMap,
-            homographyMatrix = H_canon_to_frame.m,
+            homographyMatrix = canonToFrame.m,
             cardAngleDegrees = tiltAngleDeg
         )
 
         // 4. Warp frame to canonical 1200x760 px image
-        // H_canon_to_frame maps canonical (u, v) -> frame (x, y) which is directly used for inverse warping
-        val canonicalImage = warper.warpToCanonical(frame, H_canon_to_frame)
+        // canonToFrame maps canonical (u, v) -> frame (x, y) which is directly used for inverse warping
+        val canonicalImage = warper.warpToCanonical(frame, canonToFrame)
 
         // 5. Evaluate Quality Gate
         return VisionQualityGate.evaluate(

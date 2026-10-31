@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // CIEDE2000 constants (CIE 142-2001; Sharma, Wu and Dalal 2005)
+
 package com.kitalonlabs.neogold.engine.colorscience
 
 /**
@@ -79,7 +81,7 @@ object Ciede2000 {
         }
 
         val deltaHPrime = 2.0 * StrictMath.sqrt(c1Prime * c2Prime) *
-                StrictMath.sin(StrictMath.toRadians(deltaHPrimeDeg / 2.0))
+            StrictMath.sin(StrictMath.toRadians(deltaHPrimeDeg / 2.0))
 
         val lBarPrime = (l1 + l2) / 2.0
         val cBarPrime = (c1Prime + c2Prime) / 2.0
@@ -96,9 +98,9 @@ object Ciede2000 {
         }
 
         val t = 1.0 - 0.17 * StrictMath.cos(StrictMath.toRadians(hBarPrime - 30.0)) +
-                0.24 * StrictMath.cos(StrictMath.toRadians(2.0 * hBarPrime)) +
-                0.32 * StrictMath.cos(StrictMath.toRadians(3.0 * hBarPrime + 6.0)) -
-                0.20 * StrictMath.cos(StrictMath.toRadians(4.0 * hBarPrime - 63.0))
+            0.24 * StrictMath.cos(StrictMath.toRadians(2.0 * hBarPrime)) +
+            0.32 * StrictMath.cos(StrictMath.toRadians(3.0 * hBarPrime + 6.0)) -
+            0.20 * StrictMath.cos(StrictMath.toRadians(4.0 * hBarPrime - 63.0))
 
         val deltaTheta = 30.0 * StrictMath.exp(
             -StrictMath.pow((hBarPrime - 275.0) / 25.0, 2.0)

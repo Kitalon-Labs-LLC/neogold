@@ -10,9 +10,23 @@ plugins {
     alias(libs.plugins.detekt) apply false
 }
 
+// Guava is on the lint tool, the annotation-processor and the test classpaths only, never in an APK. CVE-2026-102554
+// is fixed in 33.7.2, so every configuration gets that release, in the flavor it asked for (BUG-2026-059).
+val guavaFixedRelease = "33.7.2"
+
 allprojects {
     dependencyLocking {
         lockAllConfigurations()
+    }
+
+    configurations.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.google.guava" && requested.name == "guava") {
+                val flavor = if (requested.version.orEmpty().endsWith("-android")) "android" else "jre"
+                useVersion("$guavaFixedRelease-$flavor")
+                because("CVE-2026-102554 is fixed in Guava $guavaFixedRelease (BUG-2026-059)")
+            }
+        }
     }
 }
 
@@ -100,7 +114,7 @@ tasks.register("bundleRelease") {
 tasks.register("check") {
     description = "Runs all verification checks"
     group = "verification"
-    dependsOn("testReleaseUnitTest", "lintRelease", "verifyStrings")
+    dependsOn("testReleaseUnitTest", "lintRelease", "verifyStrings", "verifyStrictMath")
 }
 
 fun resolvePythonCommand(): List<String> {
@@ -114,6 +128,25 @@ fun resolvePythonCommand(): List<String> {
         } catch (_: Exception) {}
     }
     return listOf("py", "-3")
+}
+
+// :app signs its bundle with the same Python.
+extra["pythonCommand"] = resolvePythonCommand()
+
+// The golden-vector tests read testdata/ with java.io.File, which Gradle does not see. Without these declarations a change to
+// a golden file, the synthetic model or the regenerate switch alone could leave the test task UP-TO-DATE or FROM-CACHE, so
+// the comparison would never run (BUG-2026-045, safety review of package D1).
+val testdataDir = rootDir.parentFile.resolve("testdata")
+for (module in listOf("colorscience", "estimation")) {
+    project(":engine:$module").tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+        inputs.dir(testdataDir.resolve("golden/colorscience")).withPropertyName("goldenColorscience")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(testdataDir.resolve("golden/estimation")).withPropertyName("goldenEstimation")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(testdataDir.resolve("models/model.synthetic.json")).withPropertyName("syntheticModel")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.property("regenerateGolden", providers.environmentVariable("NEOGOLD_REGENERATE_GOLDEN").orElse(""))
+    }
 }
 
 tasks.register("verifyGoldenVectors") {
@@ -150,19 +183,19 @@ tasks.register<Exec>("verifyStrings") {
     commandLine(pythonCmd + listOf("tools/check_strings.py"))
 }
 
-tasks.register<Exec>("signAssetManifest") {
-    description = "Signs the bundle assets manifest with K3 (doc 4 Section 12, doc 8 Section 6.5)"
-    group = "build"
+tasks.register<Exec>("verifyStrictMath") {
+    description = "StrictMath verification in pure engines (Doc 4 Section 4.2)"
+    group = "verification"
     workingDir = rootDir.parentFile
     val pythonCmd = resolvePythonCommand()
-    val manifestKeyProp = providers.gradleProperty("manifestKey").orNull
-    val argsList = mutableListOf<String>()
-    argsList.addAll(pythonCmd)
-    argsList.addAll(listOf("tools/sign_bundle_manifest.py", "--config-dir", "config", "--assets-dir", "android/app/src/main/assets"))
-    if (manifestKeyProp != null) {
-        argsList.addAll(listOf("--manifest-key", manifestKeyProp))
-    }
-    commandLine(argsList)
+    commandLine(pythonCmd + listOf("tools/check_strictmath.py"))
+}
+
+// The bundle is signed into :app's generated assets, never into the source tree (BUG-2026-007, BUG-2026-008).
+tasks.register("signAssetManifest") {
+    description = "Signs the bundle assets manifest with K3 (doc 4 Section 12, doc 8 Section 6.5)"
+    group = "build"
+    dependsOn(":app:signBundleManifest")
 }
 
 tasks.register<Exec>("cyclonedxBom") {

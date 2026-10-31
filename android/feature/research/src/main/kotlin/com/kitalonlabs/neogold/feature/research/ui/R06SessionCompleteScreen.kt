@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
@@ -36,6 +37,7 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
+import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 /**
  * R06: Research Session Complete Screen (FR-27, doc 6 Section 5).
@@ -71,13 +73,13 @@ fun R06SessionCompleteScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(ResearchR.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.testTag("r06_research_badge")
             )
             NgBadge(
-                text = "SAVED & QUEUED",
+                text = stringResource(ResearchR.string.r06_saved_queued),
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -109,7 +111,7 @@ fun R06SessionCompleteScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Session Complete",
+                text = stringResource(ResearchR.string.r06_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -118,7 +120,7 @@ fun R06SessionCompleteScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Research data encrypted and saved to local database.",
+                text = stringResource(ResearchR.string.r06_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -137,7 +139,7 @@ fun R06SessionCompleteScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Session Summary",
+                    text = stringResource(ResearchR.string.r06_summary),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -152,7 +154,7 @@ fun R06SessionCompleteScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Participant Code",
+                        text = stringResource(ResearchR.string.r06_code),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -176,12 +178,12 @@ fun R06SessionCompleteScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Protocol Captures",
+                        text = stringResource(ResearchR.string.r06_captures),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "$capturesCount / 4 Sites",
+                        text = stringResource(ResearchR.string.r06_sites, capturesCount),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -200,15 +202,15 @@ fun R06SessionCompleteScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Color Card Status",
+                        text = stringResource(ResearchR.string.r06_card_status),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     NgBadge(
                         text = when (cardStatus) {
-                            CardTrustStatus.VERIFIED -> "VERIFIED"
-                            CardTrustStatus.EXPIRED -> "EXPIRED"
-                            CardTrustStatus.UNVERIFIED -> "UNVERIFIED"
+                            CardTrustStatus.VERIFIED -> stringResource(ResearchR.string.r06_verified)
+                            CardTrustStatus.EXPIRED -> stringResource(ResearchR.string.r06_expired)
+                            CardTrustStatus.UNVERIFIED -> stringResource(ResearchR.string.r06_unverified)
                         },
                         containerColor = when (cardStatus) {
                             CardTrustStatus.VERIFIED -> MaterialTheme.colorScheme.primaryContainer
@@ -235,7 +237,7 @@ fun R06SessionCompleteScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Paired TSB",
+                        text = stringResource(ResearchR.string.r06_paired_tsb),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -273,13 +275,13 @@ fun R06SessionCompleteScreen(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "Outbox Queue",
+                            text = stringResource(ResearchR.string.r06_outbox),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Text(
-                        text = "Queued for Sync",
+                        text = stringResource(ResearchR.string.r06_queued),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -291,7 +293,7 @@ fun R06SessionCompleteScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         NgPrimaryButton(
-            text = "Done",
+            text = stringResource(ResearchR.string.r06_done),
             onClick = onDoneClicked,
             modifier = Modifier.testTag("r06_done_button")
         )

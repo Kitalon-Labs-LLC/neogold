@@ -84,12 +84,14 @@ data class CrashReport(
             put("exceptionClass", t.exceptionClass)
             val framesArr = JSONArray()
             for (f in t.stackFrames) {
-                framesArr.put(JSONObject().apply {
-                    put("className", f.className)
-                    put("methodName", f.methodName)
-                    put("fileName", f.fileName ?: JSONObject.NULL)
-                    put("lineNumber", f.lineNumber)
-                })
+                framesArr.put(
+                    JSONObject().apply {
+                        put("className", f.className)
+                        put("methodName", f.methodName)
+                        put("fileName", f.fileName ?: JSONObject.NULL)
+                        put("lineNumber", f.lineNumber)
+                    }
+                )
             }
             put("stackFrames", framesArr)
             if (t.cause != null) {

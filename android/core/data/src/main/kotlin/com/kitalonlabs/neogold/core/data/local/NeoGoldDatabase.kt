@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.kitalonlabs.neogold.core.data.local.dao.AuditEventDao
-import com.kitalonlabs.neogold.core.data.local.dao.CardBatchDao
 import com.kitalonlabs.neogold.core.data.local.dao.CaptureDao
+import com.kitalonlabs.neogold.core.data.local.dao.CardBatchDao
 import com.kitalonlabs.neogold.core.data.local.dao.DeviceProfileDao
 import com.kitalonlabs.neogold.core.data.local.dao.OutboxDao
 import com.kitalonlabs.neogold.core.data.local.dao.ResearchParticipantDao
@@ -16,8 +16,8 @@ import com.kitalonlabs.neogold.core.data.local.dao.ResearchStudyDao
 import com.kitalonlabs.neogold.core.data.local.dao.ScreeningSessionDao
 import com.kitalonlabs.neogold.core.data.local.dao.TsbMeasurementDao
 import com.kitalonlabs.neogold.core.data.local.entity.AuditEventEntity
-import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
+import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
 import com.kitalonlabs.neogold.core.data.local.entity.DeviceProfileEntity
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchParticipantEntity
@@ -57,6 +57,14 @@ abstract class NeoGoldDatabase : RoomDatabase() {
     companion object {
         const val DATABASE_NAME = "neogold.db"
 
+        /**
+         * sqlcipher-android does not load its native library by itself: without this, the first query throws
+         * UnsatisfiedLinkError and the app closes (BUG-2026-062). Loaded once per process, before the first factory.
+         */
+        private val sqlCipherLibrary: Unit by lazy { System.loadLibrary("sqlcipher") }
+
+        private fun loadSqlCipher() = sqlCipherLibrary
+
         val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE research_study ADD COLUMN export_public_key BLOB")
@@ -69,9 +77,13 @@ abstract class NeoGoldDatabase : RoomDatabase() {
             databaseName: String = DATABASE_NAME,
             openHelperFactory: SupportSQLiteOpenHelper.Factory? = null
         ): NeoGoldDatabase {
-            val factory = openHelperFactory ?: SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())
+            val factory = openHelperFactory ?: run {
+                loadSqlCipher()
+                SupportOpenHelperFactory(databaseKeyProvider.getSqlCipherPassphrase())
+            }
             return Room.databaseBuilder(context, NeoGoldDatabase::class.java, databaseName)
-                .openHelperFactory(factory)
+                // Never let the library delete a database that will not open (doc 8 Section 5.1, TC-SEC-07).
+                .openHelperFactory(KeepOnCorruptionFactory(factory))
                 .addMigrations(MIGRATION_1_2)
                 .addCallback(DatabaseCallback)
                 .build()

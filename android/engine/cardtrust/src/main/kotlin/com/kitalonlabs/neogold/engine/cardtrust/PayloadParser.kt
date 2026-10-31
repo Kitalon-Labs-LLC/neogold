@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // card and study QR payload byte layout (card/spec)
+
 package com.kitalonlabs.neogold.engine.cardtrust
 
 import java.nio.ByteBuffer
@@ -20,6 +22,7 @@ object PayloadParser {
      * Parses a raw byte array as a Card Batch payload (type = 0x01).
      * Returns null if malformed, truncated, containing trailing bytes, or unsupported version.
      */
+    @Suppress("ReturnCount") // a strict parser returns null at the first malformed field
     fun parseCardBatch(payload: ByteArray): CardBatchPayload? {
         // Minimum possible card batch payload length:
         // 6 (header) + 1+3 (issuer) + 1+3 (batch) + 1 (patch_count) + 23*6 (patches) + 64 (sig) = 217 bytes
@@ -112,6 +115,7 @@ object PayloadParser {
      * Parses a raw byte array as a Study Profile payload (type = 0x02).
      * Returns null if malformed, truncated, containing trailing bytes, or unsupported version.
      */
+    @Suppress("CyclomaticComplexMethod", "ReturnCount") // a strict parser returns null at the first malformed field
     fun parseStudyProfile(payload: ByteArray): StudyProfilePayload? {
         // Minimum possible study profile payload length:
         // 5 (header) + 1+3 (issuer) + 1+2 (code) + 1+1 (name) + 1+1 (partner) + 1+0 (host) + 32 (pub) + 64 (sig) = 113 bytes

@@ -112,10 +112,8 @@ The pipeline must produce byte-identical `model.json` output across repeated run
 
 Once verified:
 
-1. Copy the generated `model.json` into the Android application assets directory:
-   ```bash
-   cp config/model.json android/app/src/main/assets/model.json
-   ```
+1. The generated `model.json` stays in `config/`. The Android build signs it into the app's assets; there is no
+   copy to make by hand and none is committed under `android/`.
 2. Run the Android engine test suite to verify end-to-end integration:
    ```bash
    cd android

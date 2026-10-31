@@ -133,7 +133,7 @@ class Matrix(
                 normSq += v * v
             }
             val norm = StrictMath.sqrt(normSq)
-            if (norm < 1e-12) {
+            if (norm < SINGULAR_TOLERANCE) {
                 throw IllConditionedMatrixException(
                     "Column $k has near-zero norm ($norm < 1e-12); matrix is singular or rank-deficient"
                 )
@@ -187,7 +187,7 @@ class Matrix(
         var minDiag = Double.MAX_VALUE
         for (i in 0 until n) {
             val diag = StrictMath.abs(aWork[i * n + i])
-            if (diag < 1e-12) {
+            if (diag < SINGULAR_TOLERANCE) {
                 throw IllConditionedMatrixException(
                     "Diagonal element R[$i, $i] is near-zero ($diag < 1e-12); matrix is rank-deficient"
                 )
@@ -197,7 +197,7 @@ class Matrix(
         }
 
         val conditionRatio = maxDiag / minDiag
-        if (conditionRatio > 1e12) {
+        if (conditionRatio > MAX_CONDITION_RATIO) {
             throw IllConditionedMatrixException(
                 "Matrix is ill-conditioned: condition ratio max|Rii| / min|Rii| = $conditionRatio > 1e12"
             )
@@ -206,13 +206,13 @@ class Matrix(
         // Back-substitution to solve R * X = (Q^T * B)[0..n-1]
         val xData = DoubleArray(n * p)
         for (i in (n - 1) downTo 0) {
-            val r_ii = aWork[i * n + i]
+            val rDiagonal = aWork[i * n + i]
             for (j in 0 until p) {
                 var sum = bWork[i * p + j]
                 for (k in (i + 1) until n) {
                     sum -= aWork[i * n + k] * xData[k * p + j]
                 }
-                xData[i * p + j] = sum / r_ii
+                xData[i * p + j] = sum / rDiagonal
             }
         }
 
@@ -231,3 +231,9 @@ class Matrix(
         }
     }
 }
+
+/** A column or diagonal element below this is treated as zero (rank deficiency). */
+private const val SINGULAR_TOLERANCE = 1e-12
+
+/** Largest accepted ratio between the biggest and smallest diagonal element of R. */
+private const val MAX_CONDITION_RATIO = 1e12

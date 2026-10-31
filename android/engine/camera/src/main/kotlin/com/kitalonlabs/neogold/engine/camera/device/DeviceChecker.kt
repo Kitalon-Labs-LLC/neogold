@@ -86,7 +86,7 @@ object DeviceChecker {
         } else {
             (Runtime.getRuntime().maxMemory() / (1024 * 1024)).toInt().coerceAtLeast(1024)
         }
-        val isLowRam = actManager?.isLowRamDevice ?: (ramMb < 2500)
+        val isLowRam = actManager?.isLowRamDevice ?: (ramMb < LOW_RAM_THRESHOLD_MB)
 
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
         val (backCameraId, characteristics) = findBackCamera(cameraManager)
@@ -97,7 +97,9 @@ object DeviceChecker {
         val supportsAwbLock = characteristics?.let { CameraControlHelper.isAwbLockSupported(it) } ?: false
 
         val capabilitiesList = characteristics?.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES) ?: intArrayOf()
-        val supportsManual = capabilitiesList.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)
+        val supportsManual = capabilitiesList.contains(
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR
+        )
         val supportsRaw = capabilitiesList.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)
 
         val capabilities = DeviceCapabilities(
@@ -147,3 +149,5 @@ object DeviceChecker {
         }
     }
 }
+
+private const val LOW_RAM_THRESHOLD_MB = 2500

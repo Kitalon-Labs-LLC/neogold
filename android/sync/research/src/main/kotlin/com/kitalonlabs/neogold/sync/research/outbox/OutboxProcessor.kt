@@ -7,10 +7,8 @@ import com.kitalonlabs.neogold.core.data.local.dao.ResearchParticipantDao
 import com.kitalonlabs.neogold.core.data.local.dao.ResearchStudyDao
 import com.kitalonlabs.neogold.core.data.local.dao.ScreeningSessionDao
 import com.kitalonlabs.neogold.core.data.local.dao.TsbMeasurementDao
-import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
-import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.security.EncryptedFileStore
 import com.kitalonlabs.neogold.sync.research.api.ApiException
 import com.kitalonlabs.neogold.sync.research.api.ResearchApiClient
@@ -24,7 +22,6 @@ import com.kitalonlabs.neogold.sync.research.api.models.TsbUpload
 import com.kitalonlabs.neogold.sync.research.crypto.Base64Url
 import com.kitalonlabs.neogold.sync.research.enrollment.StudyRevocationManager
 import kotlinx.serialization.json.Json
-import java.io.InputStream
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -35,10 +32,16 @@ sealed class OutboxResult {
     object Paused : OutboxResult()
     object Closed : OutboxResult()
     object Revoked : OutboxResult()
+
+    /** The phone has no device ID (it left, was revoked, or the study closed): there is nothing to send and nothing to retry. */
+    object NotEnrolled : OutboxResult()
     data class AppVersionUnsupported(val minVersion: String) : OutboxResult()
     data class Error(val message: String, val cause: Throwable? = null) : OutboxResult()
 }
 
+@Suppress(
+    "LongParameterList"
+) // upload state machine; the collaborators are the DAOs and the API client, injected for tests
 class OutboxProcessor(
     private val apiClient: ResearchApiClient,
     private val outboxDao: OutboxDao,
@@ -52,13 +55,20 @@ class OutboxProcessor(
     private val revocationManager: StudyRevocationManager,
     private val reconciliationManager: ReconciliationManager,
     private val appVersion: String,
-    private val json: Json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    private val json: Json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+    }
 ) {
 
+    @Suppress(
+        "ReturnCount",
+        "TooGenericExceptionCaught"
+    ) // network and server failures are retried with backoff (TC-SYNC-03); reworked in C4
     suspend fun process(): OutboxResult {
         val study = studyDao.getActiveStudy() ?: return OutboxResult.Error("No active research study found")
         val baseUrl = study.serverUrl ?: return OutboxResult.Error("No server URL configured for study")
-        val deviceId = study.serverDeviceId ?: return OutboxResult.Error("Device not enrolled")
+        val deviceId = study.serverDeviceId ?: return OutboxResult.NotEnrolled
         val keyAlias = study.deviceKeyAlias ?: return OutboxResult.Error("Device key alias missing")
 
         // 1. GET /device first (doc 7 Section 3)
@@ -74,9 +84,10 @@ class OutboxProcessor(
                 revocationManager.handleDeviceRevoked(study)
                 return OutboxResult.Revoked
             }
-            return OutboxResult.Error("Failed to check device status: ${e.message}", e)
+            // the HTTP status only: the code and the text are the server's own strings, and a log is not the place for them
+            return OutboxResult.Error("Failed to check device status: HTTP ${e.statusCode}", e)
         } catch (e: Exception) {
-            return OutboxResult.Error("Failed to connect to server: ${e.message}", e)
+            return OutboxResult.Error("Failed to connect to server: ${e.javaClass.simpleName}", e)
         }
 
         // Check revocation
@@ -90,6 +101,8 @@ class OutboxProcessor(
             // Keep outbox; stop early before any image is sent (TC-SYNC-02)
             return OutboxResult.Paused
         } else if (deviceStatus.study_status == "CLOSED") {
+            // Nothing more will be accepted: the phone disconnects (the data stays for export) instead of asking again forever.
+            revocationManager.handleStudyClosed(study)
             return OutboxResult.Closed
         }
 
@@ -129,6 +142,7 @@ class OutboxProcessor(
         return OutboxResult.Success(processedCount)
     }
 
+    @Suppress("TooGenericExceptionCaught") // network and server failures are retried with backoff (TC-SYNC-03)
     private suspend fun processItem(
         item: OutboxEntity,
         study: ResearchStudyEntity,
@@ -155,7 +169,8 @@ class OutboxProcessor(
             return false
         } catch (e: Exception) {
             // Network failure / timeout: keep key, retry with backoff (TC-SYNC-03)
-            outboxDao.recordAttempt(item.id, e.message?.take(100), System.currentTimeMillis())
+            // the kind of failure, not its message: an I/O message names the host
+            outboxDao.recordAttempt(item.id, e.javaClass.simpleName, System.currentTimeMillis())
             outboxDao.updateState(item.id, "PENDING", System.currentTimeMillis())
             return false
         }
@@ -250,7 +265,9 @@ class OutboxProcessor(
         val captureDate = formatCalendarDate(session.createdAt, study.timeZone)
         val capturedAt = if (study.timestampPrecision == "FULL") {
             formatIsoDateTime(session.createdAt)
-        } else null
+        } else {
+            null
+        }
 
         val captures = captureDao.getCapturesForSession(session.id)
         val captureManifests = captures.map { c ->
@@ -258,9 +275,11 @@ class OutboxProcessor(
             val fileSizeBytes = if (hasImage) {
                 try {
                     val file = encryptedFileStore.getEncryptedFile(c.imageFile!!)
-                    if (file.exists()) file.length() else 1000000L
-                } catch (_: Exception) { 1000000L }
-            } else null
+                    if (file.exists()) file.length() else DEFAULT_IMAGE_SIZE_BYTES
+                } catch (_: Exception) { DEFAULT_IMAGE_SIZE_BYTES }
+            } else {
+                null
+            }
 
             val failReasons = c.qualityFailReasons?.let { reasonsJson ->
                 try {
@@ -346,7 +365,7 @@ class OutboxProcessor(
 
         // Decrypt and stream directly without writing plain image to disk (TC-SYNC-20)
         val file = encryptedFileStore.getEncryptedFile(imageFile)
-        val sizeBytes = if (file.exists()) file.length() else 1000000L
+        val sizeBytes = if (file.exists()) file.length() else DEFAULT_IMAGE_SIZE_BYTES
 
         apiClient.putCaptureImage(
             baseUrl = baseUrl,
@@ -376,13 +395,19 @@ class OutboxProcessor(
         val minutesFromCapture: Int? = if (tsbSessionId != null) {
             val session = sessionDao.getSessionById(tsbSessionId)
             if (session != null) {
-                ((tsb.drawTime - session.createdAt) / 60000).toInt()
-            } else null
-        } else null
+                ((tsb.drawTime - session.createdAt) / MILLIS_PER_MINUTE).toInt()
+            } else {
+                null
+            }
+        } else {
+            null
+        }
 
         val drawTime = if (study.timestampPrecision == "FULL") {
             formatIsoDateTime(tsb.drawTime)
-        } else null
+        } else {
+            null
+        }
 
         val upload = TsbUpload(
             participant_id = tsb.participantId,
@@ -404,11 +429,12 @@ class OutboxProcessor(
         )
     }
 
+    @Suppress("ReturnCount") // upload state machine; each early exit is a different server answer
     private suspend fun handleApiError(item: OutboxEntity, error: ApiException) {
         val now = System.currentTimeMillis()
         val code = error.errorCode
 
-        // 1. Dependency errors: re-queue dependency first, cap at 3 (doc 7 Section 3, Section 5.2, TC-SYNC-05)
+        // 1. Dependency errors: re-queue the dependency first; the third error ends the item (two re-queues, doc 7 Section 3, TC-SYNC-05)
         if (code == ErrorCode.PARTICIPANT_UNKNOWN || code == ErrorCode.SESSION_UNKNOWN || code == ErrorCode.CARD_BATCH_UNKNOWN) {
             val currentRequeues = item.dependencyRequeues
             if (currentRequeues + 1 >= 3) {
@@ -442,14 +468,15 @@ class OutboxProcessor(
         }
 
         // 4. Rate limited / 5xx / Maintenance: retryable with backoff
-        if (error.statusCode in 500..599 || code == ErrorCode.RATE_LIMITED || code == ErrorCode.MAINTENANCE || code == ErrorCode.STORAGE_FULL) {
+        val isTransient = code == ErrorCode.RATE_LIMITED || code == ErrorCode.MAINTENANCE || code == ErrorCode.STORAGE_FULL
+        if (error.statusCode in SERVER_ERROR_STATUS_CODES || isTransient) {
             outboxDao.recordAttempt(item.id, code, now)
             outboxDao.updateState(item.id, "PENDING", now)
             return
         }
 
         // 5. Unknown error code: follow retryable flag, fallback to HTTP class (TC-SYNC-08)
-        val isRetryable = error.problem.retryable ?: (error.statusCode >= 500)
+        val isRetryable = error.problem.retryable ?: (error.statusCode >= SERVER_ERROR_STATUS_CODES.first)
         if (isRetryable) {
             outboxDao.recordAttempt(item.id, code, now)
             outboxDao.updateState(item.id, "PENDING", now)
@@ -557,3 +584,7 @@ class OutboxProcessor(
         }
     }
 }
+
+private const val DEFAULT_IMAGE_SIZE_BYTES = 1_000_000L
+private const val MILLIS_PER_MINUTE = 60_000L
+private val SERVER_ERROR_STATUS_CODES = 500..599

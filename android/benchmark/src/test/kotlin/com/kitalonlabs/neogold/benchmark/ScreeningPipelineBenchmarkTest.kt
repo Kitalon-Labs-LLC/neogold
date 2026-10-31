@@ -56,7 +56,7 @@ class ScreeningPipelineBenchmarkTest {
 
     @Before
     fun setUp() {
-        pipelineUseCase = ScreeningPipelineUseCase(visionEngine = VisionEngine())
+        pipelineUseCase = ScreeningPipelineUseCase(integrityChecker = { true }, visionEngine = VisionEngine())
 
         val modelFile = File(repoRoot, "testdata/models/model.synthetic.json")
         estimationEngine = EstimationEngine.fromJson(modelFile.readText())
@@ -111,13 +111,13 @@ class ScreeningPipelineBenchmarkTest {
         val detector = DefaultMarkerDetector()
 
         // Warm up (3 iterations)
-        for (i in 0 until 3) {
+        repeat(3) {
             detector.detectMarkers(previewFrame)
         }
 
         // 30 runs
         val latencies = mutableListOf<Long>()
-        for (i in 0 until 30) {
+        repeat(30) {
             val t0 = System.nanoTime()
             val markers = detector.detectMarkers(previewFrame)
             val dtMs = (System.nanoTime() - t0) / 1_000_000
@@ -129,7 +129,7 @@ class ScreeningPipelineBenchmarkTest {
         val p50 = latencies[15]
         val p95 = latencies[28]
 
-        println("Marker Detection (640x480): p50 = ${p50} ms, p95 = ${p95} ms (budget < 80 ms)")
+        println("Marker Detection (640x480): p50 = $p50 ms, p95 = $p95 ms (budget < 80 ms)")
         assertThat(p50).isLessThan(80L)
         assertThat(p95).isLessThan(80L)
     }
@@ -146,7 +146,7 @@ class ScreeningPipelineBenchmarkTest {
         )
 
         // Warm up (3 runs)
-        for (i in 0 until 3) {
+        repeat(3) {
             pipelineUseCase.execute(
                 frame = fullResFrame,
                 cardBatch = testCardBatch,
@@ -163,7 +163,7 @@ class ScreeningPipelineBenchmarkTest {
         val analysisLatencies = mutableListOf<Long>()
         val totalLatencies = mutableListOf<Long>()
 
-        for (i in 0 until 30) {
+        repeat(30) {
             val res = pipelineUseCase.execute(
                 frame = fullResFrame,
                 cardBatch = testCardBatch,
@@ -195,9 +195,9 @@ class ScreeningPipelineBenchmarkTest {
         val totalP50 = totalLatencies[15]
         val totalP95 = totalLatencies[28]
 
-        println("Warp & Sample: p50 = ${warpP50} ms, p95 = ${warpP95} ms (budget < 700 ms)")
-        println("Quality & Analysis: p50 = ${analysisP50} ms, p95 = ${analysisP95} ms (budget < 200 ms)")
-        println("Capture to Result: p50 = ${totalP50} ms, p95 = ${totalP95} ms (target < 4000 ms, limit < 10000 ms)")
+        println("Warp & Sample: p50 = $warpP50 ms, p95 = $warpP95 ms (budget < 700 ms)")
+        println("Quality & Analysis: p50 = $analysisP50 ms, p95 = $analysisP95 ms (budget < 200 ms)")
+        println("Capture to Result: p50 = $totalP50 ms, p95 = $totalP95 ms (target < 4000 ms, limit < 10000 ms)")
 
         assertThat(warpP95).isLessThan(700L)
         assertThat(analysisP95).isLessThan(200L)
@@ -208,6 +208,7 @@ class ScreeningPipelineBenchmarkTest {
     @Test
     fun testPeakMemoryFootprint_under120MB() {
         val runtime = Runtime.getRuntime()
+        @Suppress("ExplicitGarbageCollectionCall") // settle the heap before reading the baseline
         System.gc()
         Thread.sleep(100)
 

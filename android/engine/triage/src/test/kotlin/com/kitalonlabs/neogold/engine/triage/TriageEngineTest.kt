@@ -1,6 +1,7 @@
 package com.kitalonlabs.neogold.engine.triage
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -18,11 +19,10 @@ class TriageEngineTest {
             File("../../../testdata/triage/config.synthetic.json"),
             File("../../testdata/triage/config.synthetic.json"),
             File("../testdata/triage/config.synthetic.json"),
-            File("testdata/triage/config.synthetic.json"),
-            File("d:/Project/neogold-android/testdata/triage/config.synthetic.json")
+            File("testdata/triage/config.synthetic.json")
         )
         val configFile = candidatePaths.firstOrNull { it.exists() }
-            ?: throw IllegalStateException("Could not find config.synthetic.json")
+            ?: error("Could not find config.synthetic.json")
         val json = configFile.readText()
         syntheticConfig = TriageConfigParser.parse(json)
         engine = TriageEngine(
@@ -442,7 +442,7 @@ class TriageEngineTest {
         // Schema and property check on clinical config
         val clinicalJson = File("config/triage-config.json").takeIf { it.exists() }
             ?: File("../../../config/triage-config.json").takeIf { it.exists() }
-            ?: File("d:/Project/neogold-android/config/triage-config.json")
+            ?: error("Could not find config/triage-config.json")
         val parsed = TriageConfigParser.parse(clinicalJson.readText())
 
         // Every GA from 35 to 44 maps to exactly one band
@@ -470,7 +470,13 @@ class TriageEngineTest {
             clock = { LocalDate.of(2026, 10, 17) }
         )
         val result = publicEngine.evaluate(
-            TriageInputs(gestationalAgeWeeks = 40, ageHours = 48.0, estimate = 12.0, lowerBound = 10.0, upperBound = 14.0)
+            TriageInputs(
+                gestationalAgeWeeks = 40,
+                ageHours = 48.0,
+                estimate = 12.0,
+                lowerBound = 10.0,
+                upperBound = 14.0
+            )
         )
         assertThat(result).isInstanceOf(TriageResult.Unavailable::class.java)
         val unavail = result as TriageResult.Unavailable
@@ -491,6 +497,23 @@ class TriageEngineTest {
     }
 
     @Test
+    fun test_H7_config_cut_off_anywhere_is_rejected() {
+        // A config that is cut off at any point must be rejected outright, never half-accepted (H7, H8).
+        // Pins the "Unexpected EOF" paths of the JSON tokenizer. No numbered test case covers truncation,
+        // so this cites the hazard only: it must not count as coverage for another case.
+        val configFile = File("config/triage-config.json").takeIf { it.exists() }
+            ?: File("../../../config/triage-config.json").takeIf { it.exists() }
+            ?: error("Could not find config/triage-config.json")
+        val json = configFile.readText().trimEnd()
+
+        for (cut in 0 until json.length) {
+            assertThrows(IllegalArgumentException::class.java) { TriageConfigParser.parse(json.substring(0, cut)) }
+        }
+        val eof = assertThrows(IllegalArgumentException::class.java) { TriageConfigParser.parse("") }
+        assertThat(eof).hasMessageThat().isEqualTo("Unexpected EOF")
+    }
+
+    @Test
     fun test_TC_TRI_20_config_past_validUntil() {
         // Set device date after validUntil -> Triage disabled; message to update the app
         val expiredEngine = TriageEngine(
@@ -499,7 +522,13 @@ class TriageEngineTest {
             clock = { LocalDate.of(2028, 1, 1) } // syntheticConfig validUntil is 2027-12-31
         )
         val result = expiredEngine.evaluate(
-            TriageInputs(gestationalAgeWeeks = 40, ageHours = 48.0, estimate = 12.0, lowerBound = 10.0, upperBound = 14.0)
+            TriageInputs(
+                gestationalAgeWeeks = 40,
+                ageHours = 48.0,
+                estimate = 12.0,
+                lowerBound = 10.0,
+                upperBound = 14.0
+            )
         )
         assertThat(result).isInstanceOf(TriageResult.Unavailable::class.java)
         val unavail = result as TriageResult.Unavailable
@@ -511,7 +540,8 @@ class TriageEngineTest {
     fun test_TC_TRI_21_signoff_hash_enforced_in_CI() {
         // CI check verify_clinical_signoff.py handles triageEnabled false
         val draftJson = File("config/triage-config.json").takeIf { it.exists() }
-            ?: File("d:/Project/neogold-android/config/triage-config.json")
+            ?: File("../../../config/triage-config.json").takeIf { it.exists() }
+            ?: error("Could not find config/triage-config.json")
         val parsed = TriageConfigParser.parse(draftJson.readText())
         assertThat(parsed.triageEnabled).isFalse()
         assertThat(parsed.clinicalSignoff.status).isEqualTo(SignoffStatus.DRAFT)

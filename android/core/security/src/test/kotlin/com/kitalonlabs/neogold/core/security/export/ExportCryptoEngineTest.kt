@@ -1,8 +1,8 @@
 package com.kitalonlabs.neogold.core.security.export
 
-import com.google.crypto.tink.KeyTemplates
-import com.google.crypto.tink.KeysetHandle
-import com.google.crypto.tink.subtle.X25519
+import com.google.crypto.tink.StreamingAead
+import com.kitalonlabs.neogold.decrypt.DecryptEngine
+import com.kitalonlabs.neogold.decrypt.DecryptionException
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -14,72 +14,74 @@ import org.robolectric.RobolectricTestRunner
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
+import com.kitalonlabs.neogold.decrypt.TamperedCiphertextException as DecryptTamperedException
 
+/**
+ * The app only encrypts (BUG-083 item 29): every decrypting step in these tests goes through the offline decrypt tool, so
+ * a test passing means the tool can open what the app writes, not that the app agrees with itself.
+ */
 @RunWith(RobolectricTestRunner::class)
 class ExportCryptoEngineTest {
 
+    private fun decryptBytes(aead: StreamingAead, ciphertext: ByteArray, aad: ByteArray = ByteArray(0)): ByteArray {
+        val out = ByteArrayOutputStream()
+        DecryptEngine.decryptStream(aead, ByteArrayInputStream(ciphertext), out, aad)
+        return out.toByteArray()
+    }
+
     @Test
     fun testWrapAndUnwrapRoundTrip() {
-        val privateKeyBytes = X25519.generatePrivateKey()
-        val publicKeyBytes = X25519.publicFromPrivate(privateKeyBytes)
+        val (privateKeyBytes, publicKeyBytes) = DecryptEngine.generateKeyPair()
 
         val dataKeysetHandle = ExportCryptoEngine.generateDataKeysetHandle()
         val wrappedKeyB64 = ExportCryptoEngine.wrapDataKey(dataKeysetHandle, publicKeyBytes)
         assertNotNull(wrappedKeyB64)
         assertTrue(wrappedKeyB64.isNotEmpty())
 
-        val unwrappedKeysetHandle = ExportCryptoEngine.unwrapDataKey(wrappedKeyB64, privateKeyBytes)
-        assertNotNull(unwrappedKeysetHandle)
+        val unwrappedKeysetHandle = DecryptEngine.unwrapDataKey(wrappedKeyB64, privateKeyBytes)
 
-        // Verify that the unwrapped StreamingAead can decrypt what dataKeysetHandle encrypted
         val encAead = ExportCryptoEngine.getStreamingAead(dataKeysetHandle)
-        val decAead = ExportCryptoEngine.getStreamingAead(unwrappedKeysetHandle)
+        val decAead = unwrappedKeysetHandle.getPrimitive(
+            com.google.crypto.tink.RegistryConfiguration.get(),
+            StreamingAead::class.java
+        )
 
         val plaintext = "Test research session CSV plaintext contents 123456789".toByteArray(StandardCharsets.UTF_8)
         val ciphertext = ExportCryptoEngine.encryptBytes(encAead, plaintext)
-        val decrypted = ExportCryptoEngine.decryptBytes(decAead, ciphertext)
 
-        assertArrayEquals(plaintext, decrypted)
+        assertArrayEquals(plaintext, decryptBytes(decAead, ciphertext))
     }
 
     @Test
     fun testWrongPrivateKeyFails() {
-        val privKey1 = X25519.generatePrivateKey()
-        val pubKey1 = X25519.publicFromPrivate(privKey1)
-
-        val privKey2 = X25519.generatePrivateKey()
+        val (_, pubKey1) = DecryptEngine.generateKeyPair()
+        val (privKey2, _) = DecryptEngine.generateKeyPair()
 
         val dataKeysetHandle = ExportCryptoEngine.generateDataKeysetHandle()
         val wrappedKeyB64 = ExportCryptoEngine.wrapDataKey(dataKeysetHandle, pubKey1)
-
         try {
-            ExportCryptoEngine.unwrapDataKey(wrappedKeyB64, privKey2)
+            DecryptEngine.unwrapDataKey(wrappedKeyB64, privKey2)
             fail("Expected DecryptionException when using wrong private key")
-        } catch (e: DecryptionException) {
-            assertTrue(e.message?.contains("wrong private key") == true)
+        } catch (_: DecryptionException) {
+            // expected
         }
     }
 
     @Test
     fun testTamperedCiphertextFails() {
-        val privKey = X25519.generatePrivateKey()
-        val pubKey = X25519.publicFromPrivate(privKey)
-
         val dataKeysetHandle = ExportCryptoEngine.generateDataKeysetHandle()
         val aead = ExportCryptoEngine.getStreamingAead(dataKeysetHandle)
+        val plaintext = "Sensitive study measurements".toByteArray(StandardCharsets.UTF_8)
 
-        val plaintext = "Confidential clinical measurements".toByteArray(StandardCharsets.UTF_8)
         val ciphertext = ExportCryptoEngine.encryptBytes(aead, plaintext)
-
-        // Tamper with ciphertext by flipping a bit in the middle
         val tampered = ciphertext.copyOf()
-        tampered[tampered.size / 2] = (tampered[tampered.size / 2].toInt() xor 0xFF).toByte()
+        tampered[tampered.size - 1] = (tampered[tampered.size - 1].toInt() xor 0x01).toByte()
 
         try {
-            ExportCryptoEngine.decryptBytes(aead, tampered)
+            decryptBytes(aead, tampered)
             fail("Expected TamperedCiphertextException when ciphertext is modified")
-        } catch (e: TamperedCiphertextException) {
-            assertTrue(e.message?.contains("tampered") == true || e.cause != null)
+        } catch (_: DecryptTamperedException) {
+            // expected
         }
     }
 
@@ -88,21 +90,107 @@ class ExportCryptoEngineTest {
         val dataKeysetHandle = ExportCryptoEngine.generateDataKeysetHandle()
         val aead = ExportCryptoEngine.getStreamingAead(dataKeysetHandle)
 
-        // 128 KB payload
-        val largeData = ByteArray(128 * 1024) { (it % 256).toByte() }
+        // larger than several 4 KB segments, so segment boundaries are crossed
+        val largeData = ByteArray(40_000) { (it % 251).toByte() }
+        val cipherOut = ByteArrayOutputStream()
+        ExportCryptoEngine.encryptStream(aead, ByteArrayInputStream(largeData), cipherOut)
 
-        val inStream = ByteArrayInputStream(largeData)
-        val cipherOutStream = ByteArrayOutputStream()
-        ExportCryptoEngine.encryptStream(aead, inStream, cipherOutStream)
+        assertArrayEquals(largeData, decryptBytes(aead, cipherOut.toByteArray()))
+    }
 
-        val ciphertext = cipherOutStream.toByteArray()
-        assertTrue(ciphertext.size > largeData.size)
+    @Test
+    fun testAssociatedDataIsBound() {
+        val aead = ExportCryptoEngine.getStreamingAead(ExportCryptoEngine.generateDataKeysetHandle())
+        val ciphertext = ExportCryptoEngine.encryptBytes(aead, "x".toByteArray(), "images/a.enc".toByteArray())
+        try {
+            decryptBytes(aead, ciphertext, "images/b.enc".toByteArray())
+            fail("A ciphertext must not open under other associated data")
+        } catch (_: DecryptTamperedException) {
+            // expected
+        }
+    }
 
-        val cipherInStream = ByteArrayInputStream(ciphertext)
-        val plainOutStream = ByteArrayOutputStream()
-        ExportCryptoEngine.decryptStream(aead, cipherInStream, plainOutStream)
+    @Test
+    fun testWrapRejectsAKeyOfTheWrongLength() {
+        val handle = ExportCryptoEngine.generateDataKeysetHandle()
+        try {
+            ExportCryptoEngine.wrapDataKey(handle, ByteArray(31))
+            fail("A public key that is not 32 bytes must be refused")
+        } catch (_: IllegalArgumentException) {
+            // expected
+        }
+    }
 
-        assertArrayEquals(largeData, plainOutStream.toByteArray())
+    /**
+     * BUG-083 item 27: archives written by the app on Tink 1.7.0 (kept as a fixture, made with a throwaway key) still open
+     * with the decryptor on Tink 1.24, so a version bump cannot orphan an export that is already on a drive.
+     */
+    @Test
+    fun testArchiveWrittenByTink170StillOpens() {
+        val fixture = java.util.Properties().apply {
+            // read from the module directory: Robolectric's class loader does not serve plain test resources
+            java.io.File("src/test/resources/export/legacy-tink-1.7.0.properties").inputStream().use { load(it) }
+        }
+        val b64 = java.util.Base64.getDecoder()
+        val keyset = DecryptEngine.unwrapDataKey(
+            fixture.getProperty("wrappedDataKeyB64"),
+            b64.decode(fixture.getProperty("privateKeyB64"))
+        )
+        val aead = keyset.getPrimitive(com.google.crypto.tink.RegistryConfiguration.get(), StreamingAead::class.java)
+        val plain = decryptBytes(
+            aead,
+            b64.decode(fixture.getProperty("ciphertextB64")),
+            fixture.getProperty("aad").toByteArray()
+        )
+        assertEquals(fixture.getProperty("plaintext"), String(plain, StandardCharsets.UTF_8))
+    }
+
+    /** The wrap format is fixed by export-format v1: the same bytes the 1.7.0 build wrote are the bytes a new build writes. */
+    @Test
+    fun testWrapIsRawHpkeOfTheBinaryKeyset() {
+        val (privateKeyBytes, publicKeyBytes) = DecryptEngine.generateKeyPair()
+        val handle = ExportCryptoEngine.generateDataKeysetHandle()
+        val unwrapped = DecryptEngine.unwrapDataKey(
+            ExportCryptoEngine.wrapDataKey(handle, publicKeyBytes),
+            privateKeyBytes
+        )
+        val sample = "same key".toByteArray()
+        val ciphertext = ExportCryptoEngine.encryptBytes(ExportCryptoEngine.getStreamingAead(handle), sample)
+        val aead = unwrapped.getPrimitive(com.google.crypto.tink.RegistryConfiguration.get(), StreamingAead::class.java)
+        assertArrayEquals(sample, decryptBytes(aead, ciphertext))
+    }
+
+    /**
+     * BUG-083 item 29: the phone encrypts and nothing else. The only public entry points of the engine and of a session are
+     * listed; a new public function that handles keys or decrypts fails this test and needs a decision here.
+     * (Kotlin `internal` functions are compiled with a `$module` suffix in their name, so a name without `$` is public.)
+     */
+    @Test
+    fun testOnlyEncryptingEntryPointsArePublic() {
+        fun publicNames(c: Class<*>) = c.declaredMethods
+            .filter { java.lang.reflect.Modifier.isPublic(it.modifiers) && !it.isSynthetic && '$' !in it.name }
+            .map { it.name }
+            .toSortedSet()
+
+        assertEquals(
+            sortedSetOf("createSession", "getCONTEXT_INFO", "sha256Hex"),
+            publicNames(ExportCryptoEngine::class.java)
+        )
+        assertEquals(
+            sortedSetOf("encryptBytes", "encryptStream", "wrapDataKey"),
+            publicNames(ExportSession::class.java)
+        )
+    }
+
+    @Test
+    fun testSerializedDataKeyIsZeroedAfterWrapping() {
+        // the keyset bytes are a local of wrapDataKey; the observable part is that wrapping twice with one handle works
+        // and gives two different wraps (HPKE is randomized), so nothing about the first call was consumed
+        val (_, publicKeyBytes) = DecryptEngine.generateKeyPair()
+        val handle = ExportCryptoEngine.generateDataKeysetHandle()
+        val first = ExportCryptoEngine.wrapDataKey(handle, publicKeyBytes)
+        val second = ExportCryptoEngine.wrapDataKey(handle, publicKeyBytes)
+        assertTrue(first != second)
     }
 
     @Test

@@ -2,7 +2,6 @@ package com.kitalonlabs.neogold.feature.result
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,11 +52,11 @@ fun S20ResultScreen(
     estimatedHigh: Double?,
     threshold: Double?,
     recheckHours: Int = 24,
-    appVersion: String = "1.0.0",
-    modelVersion: String = "1.0.0",
-    configVersion: String = "2026.10.0",
-    cardBatchId: String? = "NG-2026-001",
-    triageEnabled: Boolean = true,
+    appVersion: String,
+    modelVersion: String,
+    configVersion: String,
+    cardBatchId: String? = null,
+    triageEnabled: Boolean,
     onSaveToLog: (registerNumber: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -140,12 +139,16 @@ fun S20ResultScreen(
                         }
                     },
                     label = { Text(stringResource(R.string.register_label)) },
-                    placeholder = { Text("e.g. 12/345 or OPD-2027-15") },
+                    placeholder = { Text(stringResource(R.string.register_example)) },
                     isError = registerError != null,
                     supportingText = {
                         Text(
                             text = registerError ?: stringResource(R.string.register_hint),
-                            color = if (registerError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (registerError != null) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     },
                     singleLine = true,

@@ -18,7 +18,8 @@ class RetentionManager(
     private val database: NeoGoldDatabase,
     private val dataStore: NeoGoldDataStore,
     private val encryptedFileStore: EncryptedFileStore,
-    private val serverConfirmationHook: ResearchRetentionServerConfirmationHook = NoOpResearchRetentionServerConfirmationHook(),
+    private val serverConfirmationHook: ResearchRetentionServerConfirmationHook =
+        NoOpResearchRetentionServerConfirmationHook(),
     private val currentTimeProvider: () -> Long = { System.currentTimeMillis() }
 ) {
 
@@ -84,6 +85,9 @@ class RetentionManager(
      * items are ACKED, confirms with server that the session reports COMPLETE or REJECTED,
      * then deletes research encrypted image files and local rows.
      */
+    @Suppress(
+        "NestedBlockDepth"
+    ) // each purge step guards the next: a research row is kept until the server has confirmed it
     suspend fun purgeResearchSessions(): Int {
         val now = currentTimeProvider()
         val activeStudy = database.researchStudyDao().getActiveStudy() ?: return 0

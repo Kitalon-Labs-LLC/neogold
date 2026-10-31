@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.models.db import ParticipantAlias
+from app.models.db import IdempotencyRecord, ParticipantAlias
 from tests.conftest import (
     create_enrollment_code,
     mint_device_key,
@@ -158,6 +158,16 @@ def test_tc_api_16_participant_alias_and_conflict(client: TestClient, db, two_en
     assert r3.status_code == 409
     prob3 = r3.json()
     assert prob3["code"] == "PARTICIPANT_CODE_TAKEN"
+    # doc 7 Section 6.1: a problem detail never carries a participant code. The response is also stored for
+    # idempotent replay, so a code here would sit in idempotency_record too (audit A10).
+    assert code_str not in r3.text
+    assert code_str not in prob3.get("detail", "")
+    # ... and what was stored for replay is the same body, so check the table and not only the response.
+    stored = db.execute(
+        select(IdempotencyRecord.response_body).where(IdempotencyRecord.response_status == 409)
+    ).scalars().all()
+    assert stored, "the 409 should have been stored for idempotent replay"
+    assert all(code_str not in json.dumps(body) for body in stored)
 
     # 4. Same participant ID submitted with different content -> 409 CONFLICT_IMMUTABLE
     payload_conflict = {

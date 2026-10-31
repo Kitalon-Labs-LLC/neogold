@@ -32,10 +32,12 @@ data class SiteModel(
 ) {
     init {
         require(standardizationMeans.size == standardizationScales.size) {
-            "Dimension mismatch: standardizationMeans size (${standardizationMeans.size}) != standardizationScales size (${standardizationScales.size})"
+            "Dimension mismatch: standardizationMeans size (${standardizationMeans.size}) " +
+                "!= standardizationScales size (${standardizationScales.size})"
         }
         require(standardizationMeans.size == ridgeCoefficients.size) {
-            "Dimension mismatch: standardizationMeans size (${standardizationMeans.size}) != ridgeCoefficients size (${ridgeCoefficients.size})"
+            "Dimension mismatch: standardizationMeans size (${standardizationMeans.size}) " +
+                "!= ridgeCoefficients size (${ridgeCoefficients.size})"
         }
         require(standardizationScales.all { it > 0.0 && !it.isNaN() && !it.isInfinite() }) {
             "All standardizationScales must be strictly positive finite numbers"
@@ -82,7 +84,8 @@ data class EstimationModel(
         require(sites.containsKey(BodySite.STERNUM)) { "Model must contain at least 'sternum' site parameters" }
         for ((site, siteModel) in sites) {
             require(siteModel.standardizationMeans.size == featureList.size) {
-                "Site $site feature dimensions (${siteModel.standardizationMeans.size}) do not match featureList length (${featureList.size})"
+                "Site $site feature dimensions (${siteModel.standardizationMeans.size}) " +
+                    "do not match featureList length (${featureList.size})"
             }
         }
     }

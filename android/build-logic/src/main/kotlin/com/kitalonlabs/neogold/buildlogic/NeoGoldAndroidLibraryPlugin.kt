@@ -16,6 +16,7 @@ class NeoGoldAndroidLibraryPlugin : Plugin<Project> {
             if (!pluginManager.hasPlugin("org.jetbrains.kotlin.android") && extensions.findByName("kotlin") == null) {
                 pluginManager.apply("org.jetbrains.kotlin.android")
             }
+            pluginManager.apply(NeoGoldDetektPlugin::class.java)
 
             extensions.configure<LibraryExtension> {
                 compileSdk = 36

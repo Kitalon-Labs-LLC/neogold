@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
@@ -32,6 +33,7 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryBut
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgSyncStatusChip
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.data.CardTrustStatus
+import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 /**
  * R02: Study Home Screen (doc 6 Section 5, Section 6.2).
@@ -65,7 +67,7 @@ fun R02StudyHomeScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(ResearchR.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.testTag("research_mode_badge")
@@ -76,7 +78,7 @@ fun R02StudyHomeScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Lock,
-                    contentDescription = "Lock research mode",
+                    contentDescription = stringResource(ResearchR.string.r02_lock_description),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -103,7 +105,7 @@ fun R02StudyHomeScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Study: $studyCode • Site: $siteCode",
+                    text = stringResource(ResearchR.string.r02_study_site, studyCode, siteCode),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -116,9 +118,12 @@ fun R02StudyHomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     val (cardBadgeText, cardBadgeColor) = when (cardStatus) {
-                        CardTrustStatus.VERIFIED -> "CARD VERIFIED" to MaterialTheme.colorScheme.primary
-                        CardTrustStatus.EXPIRED -> "CARD EXPIRED" to MaterialTheme.colorScheme.error
-                        CardTrustStatus.UNVERIFIED -> "CARD UNVERIFIED" to MaterialTheme.colorScheme.outline
+                        CardTrustStatus.VERIFIED ->
+                            stringResource(ResearchR.string.r_card_verified_badge) to MaterialTheme.colorScheme.primary
+                        CardTrustStatus.EXPIRED ->
+                            stringResource(ResearchR.string.r_card_expired_badge) to MaterialTheme.colorScheme.error
+                        CardTrustStatus.UNVERIFIED ->
+                            stringResource(ResearchR.string.r_card_unverified_badge) to MaterialTheme.colorScheme.outline
                     }
                     NgBadge(
                         text = cardBadgeText,
@@ -139,7 +144,7 @@ fun R02StudyHomeScreen(
 
         // Primary: New Participant Session
         NgPrimaryButton(
-            text = "New Participant Session",
+            text = stringResource(ResearchR.string.r02_new_session),
             onClick = onNewParticipantSession,
             modifier = Modifier.testTag("new_session_button")
         )
@@ -148,7 +153,7 @@ fun R02StudyHomeScreen(
 
         // Secondary: Enter TSB later by participant code
         NgSecondaryButton(
-            text = "Enter TSB Value",
+            text = stringResource(ResearchR.string.r02_enter_tsb),
             onClick = onEnterTsbClicked,
             modifier = Modifier.testTag("enter_tsb_button")
         )
@@ -157,7 +162,7 @@ fun R02StudyHomeScreen(
 
         // Export encrypted study data (SAF)
         NgSecondaryButton(
-            text = "Export Research Data",
+            text = stringResource(ResearchR.string.r02_export),
             onClick = onExportClicked,
             modifier = Modifier.testTag("export_data_button")
         )

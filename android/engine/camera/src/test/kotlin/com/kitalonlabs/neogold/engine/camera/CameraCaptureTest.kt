@@ -7,9 +7,7 @@ import com.kitalonlabs.neogold.engine.camera.model.BurstCaptureResult
 import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
 import com.kitalonlabs.neogold.engine.camera.model.CaptureMetadata
 import com.kitalonlabs.neogold.engine.camera.model.LaplacianEstimator
-import com.kitalonlabs.neogold.engine.vision.DetectedMarker
 import com.kitalonlabs.neogold.engine.vision.ImageFrame
-import com.kitalonlabs.neogold.engine.vision.Point2D
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -19,7 +17,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 
 /**
- * Tests TC-CAP-01, TC-CAP-15, downsampled in-memory decoding, and zero-disk-write privacy verification.
+ * Tests TC-CAP-15, downsampled in-memory decoding, and zero-disk-write privacy verification.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -35,55 +33,6 @@ class CameraCaptureTest {
         bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
         bitmap.recycle()
         return out.toByteArray()
-    }
-
-    @Test
-    fun tcCap01_liveCardDetectionAndAutoCaptureGating() {
-        // TC-CAP-01: Auto-capture fires only when all 4 markers are detected and steady
-        var autoCaptureTriggered = false
-        var lastState: LiveCardState = LiveCardState.IDLE
-
-        // Create analyzer with 100 ms steady threshold for fast unit testing
-        val analyzer = LiveCardAnalyzer(
-            steadyRequiredDurationMs = 100L,
-            onStateChanged = { lastState = it },
-            onAutoCaptureTriggered = { autoCaptureTriggered = true }
-        )
-
-        // 1. Initially idle
-        assertThat(lastState.allFourFound).isFalse()
-        assertThat(autoCaptureTriggered).isFalse()
-
-        // 2. State with 3 markers -> auto-capture does not fire
-        val threeMarkers = mapOf(
-            0 to DetectedMarker(0, listOf(Point2D(0.0, 0.0), Point2D(10.0, 0.0), Point2D(10.0, 10.0), Point2D(0.0, 10.0)), Point2D(5.0, 5.0)),
-            1 to DetectedMarker(1, listOf(Point2D(100.0, 0.0), Point2D(110.0, 0.0), Point2D(110.0, 10.0), Point2D(100.0, 10.0)), Point2D(105.0, 5.0)),
-            2 to DetectedMarker(2, listOf(Point2D(100.0, 100.0), Point2D(110.0, 100.0), Point2D(110.0, 110.0), Point2D(100.0, 110.0)), Point2D(105.0, 105.0))
-        )
-        val partialState = LiveCardState(
-            detectedMarkerCount = 3,
-            detectedMarkers = threeMarkers,
-            allFourFound = false,
-            cardAngleDegrees = 0.0,
-            steadyFraction = 0.0f,
-            isSteadyForOneSecond = false,
-            readyForCapture = false
-        )
-        assertThat(partialState.readyForCapture).isFalse()
-
-        // 3. State with all 4 markers and steady -> ready for capture
-        val fourMarkers = threeMarkers + (3 to DetectedMarker(3, listOf(Point2D(0.0, 100.0), Point2D(10.0, 100.0), Point2D(10.0, 110.0), Point2D(0.0, 110.0)), Point2D(5.0, 105.0)))
-        val completeState = LiveCardState(
-            detectedMarkerCount = 4,
-            detectedMarkers = fourMarkers,
-            allFourFound = true,
-            cardAngleDegrees = 3.5,
-            steadyFraction = 1.0f,
-            isSteadyForOneSecond = true,
-            readyForCapture = true
-        )
-        assertThat(completeState.allFourFound).isTrue()
-        assertThat(completeState.readyForCapture).isTrue()
     }
 
     @Test

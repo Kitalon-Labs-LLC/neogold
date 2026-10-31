@@ -1,6 +1,6 @@
-package com.kitalonlabs.neogold.engine.vision
+@file:Suppress("MagicNumber") // quad corner indices and marker grid sizes of the card's two marker families
 
-import com.kitalonlabs.neogold.engine.colorscience.RectPx
+package com.kitalonlabs.neogold.engine.vision
 
 /**
  * Marker detection interface.
@@ -68,6 +68,9 @@ object MarkerCodebook {
 
 /**
  * Pure Kotlin marker detector capable of finding corner markers in camera and synthetic frames.
+ *
+ * The app prefers OpenCV's ArUco detector (see [DefaultMarkerDetector], ADR-018). This one is the JVM-testable
+ * reference and the fallback when OpenCV cannot load.
  */
 class FastMarkerDetector : MarkerDetector {
 
@@ -126,6 +129,10 @@ class FastMarkerDetector : MarkerDetector {
         return null
     }
 
+    @Suppress(
+        "NestedBlockDepth",
+        "ReturnCount"
+    ) // image-processing loops of the reference and fallback detector (ADR-018)
     private fun decodeGrid(
         frame: ImageFrame,
         corners: List<Point2D>,
@@ -140,7 +147,7 @@ class FastMarkerDetector : MarkerDetector {
             Point2D(1.0, 1.0),
             Point2D(0.0, 1.0)
         )
-        val H = try {
+        val homography = try {
             Homography.findHomography(unitSquare, corners)
         } catch (_: Exception) {
             return null
@@ -155,7 +162,7 @@ class FastMarkerDetector : MarkerDetector {
             for (c in 0 until gridSize) {
                 val u = (c + 0.5) / gridSize
                 val v = (r + 0.5) / gridSize
-                val pt = H.transform(Point2D(u, v))
+                val pt = homography.transform(Point2D(u, v))
                 val px = pt.x.toInt().coerceIn(0, frame.width - 1)
                 val py = pt.y.toInt().coerceIn(0, frame.height - 1)
                 val lum = frame.getLuminance(px, py)
@@ -215,6 +222,11 @@ class FastMarkerDetector : MarkerDetector {
      * Extracts potential quadrilateral corners from frame.
      * Uses thresholding and polygon contour tracking.
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LongMethod",
+        "NestedBlockDepth"
+    ) // image-processing loops of the reference and fallback detector (ADR-018)
     fun findCandidateQuads(frame: ImageFrame): List<List<Point2D>> {
         val w = frame.width
         val h = frame.height
@@ -256,17 +268,21 @@ class FastMarkerDetector : MarkerDetector {
                 val idx = y * mw + x
                 if (darkMask[idx] && !visited[idx]) {
                     var blobCount = 0
-                    var minX = x; var maxX = x
-                    var minY = y; var maxY = y
+                    var minX = x
+                    var maxX = x
+                    var minY = y
+                    var maxY = y
 
                     // Breadth-first search
                     val queue = IntArray(mw * mh)
-                    var qHead = 0; var qTail = 0
+                    var qHead = 0
+                    var qTail = 0
                     queue[qTail++] = idx
                     visited[idx] = true
                     val boundaryX = mutableListOf<Int>()
                     val boundaryY = mutableListOf<Int>()
-                    var sumX = 0L; var sumY = 0L
+                    var sumX = 0L
+                    var sumY = 0L
 
                     while (qHead < qTail) {
                         val curr = queue[qHead++]
@@ -286,27 +302,43 @@ class FastMarkerDetector : MarkerDetector {
                         // Neighbors
                         val n1 = (cy - 1) * mw + cx
                         if (cy > 0) {
-                            if (darkMask[n1] && !visited[n1]) { visited[n1] = true; queue[qTail++] = n1 }
-                            else if (!darkMask[n1]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n1] && !visited[n1]) {
+                                visited[n1] = true
+                                queue[qTail++] = n1
+                            } else if (!darkMask[n1]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         val n2 = (cy + 1) * mw + cx
                         if (cy < mh - 1) {
-                            if (darkMask[n2] && !visited[n2]) { visited[n2] = true; queue[qTail++] = n2 }
-                            else if (!darkMask[n2]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n2] && !visited[n2]) {
+                                visited[n2] = true
+                                queue[qTail++] = n2
+                            } else if (!darkMask[n2]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         val n3 = cy * mw + (cx - 1)
                         if (cx > 0) {
-                            if (darkMask[n3] && !visited[n3]) { visited[n3] = true; queue[qTail++] = n3 }
-                            else if (!darkMask[n3]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n3] && !visited[n3]) {
+                                visited[n3] = true
+                                queue[qTail++] = n3
+                            } else if (!darkMask[n3]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         val n4 = cy * mw + (cx + 1)
                         if (cx < mw - 1) {
-                            if (darkMask[n4] && !visited[n4]) { visited[n4] = true; queue[qTail++] = n4 }
-                            else if (!darkMask[n4]) isBoundary = true
-                        } else isBoundary = true
+                            if (darkMask[n4] && !visited[n4]) {
+                                visited[n4] = true
+                                queue[qTail++] = n4
+                            } else if (!darkMask[n4]) isBoundary = true
+                        } else {
+                            isBoundary = true
+                        }
 
                         if (isBoundary) {
                             boundaryX.add(cx)
@@ -327,12 +359,14 @@ class FastMarkerDetector : MarkerDetector {
                             val px2 = ((maxX + 1) * step).toDouble()
                             val py2 = ((maxY + 1) * step).toDouble()
 
-                            quads.add(listOf(
-                                Point2D(px1, py1),
-                                Point2D(px2, py1),
-                                Point2D(px2, py2),
-                                Point2D(px1, py2)
-                            ))
+                            quads.add(
+                                listOf(
+                                    Point2D(px1, py1),
+                                    Point2D(px2, py1),
+                                    Point2D(px2, py2),
+                                    Point2D(px1, py2)
+                                )
+                            )
 
                             // 2. Rotated 4-corner quad from extremal boundary points
                             if (boundaryX.size >= 8) {
@@ -394,12 +428,14 @@ class FastMarkerDetector : MarkerDetector {
                                 if (maxCross > 0.0 && minCross < 0.0) {
                                     val s = step.toDouble()
                                     val half = s * 0.5
-                                    quads.add(listOf(
-                                        Point2D(p0x * s + half, p0y * s + half),
-                                        Point2D(boundaryX[p1Idx] * s + half, boundaryY[p1Idx] * s + half),
-                                        Point2D(p2x * s + half, p2y * s + half),
-                                        Point2D(boundaryX[p3Idx] * s + half, boundaryY[p3Idx] * s + half)
-                                    ))
+                                    quads.add(
+                                        listOf(
+                                            Point2D(p0x * s + half, p0y * s + half),
+                                            Point2D(boundaryX[p1Idx] * s + half, boundaryY[p1Idx] * s + half),
+                                            Point2D(p2x * s + half, p2y * s + half),
+                                            Point2D(boundaryX[p3Idx] * s + half, boundaryY[p3Idx] * s + half)
+                                        )
+                                    )
                                 }
                             }
                         }

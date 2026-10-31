@@ -1,7 +1,6 @@
 package com.kitalonlabs.neogold.feature.screening.domain
 
 import com.kitalonlabs.neogold.engine.cardtrust.CardBatchPayload
-import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
 import com.kitalonlabs.neogold.engine.triage.TriageResult
 import com.kitalonlabs.neogold.engine.vision.QualityGateResult
 import com.kitalonlabs.neogold.engine.vision.QualityReasonCode
@@ -64,8 +63,19 @@ sealed class ScreeningState {
      * Screening blocked.
      */
     data class Blocked(
-        val inputs: ScreeningInputs,
+        /** What the worker had entered, or null when screening was blocked before anything was entered. */
+        val inputs: ScreeningInputs?,
         val reason: CardBlockReason
+    ) : ScreeningState()
+
+    /**
+     * Terminal state: the triage engine says triage is not available (switched off, not signed for this build, or past
+     * its valid-until date). No estimate is made and none is shown; the worker is told to use a blood test (TC-TRI-26).
+     */
+    data class TriageUnavailable(
+        val inputs: ScreeningInputs,
+        val triageResult: TriageResult.Unavailable,
+        val versions: VersionsRecord
     ) : ScreeningState()
 
     /**

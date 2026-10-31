@@ -1,0 +1,31 @@
+# NeoGold CODEOWNERS (P25)
+# Tier 0 paths, .claude/, quality/, and workflows require the second approver.
+
+# Default maintainer
+* @sowad
+
+# Tier 0 (Clinical Safety & Triage) - requires second approver
+/android/engine/triage/                 @sowad @second-approver
+/android/engine/estimation/             @sowad @second-approver
+/android/engine/colorscience/           @sowad @second-approver
+/android/engine/cardtrust/              @sowad @second-approver
+/android/engine/vision/src/main/kotlin/com/kitalonlabs/neogold/engine/vision/QualityGate*.kt @sowad @second-approver
+/android/feature/result/                @sowad @second-approver
+/config/triage-config.json              @sowad @second-approver
+/config/model.json                      @sowad @second-approver
+/android/app/src/main/assets/model.json @sowad @second-approver
+/android/core/designsystem/src/main/res/values/strings.xml    @sowad @second-approver
+/android/core/designsystem/src/main/res/values-bn/strings.xml @sowad @second-approver
+/CLINICAL_SIGNOFF.md                    @sowad @second-approver
+
+# Guardrails, Quality Tiers, Hooks & Agents - requires second approver
+/.claude/                               @sowad @second-approver
+/quality/                               @sowad @second-approver
+/.github/workflows/                     @sowad @second-approver
+
+# The secrets-scan config and the gate scripts: a commit must not be able to edit its own gate
+# without the second approver seeing it (added after the A1 privacy review).
+/.gitleaks.toml                         @sowad @second-approver
+/.trivyignore.yaml                      @sowad @second-approver
+/tools/check_*.py                       @sowad @second-approver
+/tools/hooks/                           @sowad @second-approver

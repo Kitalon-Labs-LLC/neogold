@@ -17,6 +17,7 @@ class NeoGoldJvmLibraryPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("org.jetbrains.kotlin.jvm")
+            pluginManager.apply(NeoGoldDetektPlugin::class.java)
 
             extensions.configure<JavaPluginExtension> {
                 toolchain {

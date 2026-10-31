@@ -278,7 +278,7 @@ Every item waiting to go to the Study Intake Service.
 | `entity_id` | TEXT | No | ID of the row being sent |
 | `idempotency_key` | TEXT | No | Unique; reused on every retry; replaced only when the row is re-queued as a new revision |
 | `revision` | INTEGER | No | Default 0; incremented when a TSB value is linked, or a client-bug failure is re-queued after an app update (doc 7 Section 5.2) |
-| `dependency_requeues` | INTEGER | No | Default 0; at 3 the row becomes `FAILED_PERMANENT` |
+| `dependency_requeues` | INTEGER | No | Default 0; counts the re-queues done (at most 2). The third dependency error makes the row `FAILED_PERMANENT` |
 | `payload_sha256` | TEXT | No | |
 | `state` | TEXT | No | `PENDING`, `IN_FLIGHT`, `ACKED`, `FAILED_PERMANENT`; `IN_FLIGHT` rows are reset to `PENDING` when the worker starts |
 | `attempts` | INTEGER | No | Default 0 |
@@ -320,6 +320,7 @@ Local, append-only trail of security- and integrity-relevant actions.
 | `safety_ack_version` | Int | 0 (forces notice on first launch and after major model updates) |
 | `onboarding_complete` | Boolean | false |
 | `active_device_profile_id` | String | none |
+| `qualification_build_fingerprint` | String | none (the OS build fingerprint the camera was qualified on; a different build means qualify again, NG-044. It is not a `device_profile` column because the schema stays at version 2) |
 | `screening_retention_days` | Int | 180 (allowed 30 to 365), PRD D7 |
 | `register_number_retention_days` | Int | 60 (allowed 14 to 90), PRD D7 |
 | `keep_screening_log` | Boolean | true (a facility can switch the log off entirely) |

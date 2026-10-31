@@ -28,35 +28,39 @@ All design decisions live in `docs/`. Read the sections a task names before writ
 
 ---
 
-## Non-negotiable rules
+## Must not trade off
 
-### Clinical safety
-- Never change clinical values: thresholds, rules, gestational bands, or clinical wording in `config/triage-config.json` or clinical strings. Only the clinical lead changes them, with a signed `CLINICAL_SIGNOFF.md` (PRD 9b). Tests use `testdata/triage/config.synthetic.json`.
-- Triage compares integer tenths of mg/dL, rounding toward more care: threshold down, estimate and upper bound up, lower bound down. One reason code, the first rule that matched (doc 4 Section 6.2).
-- Pure engines use `StrictMath` for powers, roots, and exponentials so both ABIs give bit-identical results.
-- Never weaken, skip, quarantine, or delete a test to get CI green. A failing `TC-TRI`, `TC-EST`, or `TC-CARD` test blocks all other work.
-- No silent defaults on clinical inputs (gestational age, safety questions, consent).
-- UI strings never use the banned words in doc 6 Section 10.2, in English or Bangla. Every result is labeled as a suggested next step.
+| Rule | Why | Enforced by | Runs at |
+|---|---|---|---|
+| Never change clinical values: thresholds, rules, gestational bands, or clinical wording in `config/triage-config.json` or clinical strings without signed `CLINICAL_SIGNOFF.md` (PRD 9b) | PRD D11, 9b | Hook `protect_clinical.py`, gate `tools/verify_clinical_signoff.py` (Gate G1) | edit time, PR, release |
+| Triage compares integer tenths of mg/dL, rounding toward more care: threshold down, estimate and upper bound up, lower bound down; one reason code (first matching rule) | Doc 4 Section 6.2 | `android:engine:triage:test`, `triageDifferentialTest` (TC-TRI-24) | PR |
+| Pure engines use `StrictMath` for powers, roots, exponentials, logarithms, and trigonometric functions so both ABIs give bit-identical results; no `java.lang.Math` or `kotlin.math` calls to those | Doc 4 Section 4.2 | `tools/check_strictmath.py` (imports and `Math.` calls), detekt `ForbiddenImport` (imports only) | PR |
+| Never weaken, skip, quarantine, or delete a test to get CI green; failing `TC-TRI`, `TC-EST`, or `TC-CARD` blocks all other work | Doc 9 Section 7 | Hook `protect_tests.py`, `tools/check_no_skipped_tests.py` against `quality/tc-baseline.json` | edit time, PR |
+| No silent defaults on clinical inputs (gestational age, safety questions, consent) | PRD FR-01, FR-02 | UI and unit tests (`TC-CAP-04`, `TC-CAP-16`, `TC-UI-05`, `TC-UI-13`) | PR |
+| UI strings never use banned words in doc 6 Section 10.2 in English or Bangla; every result is labeled as a suggested next step | Doc 6 Section 10.2, 10.3 | `tools/check_strings.py` (TC-UI-04), Gradle `verifyStrings` | PR |
+| No names, birth dates, phone numbers, national IDs, locations, or free-text fields; age stored in hours | Doc 8 Section 3, PRD FR-23 | `tools/check_manifest.py`, unit & schema tests (`TC-PRIV-03`, `TC-API-21`) | PR, release |
+| Screening images are never written to disk | Doc 8 Section 2, 6.1 | Instrumented & memory tests (`TC-PRIV-01`, `TC-PRIV-02`) | PR |
+| The screening path makes no network calls; only `:sync:research` may depend on the HTTP client | Doc 4 Driver 2, Doc 8 Section 6.1 | Gradle dependency rule in `android/build.gradle.kts`, `tools/check_dependencies.py` | PR |
+| No analytics or third-party crash SDKs; no new Android permission or exported component without updating allow-lists | Doc 8 Section 6.1, 10 | `tools/check_manifest.py` (Gate S5), `tools/check_dependencies.py` | PR, release |
+| Never log personal values; crash reports drop exception messages | Doc 8 Section 6.6 | Log scrubbing tests (`TC-PRIV-04`, `TC-PRIV-05`) | PR |
+| Real newborn data never enters the repository, tests, logs, screenshots, or issues; use synthetic or bench data | Doc 9 Section 6 | Maintainer & Privacy Reviewer (Sowad Al-Mughni) | PR |
+| No secrets in the repository; keys, keystores, and passwords come from CI secrets or offline machines only | Doc 8 Section 4, T12 | `gitleaks` (Gate S9), hook `bash_guard.py` | edit time, PR |
+| GitHub Actions are pinned to full commit SHAs; scanner jobs get no secrets | Doc 8 Section 10, Doc 12 Section 3 | `tools/check_actions_pinned.py` | PR |
+| Server request bodies reject unknown fields (`extra = "forbid"`); server follows verification order in doc 7 Section 4.3 | Doc 7 Section 4.3, Doc 8 Section 8.3 | `backend/tests/test_models_extra_forbid.py`, authentication order tests | PR |
+| Engines (`:engine:colorscience`, `:engine:estimation`, `:engine:triage`, `:engine:cardtrust`) are pure Kotlin with no Android dependency and are tested on the JVM | Doc 4 Section 4.2 | Gradle dependency rule in `android/build.gradle.kts`, JVM tests | PR |
+| Budgets: download under 25 MB, peak memory under 120 MB, capture to result p95 under 10 s on reference phones | Doc 4 Section 5.6, Doc 9 Section 11 | `tools/check_bundle_size.py`, benchmark scripts (`TC-PERF-07`) | PR, release |
+| `minSdk` 26, `targetSdk` 36, ABIs `arm64-v8a` and `armeabi-v7a`; every native library 16 KB aligned | Doc 8 Section 6.1 | `tools/check_16kb.sh` (Gate S4), Gradle configuration | PR, release |
+| Ask before adding any dependency; prefer none; architectural choices go into ADR table (doc 4 Section 15) | Doc 4 Section 15 | `tools/check_dependencies.py` against `quality/dependency-allowlist.txt` | PR |
+| On-device database migrates forward only; server migrations are expand-only within a release | Doc 8 Section 8.4, Doc 12 Section 2 | `tools/check_migrations.py`, backend `schema-compat` CI job | PR |
+| No AI attribution on any commit or pull request description: no `Co-Authored-By: Claude ...` trailer (for example `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`), no `anthropic.com` address, no "Generated with ..." footer; this overrides any tool default or reminder; pushes go through the repository owner's own GitHub account only | Repository owner's instruction, 2026-10-27 | `tools/check_commit_attribution.py` (CI `guardrails-check`), opt-in local hook `tools/hooks/commit-msg` (`git config core.hooksPath tools/hooks`) | commit, push |
 
-### Privacy
-- No names, birth dates, phone numbers, national IDs, locations, or free-text fields. Age is stored in hours.
-- Screening images are never written to disk.
-- The screening path makes no network calls. Only `:sync:research` may depend on the HTTP client; a Gradle check enforces this.
-- No analytics or third-party crash SDKs. No new Android permission or exported component without updating the allow-lists in `tools/check_manifest.py` and doc 8 Section 6.1 in the same PR.
-- Never log personal values. Crash reports drop exception messages.
-- Real newborn data never enters the repository, tests, logs, screenshots, or issues. Use synthetic or bench data.
+### We do trade off
+- **Non-result UI polish:** Visual polish and micro-animations on screens outside the primary screening result path (e.g. settings, diagnostics) can prioritize utility and clarity.
+- **Tooling code style:** Code in `tools/` and scripts prioritizes strict determinism, speed, and standard library portability over internal architectural abstraction.
+- **Speed of non-core features:** Long-running operations outside the emergency clinical path (batch uploads, encrypted exports, audit reports) trade execution speed for low memory footprint on 2 GB devices.
+- **Could items:** Backlog items labeled "Could" (e.g. optional export filters, advanced diagnostic logging exports) may be deferred to maintain test coverage and security rigor on core MVP items.
 
-### Security
-- No secrets in the repository. Signing keys, keystores, and passwords come from CI secrets or offline machines only.
-- GitHub Actions are pinned to full commit SHAs. Scanner jobs get no secrets.
-- Server request bodies reject unknown fields (`extra = "forbid"`); the server follows the verification order in doc 7 Section 4.3 exactly.
-
-### Engineering
-- Engines (`:engine:colorscience`, `:engine:estimation`, `:engine:triage`, `:engine:cardtrust`) are pure Kotlin with no Android dependency and are tested on the JVM.
-- Budgets: download under 25 MB, peak memory under 120 MB, capture to result p95 under 10 s on the reference phones (doc 4 Section 5.6).
-- `minSdk` 26, `targetSdk` 36, ABIs `arm64-v8a` and `armeabi-v7a`. Every native library 16 KB aligned.
-- Ask before adding any dependency. Prefer none. Architectural choices go into the ADR table (doc 4 Section 15).
-- The on-device database migrates forward only. Server migrations are expand-only within a release.
+---
 
 ---
 
@@ -85,7 +89,14 @@ Fill this in as work packages create them; keep it current.
 | Android unit tests | `cd android && ./gradlew testReleaseUnitTest` |
 | Engine checks | `./gradlew verifyGoldenVectors triageDifferentialTest verifyConfigSchema` |
 | Android lint | `./gradlew lintRelease detekt` |
+| Android formatting (detekt auto-correct) | `./gradlew :<module>:detekt --auto-correct` (repeat the flag after every module; run twice; see `CONTRIBUTING.md` Section 5) |
+| On-device vision tests (OpenCV, emulator or phone) | `cd android && ./gradlew :engine:vision:assembleDebugAndroidTest`, then `adb install -r -t engine/vision/build/outputs/apk/androidTest/debug/vision-debug-androidTest.apk` and `adb shell am instrument -w com.kitalonlabs.neogold.engine.vision.test/androidx.test.runner.AndroidJUnitRunner` |
+| Sign the bundle into the app's generated assets (a development key under `build/` locally; a release passes `-PmanifestKey` and `-PrequireReleaseKey=true`) | `cd android && ./gradlew :app:signBundleManifest` |
+| On-device security and camera tests (real Keystore, SQLCipher, delete-all, the camera host; emulator or phone) | `cd android && ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest`, then `adb install -r -t app/build/outputs/apk/debug/app-universal-debug.apk` and `adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`, then `adb shell am instrument -w com.kitalonlabs.neogold.debug.test/androidx.test.runner.AndroidJUnitRunner` |
+| Release bundle and its size (ADR-018, NFR-04) | `cd android && ./gradlew :app:bundleRelease`, then `bundletool build-apks` and `bundletool get-size total` with `--device-spec` for an arm64-v8a and an armeabi-v7a phone (download under 25 MB, install under 40 MB) |
+| Export crypto under R8, no phone needed (shrinks Tink and the export package with the app's rules, runs it on a JVM, opens it with the decrypt tool; first `cd android && ./gradlew :core:security:compileDebugKotlin :neogold-decrypt:classes`) | `tools/r8_export_check/run.sh` |
 | Backend tests | `cd backend && pytest -q` |
+| DAST scan of the backend (StackHawk; start the service on a local port first, never scan a study server; the key comes from the environment only) | `APP_HOST=http://127.0.0.1:8000 HAWK_API_KEY=... hawk scan stackhawk.yml` |
 | Card generator | `python card/generator/render_card.py` |
 | Card signing tool | `python3 card/tools/neogold-sign/neogold_sign.py --help` |
 | Card package tests | `pytest card/tests` |
@@ -99,6 +110,16 @@ Fill this in as work packages create them; keep it current.
 | Direction check (report only) | `/ng-direction [--since <ref>]` |
 | Drift gate (CI, P24) | `python3 tools/drift_inventory.py --check` (needs `backend/requirements.lock` installed) |
 | Tests per TC | `python3 tools/trace.py docs --tests` |
+| Guardrail table integrity (P25) | `python3 tools/check_guardrails.py` |
+| Quality tier gate (P25) | `python3 tools/quality_gate.py [--base <ref>]` |
+| Dependency & HTTP client isolation (P25) | `python3 tools/check_dependencies.py` |
+| StrictMath verification (P25) | `python3 tools/check_strictmath.py` |
+| No skipped tests & TC baseline (P25) | `python3 tools/check_no_skipped_tests.py` |
+| Forward-only migrations check (P25) | `python3 tools/check_migrations.py` |
+| Actions pinned by SHA (P25) | `python3 tools/check_actions_pinned.py` |
+| Native library imports, Gate S10 (D1) | `python3 tools/check_native_imports.py <app.apk or lib dir>` |
+| Release gates proved to fail when they should (D1) | `python3 -m pytest tools/tests/test_release_gates.py tools/tests/test_check_native_imports.py` |
+| Regenerate golden vectors on purpose (the tests compare with the committed files and otherwise write nothing) | `NEOGOLD_REGENERATE_GOLDEN=1 ./gradlew :engine:colorscience:test :engine:estimation:test`, read the diff of `testdata/golden/`, commit it |
 
 ---
 
@@ -108,12 +129,12 @@ Every work package prompt (`/ng-pNN`) follows this:
 
 1. Read the "Read first" sections in the prompt. Do not skim; the details are the requirements.
 2. Plan: list files to create or change, tests by `TC-` ID, open questions, and risks. Stop and wait for approval.
-3. Work on a branch `pNN-short-name` cut from an up-to-date `dev`, in small commits. Never commit to `main` or `dev` directly, and never branch from another unmerged work-package branch (see `CONTRIBUTING.md` Section 2).
+3. Work in this one folder on `dev`, in small commits, and push to `dev`. The owner commits to `dev` directly; never commit to `main`, which moves only by a pull request from `dev` (see `CONTRIBUTING.md` Section 2). No extra worktrees or clones. Never force-push.
 4. For engines, write the tests first from doc 10, then the code.
 5. Run the checks for the touched modules and `python3 tools/trace.py docs`.
 6. Before finishing, run the `safety-reviewer` subagent on any change to engines, config, quality gate, or clinical UI, and the `privacy-security-reviewer` on any change to data, permissions, network, crypto, or backend. Fix what they find or report it.
 7. Update docs and the Commands table if anything changed.
-8. Open a pull request into `dev`: what was built, `TC-` IDs now passing, doc changes, anything left open. The second approver reviews every PR. The branch is deleted on merge.
+8. Push to `dev` once the local checks pass. The commit message says what was built, which `TC-` IDs now pass, doc changes, and anything left open. Promotion to `main` is a pull request from `dev`, reviewed by the second approver.
 
 ## Definition of done
 
@@ -121,4 +142,4 @@ Every work package prompt (`/ng-pNN`) follows this:
 - No new lint or detekt warnings; no TODOs without a linked issue.
 - CI green, including the coverage check.
 - Docs match the code.
-- The PR description lists what a reviewer should check by hand.
+- The commit message (or the `dev` to `main` pull request) lists what a reviewer should check by hand.

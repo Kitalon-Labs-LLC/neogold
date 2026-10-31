@@ -1,4 +1,4 @@
-appId: com.kitalonlabs.neogold
+appId: ${APP_ID}
 ---
 # ==============================================================================
 # NeoGold Screening Capture Flow (TC-CAP-01, TC-CAP-15)

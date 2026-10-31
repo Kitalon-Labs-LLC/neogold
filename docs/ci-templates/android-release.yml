@@ -42,7 +42,8 @@ jobs:
           printf '%s' "$UPLOAD_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           printf '%s' "$RELEASE_MANIFEST_KEY_B64" | base64 -d > "$RUNNER_TEMP/manifest.key"
           ./gradlew --no-daemon signAssetManifest bundleRelease cyclonedxBom \
-            -PuploadKeystore="$RUNNER_TEMP/upload.jks" -PmanifestKey="$RUNNER_TEMP/manifest.key"
+            -PuploadKeystore="$RUNNER_TEMP/upload.jks" -PmanifestKey="$RUNNER_TEMP/manifest.key" \
+            -PrequireReleaseKey=true
           mkdir -p "$RUNNER_TEMP/upload"
           cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/upload/"
       - name: Install bundletool and put SDK and NDK tools on PATH

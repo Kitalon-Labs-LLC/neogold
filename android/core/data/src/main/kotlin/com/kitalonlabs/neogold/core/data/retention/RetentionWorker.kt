@@ -7,37 +7,37 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
-import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
-import com.kitalonlabs.neogold.core.security.AndroidMasterKeyProvider
-import com.kitalonlabs.neogold.core.security.DefaultDatabaseKeyProvider
-import com.kitalonlabs.neogold.core.security.DefaultEncryptedFileStore
-import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * What the retention worker needs from the app. The Application implements it, so the worker uses the one database and
+ * the one set of keys the app already opened instead of building a second set of its own.
+ */
+interface RetentionComponent {
+    /** The retention jobs over the open database, or null while storage cannot be read (a lost Keystore key). */
+    suspend fun retentionManager(): RetentionManager?
+}
+
+/** Daily retention (doc 5 Section 2.5): register number erasure, screening purge, abandoned sessions, research. */
 class RetentionWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
+    @Suppress("TooGenericExceptionCaught") // a failed run is retried with backoff; nothing here may crash the process
     override suspend fun doWork(): Result {
         return try {
-            val masterKeyProvider = AndroidMasterKeyProvider(applicationContext)
-            val databaseKeyProvider = DefaultDatabaseKeyProvider(applicationContext, masterKeyProvider)
-            val fileKeysetProvider = DefaultFileKeysetProvider(applicationContext, masterKeyProvider)
-            val encryptedFileStore = DefaultEncryptedFileStore(applicationContext, fileKeysetProvider)
-            val database = NeoGoldDatabase.buildDatabase(applicationContext, databaseKeyProvider)
-            val dataStore = DefaultNeoGoldDataStore(applicationContext)
-
-            val retentionManager = RetentionManager(
-                database = database,
-                dataStore = dataStore,
-                encryptedFileStore = encryptedFileStore
-            )
-
-            retentionManager.runAllRetentionJobs()
-            Result.success()
-        } catch (e: Exception) {
+            val manager = (applicationContext as? RetentionComponent)?.retentionManager()
+            if (manager == null) {
+                Result.retry()
+            } else {
+                manager.runAllRetentionJobs()
+                Result.success()
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
             Result.retry()
         }
     }

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.ui.draw.rotate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -25,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,13 +48,7 @@ fun WhatToTellTheMotherCard(
 ) {
     var expanded by remember { mutableStateOf(initiallyExpanded) }
 
-    val scriptResId = when (action) {
-        TriageUiAction.REFER_URGENT -> R.string.mother_card_refer_urgent
-        TriageUiAction.BLOOD_TEST -> R.string.mother_card_blood_test
-        TriageUiAction.RECHECK -> R.string.mother_card_recheck
-        TriageUiAction.NO_FURTHER_ACTION -> R.string.mother_card_no_further
-        TriageUiAction.CANNOT_SCREEN -> R.string.cannot_screen
-    }
+    val scriptResId = motherCardScriptRes(action)
 
     Card(
         shape = RoundedCornerShape(CardCornerRadius),
@@ -87,7 +81,7 @@ fun WhatToTellTheMotherCard(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .size(24.dp)
-                        .rotate(if (expanded) 180f else 0f)
+                        .rotate(if (expanded) EXPANDED_ARROW_ROTATION_DEGREES else 0f)
                 )
             }
 
@@ -105,3 +99,15 @@ fun WhatToTellTheMotherCard(
         }
     }
 }
+
+/** The script for each result (TC-UI-09); a test reads the strings these point at. */
+@androidx.annotation.StringRes
+internal fun motherCardScriptRes(action: TriageUiAction): Int = when (action) {
+    TriageUiAction.REFER_URGENT -> R.string.mother_card_refer_urgent
+    TriageUiAction.BLOOD_TEST -> R.string.mother_card_blood_test
+    TriageUiAction.RECHECK -> R.string.mother_card_recheck
+    TriageUiAction.NO_FURTHER_ACTION -> R.string.mother_card_no_further
+    TriageUiAction.CANNOT_SCREEN -> R.string.cannot_screen
+}
+
+private const val EXPANDED_ARROW_ROTATION_DEGREES = 180f

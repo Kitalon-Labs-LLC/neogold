@@ -57,6 +57,20 @@ sealed class ScreeningEvent {
     ) : ScreeningEvent()
 
     /**
+     * The optional forehead photo was read and the estimate and the triage decision were made again from both sites
+     * (FR-15, TC-CAP-16). Only a state that already holds a result takes it; anywhere else it changes nothing.
+     */
+    data class ForeheadAdded(
+        val intermediateData: ScreeningIntermediateData
+    ) : ScreeningEvent()
+
+    /**
+     * The analysis did not finish in time, or failed: the worker is sent to a blood test, decided by the engine like the
+     * quality fallback (NFR-02, doc 4 Section 5.6). No estimate exists, so none is shown.
+     */
+    data object AnalysisFailed : ScreeningEvent()
+
+    /**
      * Save the session record (called on terminal states or user confirmation).
      */
     data class SaveSession(

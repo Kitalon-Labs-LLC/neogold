@@ -37,13 +37,15 @@ from app.models.db import (
 from app.models.db import (
     Session as DbSession,
 )
+from app.privileges import privilege_problems
+from app.study_time import study_today
 
 CROCKFORD_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 
 def get_purge_db() -> Session:
     if settings.PURGE_DATABASE_URL:
-        purge_engine = create_engine(settings.PURGE_DATABASE_URL, pool_pre_ping=True)
+        purge_engine = create_engine(settings.PURGE_DATABASE_URL, pool_pre_ping=True, hide_parameters=True)
         PurgeSession = sessionmaker(autocommit=False, autoflush=False, bind=purge_engine)
         return PurgeSession()
     return SessionLocal()
@@ -51,7 +53,7 @@ def get_purge_db() -> Session:
 
 def get_export_db() -> Session:
     if settings.EXPORT_DATABASE_URL:
-        export_engine = create_engine(settings.EXPORT_DATABASE_URL, pool_pre_ping=True)
+        export_engine = create_engine(settings.EXPORT_DATABASE_URL, pool_pre_ping=True, hide_parameters=True)
         ExportSession = sessionmaker(autocommit=False, autoflush=False, bind=export_engine)
         return ExportSession()
     return SessionLocal()
@@ -102,6 +104,12 @@ def handle_study_create(args: argparse.Namespace) -> int:
     db = SessionLocal()
     try:
         retention_date = datetime.date.fromisoformat(args.retention_until)
+        # an unknown zone name would fail every request that assigns a date, so it is refused when the study is created
+        try:
+            study_today(args.time_zone or "Asia/Dhaka")
+        except (ValueError, LookupError) as e:
+            print(f"ERROR: unknown time zone {args.time_zone!r}: {e}", file=sys.stderr)
+            return 1
         study = Study(
             id=uuid4(),
             study_code=args.code,
@@ -240,7 +248,7 @@ def handle_code_issue(args: argparse.Namespace) -> int:
         expires_at = datetime.datetime.now(datetime.UTC) + duration
 
         count = args.count or 1
-        secret_bytes = settings.ENROLLMENT_CODE_SECRET.encode("utf-8")
+        secret_bytes = settings.enrollment_code_key()
 
         issued_codes = []
         for _ in range(count):
@@ -419,8 +427,10 @@ def handle_participant_withdraw(args: argparse.Namespace) -> int:
             print(f"Participant {code} not found", file=sys.stderr)
             return 1
 
-        today = datetime.datetime.now(datetime.UTC).date()
-        participant.withdrawn_on = today
+        zone = db.execute(
+            select(Study.time_zone).join(Site, Site.study_id == Study.id).where(Site.id == participant.site_id)
+        ).scalar_one()
+        participant.withdrawn_on = study_today(zone)  # the study's calendar day (doc 7 Section 1)
 
         # Reject all sessions and delete their images
         sessions = db.execute(select(DbSession).where(DbSession.participant_id == participant.id)).scalars().all()
@@ -525,6 +535,12 @@ def handle_selftest(args: argparse.Namespace) -> int:
                 if age_hours > 26.0:
                     print(f"Self-test FAIL: Last backup is {age_hours:.1f}h old (> 26h)", file=sys.stderr)
                     return 1
+
+        # 5. The database roles hold the privileges of doc 5 Section 3.5 (a migration run before the bootstrap skips them)
+        problems = privilege_problems(db)
+        if problems:
+            print("Self-test FAIL: database privileges are wrong: " + "; ".join(problems), file=sys.stderr)
+            return 1
 
         record_admin_audit(
             db,

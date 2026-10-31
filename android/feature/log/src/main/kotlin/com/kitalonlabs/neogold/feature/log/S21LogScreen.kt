@@ -49,10 +49,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-enum class LogDateFilter {
-    ALL, TODAY, WEEK, MONTH
-}
-
 /**
  * S21 Screening Log screen.
  * Displays local screening sessions filterable by date (FR-23, NG-023, TC-LOG-01).
@@ -74,8 +70,8 @@ fun S21LogScreen(
         when (selectedFilter) {
             LogDateFilter.ALL -> sessions
             LogDateFilter.TODAY -> sessions.filter { currentTimeMs - it.createdAt < oneDayMs }
-            LogDateFilter.WEEK -> sessions.filter { currentTimeMs - it.createdAt < 7L * oneDayMs }
-            LogDateFilter.MONTH -> sessions.filter { currentTimeMs - it.createdAt < 30L * oneDayMs }
+            LogDateFilter.WEEK -> sessions.filter { currentTimeMs - it.createdAt < DAYS_IN_WEEK * oneDayMs }
+            LogDateFilter.MONTH -> sessions.filter { currentTimeMs - it.createdAt < DAYS_IN_MONTH_FILTER * oneDayMs }
         }
     }
 
@@ -93,7 +89,7 @@ fun S21LogScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.btn_back)
                         )
                     }
                 },
@@ -275,7 +271,7 @@ private fun ScreeningSessionListItem(
                 )
 
                 Text(
-                    text = "GA ${session.gestationalAgeWeeks} wk • ${session.ageHours.toInt()} h",
+                    text = stringResource(R.string.log_ga_age, session.gestationalAgeWeeks, session.ageHours.toInt()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -283,3 +279,6 @@ private fun ScreeningSessionListItem(
         }
     }
 }
+
+private const val DAYS_IN_WEEK = 7L
+private const val DAYS_IN_MONTH_FILTER = 30L

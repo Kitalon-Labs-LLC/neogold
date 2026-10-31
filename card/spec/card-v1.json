@@ -21,7 +21,7 @@
   },
   "markers": {
     "artwork_family": "ARUCO_4X4",
-    "family_decision": "OPEN: decided by the v0.1 download-size measurement (doc 4 Section 16, item 1). The card geometry is identical for both families.",
+    "family_decision": "DECIDED 2026-10-27 (ADR-018): ARUCO_4X4, read with OpenCV DICT_4X4_50, after the download-size measurement. The card geometry is identical for both families.",
     "size_mm": 16.0,
     "keepout_mm": 3.0,
     "placements": [

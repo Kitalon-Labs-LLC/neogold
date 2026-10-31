@@ -1,3 +1,12 @@
+@file:Suppress(
+    "MagicNumber",
+    "CyclomaticComplexMethod",
+    "LongMethod",
+    "NestedBlockDepth",
+    "ReturnCount",
+    "LoopWithTooManyJumpStatements"
+) // byte-level JPEG/EXIF parser: marker codes and offsets are the format itself (ITU T.81, CIPA DC-008)
+
 package com.kitalonlabs.neogold.engine.camera.research
 
 import java.io.ByteArrayOutputStream
@@ -27,8 +36,6 @@ import java.nio.ByteOrder
  * - Embedded thumbnails
  */
 object ResearchJpegSanitizer {
-
-    private const val MARKER_PREFIX = 0xFF.toByte()
 
     // Standalone markers without length
     private const val MARKER_SOI = 0xD8
@@ -151,7 +158,11 @@ object ResearchJpegSanitizer {
                     // Check if it's XMP
                     val headerStr = String(app1Data, 0, minOf(30, app1Data.size), Charsets.US_ASCII)
                     if (headerStr.startsWith("http://ns.adobe.com")) {
-                        return ValidationResult(false, "IMAGE_METADATA_NOT_ALLOWED", "XMP metadata packet detected in APP1")
+                        return ValidationResult(
+                            false,
+                            "IMAGE_METADATA_NOT_ALLOWED",
+                            "XMP metadata packet detected in APP1"
+                        )
                     }
 
                     // Check Exif contents: must ONLY contain orientation tag in IFD0
@@ -275,7 +286,7 @@ object ResearchJpegSanitizer {
             )
         }
 
-        val type = buffer.short.toInt() and 0xFFFF
+        buffer.short // field type, not inspected
         val count = buffer.int
         val valShort = buffer.short.toInt() and 0xFFFF
         buffer.short // padding
@@ -307,23 +318,28 @@ object ResearchJpegSanitizer {
             if (marker == MARKER_SOI || marker == MARKER_EOI || (marker in MARKER_RST0..MARKER_RST7)) continue
 
             val len = readUint16(jpegBytes, pos)
-            if (marker == MARKER_APP1 && len >= 16) {
+            if (marker == MARKER_APP1 && len >= 16 && pos + 8 <= jpegBytes.size) {
                 val header = String(jpegBytes, pos + 2, 6, Charsets.US_ASCII)
                 if (header.startsWith("Exif\u0000\u0000")) {
                     val tiffStart = pos + 8
+                    // A length that runs past the end of the file is not an EXIF block we can read.
+                    if (tiffStart + (len - 8) > jpegBytes.size) return null
                     val isLE = jpegBytes[tiffStart] == 'I'.code.toByte()
                     val order = if (isLE) ByteOrder.LITTLE_ENDIAN else ByteOrder.BIG_ENDIAN
-                    val buf = ByteBuffer.wrap(jpegBytes, tiffStart, len - 8).order(order)
+                    // slice(): the offsets inside EXIF count from the start of the TIFF header, not from the start of
+                    // the file. Without it every position was read from the wrong place (BUG-2026-039).
+                    val buf = ByteBuffer.wrap(jpegBytes, tiffStart, len - 8).slice().order(order)
                     buf.position(4)
                     val ifd0 = buf.int
                     if (ifd0 in 8 until (len - 8)) {
                         buf.position(ifd0)
                         val count = buf.short.toInt() and 0xFFFF
-                        for (i in 0 until count) {
-                            if (buf.remaining() < 12) break
+                        var entry = 0
+                        while (entry < count && buf.remaining() >= 12) {
+                            entry++
                             val tag = buf.short.toInt() and 0xFFFF
-                            val type = buf.short.toInt() and 0xFFFF
-                            val cnt = buf.int
+                            buf.short // field type, not inspected
+                            buf.int // value count, not inspected
                             if (tag == 0x0112) {
                                 return buf.short.toInt() and 0xFFFF
                             } else {

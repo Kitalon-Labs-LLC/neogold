@@ -1,9 +1,7 @@
 package com.kitalonlabs.neogold.engine.camera.device
 
-import android.app.ActivityManager
 import android.content.Context
 import com.google.common.truth.Truth.assertThat
-import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner

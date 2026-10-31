@@ -1,12 +1,22 @@
 from __future__ import annotations
 
-import datetime
-
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.db import Capture as DbCapture
+from app.models.db import Participant, Site, Study
 from app.models.db import Session as DbSession
+from app.study_time import study_today
+
+
+def zone_of_session(db: Session, sess: DbSession) -> str:
+    """The time zone of the study a session belongs to (through its participant's site)."""
+    return db.execute(
+        select(Study.time_zone)
+        .join(Site, Site.study_id == Study.id)
+        .join(Participant, Participant.site_id == Site.id)
+        .where(Participant.id == sess.participant_id)
+    ).scalar_one()
 
 
 def complete_backstop_sessions(db: Session) -> int:
@@ -14,7 +24,6 @@ def complete_backstop_sessions(db: Session) -> int:
     Completes any RECEIVING session with no missing images.
     Returns number of sessions completed.
     """
-    today = datetime.datetime.now(datetime.UTC).date()
     receiving_sessions = (
         db.execute(select(DbSession).where(DbSession.status == "RECEIVING").with_for_update())
         .scalars()
@@ -33,7 +42,8 @@ def complete_backstop_sessions(db: Session) -> int:
 
         if missing == 0:
             sess.status = "COMPLETE"
-            sess.completed_on = today
+            # the study's calendar day, not the UTC day (doc 7 Section 1)
+            sess.completed_on = study_today(zone_of_session(db, sess))
             completed_count += 1
 
     db.commit()

@@ -5,7 +5,6 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.CaptureResult
 import androidx.camera.camera2.interop.Camera2Interop
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import com.kitalonlabs.neogold.engine.camera.model.CameraHardwareLevel
@@ -187,7 +186,9 @@ object CameraControlHelper {
                 gains.greenOdd,
                 gains.blue
             )
-        } else null
+        } else {
+            null
+        }
 
         val hwLevel = getHardwareLevel(characteristics)
 
@@ -214,13 +215,13 @@ object CameraControlHelper {
         val awbState = result.get(CaptureResult.CONTROL_AWB_STATE)
 
         val aeOk = aeState == null ||
-                aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED ||
-                aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
-                aeState == CaptureResult.CONTROL_AE_STATE_LOCKED
+            aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED ||
+            aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
+            aeState == CaptureResult.CONTROL_AE_STATE_LOCKED
 
         val awbOk = awbState == null ||
-                awbState == CaptureResult.CONTROL_AWB_STATE_CONVERGED ||
-                awbState == CaptureResult.CONTROL_AWB_STATE_LOCKED
+            awbState == CaptureResult.CONTROL_AWB_STATE_CONVERGED ||
+            awbState == CaptureResult.CONTROL_AWB_STATE_LOCKED
 
         return aeOk && awbOk
     }

@@ -211,3 +211,60 @@ def test_tc_api_24_tsb_links_once(client: TestClient, db, enrolled_device, test_
     )
     assert r_t3.status_code == 409
     assert r_t3.json()["code"] == "CONFLICT_IMMUTABLE"
+
+
+def test_doc7_order4_a_tsb_value_naming_an_unknown_session_is_422_session_unknown(
+    client: TestClient, db, enrolled_device, test_study_and_site
+):
+    """Doc 7 Section 3 order 4 (BUG-2026-095): a TSB value that names a session the server has not received is 422, not 404.
+
+    The client re-queues on the code, so it works either way; the status is the contract.
+    """
+    device_id, privkey, _jwk = enrolled_device
+    today_str = datetime.datetime.now(datetime.UTC).date().isoformat()
+
+    part_id = uuid4()
+    part_path = f"/participants/{part_id}"
+    part_bytes = json.dumps(
+        {"participant_code": "SKP-2422", "consent_form_id": "CF-2422", "consent_date": today_str},
+        separators=(",", ":"),
+    ).encode("utf-8")
+    token = mint_device_token(privkey, device_id, "PUT", part_path, body_bytes=part_bytes)
+    created = client.put(
+        part_path,
+        content=part_bytes,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Idempotency-Key": str(uuid4()),
+            "X-NeoGold-App-Version": "1.0.0",
+            "Content-Type": "application/json",
+        },
+    )
+    assert created.status_code == 201
+
+    tsb_path = f"/tsb-measurements/{uuid4()}"
+    tsb_bytes = json.dumps(
+        {
+            "participant_id": str(part_id),
+            "session_id": str(uuid4()),
+            "tsb_mg_dl": 12.0,
+            "minutes_from_capture": 10,
+            "draw_time": None,
+            "method": "LAB",
+        },
+        separators=(",", ":"),
+    ).encode("utf-8")
+    token = mint_device_token(privkey, device_id, "PUT", tsb_path, body_bytes=tsb_bytes)
+    response = client.put(
+        tsb_path,
+        content=tsb_bytes,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Idempotency-Key": str(uuid4()),
+            "X-NeoGold-App-Version": "1.0.0",
+            "Content-Type": "application/json",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "SESSION_UNKNOWN"

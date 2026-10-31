@@ -55,7 +55,15 @@ class ResearchCrashResilienceTest {
             .allowMainThreadQueries()
             .build()
 
-        val dummyTrustList = TrustList(1, 1, java.time.LocalDate.of(2026, 10, 1), java.time.LocalDate.of(2028, 10, 1), emptyList(), emptyList(), emptyList())
+        val dummyTrustList = TrustList(
+            1,
+            1,
+            java.time.LocalDate.of(2026, 10, 1),
+            java.time.LocalDate.of(2028, 10, 1),
+            emptyList(),
+            emptyList(),
+            emptyList()
+        )
         val pinHasher = Argon2PinHasher(FakePinHmacKeyProvider())
         val pinManager = ResearchPinManager(database.researchStudyDao(), database.auditEventDao(), pinHasher)
 
@@ -65,7 +73,9 @@ class ResearchCrashResilienceTest {
             trustList = dummyTrustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(dummyTrustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
 
         val studyId = "STUDY-CRASH-01"
@@ -115,10 +125,10 @@ class ResearchCrashResilienceTest {
     @Test
     fun tcRsh14_killDuringSaveZeroPartialRecords() = runBlocking {
         val mockCaptures = listOf(
-            ResearchCaptureInput("STERNUM", 1, "IMG_STERNUM".toByteArray()),
-            ResearchCaptureInput("FOREHEAD", 1, "IMG_FOREHEAD".toByteArray()),
-            ResearchCaptureInput("SCLERA_FLASH", 1, "IMG_SCLERA_FLASH".toByteArray()),
-            ResearchCaptureInput("SCLERA_NOFLASH", 1, "IMG_SCLERA_NOFLASH".toByteArray())
+            ResearchCaptureInput("STERNUM", 1, "IMG_STERNUM".toByteArray(), qualityPassed = true),
+            ResearchCaptureInput("FOREHEAD", 1, "IMG_FOREHEAD".toByteArray(), qualityPassed = true),
+            ResearchCaptureInput("SCLERA_FLASH", 1, "IMG_SCLERA_FLASH".toByteArray(), qualityPassed = true),
+            ResearchCaptureInput("SCLERA_NOFLASH", 1, "IMG_SCLERA_NOFLASH".toByteArray(), qualityPassed = true)
         )
 
         for (i in 1..50) {
@@ -186,7 +196,7 @@ class ResearchCrashResilienceTest {
                             qualityFailReasons = null,
                             correctionResidualDe = null,
                             features = null,
-                            imageFile = "cap_test_${i}.enc",
+                            imageFile = "cap_test_$i.enc",
                             imageSha256 = "sha256_mock"
                         )
                         database.captureDao().insert(capEntity)
@@ -242,7 +252,7 @@ class ResearchCrashResilienceTest {
     @Test
     fun tcRsh15_powerLossDuringSaveZeroPartialRecords() = runBlocking {
         val mockCaptures = listOf(
-            ResearchCaptureInput("STERNUM", 1, "IMG_STERNUM".toByteArray())
+            ResearchCaptureInput("STERNUM", 1, "IMG_STERNUM".toByteArray(), qualityPassed = true)
         )
 
         for (attempt in 1..10) {

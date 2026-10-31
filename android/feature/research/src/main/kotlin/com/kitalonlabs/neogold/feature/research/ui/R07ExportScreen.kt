@@ -17,8 +17,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.ui.res.stringResource
-import com.kitalonlabs.neogold.core.designsystem.R
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,14 +27,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgSecondaryButton
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.feature.research.export.ExportProgress
 import com.kitalonlabs.neogold.feature.research.export.ExportStage
+import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 /**
  * R07: Research Export Screen (doc 6 Section 5, doc 8 Section 5.2, FR-30, NG-036).
@@ -53,6 +54,9 @@ fun R07ExportScreen(
     exportCompleted: Boolean,
     onChooseDestinationClicked: () -> Unit,
     onDoneClicked: () -> Unit,
+    exportFailed: Boolean = false,
+    exportFileRemains: Boolean = false,
+    showCloudSync: Boolean = true,
     pendingUploadsCount: Int = 0,
     serverDeviceId: String? = null,
     onUploadNowClicked: () -> Unit = {},
@@ -74,14 +78,14 @@ fun R07ExportScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(ResearchR.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.testTag("export_research_badge")
             )
             Icon(
                 imageVector = Icons.Default.Lock,
-                contentDescription = "Encrypted export",
+                contentDescription = stringResource(ResearchR.string.r07_cd_encrypted),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -89,7 +93,7 @@ fun R07ExportScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Export Study Data",
+            text = stringResource(ResearchR.string.r07_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -98,7 +102,7 @@ fun R07ExportScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Creates an encrypted research export archive (.zip) containing de-identified CSV data tables and research images.",
+            text = stringResource(ResearchR.string.r07_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -124,7 +128,7 @@ fun R07ExportScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Study: $displayName ($studyCode)",
+                    text = stringResource(ResearchR.string.r01_study_named, displayName, studyCode),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -132,22 +136,27 @@ fun R07ExportScreen(
 
                 if (hasExportKey) {
                     Text(
-                        text = "• End-to-end encryption: Files are encrypted on-device using Tink Streaming AEAD (AES-256-GCM).\n" +
-                            "• Public-key envelope: The encryption key is wrapped to the study coordinator's offline key using Tink HPKE (X25519).\n" +
-                            "• Lost USB safe: If the export drive is lost, study records cannot be read without the coordinator's offline private key.\n" +
-                            "• De-identified: Only participant codes are included. Zero patient names, birth dates, or facility register numbers.",
+                        text = listOf(
+                            stringResource(ResearchR.string.r07_point_encrypt),
+                            stringResource(ResearchR.string.r07_point_wrap),
+                            stringResource(ResearchR.string.r07_point_lost),
+                            stringResource(ResearchR.string.r07_point_deid)
+                        ).joinToString("\n"),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = "Missing key",
+                            contentDescription = stringResource(ResearchR.string.r07_cd_missing_key),
                             tint = MaterialTheme.colorScheme.error
                         )
                         Text(
-                            text = "Export public key missing from study profile. Cannot generate encrypted export.",
+                            text = stringResource(ResearchR.string.r07_no_key),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -158,83 +167,16 @@ fun R07ExportScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Cloud Study Sync Section (doc 6 Section 5, Section 10.4, NG-042)
-        Card(
-            shape = RoundedCornerShape(CardCornerRadius),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("cloud_sync_card")
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Cloud Sync",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "Cloud Sync Status",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                if (serverDeviceId != null) {
-                    val waitingText = if (pendingUploadsCount > 0) {
-                        stringResource(R.string.upload_waiting, pendingUploadsCount)
-                    } else {
-                        "All study data uploaded to server"
-                    }
-                    Text(
-                        text = waitingText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.testTag("upload_waiting_text")
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        NgPrimaryButton(
-                            text = stringResource(R.string.upload_now),
-                            onClick = onUploadNowClicked,
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("upload_now_button")
-                        )
-                        NgSecondaryButton(
-                            text = "Leave Study",
-                            onClick = onLeaveStudyClicked,
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("leave_study_button")
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "This device is not enrolled on the study server. Research sessions can only be exported via USB until enrolled.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    NgPrimaryButton(
-                        text = "Join Study Server (R08)",
-                        onClick = onEnrollClicked,
-                        modifier = Modifier.testTag("join_server_button")
-                    )
-                }
-            }
+        if (showCloudSync) {
+            CloudSyncCard(
+                serverDeviceId = serverDeviceId,
+                pendingUploadsCount = pendingUploadsCount,
+                onUploadNowClicked = onUploadNowClicked,
+                onEnrollClicked = onEnrollClicked,
+                onLeaveStudyClicked = onLeaveStudyClicked
+            )
+            Spacer(modifier = Modifier.height(24.dp))
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         // Progress Section
         if (isExporting && exportProgress != null) {
@@ -250,14 +192,16 @@ fun R07ExportScreen(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "Export in Progress",
+                        text = stringResource(ResearchR.string.r07_progress_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
 
                     val progressFraction = if (exportProgress.totalFiles > 0) {
                         exportProgress.completedFiles.toFloat() / exportProgress.totalFiles.toFloat()
-                    } else 0f
+                    } else {
+                        0f
+                    }
 
                     LinearProgressIndicator(
                         progress = { progressFraction.coerceIn(0f, 1f) },
@@ -268,10 +212,47 @@ fun R07ExportScreen(
                     )
 
                     Text(
-                        text = "${exportProgress.message} (${exportProgress.completedFiles}/${exportProgress.totalFiles})",
+                        text = stringResource(
+                            ResearchR.string.r07_progress,
+                            stageText(exportProgress.stage),
+                            exportProgress.completedFiles,
+                            exportProgress.totalFiles
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.testTag("export_status_text")
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Failure Section: no exception text, nothing was saved
+        if (exportFailed && !isExporting) {
+            Card(
+                shape = RoundedCornerShape(CardCornerRadius),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("export_failed_card")
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(ResearchR.string.r07_failed_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = stringResource(
+                            if (exportFileRemains) ResearchR.string.r07_failed_remains else ResearchR.string.r07_failed_body
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.testTag("export_failed_text")
                     )
                 }
             }
@@ -282,7 +263,9 @@ fun R07ExportScreen(
         if (exportCompleted) {
             Card(
                 shape = RoundedCornerShape(CardCornerRadius),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("export_completed_card")
@@ -294,18 +277,18 @@ fun R07ExportScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Complete",
+                        contentDescription = stringResource(ResearchR.string.r07_cd_complete),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Column {
                         Text(
-                            text = "Export Archive Created",
+                            text = stringResource(ResearchR.string.r07_done_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "The encrypted .zip file was written successfully.",
+                            text = stringResource(ResearchR.string.r07_done_body),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -318,14 +301,16 @@ fun R07ExportScreen(
         // Action Buttons
         if (!exportCompleted) {
             NgPrimaryButton(
-                text = if (isExporting) "Exporting..." else "Select Export Destination (SAF)",
+                text = stringResource(
+                    if (isExporting) ResearchR.string.r07_button_exporting else ResearchR.string.r07_button_choose
+                ),
                 onClick = onChooseDestinationClicked,
                 enabled = hasExportKey && !isExporting,
                 modifier = Modifier.testTag("export_select_location_button")
             )
         } else {
             NgPrimaryButton(
-                text = "Done",
+                text = stringResource(ResearchR.string.r07_done),
                 onClick = onDoneClicked,
                 modifier = Modifier.testTag("export_done_button")
             )
@@ -335,10 +320,104 @@ fun R07ExportScreen(
 
         if (!isExporting && !exportCompleted) {
             NgSecondaryButton(
-                text = "Back to Study Home",
+                text = stringResource(ResearchR.string.r07_back),
                 onClick = onDoneClicked,
                 modifier = Modifier.testTag("export_back_button")
             )
         }
     }
+}
+
+/** The server side of R07 (doc 6 Section 5, Section 10.4, NG-042). Shown only once enrollment and upload are wired (C4). */
+@Composable
+private fun CloudSyncCard(
+    serverDeviceId: String?,
+    pendingUploadsCount: Int,
+    onUploadNowClicked: () -> Unit,
+    onEnrollClicked: () -> Unit,
+    onLeaveStudyClicked: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(CardCornerRadius),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("cloud_sync_card")
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = stringResource(ResearchR.string.r07_cd_cloud),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = stringResource(ResearchR.string.r07_cloud_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            if (serverDeviceId != null) {
+                val waitingText = if (pendingUploadsCount > 0) {
+                    stringResource(R.string.upload_waiting, pendingUploadsCount)
+                } else {
+                    stringResource(ResearchR.string.r07_all_uploaded)
+                }
+                Text(
+                    text = waitingText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag("upload_waiting_text")
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    NgPrimaryButton(
+                        text = stringResource(R.string.upload_now),
+                        onClick = onUploadNowClicked,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("upload_now_button")
+                    )
+                    NgSecondaryButton(
+                        text = stringResource(ResearchR.string.r07_leave_study),
+                        onClick = onLeaveStudyClicked,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("leave_study_button")
+                    )
+                }
+            } else {
+                Text(
+                    text = stringResource(ResearchR.string.r07_not_enrolled),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                NgPrimaryButton(
+                    text = stringResource(ResearchR.string.r07_join_server),
+                    onClick = onEnrollClicked,
+                    modifier = Modifier.testTag("join_server_button")
+                )
+            }
+        }
+    }
+}
+
+/** What the export is doing, in the language the screen shows. The manager's own message text is never shown. */
+@Composable
+private fun stageText(stage: ExportStage): String = when (stage) {
+    ExportStage.PREPARING, ExportStage.FAILED -> stringResource(ResearchR.string.r07_stage_preparing)
+    ExportStage.ENCRYPTING_METADATA, ExportStage.ENCRYPTING_DATA -> stringResource(ResearchR.string.r07_stage_data)
+    ExportStage.ENCRYPTING_IMAGES -> stringResource(ResearchR.string.r07_stage_images)
+    ExportStage.PACKAGING_ZIP, ExportStage.COMPLETED -> stringResource(ResearchR.string.r07_stage_packaging)
 }

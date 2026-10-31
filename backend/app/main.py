@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -16,6 +18,7 @@ from app.errors import (
     problem_response,
 )
 from app.middleware.auth import DeviceAuthMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.timing import TimingMiddleware
 from app.routers import (
     card_batches,
@@ -29,7 +32,18 @@ from app.routers import (
 
 logger = logging.getLogger("neogold")
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """K12 (doc 8 Section 4) must be set and strong before the server takes a request: stop at start, not on the first
+    enrollment. This runs at server start and not at import, so tools that only read the API description (diff_spec,
+    the drift inventory) can import the app without the secret."""
+    settings.enrollment_code_key()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="NeoGold Study Intake API",
     version=settings.API_VERSION,
     summary="Receives consented research uploads from enrolled NeoGold phones.",
@@ -81,6 +95,8 @@ app.include_router(tsb.router, prefix="/v1", include_in_schema=False)
 # Timing first (outermost) so t0 is recorded at header arrival
 app.add_middleware(DeviceAuthMiddleware)
 app.add_middleware(TimingMiddleware)
+# Outermost, so that error responses from the layers inside carry the header too.
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.exception_handler(NeoGoldError)
@@ -118,7 +134,9 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     request_id = request.scope.get("state", {}).get("request_id", "00000000000000000000000000")
-    logger.exception("Unhandled server error [request_id=%s]: %s", request_id, exc)
+    # Only the type is logged: the message and the traceback of a database error carry the statement's parameters, which
+    # include participant codes (doc 8 Section 6.6). The request_id leads to the rest.
+    logger.error("Unhandled server error [request_id=%s]: %s", request_id, type(exc).__name__)
     err = ServerError("Unexpected server failure")
     return problem_response(err, request_id, request.url.path)
 

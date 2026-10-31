@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // overlay guide proportions are layout constants
+
 package com.kitalonlabs.neogold.engine.camera.ui
 
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,12 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.engine.camera.LiveCardState
 
 // Neutral dark gray tokens per doc 6 Section 9 (no colored chrome near the baby)
@@ -58,7 +60,7 @@ fun CardDetectionOverlay(
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = state.steadyFraction,
-        label = "steadyProgress"
+        label = STEADY_PROGRESS_LABEL
     )
 
     Box(
@@ -106,7 +108,7 @@ fun CardDetectionOverlay(
                 0 to Offset(guideLeft + 24.dp.toPx(), guideTop + 24.dp.toPx()), // TL
                 1 to Offset(guideLeft + guideW - 24.dp.toPx(), guideTop + 24.dp.toPx()), // TR
                 2 to Offset(guideLeft + guideW - 24.dp.toPx(), guideTop + guideH - 24.dp.toPx()), // BR
-                3 to Offset(guideLeft + 24.dp.toPx(), guideTop + guideH - 24.dp.toPx())  // BL
+                3 to Offset(guideLeft + 24.dp.toPx(), guideTop + guideH - 24.dp.toPx()) // BL
             )
 
             for ((id, offset) in cornerOffsets) {
@@ -182,7 +184,7 @@ fun CardDetectionOverlay(
                         contentColor = NeutralTextPrimary
                     )
                 ) {
-                    Text("Manual capture", fontSize = 14.sp)
+                    Text(stringResource(R.string.manual_capture), fontSize = 14.sp)
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -199,3 +201,5 @@ fun CardDetectionOverlay(
         }
     }
 }
+
+private const val STEADY_PROGRESS_LABEL = "steadyProgress"

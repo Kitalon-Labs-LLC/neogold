@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- খসড়া: নার্স প্যানেল পর্যালোচনার অপেক্ষায় (docs/BANGLA_STRINGS_REVIEW.md) -->
+    <string name="research_sync_channel_name">গবেষণা সিঙ্ক</string>
+    <string name="research_sync_channel_description">স্টাডির ডেটা স্টাডি সার্ভারে পাঠানোর সময় অগ্রগতি দেখায়।</string>
+    <string name="research_sync_title">NeoGold স্টাডি সিঙ্ক</string>
+    <string name="research_sync_text">স্টাডি সার্ভারে স্টাডির ডেটা পাঠানো হচ্ছে...</string>
+</resources>

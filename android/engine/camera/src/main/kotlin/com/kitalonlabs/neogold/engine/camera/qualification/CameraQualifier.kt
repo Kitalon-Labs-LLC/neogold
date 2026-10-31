@@ -9,6 +9,7 @@ import com.kitalonlabs.neogold.engine.colorscience.Rgb
 import com.kitalonlabs.neogold.engine.colorscience.ciede2000
 import com.kitalonlabs.neogold.engine.vision.CardGeometry
 import com.kitalonlabs.neogold.engine.vision.ImageFrame
+import com.kitalonlabs.neogold.engine.vision.QualityReasonCode
 import com.kitalonlabs.neogold.engine.vision.VisionEngine
 import java.util.UUID
 
@@ -67,9 +68,14 @@ class CameraQualifier(
      * @param appVersion Version string of NeoGold.
      * @param currentTimeMs Timestamp of qualification.
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "LongMethod",
+        "NestedBlockDepth"
+    ) // one qualification pass (doc 4 Section 5.7); split when the camera package is reworked in C1
     fun qualifyCamera(
         photos: List<ImageFrame>,
-        batchReference: Map<String, Lab> = CardGeometry.PATCHES.mapValues { it.value.nominalLab },
+        batchReference: Map<String, Lab>,
         capabilities: DeviceCapabilities,
         cardBatchId: String,
         appVersion: String = "1.0.0",
@@ -87,8 +93,10 @@ class CameraQualifier(
         for (i in 0 until 3) {
             val qgResult = visionEngine.processFrame(photos[i], batchReference)
             val sampled = qgResult.sampledPatches
-            if (!qgResult.passed || sampled == null) {
-                failureReasons.add("Photo ${i + 1} failed quality gate: ${qgResult.failureReasons}")
+            // The skin check on the card's window is for a baby's skin; these photos show the card on a table.
+            val blocking = qgResult.failureReasons.filter { it != QualityReasonCode.WINDOW_NOT_SKIN }
+            if (blocking.isNotEmpty() || sampled == null) {
+                failureReasons.add("Photo ${i + 1} failed quality gate: $blocking")
             }
 
             // Convert sampled RGB to Lab, with linear matrix fit to batch reference
@@ -109,7 +117,9 @@ class CameraQualifier(
                 val model = try {
                     if (observedLinearRgbList.size >= 3) {
                         ColorCorrectionFitter.fit(observedLinearRgbList, targetXyzList, useRootPolynomial = false)
-                    } else null
+                    } else {
+                        null
+                    }
                 } catch (_: Exception) {
                     null
                 }
@@ -140,7 +150,11 @@ class CameraQualifier(
 
                 // Compute accuracy for this photo vs batch reference
                 val meanAcc = if (model != null && referenceLabs.isNotEmpty()) {
-                    val residual = QualityResidualCalculator.computeResidual(model, observedLinearRgbList, referenceLabs)
+                    val residual = QualityResidualCalculator.computeResidual(
+                        model,
+                        observedLinearRgbList,
+                        referenceLabs
+                    )
                     residual.meanDeltaE
                 } else {
                     var sumAccDeltaE = 0.0
@@ -150,12 +164,12 @@ class CameraQualifier(
                         sumAccDeltaE += ciede2000(patchLab, refLab)
                         accCount++
                     }
-                    if (accCount > 0) sumAccDeltaE / accCount else 99.0
+                    if (accCount > 0) sumAccDeltaE / accCount else NO_EVIDENCE_DELTA_E
                 }
                 accuracyDeltas.add(meanAcc)
             } else {
-                uniformityDeltas.add(99.0)
-                accuracyDeltas.add(99.0)
+                uniformityDeltas.add(NO_EVIDENCE_DELTA_E)
+                accuracyDeltas.add(NO_EVIDENCE_DELTA_E)
             }
             patchSets.add(photoPatches)
         }
@@ -178,13 +192,13 @@ class CameraQualifier(
                 }
             }
         }
-        val repeatabilityDe = if (repCount > 0) sumRepDeltaE / repCount else 99.0
+        val repeatabilityDe = if (repCount > 0) sumRepDeltaE / repCount else NO_EVIDENCE_DELTA_E
 
         // 3. Overall Uniformity (max or mean across the 3 photos)
-        val uniformityDe = if (uniformityDeltas.isNotEmpty()) uniformityDeltas.maxOrNull() ?: 99.0 else 99.0
+        val uniformityDe = if (uniformityDeltas.isNotEmpty()) uniformityDeltas.maxOrNull() ?: NO_EVIDENCE_DELTA_E else NO_EVIDENCE_DELTA_E
 
         // 4. Overall Accuracy (mean across 3 photos)
-        val accuracyDe = if (accuracyDeltas.isNotEmpty()) accuracyDeltas.average() else 99.0
+        val accuracyDe = if (accuracyDeltas.isNotEmpty()) accuracyDeltas.average() else NO_EVIDENCE_DELTA_E
 
         // 5. Evaluate thresholds
         val repPassed = repeatabilityDe < thresholds.maxRepeatabilityDeltaE
@@ -192,16 +206,23 @@ class CameraQualifier(
         val accPassed = accuracyDe < thresholds.maxAccuracyDeltaE
 
         if (!repPassed) {
-            failureReasons.add("Repeatability Delta E ($repeatabilityDe) exceeds threshold ${thresholds.maxRepeatabilityDeltaE}")
+            failureReasons.add(
+                "Repeatability Delta E ($repeatabilityDe) exceeds threshold ${thresholds.maxRepeatabilityDeltaE}"
+            )
         }
         if (!uniPassed) {
-            failureReasons.add("Duplicate patch uniformity Delta E ($uniformityDe) exceeds threshold ${thresholds.maxUniformityDeltaE}")
+            failureReasons.add(
+                "Duplicate patch uniformity Delta E ($uniformityDe) exceeds threshold ${thresholds.maxUniformityDeltaE}"
+            )
         }
         if (!accPassed) {
-            failureReasons.add("Calibration accuracy Delta E ($accuracyDe) exceeds threshold ${thresholds.maxAccuracyDeltaE}")
+            failureReasons.add(
+                "Calibration accuracy Delta E ($accuracyDe) exceeds threshold ${thresholds.maxAccuracyDeltaE}"
+            )
         }
 
-        val status = if (repPassed && uniPassed && accPassed && failureReasons.isEmpty()) {
+        val allChecksPassed = repPassed && uniPassed && accPassed
+        val status = if (allChecksPassed && failureReasons.isEmpty()) {
             QualificationStatus.QUALIFIED
         } else {
             QualificationStatus.RESEARCH_ONLY
@@ -257,3 +278,6 @@ class CameraQualifier(
         )
     }
 }
+
+/** Delta E reported when a check had no evidence at all, so it can never pass. */
+private const val NO_EVIDENCE_DELTA_E = 99.0

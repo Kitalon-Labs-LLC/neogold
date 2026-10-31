@@ -103,7 +103,7 @@ On the API side, every request schema sets `additionalProperties: false`, so a c
 |---|---|---|---|---|---|---|
 | K1 | Play app signing key | Managed by Google | Signs what users install | Google Play App Signing | Google-managed | Contact Google; publish advisory |
 | K2 | Upload key | Keystore file | Signs bundles uploaded to Play | Founder's machine, encrypted, plus offline backup; a copy is the `UPLOAD_KEYSTORE_B64` secret in the protected `release` environment, used only by the release job | On compromise | Reset through Play Console upload key reset [Certain this exists] |
-| K3 | Release manifest key | Ed25519 | Signs the bundle manifest (model, config, trust lists) | GitHub Actions secret in a protected `release` environment with required reviewer | Each major version | Low in v1.0, because APK signing dominates; high once over-the-air updates ship (NG-062), so K3 moves to offline signing before then |
+| K3 | Release manifest key | Ed25519 | Signs the bundle manifest (model, config, trust lists) | GitHub Actions secret in a protected `release` environment with required reviewer; the public half is committed as `config/k3-public-key.hex` and the build refuses any other key | Each major version | Low in v1.0, because APK signing dominates; high once over-the-air updates ship (NG-062), so K3 moves to offline signing before then |
 | K4 | Card issuer key | Ed25519 | Signs card batch QR payloads | Offline: air-gapped laptop with encrypted disk, plus a paper or encrypted USB backup in a separate location | 2 years, or on compromise | Serious: an attacker could sign fake reference values that match a counterfeit card. Revoke via trust list in an app update; revoke affected batch IDs |
 | K5 | Study issuer key | Ed25519 | Signs study profiles (server host, export key) | Same offline machine as K4, separate key | 2 years | Phones could be enrolled to a rogue server; remove key in an app update, re-issue study profiles |
 | K6 | Device signing keys | ECDSA P-256 | Per-request API signatures | Android Keystore on each phone, non-exportable | Per enrollment | Revoke the device (doc 7 Section 4.5) |
@@ -112,7 +112,7 @@ On the API side, every request schema sets `additionalProperties: false`, so a c
 | K9 | PIN verifier key | Keystore HMAC-SHA256 | Binds the PIN hash to the phone (Section 6.2) | Keystore, non-exportable | Per study enrollment | As K7 |
 | K10 | Study export key pair | X25519 (Tink HPKE) | Encrypts USB exports (Section 5.2) | Public key in the study profile; private key offline with the study coordinator | Per study | Exports readable by holder; issue new profile and key |
 | K11 | TLS certificate keys | Managed by Caddy | HTTPS | Server, Caddy data volume | Automatic, about every 60 to 90 days [Likely] | Revoke and reissue |
-| K12 | Enrollment code secret | 256-bit random | HMAC of enrollment codes | Server environment file, mode 0600 | On compromise (invalidates unused codes only) | Reissue codes |
+| K12 | Enrollment code secret | 256-bit random | HMAC of enrollment codes | Server environment file, mode 0600; there is no default, and the server refuses to start without it, with fewer than 32 characters, or with the old published value (BUG-2026-063) | On compromise (invalidates unused codes only) | Reissue codes |
 | K13 | Database role passwords | Random | `neogold_app`, `neogold_export`, `neogold_migrator` | Server environment file | Yearly | Rotate; review audit log |
 | K14 | Backup repository password | Random passphrase | restic encryption | On the server only in a root-owned file (mode 0600) read by the backup job; offline copies with the coordinator and one deputy | Per study | Start a new repository, copy the snapshots into it (`restic copy`), and delete the old one. Adding a new password and removing the old one is not enough, because restic keeps the same master key [Likely, per restic's key design] |
 | K15 | SSH and WireGuard keys | Ed25519 | Admin access | Each admin's own machine | On staff change | Remove from `authorized_keys` and WireGuard peers |
@@ -136,11 +136,12 @@ On the API side, every request schema sets `additionalProperties: false`, so a c
 
 - Keystore master keys are AES-256-GCM, non-exportable, StrongBox where present, TEE otherwise. They do not require user authentication, so retention jobs and uploads run with the screen off.
 - `androidx.security:security-crypto` is not used; it is deprecated [Likely] and Tink is the maintained path (doc 4 Section 4.3).
-- **Keystore loss.** If a Keystore key disappears, decryption fails with a specific exception. The app then tells the user plainly that local data could not be opened, resets the encrypted stores, and keeps working. Research mode reduces the impact by uploading on every Wi-Fi connection and offering USB export; screening relies on the paper register. This path has its own instrumented test.
+- **Keystore loss.** If a Keystore key disappears, decryption fails with a specific exception. The app checks the keys before it opens the database. If one is gone it tells the user plainly that saved data could not be opened and offers Try again or Reset saved data. It deletes nothing until the user chooses to reset, because the failure can be temporary and a reset cannot be undone; after a reset it keeps working with empty stores. Research mode reduces the impact by uploading on every Wi-Fi connection and offering USB export; screening relies on the paper register. This path has its own instrumented test.
 
 ### 5.2 Exports (USB and local)
 
 - **Research export (FR-30)** is encrypted to the study's export public key (K10), which arrives inside the signed study profile. Each file is encrypted with a fresh Tink streaming AEAD key, and that key is wrapped with Tink HPKE (X25519, HKDF-SHA256, AES-256-GCM) [Likely available in the Tink version used; confirm in v0.5]. The coordinator decrypts with `neogold-admin decrypt-export`. A lost USB drive exposes nothing, and the health worker never handles a password.
+- **Key handling during an export (BUG-2026-038).** The data key of an export is made for that export, held in memory only, and never written to disk, not even beside the ciphertext; the app has no code that serializes it. There is no resume: a staging directory holds ciphertext only, is emptied before an export starts and removed when it ends (success, failure and cancel), and "Delete all data" removes it too. A failed or cancelled export deletes the file it was writing, and a failure shows a fixed message, never the text of an exception (which can carry a path). The export is pseudonymised, not anonymous: the archive header and manifest are not encrypted, and the tables hold participant codes and exact times until the coordinator's tool shifts the dates. Details: `docs/specs/export-format.md` Section 7.
 - **Screening log export (FR-33)** goes to a location the user picks through the Storage Access Framework, with register numbers excluded by default and a warning screen before writing. It is not encrypted, because its purpose is a facility reading it in a spreadsheet; minimization (no names, no birth dates) is the protection.
 
 ### 5.3 In transit
@@ -189,9 +190,9 @@ Checked on the merged manifest of every release build by a CI script (S5 in Sect
 |---|---|
 | Length | 6 digits minimum; rejects repeated digits, simple sequences, and the top 100 most common PINs |
 | Hash | Argon2id with m = 19 MiB, t = 2, p = 1 and a 16-byte random salt [Certain, OWASP Password Storage Cheat Sheet minimum]; if the 2 GB floor phone takes more than 1 second, use OWASP's equivalent m = 12 MiB, t = 3 [Certain that OWASP lists it] |
-| Device binding | The Argon2id output is then passed through HMAC-SHA256 with a non-exportable Keystore key (K9). A copied database cannot be brute-forced on another computer, because the last step only runs inside this phone's Keystore |
+| Device binding | The Argon2id output is then passed through HMAC-SHA256 with a non-exportable Keystore key (K9). A copied database cannot be brute-forced on another computer, because the last step only runs inside this phone's Keystore. If K9 cannot be reached the check stops with a Keystore-loss error; there is no software fallback, and a stored PIN whose K9 is gone is reported as lost, not as a wrong PIN (BUG-2026-011) |
 | Library | Bouncy Castle's Argon2 (pure Java, shrunk by R8), decided in ADR-016 (doc 4 Section 15). Switch to argon2kt over JNI if one hash takes over 1 s on the 2 GB floor phone [Guessing; not yet measured] |
-| Lockout | The failure counter is written **before** each check, so killing the app does not reset it. 5 failures: 1 minute; 10: 15 minutes; 15 and above: 1 hour per attempt |
+| Lockout | The failure counter is written **before** each check, so killing the app does not reset it. 5 failures: 1 minute; 10: 15 minutes; 15 and above: 1 hour per attempt. Checks run one at a time, so guesses made at the same moment each count. A phone holds one study: the QR of another study is refused while one is active, so a PIN typed for it cannot get around the first PIN. Until R09 (leave study, package C4) sets a study's status, the only way to a new study is Delete all data in Settings |
 | No wipe on failures | Wiping would let anyone destroy study data by typing wrong PINs; the data is already encrypted, so a slow attacker gains little |
 | Forgotten PIN | Re-enroll with a coordinator-issued code while keeping local data (open issue 3) |
 | Session | Research mode re-locks after 5 minutes in the background or on screen off |
@@ -212,7 +213,9 @@ Checked on the merged manifest of every release build by a CI script (S5 in Sect
 
 ### 6.5 Integrity of bundled artifacts
 
-- Model, triage config, card trust list, and study trust list are listed in a bundle manifest signed with K3 and checked at startup (doc 4 Section 12). A failed check disables screening.
+- Model, triage config, card trust list, and study trust list are listed in a bundle manifest signed with K3 and checked at startup (doc 4 Section 12). A failed check disables screening, research unlock and the triage switch.
+- The build signs the bundle into the app's generated assets; no signed copy is committed. The app reads each file once, checks the hash of those bytes and parses those same bytes, so a file cannot be swapped between the check and its use (BUG-2026-007).
+- The app trusts the public half of the key that signed its own bundle, which the build writes into `BuildConfig`. A release is signed with the real K3 (`-PmanifestKey`, from a CI secret), and the build fails if its public half is not the one pinned in `config/k3-public-key.hex`. Local and pull-request builds use a development key made under `build/`; an installed build that is not debuggable and carries a development key turns screening and research off. No private key is committed (BUG-2026-008).
 - This catches corruption and on-device modification. It does **not** stop a repackaged APK (T3). The triage config's `validUntil` (doc 4 Section 6.1) stops an old, unmaintained build from showing triage results forever (H8).
 - Card batches and study profiles are separately signed (K4, K5) and verified offline.
 
@@ -223,6 +226,7 @@ Checked on the merged manifest of every release build by a CI script (S5 in Sect
 - A small in-house handler writes crash reports to an encrypted local file: exception class names, stack frames, app version, Android version, device model. **Exception messages are dropped**, because messages are where personal values leak (a formatted register number, for example).
 - After a crash, the next launch offers "Share crash report", which opens the Android share sheet so the user decides where it goes. Nothing is sent automatically (FR-34).
 - The on-device structured log (doc 4 Section 13) follows the same rules: event names and codes, no values typed by users.
+- The server follows the same rule: its catch-all error handler logs the exception type and the request ID, not the message or the traceback, and its database engines hide statement parameters, so a failed insert does not write a participant code to the journal (BUG-2026-065).
 - Why not an SDK: hosted crash services send data abroad by default, and self-hosted ones add a server to secure. ACRA was considered and stays an option if field debugging needs more [Likely suitable, Apache 2.0].
 
 ---
@@ -244,6 +248,8 @@ flowchart LR
 - The signed study profile replaces the typed study code of FR-25. It carries the study name, partner, server host (absent for export-only studies), timestamp precision, export public key (K10), and expiry.
 - Staff see the study name, partner, and host before confirming. A forged QR fails signature verification; a genuine QR for the wrong study is caught by the name on screen.
 - Enrollment code properties (60 bits, single use, 72 hours, site-bound, HMAC-stored) are in doc 7 Section 4.1.
+- On the phone, joining a server is allowed only into the study already set up on it (same study code), only once, and never with a device fact the phone did not measure. A QR of another study is refused without a PIN try and without a request. R01 shows the study's name before the PIN; this is intended (decided 30 October 2026, BUG-2026-083 item 23): the name comes from a signed QR the worker holds, it is not a secret, and a worker with two sites needs to see which study the phone is on.
+- The upload worker uses the app's one database and key set, and does nothing while storage is unreadable or the bundle check failed (BUG-2026-083 item 33). It and the enrollment code path log the kind of a failure, never a message that could carry a host, a code or a server's words.
 
 ### 7.2 Request signing
 
@@ -254,9 +260,9 @@ Per-request ES256 tokens from the Keystore key, bound to method, URL, and body h
 | Event | Who acts | Steps |
 |---|---|---|
 | Phone lost or stolen | Coordinator | `neogold-admin device revoke <id> --reason LOST`; check `status` for uploads after the loss time; record in incident log (Section 12) |
-| Phone reassigned | Health worker or coordinator | Leave study in the app (`DELETE /device`), or revoke with `REASSIGNED`. Leaving deletes only the device key; local research data is wiped (FR-33) only once the outbox is empty or exported |
+| Phone reassigned | Health worker or coordinator | Leave study in the app (`DELETE /device`), or revoke with `REASSIGNED`. Leaving (R09, PIN asked again) deletes only the device key and device ID; the study stays on the phone and local research data is wiped (FR-33) only once the outbox is empty or exported |
 | Staff member leaves | Coordinator | Change the research PIN on that phone; the device key itself is not personal |
-| Study ends | Coordinator | `study close`; phones show `STUDY_CLOSED` and offer USB export of anything not yet uploaded |
+| Study ends | Coordinator | `study close`; phones that reach the server see it, clear their device key and device ID, stop retrying and keep everything for USB export (audit event `DEVICE_DISCONNECTED`, reason only) |
 
 ### 7.4 Admin access
 
@@ -456,6 +462,7 @@ Section numbers refer to the unofficial English translation; the lawyer confirms
 | S7 | Authentication test cases 10 of 10 (doc 7 Section 12.3) | Backend release |
 | S8 | Backup restore test passed within the last 30 days | Production study go-live and each backend release |
 | S9 | Secrets scan clean on the release commit | Release |
+| S10 | No bundled native library imports a socket or name-resolution function, except `libsqlcipher.so` (`tools/check_native_imports.py`, BUG-2026-058; a library outside Kotlin's dependency rule and detekt) | Pull request, release |
 
 G3 was adopted on 11 October 2026 together with the decision to keep v1.0 a closed research build (PRD D10); PRD Section 16 open item 5 tracks it.
 
@@ -465,7 +472,7 @@ G3 was adopted on 11 October 2026 together with the decision to keep v1.0 a clos
 |---|---|---|
 | NeoGold code | MIT (PRD) | Keep notice |
 | Card design and documentation | CC BY 4.0 (PRD) | Attribution |
-| OpenCV (if chosen) | Apache 2.0 [Certain] | Notice file |
+| OpenCV (ADR-018) | Apache 2.0 [Certain] | Notice file (S24 lists it) |
 | Tink | Apache 2.0 [Certain] | Notice file |
 | SQLCipher for Android, community edition | BSD 3-Clause [Certain, verified in docs/spikes/2026-10-26-sqlcipher-license.md] | Notice in app |
 | Bouncy Castle (if chosen) | MIT-style Bouncy Castle license [Certain] | Notice |

@@ -26,16 +26,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgNumberStepper
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgYesNoButtons
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimeField
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBirthTimePicker
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
+import com.kitalonlabs.neogold.feature.research.data.ResearchError
 import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
+import com.kitalonlabs.neogold.feature.research.R as ResearchR
 
 /**
  * R03: Participant & Consent Screen (FR-26, NG-029, doc 6 Section 5).
@@ -45,6 +50,8 @@ import com.kitalonlabs.neogold.feature.research.data.ResearchFormats
 @Composable
 fun R03ParticipantConsentScreen(
     studyName: String,
+    /** Why the participant could not be registered (a code already used in this study, for example). */
+    error: ResearchError? = null,
     onContinueToCapture: (
         participantCode: String,
         consentFormId: String,
@@ -60,9 +67,18 @@ fun R03ParticipantConsentScreen(
     var participantCode by remember { mutableStateOf("") }
     var consentFormId by remember { mutableStateOf("") }
 
+    // No birth time and no age until the health worker chooses them: a pre-filled 48 hours would be recorded as the
+    // baby's age whenever nobody looked (A9, FR-02, H2, BUG-2026-044).
     val now = System.currentTimeMillis()
-    var birthTimeMillis by remember { mutableStateOf(now - 48 * 3600 * 1000L) } // default 48h
-    var calculatedAgeHours by remember { mutableStateOf(48.0) }
+    var birthTimeMillis by remember { mutableStateOf<Long?>(null) }
+    var showBirthPicker by remember { mutableStateOf(false) }
+    val birthTime = birthTimeMillis
+    val birthInFuture = birthTime != null && birthTime > now
+    val rawAgeHours: Double? = birthTime?.takeIf { !birthInFuture }?.let { (now - it) / MILLIS_PER_HOUR }
+    // The study server takes ages of 0 to 720 hours (doc 7). One hour is left for the captures, because the age is worked out
+    // again when the session is saved; a birth time further back than that is a typing mistake.
+    val birthTooOld = rawAgeHours != null && rawAgeHours > MAX_AGE_HOURS
+    val ageHours: Double? = rawAgeHours?.takeIf { !birthTooOld }
 
     var gestationalAgeWeeks by remember { mutableStateOf<Int?>(null) } // No silent default (H3)
     var earlyJaundiceAnswer by remember { mutableStateOf<Boolean?>(null) }
@@ -73,6 +89,7 @@ fun R03ParticipantConsentScreen(
     val isConsentFormIdValid = ResearchFormats.isValidConsentFormId(consentFormId)
     val areInputsComplete = isParticipantCodeValid &&
         isConsentFormIdValid &&
+        ageHours != null &&
         gestationalAgeWeeks != null &&
         earlyJaundiceAnswer != null &&
         dangerSignsAnswer != null &&
@@ -91,19 +108,29 @@ fun R03ParticipantConsentScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Participant & Consent",
+                text = stringResource(ResearchR.string.r03_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             NgBadge(
-                text = "RESEARCH MODE",
+                text = stringResource(ResearchR.string.research_badge),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (error != null) {
+            Text(
+                text = error.text(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.testTag("r03_error_message")
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Identification Card
         Card(
@@ -116,7 +143,7 @@ fun R03ParticipantConsentScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Study: $studyName",
+                    text = stringResource(ResearchR.string.r03_study, studyName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -125,11 +152,11 @@ fun R03ParticipantConsentScreen(
                 OutlinedTextField(
                     value = participantCode,
                     onValueChange = { participantCode = it.uppercase() },
-                    label = { Text("Participant Code (e.g. SKP-0142)") },
+                    label = { Text(stringResource(ResearchR.string.r03_code_label)) },
                     isError = participantCode.isNotBlank() && !isParticipantCodeValid,
                     supportingText = {
                         if (participantCode.isNotBlank() && !isParticipantCodeValid) {
-                            Text("Format must match ^[A-Z]{2,5}-[0-9]{3,6}$")
+                            Text(stringResource(ResearchR.string.r03_code_help))
                         }
                     },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
@@ -142,11 +169,11 @@ fun R03ParticipantConsentScreen(
                 OutlinedTextField(
                     value = consentFormId,
                     onValueChange = { consentFormId = it.uppercase() },
-                    label = { Text("Paper Consent Form ID (e.g. SKP-C-0142)") },
+                    label = { Text(stringResource(ResearchR.string.r03_consent_label)) },
                     isError = consentFormId.isNotBlank() && !isConsentFormIdValid,
                     supportingText = {
                         if (consentFormId.isNotBlank() && !isConsentFormIdValid) {
-                            Text("Format must match ^[A-Z]{2,5}-[A-Z0-9-]{2,26}$")
+                            Text(stringResource(ResearchR.string.r03_consent_help))
                         }
                     },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
@@ -171,30 +198,59 @@ fun R03ParticipantConsentScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Clinical Details",
+                    text = stringResource(ResearchR.string.r03_clinical),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                val formattedBirth = java.time.Instant.ofEpochMilli(birthTimeMillis)
-                    .atZone(java.time.ZoneId.systemDefault())
-                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                val formattedBirth = birthTime?.let {
+                    java.time.Instant.ofEpochMilli(it)
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                } ?: "\u2014" // an em dash: not set yet
                 val phoneTimeNow = java.time.Instant.ofEpochMilli(System.currentTimeMillis())
                     .atZone(java.time.ZoneId.systemDefault())
                     .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
 
                 NgBirthTimeField(
                     formattedBirthDateTime = formattedBirth,
-                    ageInHours = calculatedAgeHours.toInt(),
+                    ageInHours = ageHours?.toInt(),
                     currentPhoneTime = phoneTimeNow,
-                    onEditClicked = { },
+                    onEditClicked = { showBirthPicker = true },
                     modifier = Modifier.testTag("birth_time_field")
                 )
+                if (birthInFuture) {
+                    Text(
+                        text = stringResource(R.string.birth_time_future_error),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("birth_time_future_error")
+                    )
+                }
+                if (birthTooOld) {
+                    Text(
+                        text = stringResource(R.string.birth_time_too_old_error),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag("birth_time_too_old_error")
+                    )
+                }
+                if (showBirthPicker) {
+                    NgBirthTimePicker(
+                        nowEpochMs = now,
+                        initialEpochMs = birthTime,
+                        onDismiss = { showBirthPicker = false },
+                        onPicked = {
+                            birthTimeMillis = it
+                            showBirthPicker = false
+                        }
+                    )
+                }
 
                 Column {
                     Text(
-                        text = "Gestational age (weeks)",
+                        text = stringResource(ResearchR.string.r03_ga),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -210,7 +266,7 @@ fun R03ParticipantConsentScreen(
 
                 Column {
                     Text(
-                        text = "Yellow color in first 24 hours?",
+                        text = stringResource(ResearchR.string.r03_q_early_jaundice),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -224,7 +280,7 @@ fun R03ParticipantConsentScreen(
 
                 Column {
                     Text(
-                        text = "Any danger signs present?",
+                        text = stringResource(ResearchR.string.r03_q_danger),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -238,7 +294,7 @@ fun R03ParticipantConsentScreen(
 
                 Column {
                     Text(
-                        text = "Prior phototherapy received?",
+                        text = stringResource(ResearchR.string.r03_q_prior_photo),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -255,14 +311,14 @@ fun R03ParticipantConsentScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         NgPrimaryButton(
-            text = "Start Captures",
+            text = stringResource(ResearchR.string.r03_start),
             enabled = areInputsComplete,
             onClick = {
                 onContinueToCapture(
                     participantCode.trim(),
                     consentFormId.trim(),
-                    birthTimeMillis,
-                    calculatedAgeHours,
+                    birthTime!!,
+                    ageHours!!,
                     gestationalAgeWeeks!!,
                     earlyJaundiceAnswer!!,
                     dangerSignsAnswer!!,
@@ -273,3 +329,6 @@ fun R03ParticipantConsentScreen(
         )
     }
 }
+
+private const val MILLIS_PER_HOUR = 3_600_000.0
+private const val MAX_AGE_HOURS = 719.0

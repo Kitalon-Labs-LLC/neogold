@@ -1,0 +1,21 @@
+# StackHawk DAST scan of the Study Intake Service (backend/). Run it against a local instance, never against a study server:
+#   APP_HOST=http://127.0.0.1:8000 HAWK_API_KEY=<key> hawk scan stackhawk.yml
+# The key comes from the environment (doc 8 Section 4: no secrets in the repository).
+app:
+  applicationId: db3f07d4-9268-4851-bd4c-000254fb03dc
+  env: ${STACKHAWK_ENV:Development}
+  host: ${APP_HOST:http://127.0.0.1:8000}
+  # The repository's own contract is the source of truth for the routes (docs/api/openapi.yaml); the spec's server URL
+  # carries the /v1 base path.
+  openApiConf:
+    filePath: docs/api/openapi.yaml
+  # Every route except /health and /enrollments needs a device assertion signed by a phone's hardware key, which a scanner
+  # cannot mint, so those routes are scanned without a login and answer 401. See docs/11 BUG-2026-084.
+
+tags:
+  - name: _STACKHAWK_AGENT
+    value: ${HAWK_AGENT:none}
+  - name: _STACKHAWK_GIT_COMMIT_SHA
+    value: ${COMMIT_SHA:none}
+  - name: _STACKHAWK_GIT_BRANCH
+    value: ${BRANCH_NAME:none}

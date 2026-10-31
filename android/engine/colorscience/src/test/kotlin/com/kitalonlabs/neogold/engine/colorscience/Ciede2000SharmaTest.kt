@@ -66,7 +66,12 @@ class Ciede2000SharmaTest {
             val diff = StrictMath.abs(actual - pair.expectedDeltaE)
             assertWithMessage(
                 "Pair #%s failed: lab1=%s, lab2=%s, expected=%s, actual=%s, diff=%s",
-                index + 1, pair.lab1, pair.lab2, pair.expectedDeltaE, actual, diff
+                index + 1,
+                pair.lab1,
+                pair.lab2,
+                pair.expectedDeltaE,
+                actual,
+                diff
             ).that(diff).isAtMost(1e-4)
         }
     }

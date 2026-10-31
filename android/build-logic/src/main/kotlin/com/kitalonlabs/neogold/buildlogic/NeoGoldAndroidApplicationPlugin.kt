@@ -28,6 +28,7 @@ class NeoGoldAndroidApplicationPlugin : Plugin<Project> {
             if (!pluginManager.hasPlugin("org.jetbrains.kotlin.android") && extensions.findByName("kotlin") == null) {
                 pluginManager.apply("org.jetbrains.kotlin.android")
             }
+            pluginManager.apply(NeoGoldDetektPlugin::class.java)
 
             val buildNumber = providers.gradleProperty("buildNumber").map(String::toInt).getOrElse(1)
             val effectiveVersionName = providers.gradleProperty("versionName").getOrElse(
@@ -46,9 +47,12 @@ class NeoGoldAndroidApplicationPlugin : Plugin<Project> {
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 }
 
+                // AGP 9 refuses to build an App Bundle while ABI splits are on (issuetracker 402800800), and Play
+                // makes the ABI splits from the bundle itself, so the per-ABI APKs exist for APK builds only.
+                val buildsBundle = gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
                 splits {
                     abi {
-                        isEnable = true
+                        isEnable = !buildsBundle
                         reset()
                         include("arm64-v8a", "armeabi-v7a")
                         isUniversalApk = true
@@ -77,6 +81,10 @@ class NeoGoldAndroidApplicationPlugin : Plugin<Project> {
                     release {
                         isMinifyEnabled = true
                         isShrinkResources = true
+                        // Only the two supported ABIs (CLAUDE.md); OpenCV's x86 and x86_64 libraries add 100 MB.
+                        ndk {
+                            abiFilters += setOf("arm64-v8a", "armeabi-v7a")
+                        }
                         if (releaseSigning != null) {
                             signingConfig = releaseSigning
                         }

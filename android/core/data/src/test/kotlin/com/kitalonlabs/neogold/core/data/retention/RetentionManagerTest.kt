@@ -7,8 +7,6 @@ import com.kitalonlabs.neogold.core.data.datastore.DefaultNeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.datastore.NeoGoldDataStore
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
 import com.kitalonlabs.neogold.core.data.local.entity.CaptureEntity
-import com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity
-import com.kitalonlabs.neogold.core.data.local.entity.DeviceProfileEntity
 import com.kitalonlabs.neogold.core.data.local.entity.OutboxEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchParticipantEntity
 import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity

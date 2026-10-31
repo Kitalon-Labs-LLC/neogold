@@ -1,0 +1,5 @@
+{
+  "schema": 1,
+  "note": "Hardcoded UI string literals per Kotlin file (tools/check_strings.py). May only shrink. Regenerate with: python3 tools/check_strings.py --update-baseline",
+  "files": {}
+}

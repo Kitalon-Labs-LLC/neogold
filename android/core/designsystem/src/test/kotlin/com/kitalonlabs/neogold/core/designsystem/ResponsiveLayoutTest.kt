@@ -52,11 +52,13 @@ class ResponsiveLayoutTest {
         assertThat(titleMediumRatio).isAtLeast(1.49)
 
         // HeadlineMedium (Screen Title, 22 sp): Line height >= 1.35x font size
-        val headlineMediumRatio = (NeoGoldTypography.headlineMedium.lineHeight.value / NeoGoldTypography.headlineMedium.fontSize.value).toDouble()
+        val headlineMediumRatio =
+            (NeoGoldTypography.headlineMedium.lineHeight.value / NeoGoldTypography.headlineMedium.fontSize.value).toDouble()
         assertThat(headlineMediumRatio).isAtLeast(1.30)
 
         // HeadlineLarge (Result Action, 28 sp): Line height >= 1.3x font size
-        val headlineLargeRatio = (NeoGoldTypography.headlineLarge.lineHeight.value / NeoGoldTypography.headlineLarge.fontSize.value).toDouble()
+        val headlineLargeRatio =
+            (NeoGoldTypography.headlineLarge.lineHeight.value / NeoGoldTypography.headlineLarge.fontSize.value).toDouble()
         assertThat(headlineLargeRatio).isAtLeast(1.30)
     }
 

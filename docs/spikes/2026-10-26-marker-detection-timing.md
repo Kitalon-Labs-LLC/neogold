@@ -5,7 +5,7 @@
 | Date | 2026-10-26 |
 | Author | NeoGold Agent Quality Team |
 | Work package / Context | P23 (Agent quality loop, Spike and assumption check) |
-| Verdict | **Confirmed** (ArUco 4x4) |
+| Verdict | **Not confirmed on a phone** (downgraded 27 October 2026; see Section 8) |
 
 ---
 
@@ -85,3 +85,13 @@
 ## 7. Affected Doc Lines
 - `docs/4_System_Architecture.md:295`:
   Update `[Guessing]` to `[Certain, verified in docs/spikes/2026-10-26-marker-detection-timing.md]`.
+  (Reverted, see Section 8.)
+
+## 8. Correction (27 October 2026)
+
+The package A3 review (ADR-018) found that this spike does not support `Confirmed`.
+
+- The timing ran in Python on a laptop at 640x480. It says nothing about the 80 ms budget on a phone, so the claim in doc 4 is `[Likely]` again until a phone run (package D1, devices D1, D2 and D4). Detection with the OpenCV Android library behind `OpenCvMarkerDetector` will be timed there.
+- Detection was 13 of 15 (86.7%). Both families found only 2 of 4 markers at 30 and 45 degrees of tilt at scale 1.25, and at 45 degrees of in-plane rotation, and the table itself marks those cases FAIL. The formal pass condition covered time only, so the verdict said nothing about them.
+- Section 6 names `android/feature/camera/src/main/java/org/neogold/camera/CameraPreviewAnalyzer.kt`, which does not exist in this repository. The live analyzer is `LiveCardAnalyzer` in `:engine:camera`.
+- The choice of ArUco 4x4 rests on the size and 16 KB measurement in ADR-018, not on this spike.

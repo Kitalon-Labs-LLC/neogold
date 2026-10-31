@@ -1,7 +1,6 @@
 package com.kitalonlabs.neogold.engine.camera.model
 
 import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CaptureResult
 import com.kitalonlabs.neogold.engine.vision.ImageFrame
 
 /**
@@ -36,13 +35,13 @@ enum class CameraHardwareLevel {
  */
 data class CaptureMetadata(
     val sensorSensitivity: Int?, // ISO
-    val exposureTimeNs: Long?,   // Exposure time in nanoseconds
+    val exposureTimeNs: Long?, // Exposure time in nanoseconds
     val aeLockSupported: Boolean,
     val awbLockSupported: Boolean,
     val aeLocked: Boolean,
     val awbLocked: Boolean,
-    val aeState: Int?,           // CaptureResult.CONTROL_AE_STATE
-    val awbState: Int?,          // CaptureResult.CONTROL_AWB_STATE
+    val aeState: Int?, // CaptureResult.CONTROL_AE_STATE
+    val awbState: Int?, // CaptureResult.CONTROL_AWB_STATE
     val colorCorrectionGains: FloatArray?, // R, Gr, Gb, B or R, G, B gains
     val hardwareLevel: CameraHardwareLevel,
     val acceptedControls: Map<String, Any?> = emptyMap()

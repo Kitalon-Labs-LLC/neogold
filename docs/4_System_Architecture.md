@@ -52,7 +52,7 @@ flowchart LR
 
 | Container | Technology | Responsibility | Runs where |
 |---|---|---|---|
-| **Android app** | Kotlin, Jetpack Compose, CameraX, native marker library (OpenCV or AprilTag), SQLCipher, Tink | Capture, color correction, estimation, triage, local log, research mode, export, optional sync | Health worker's phone |
+| **Android app** | Kotlin, Jetpack Compose, CameraX, OpenCV for ArUco marker detection (ADR-018), SQLCipher, Tink | Capture, color correction, estimation, triage, local log, research mode, export, optional sync | Health worker's phone |
 | **Study Intake Service** | Python 3.12, FastAPI, PostgreSQL 16, Caddy, Docker Compose | Device enrollment, receive research sessions and images, integrity checks, de-identified export | One small VM per study, chosen by the partner |
 | **Training pipeline** | Python 3.12, NumPy, OpenCV, scikit-learn, pinned with a lockfile and a Docker image | Rebuild features from exported data, train and calibrate the model, generate metrics and model card | Researcher's machine or CI, never a public server |
 | **Card Production Kit** | Design files (SVG/PDF), Python signing CLI | Card layout, print spec, batch measurement import, QR generation and signing | Card producer's machine |
@@ -162,8 +162,9 @@ Production dependencies the diagram does not draw, approved in the 2026-10-26 di
 | Async | Coroutines and Flow | Standard |
 | Navigation | Compose Navigation with type-safe routes | Standard |
 | Camera | CameraX with `Camera2Interop` | Needed to turn off scene modes and effects, lock AE and AWB where available, and read `CaptureResult` metadata; this is the reason Flutter was rejected (doc 1, Section 10) |
-| Computer vision | Decided in v0.1 by measured size: (a) OpenCV Android from Maven Central (`org.opencv:opencv`, Apache 2.0) [Certain] with ArUco markers in `objdetect` [Likely], or (b) the small AprilTag C library through JNI plus homography and blur math in Kotlin [Likely smaller] | The download budget is 25 MB (NFR-04). The full OpenCV package is large [Likely]; whichever option fits the budget on both ABIs wins |
-| ABIs | `arm64-v8a` and `armeabi-v7a` | Some low-end and Android Go phones run 32-bit Android [Certain, verified in docs/spikes/2026-10-26-dual-abi-armeabi-v7a.md]; App Bundle splits deliver one ABI per phone |
+| Computer vision | OpenCV Android from Maven Central (`org.opencv:opencv` 4.14.0, Apache 2.0) with ArUco 4x4 markers in `objdetect`, used in `:engine:vision` only (ADR-018). The pure Kotlin detector stays as the JVM-testable reference; it runs in the app only when the native library is missing, and says so | Measured on a release App Bundle on 27 October 2026 (MiB): OpenCV adds 9.9 to the arm64-v8a download (13.96 in all, budget 25) and 8.1 to the armeabi-v7a download (11.82), and 25.3 to the arm64-v8a install (34.28 in all, budget 40). The 64-bit libraries are 16 KB aligned. The install budget is the tight one |
+| ABIs | `arm64-v8a` and `armeabi-v7a` | Some low-end and Android Go phones run 32-bit Android [Likely] (the 2026-10-26 spike, docs/spikes/2026-10-26-dual-abi-armeabi-v7a.md, only inspected the build configuration, so it does not confirm what phones run); App Bundle splits deliver one ABI per phone |
+| QR scanning | ZXing core (`com.google.zxing:core` 3.5.4, Apache 2.0), used in `:engine:camera` only, reads the card and study-sheet QR as raw bytes from the camera's brightness plane | Pure Java, no network, no native code. The payloads are packed binary in byte mode, so the bytes are taken from ZXing's byte segments and never from its text (card/spec/qr-formats.md). Signatures are checked by `:engine:cardtrust`, not by the scanner (C1) |
 | Estimation | Pure Kotlin linear model from JSON | v1 model is ridge regression on engineered color features; no ML runtime needed, fully auditable. LiteRT reserved for the v2 sclera model |
 | Local DB | Room on SQLCipher | Encrypted at rest for both screening log and research data |
 | File encryption | Tink streaming AEAD, keyset wrapped by an Android Keystore key | `androidx.security:security-crypto` is deprecated [Likely]; Tink is the maintained path |
@@ -192,12 +193,15 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `junit:junit`, `com.google.truth:truth`, `app.cash.turbine:turbine`, `org.robolectric:robolectric` | any | test | P01 allowed list; doc 9 Section 3 |
 | `io.gitlab.arturbosch.detekt:*` | any | all | P01 allowed list |
 | `androidx.camera:*` | `:engine:camera` | all | Section 4.3 Camera |
+| `org.opencv:opencv` | `:engine:vision` | all | ADR-018; Section 4.3 Computer vision |
+| `com.google.zxing:core` | `:engine:camera` | all | Section 4.3 QR scanning (C1); approved by the owner on 2026-10-27 |
 | `androidx.room:room-runtime`, `androidx.room:room-ktx`, `androidx.room:room-compiler` | any | all | Section 4.3 Local DB; ADR-008 |
 | `androidx.room:room-testing` | any | test | doc 9 Section 3 (`MigrationTestHelper`) |
 | `net.zetetic:sqlcipher-android` | `:core:data` | all | Section 4.3 Local DB; ADR-008 |
 | `androidx.sqlite:sqlite`, `androidx.sqlite:sqlite-framework` | `:core:data` | all | SupportSQLite bridge between Room and SQLCipher; ADR-008 (P24, A15) |
 | `org.bouncycastle:bcprov-jdk18on` | `:core:security` | all | ADR-016; doc 8 Section 6.2 |
-| `com.google.crypto.tink:tink` | any | all | Section 4.3 File encryption and Signatures; ADR-008 |
+| `org.bouncycastle:bcprov-jdk18on` | `:sync:research` | test | BUG-2026-036: holds the Bouncy Castle that Robolectric brings to this module's test classpath at the version the app uses; no production code in the module imports it |
+| `com.google.crypto.tink:tink-android` | any | all | Section 4.3 File encryption and Signatures; ADR-008, ADR-019 |
 | `androidx.work:work-runtime-ktx` | any | all | Section 4.3 Background work |
 | `androidx.work:work-testing` | any | test | doc 9 Section 3 |
 | `com.squareup.okhttp3:okhttp` | `:sync:research` | all | Section 4.3 HTTP client (research mode only); CLAUDE.md privacy rule |
@@ -207,6 +211,7 @@ Each row transcribes an approval that already exists elsewhere in the documents;
 | `com.jakewharton.timber:timber` | any | all | doc 8 Section 6.1 Release logging |
 | `androidx.biometric:biometric` | any | all | doc 8 Section 6.3 (`BiometricPrompt`) |
 | `androidx.test.ext:junit`, `androidx.test.espresso:espresso-core` | any | test | doc 9 Section 3 UI (instrumented) |
+| `androidx.test:runner` | any | test | The instrumentation runner (`AndroidJUnitRunner`) that the convention plugins already name; `androidx.test.ext:junit` does not bring it. First used by the OpenCV tests of `:engine:vision` (ADR-018). This row is not a transcription of an earlier approval: it was added with A3 and waits for the owner's decision (CLAUDE.md: ask before adding a dependency) |
 
 ### 4.4 Screening state machine
 
@@ -257,6 +262,35 @@ Design consequences:
 
 `Onboarding (language → safety notice → device check → card scan → calibration)` → `Home` → `Screening (inputs → safety questions → rule outcome → capture guide → camera → analysis)` → `Result` → `Log`. Research mode is a separate graph behind the study PIN. Full screen inventory is in `6_UI_UX_Guidelines.md`.
 
+### 4.7 Research session wiring (package C2)
+
+- **One state holder.** `NeoGoldContainer.researchViewModel(database)` builds the `ResearchRepository` (database, encrypted files, trust list, `ResearchPinManager`, the PIN hasher, and a provenance provider that names the app, model, config and device profile at save time) and the `ResearchViewModel` that R01 to R06 share. It is null when the bundle has no trust list.
+- **Session lock.** `ResearchSessionManager` locks on a button, after 5 minutes in the background, and when the screen turns off, and it counts its locks (`lockCount`). The view model records the count before any slow work (a PIN check, a save) and compares afterwards, so work started before a lock never writes into state the lock cleared. Every research route returns to R01 when the session locks.
+- **PIN checks run one at a time** (a mutex in `ResearchPinManager`), so overlapping guesses each count against the lockout.
+- **Errors are typed.** The view model exposes a `ResearchError` (a reason and the numbers it needs); each screen turns it into text in the language it shows. Repository refusals are `ResearchRefusal` (the old message text plus the typed reason).
+- **The card.** A session names the card of the phone's active device profile (`chooseResearchCard`), whatever its date; one expiry rule (`cardHasExpired`) is shared with the card verifier. The quality gate gets reference colors only from a card that has not expired; a photo checked with no card is recorded as not passed, with the reason `NO_REFERENCE_CARD`.
+- **Blinding is structural.** `:feature:research` does not depend on `:engine:estimation` or `:engine:triage`, so research code cannot make an estimate; `ResearchBlindingGuardTest` fails if that dependency returns or if a screen names an estimate or triage field.
+
+### 4.8 Study server wiring (package C4)
+
+- **One graph, in the only module that has the HTTP client.** `ResearchSyncGraph` (in `:sync:research`) builds the OkHttp client (redirects not followed), the API client, `StudyEnrollmentManager`, `StudyRevocationManager`, `ReconciliationManager`, `OutboxProcessor` and `ResearchRetentionConfirmationHook` over the open database, the app's encrypted file store and the app's trust list. `NeoGoldContainer.syncGraph(database)` creates it once per database and is null when the trust list did not verify, so nothing is sent from a phone whose bundle check failed.
+- **The worker builds nothing.** `ResearchUploadWorker` asks the application for its processor (`ResearchSyncComponent`, the same pattern as the retention worker). While the application has none (storage cannot be read, the bundle check failed) the worker does nothing and tries again later. It logs the kind of an exception, never its message.
+- **The feature module never sees the network.** `:feature:research` declares `StudyServer` (enroll, leave, upload now, schedule); `:app` implements it as `StudyServerSync` over the graph. A failure leaves `:sync:research` as a `ServerFailureKind` (no text), becomes a typed `ResearchError` in `:app`, and each screen writes it in the language it shows. `StudyServerViewModel` holds R07's cloud card, R08 and R09 and follows the rules of `ResearchViewModel` (one action at a time, a lock clears the scan and drops a late answer).
+- **Joining a server.** The study is already on the phone (R01 made it, with the PIN). R08 scans the signed study QR again, checks it is the same study and names a server, takes the one-time code and sends it with the facts the phone measured about itself (camera level and qualification from the active device profile; no default). The manager refuses before any key is made or request sent if there is no study, the QR is of another study, the phone already has a device ID or the study has no server; after the server answers it refuses (and deletes the key) if the policy differs from the signed profile or the server's `max_image_bytes` is below the 5,000,000 bytes the app keeps. A phone with no device profile cannot join.
+- **Leaving.** R09 asks for the PIN again (the same lockout as R01), tells the server (`DELETE /device`), and clears the device key and device ID. The study stays ACTIVE and every session, photo and outbox row stays, because export and retention find the study through the active row (TC-SYNC-16). A revoked device and a closed study have the same local effect, written to the audit log as `DEVICE_DISCONNECTED` with the reason only. Moving to a different study is Export, then Delete all data.
+- **When uploads start.** After a session or a TSB value is saved, after enrollment, and once at every app start (`NeoGoldContainer.scheduleUploads`), each only when the phone has a device ID and rows are waiting. A waiting run is not duplicated; a run in progress gets one more queued behind it, so what was saved during the run is not left for the next save. "Upload now" replaces a waiting run with an expedited one and ignores a run in progress (TC-SYNC-10). All of it runs off the main thread.
+- **Retention asks the server.** `RetentionManager` gets `ResearchRetentionConfirmationHook` from the graph; a research session is purged only after the server reports it COMPLETE or REJECTED. With no graph the default confirms nothing, so nothing is purged. A phone that has left its server never purges research data by itself (no device ID to ask with); it stays until export and Delete all data.
+
+### 4.9 Screening wiring (package E1)
+
+- **The engine decides everything.** `TriageEngine.evaluateBeforeCapture` runs steps 1 and 2 of the algorithm (the config is enabled, signed for a public build and not expired; hard rules R1 to R5) with no estimate, and `evaluate` runs the same function for those steps, so the two cannot disagree. `ScreeningStateMachine` has no rule of its own: the rules and the quality fallback are the engine's answers, and an unavailable triage is its own end state (`TriageUnavailable`).
+- **One object per screening.** `ScreeningFlow` holds the worker's answers with no value filled in, asks the engine once all are given, takes the card check, runs each photo through the pipeline on a worker thread with a 10 second limit, and turns a timeout, a failure or the third refused photo into the engine's blood-test decision. `NeoGoldContainer.newScreening()` builds it over the verified bundle (config, model, quality limits, versions) and returns null when any is missing; the card is the one a research session would name, checked against the trust list now.
+- **Shown and stored are one thing.** `ResultPresentation` maps a `TriageResult` to the action, the doc 6 Section 3 next-step line, the reason and the estimate; `toSessionEntity` builds the log row from it. A recheck that carries no hours is shown and stored as a blood test.
+- **The photo stays in memory.** S16 hands the frame to the route, which holds it until the analysis ends, the worker leaves S19 or gives up, and then drops it; nothing is written (doc 8 Section 2). The 10 second limit is a real one: the analysis runs in its own job and the worker stops waiting for it at the limit even if it never checks for cancellation (`ScreeningFlowRunTest` times it).
+- **The flow belongs to the app, not a screen.** `ScreeningHolder` (in `NeoGoldContainer`) keeps it across rotation and the app lock and is cleared by Reset and Delete all data; a route that finds no flow (a restart) goes Home. A recheck is counted from the moment the decision was shown, a second tap on Save writes no second row, and a result is not reached again by Back.
+- **The optional forehead photo (FR-15, NG-040, TC-CAP-16).** After the chest photo passes, and only when the model has a forehead site and a weight for it, S18 asks before any result is shown (`ScreeningFlow.shouldOfferForehead`; the result screen sends the worker back to S18 while the choice is open). Skipping keeps the result from the chest photo. Adding reads the second photo the same way as the first (its own card, colour correction and quality gate: `ScreeningPipelineUseCase.addForehead`), then makes the estimate from both sites by the model's weights (doc 4 Section 5.5) and lets the triage engine decide again. A forehead photo that is refused, slow (the same 10 second limit) or fails never changes the chest result and never turns it into a blood test; the worker may try up to three times, then only skipping is left. **A second photo can only raise the level of care:** if the decision made from both sites is less careful than the one from the chest photo (`isAtLeastAsCareful`: a less urgent action, or a later recheck), the chest result is kept, because the weights and the two-site interval have not been validated on babies and any photo that passes the quality gate is averaged in. Back on S18, and the button on the analysing screen, mean "go on without it"; nothing is saved before the choice (`record` refuses). Nothing is saved from the forehead photo. The saved row does not say which sites were used (see doc 11, BUG-2026-083 item 36 (h)).
+- Screening is still off in v1.0 because the shipped config has `triageEnabled: false`; `SCREENING_PIPELINE_WIRED` only says the screens compute a real result.
+
 ---
 
 ## 5. Capture and Measurement Pipeline
@@ -289,6 +323,8 @@ flowchart LR
 3. Run preview until auto exposure and auto white balance report converged.
 4. If the phone supports `CONTROL_AE_LOCK` and `CONTROL_AWB_LOCK`, lock both before the burst so the three frames match. If not, capture anyway; each frame is corrected on its own card.
 5. Capture a burst of three frames as high-quality JPEG. Record for each: sensor sensitivity, exposure time, AE and AWB state, lock support, Camera2 hardware level (`LEGACY`, `LIMITED`, `FULL`, `LEVEL_3`), and color correction gains when exposed.
+**The camera host (package C1).** `CameraHost` in `:engine:camera` does steps 1, 2 and 5 for every screen: it binds the preview, the frame analyzer that `CameraMode` asks for (`ReadQr` for S06 and R08, `Stills` for S07, `LiveCard` for S16 and R04) and the still capture, applies the controls in step 2 to both, and returns a `CameraSession` with `captureFrame()` and `captureBurst()`. Only NeoGold types leave the module. The capture result of each still arrives through a Camera2 interop session callback into `CaptureResultRegistry`, keyed by the frame's sensor timestamp, and the burst controller waits up to 750 ms for the one that belongs to the photo; a photo whose result does not arrive is kept with metadata that says nothing is known (the locks are recorded as off, never as on). Frames are analyzed and photos copied on one background thread per session; photos stay in memory. `CameraPreviewHost` is the Compose side: it asks for camera access, shows the preview, closes the camera when the screen leaves and offers a retry when the camera cannot be opened. The app provides the permission state, so the module needs no activity library. The result is checked on the API 37 emulator's virtual camera (`CameraHostInstrumentedTest`); real lenses are the bench task D1, D2 and D4.
+
 6. **Camera qualification (FR-04)** decides screening eligibility, on every phone including `LEGACY` devices:
 
 | Test | How | Pass when (initial values, tune in v0.1) |
@@ -301,7 +337,7 @@ A phone that fails is limited to research mode, where its images still help the 
 
 ### 5.2 Card detection and sampling
 
-- Four corner markers (ArUco or AprilTag, decided in v0.1) give a homography to a canonical card image (for example 1200 x 760 px). [Likely] Markers make detection robust to angle and partial shadow at low CPU cost.
+- Four corner markers (ArUco 4x4, ADR-018) give a homography to a canonical card image (for example 1200 x 760 px). [Likely] Markers make detection robust to angle and partial shadow at low CPU cost.
 - The card carries duplicate gray and skin-tone patches in opposite corners. Comparing them on every capture detects uneven light and phone processing that varies across the image.
 - Patch values are trimmed means (drop the brightest and darkest 10% of pixels) from the inner 60% of each patch, which removes edge bleed and specular highlights.
 - The skin value comes from the punched window, inner 70% only. A skin plausibility check (chromaticity range, uniformity, no hard edges) rejects cloth, shadow, a finger, or an empty window.
@@ -342,7 +378,7 @@ Because the card sits next to the skin in every photo, lighting is corrected per
 
 | Stage | Budget |
 |---|---|
-| Marker detection on preview frame | under 80 ms per frame, run at 5 fps [Certain, verified in docs/spikes/2026-10-26-marker-detection-timing.md] |
+| Marker detection on preview frame | under 80 ms per frame, run at 5 fps [Likely] (a laptop run in Python took 23.6 ms per frame, docs/spikes/2026-10-26-marker-detection-timing.md; not yet measured on a phone) |
 | AE and AWB convergence (and lock if supported) | under 1.5 s [Guessing] |
 | Burst capture | under 1.5 s |
 | Decode at reduced size, warp, sampling | under 700 ms |
@@ -403,7 +439,7 @@ The threshold arrays are deliberately zeroed placeholders. The clinical lead fil
    - `U >= T - 5.0` gives `RECHECK` in the configured hours.
    - Otherwise `NO_FURTHER_ACTION_FROM_SCREEN`.
 7. **Output:** action, one reason code (the first rule that matched, in the order above; for example `R2`, `ZONE_WITHIN3`, `WIDE_INTERVAL`), threshold used, interval, config and model versions.
-8. **Arithmetic:** values are converted to integer tenths of mg/dL before any comparison, so a boundary such as `T - 3.0` cannot be missed through floating-point error. Rounding always moves toward more care: the threshold is rounded down, the estimate and upper bound up, and the lower bound down. Display rounding (to the nearest 0.1) is separate and never feeds a decision. The color and estimation engines use `StrictMath` for powers, roots, and exponentials, so both ABIs (arm64-v8a, armeabi-v7a) produce bit-identical results [Certain that Java specifies `StrictMath` results exactly]. Threshold tables must cover 0 to 336 hours for every gestational band; the schema rejects a table that does not.
+8. **Arithmetic:** values are converted to integer tenths of mg/dL before any comparison, so a boundary such as `T - 3.0` cannot be missed through floating-point error. Rounding always moves toward more care: the threshold is rounded down, the estimate and upper bound up, and the lower bound down. Display rounding (to the nearest 0.1) is separate and never feeds a decision. The color and estimation engines use `StrictMath` for powers, roots, exponentials, logarithms, and trigonometric functions, so both ABIs (arm64-v8a, armeabi-v7a) produce bit-identical results [Certain that Java specifies `StrictMath` results exactly]. Threshold tables must cover 0 to 336 hours for every gestational band; the schema rejects a table that does not.
 
 The triage engine is pure Kotlin with table-driven tests covering every rule, every boundary (exactly at `T`, exactly at `T - 3.0`), and every gestational band.
 
@@ -562,7 +598,7 @@ flowchart LR
 | `trust-list.json` | Integer version | APK assets | Card issuer change |
 | Bundle manifest | Lists SHA-256 of all four, signed by release key | APK assets | Release pipeline |
 
-At startup the app verifies the manifest signature and every hash. Any mismatch disables screening. Over-the-air updates of these artifacts are a v1.1 Could-have (NG-062); in v1.0 they change only with an app release.
+At startup the app verifies the manifest signature and every hash. Any mismatch disables screening, research unlock and the triage switch. `config/` is the only source: the build signs these files into the app's generated assets (`:app:signBundleManifest`), and the app reads each file once, hashes those bytes and parses the config from the same bytes (`VerifiedAssets`), so nothing is checked and then read again. Over-the-air updates of these artifacts are a v1.1 Could-have (NG-062); in v1.0 they change only with an app release.
 
 ---
 
@@ -608,12 +644,35 @@ Detailed in `12_Deployment_Runbook.md`. Summary:
 | ADR-015 | Monotone piecewise-linear linearization with PAVA isotonic filtering | Cubic splines (PCHIP, natural splines), unconstrained polynomials | Unconditional monotonicity across all inputs without Runge oscillations or spline overshoot; noise-resilient with 6 to 7 gray patches; exact node fidelity; zero matrix inversion |
 | ADR-016 | Bouncy Castle Argon2id (pure Java) for the research PIN hash, in `:core:security` only | argon2kt over JNI | No extra native library to build and 16 KB-align on two ABIs; R8 shrinks it. Timing on the 2 GB floor phone is not yet measured [Guessing]; switch to argon2kt if a hash takes over 1 s (doc 8 Section 6.2). Recorded in the 2026-10-26 direction check (P24, A15) |
 | ADR-017 | Manual dependency wiring in `:app` | Hilt | The app was built without it; adopting Hilt now is a cross-module refactor with no user-facing gain. Recorded in the 2026-10-26 direction check (P24, A17) |
+| ADR-018 | OpenCV (`org.opencv:opencv` 4.14.0) for ArUco 4x4 marker detection, in `:engine:vision` only. When OpenCV loads its answer is final; the pure Kotlin detector runs only when OpenCV is missing altogether, and says so (`usesFallback`) | The AprilTag C library through JNI (the 273-line stand-in in the repository was never built here: no NDK, and the card artwork is ArUco); pure Kotlin only; OpenCV 5.0.0 | Both ABIs fit both NFR-04 budgets with the full OpenCV library, measured on a release App Bundle; install size is the tight one. OpenCV 5.0.0 fails the install budget and gate S4. The measurement, the rules the detector applies and what is not yet verified are in the notes below the table |
+| ADR-019 | Tink moves from `tink` 1.7.0 to `tink-android` 1.24.0 (all modules and the offline decrypt tool). The export engine uses the typed key API (`HpkeParameters`, `TinkProtoKeysetFormat` with `InsecureSecretKeyAccess`) instead of `CleartextKeysetHandle` and raw protobuf messages, and the app contains only the encrypting half of the export: unwrapping a data key and decrypting stay in `:neogold-decrypt` | Staying on 1.7.0; the full `tink` JVM jar on a newer version | The 1.7.0 jar pulled protobuf-java 3.19.3 (three CVEs, ignored in `.trivyignore.yaml` since BUG-2026-036); `tink-android` uses protobuf-javalite and the ignores are gone. The wire format of the export (HPKE X25519/HKDF-SHA256/AES-256-GCM, no key prefix, over the binary keyset; streaming AES-256-GCM-HKDF 4 KB) is unchanged and a fixture written by 1.7.0 is opened in the tests (BUG-083 items 27 and 29). Approved by the owner on 2026-10-30 |
+
+**ADR-018 notes (27 October 2026).**
+
+Measurement, on a release App Bundle with bundletool 1.18.3 (the version and checksum the release workflow pins). Sizes are MiB (1,048,576 bytes), as the repository's scripts count them:
+
+| | Before OpenCV | With OpenCV 4.14.0 | Budget (NFR-04) |
+|---|---|---|---|
+| arm64-v8a download | 4.07 | 13.96 | 25 |
+| arm64-v8a install | 8.97 | 34.28 | 40 |
+| armeabi-v7a download | 3.68 | 11.82 | 25 |
+| armeabi-v7a install | 7.31 | 24.02 | 40 |
+
+In decimal megabytes the arm64-v8a install is 35.95 against 40, so the headroom is 4.0 MB, and the later packages will use it. No workflow checks these sizes yet (BUG-2026-053). After package B1 wired the container, the integrity check, the Keystore and retention into the app (29 October 2026) the same measurement gives arm64-v8a 14.08 download and 34.57 install, armeabi-v7a 11.94 and 24.31 (MiB); in decimal megabytes the arm64-v8a install is 36.25 against 40, so the headroom is 3.75 MB.
+
+- **Why not 5.0.0.** It is 3.7 MiB larger to download but 8.4 MiB larger to install on arm64-v8a, which alone would pass 40 MiB, and its arm64-v8a `libc++_shared.so` is 4 KB aligned, which fails gate S4. The 4.14.0 libraries are 16 KB aligned on arm64-v8a (`zipalign -c -P 16` passes and the ELF `LOAD` alignment is 16384); the 32-bit armeabi-v7a libraries are 4 KB, which S4 does not cover.
+- **Build.** Release builds keep only `arm64-v8a` and `armeabi-v7a` (the OpenCV x86 and x86_64 libraries alone add 100 MB). R8 keeps `org.opencv.**` because the native library finds its Java classes by name.
+- **Rules the detector applies**, all in code and tested on the JVM: only IDs 0 to 3 count; an ID found twice is dropped, never guessed (two cards in view, or a false detection), and the vision engine drops a repeated ID from any detector that reports one (the Kotlin fallback never does); a frame on which OpenCV fails counts as "no markers"; the centre of a marker is where its diagonals cross. When OpenCV is missing, the Kotlin detector runs and `DefaultMarkerDetector.usesFallback` is true. On a supported phone that is an error state: the screening flow must block and record it (package E1, BUG-2026-057).
+- **Evidence.** On an x86_64 emulator (API 37), 72 synthetic frames (three scales, three tilts up to 20 degrees, eight rotations) all gave four markers, with corners within 0.8 px and centres within 0.8 px of the rendered card. Two cards in one frame were not taken for one. The quality gate passed and all 23 patches were read within 0.5 Delta E 2000 on nine frames, including the card at the size the card spec gives it in a photo. Detection took a median of 20 ms in one run and 110 ms in another on the same code: an emulator's speed follows the host load and says nothing about a phone [Guessing for phones].
+- **Provenance** (supply-chain review, 29 October 2026). The checksum pins date from the P08 commit, before OpenCV was used, so the review checked them again. The AAR passes `gpg --verify` under key 72D1FA7F942F5D762BD1790EAED1E41000A267FC ("OpenCV Team <admin@opencv.org>"), and its `libopencv_java4.so` for all four ABIs is byte-identical to the file in GitHub's `opencv-4.14.0-android-sdk.zip`. The `.module` file Central serves lists the AAR as 3.3 to 3.6 MB with hashes that match no real file, in all five versions from 4.12.0 to 5.0.0.1: upstream's build script publishes a Java-only AAR first and then copies the full one over it. Gradle ignores those fields. A pinned hash fails any later change of the served bytes; `verify-signatures` is false, so repeat this check (`gpgv` plus the GitHub digest) at every OpenCV bump. The signing key changed between 4.12.0 (RSA, expired December 2025) and 4.13.0 (Ed25519, created 22 January 2026), self-signed only.
+- **What the binary can do.** The AAR manifest holds only `uses-sdk`. The Java classes use no `java.net`, `android.net`, provider or receiver, and the library imports no socket, `getaddrinfo` or SSL symbol on either ABI; gate S5 passes on the merged manifests. The library embeds libjpeg-turbo, libwebp, libpng, libtiff, libopenjp2, OpenEXR, protobuf and oneTBB, which neither the Trivy gate (S2) nor the SBOM sees. Only ArUco runs, and detekt forbids the `imgcodecs`, `videoio`, `dnn` and `android.Utils` imports in the engine modules, so those codecs stay unreachable from Kotlin; track OpenCV releases by hand. What the native libraries import is not checked by any gate yet (BUG-2026-058).
+- **Not verified.** Any ARM device; printed cards under clinic light (package D1); the minified release build running OpenCV (the app does not call the detector yet, so R8 removes its call sites). The four markers are not checked against each other's geometry (BUG-2026-055). The on-device tests run by hand, not in CI (BUG-2026-054).
 
 ---
 
 ## 16. Open Issues for Review
 
-1. **Marker library:** OpenCV vs AprilTag, decided by measured download size against the 25 MB budget in v0.1.
+1. **Marker library:** resolved on 27 October 2026 by ADR-018 (OpenCV, ArUco 4x4), after a measurement against the 25 MB download and 40 MB install budgets.
 2. **Qualification thresholds:** the repeatability, uniformity, and accuracy limits in Section 5.1 are starting values; tune on the device test matrix.
 3. **Root-polynomial vs linear correction:** decide on v0.5 data.
 4. **Bangladesh hosting provider:** partner infrastructure first; if the partner has none, compare two Dhaka providers on encryption, backups, and access control before the study.

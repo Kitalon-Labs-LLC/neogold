@@ -2,7 +2,6 @@ package com.kitalonlabs.neogold.feature.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -77,7 +75,6 @@ fun S01LanguageScreen(
 
             // Bangla selection option
             LanguageOptionCard(
-                languageCode = "bn",
                 label = stringResource(R.string.lang_bangla),
                 nativeLabel = "বাংলা",
                 isSelected = selectedLang == "bn",
@@ -92,7 +89,6 @@ fun S01LanguageScreen(
 
             // English selection option
             LanguageOptionCard(
-                languageCode = "en",
                 label = stringResource(R.string.lang_english),
                 nativeLabel = "English",
                 isSelected = selectedLang == "en",
@@ -122,7 +118,6 @@ fun S01LanguageScreen(
 
 @Composable
 private fun LanguageOptionCard(
-    languageCode: String,
     label: String,
     nativeLabel: String,
     isSelected: Boolean,

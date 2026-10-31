@@ -231,7 +231,7 @@ Fake server is OkHttp `MockWebServer` unless the level is E2E (staging).
 | TC-SYNC-02 | Paused study stops early | FR-31 | `GET /device` returns `PAUSED` | No image request sent; retry scheduled | I | P1 |
 | TC-SYNC-03 | Timeout retry keeps the key | FR-31 | Drop the connection after the server processes a manifest | Retry carries the same `Idempotency-Key`; server replays; no duplicate | I | P1 |
 | TC-SYNC-04 | Request in progress | FR-31 | Server answers `409 REQUEST_IN_PROGRESS` | Retry after 30 s with the same key | I | P2 |
-| TC-SYNC-05 | Dependency re-queue limit | FR-31 | Server always answers `PARTICIPANT_UNKNOWN` | Participant re-sent; after 3 re-queues the session is `FAILED_PERMANENT` with the code shown | I | P1 |
+| TC-SYNC-05 | Dependency re-queue limit | FR-31 | Server always answers `PARTICIPANT_UNKNOWN` | Participant re-sent after each of the first two errors; after the third error the session is `FAILED_PERMANENT` with the code shown | I | P1 |
 | TC-SYNC-06 | Hash mismatch | FR-31 | Server answers `HASH_MISMATCH` three times | Same key and headers each time; then `FAILED_PERMANENT` | I | P2 |
 | TC-SYNC-07 | Server rejects a card batch | FR-31 | `CARD_BATCH_INVALID` on the batch | Its sessions sent with `card_status UNVERIFIED` and no batch ID | I | P1 |
 | TC-SYNC-08 | Unknown error code | FR-31 | Server returns a new code with `retryable` true, then false | Retried, then permanent | I | P2 |

@@ -3,7 +3,6 @@ package com.kitalonlabs.neogold.feature.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,11 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -30,17 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcon
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgTextButton
-import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
+import com.kitalonlabs.neogold.feature.settings.R as SettingsR
 
 /**
  * S23: Settings (NG-002, NG-005, NFR-06, TC-ONB-04, doc 6 Section 5).
@@ -70,6 +62,7 @@ fun S23SettingsScreen(
     onCrashReportingChanged: (Boolean) -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToDeleteData: () -> Unit = {},
+    onNavigateToResearch: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var selectedLang by remember(currentLanguage) { mutableStateOf(currentLanguage) }
@@ -213,7 +206,7 @@ fun S23SettingsScreen(
         // Retention Days Slider
         val currentDaysInt = retentionSlider.toInt()
         Text(
-            text = stringResource(R.string.settings_retention_days, ClinicalNumberFormatter.formatInteger(currentDaysInt)),
+            text = stringResource(R.string.settings_retention_days, currentDaysInt),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -306,6 +299,23 @@ fun S23SettingsScreen(
         HorizontalDivider(modifier = Modifier.padding(vertical = Dimens.SpacingMd))
 
         // Navigation Links
+        if (onNavigateToResearch != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onNavigateToResearch)
+                    .testTag("link_research_mode")
+                    .padding(vertical = Dimens.SpacingMd),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(SettingsR.string.settings_research_mode),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()

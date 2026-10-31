@@ -92,6 +92,9 @@ class EstimationEngine(val model: EstimationModel) {
      * Never throws; failures return [EstimationResult.Failure] so screening flow
      * can disable estimation and recommend a blood test (TC-EST-06).
      */
+    @Suppress(
+        "TooGenericExceptionCaught"
+    ) // never throws by contract: any failure becomes EstimationResult.Failure (TC-EST-06)
     fun estimateSafe(captures: List<SiteCapture>): EstimationResult {
         return try {
             EstimationResult.Success(estimate(captures))

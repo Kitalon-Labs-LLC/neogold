@@ -41,3 +41,64 @@ jobs:
         run: python -m pytest -q tools/tests/test_drift_inventory.py tools/tests/test_doc_auditor_guard.py
       - name: Drift check against the baseline
         run: python3 tools/drift_inventory.py --check
+  guardrails-check:
+    # P25: Guardrails as code - mechanical enforcement of non-negotiable rules
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install locked Python tooling (PyYAML, pytest and the backend deps the tests import)
+        # Hash-locked like every other job: this job decides whether all the guardrails pass, so a
+        # poisoned release of pytest or pyyaml must not be able to run inside it.
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
+      - name: Guardrails table integrity
+        run: python3 tools/check_guardrails.py
+      - name: Dependency allowlist and HTTP client isolation
+        run: python3 tools/check_dependencies.py
+      - name: GitHub Actions pinned by commit SHA
+        run: python3 tools/check_actions_pinned.py
+      - name: Workflow files are valid YAML with runnable steps (BUG-2026-014, TC-OPS-01)
+        # An invalid workflow file starts no job at all, so it fails silently. Also covers
+        # android-release.yml, which no other workflow runs on.
+        run: python3 tools/check_workflows.py
+      - name: String lint and hardcoded-literal ratchet (BUG-2026-029, TC-A11Y-01)
+        run: python3 tools/check_strings.py
+      - name: No AI attribution in the commits of this change
+        # Repository rule (CLAUDE.md, Must not trade off). Checks only the commits that arrive
+        # with this push or pull request, never old history.
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -n "$PR_BASE" ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [ -n "$PUSH_BEFORE" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+            range="$PUSH_BEFORE..$GITHUB_SHA"
+          else
+            range="origin/main..$GITHUB_SHA"   # new branch, or a force-push that dropped the old tip
+          fi
+          python3 tools/check_commit_attribution.py "$range"
+      - name: StrictMath in pure engines
+        run: python3 tools/check_strictmath.py
+      - name: No skipped tests and TC baseline check
+        run: python3 tools/check_no_skipped_tests.py
+      - name: Forward-only migrations check
+        run: python3 tools/check_migrations.py --base origin/main
+      - name: Pydantic models extra-forbid check
+        env:
+          DATABASE_URL: "sqlite:///:memory:"
+        run: pytest -q backend/tests/test_models_extra_forbid.py --no-migrate
+      - name: Run tooling and Claude Code hook tests
+        # `python -m pytest`, not `pytest`: the tests do `from tools.check_x import ...`, which needs
+        # the repository root on sys.path. Only `python -m` adds the current directory.
+        run: python -m pytest -q tools/tests/ .claude/hooks/tests/
+

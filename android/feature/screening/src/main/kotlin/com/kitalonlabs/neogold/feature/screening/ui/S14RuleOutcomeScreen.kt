@@ -2,7 +2,6 @@ package com.kitalonlabs.neogold.feature.screening.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,9 +28,8 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButto
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgExperimentalBanner
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgVersionFooter
 import com.kitalonlabs.neogold.core.designsystem.components.organisms.NgTriageCard
-import com.kitalonlabs.neogold.core.designsystem.components.organisms.TriageUiAction
 import com.kitalonlabs.neogold.core.designsystem.theme.ResultButtonHeight
-import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
+import com.kitalonlabs.neogold.feature.screening.domain.ResultPresentation
 
 /**
  * S14 Rule Outcome Screen (doc 6 Section 5, Section 6.1; FR-08, NG-019).
@@ -47,49 +45,22 @@ import com.kitalonlabs.neogold.engine.triage.TriageReasonCode
  */
 @Composable
 fun S14RuleOutcomeScreen(
-    ruleCode: String,
+    presentation: ResultPresentation,
+    shownAtMs: Long,
+    appVersion: String,
+    modelVersion: String,
+    configVersion: String,
+    cardBatchId: String?,
     onSaveToLog: (registerNumber: String?) -> Unit,
-    appVersion: String = "1.0.0",
-    modelVersion: String = "1.0.0",
-    configVersion: String = "2026.10.0",
-    cardBatchId: String? = "NG-2026-001",
     modifier: Modifier = Modifier
 ) {
     var registerNumber by remember { mutableStateOf("") }
     var registerError by remember { mutableStateOf<String?>(null) }
 
-    val (action, nextStepText, reasonText) = when (ruleCode) {
-        TriageReasonCode.R1 -> Triple(
-            TriageUiAction.REFER_URGENT,
-            stringResource(R.string.rule_urgent_next_step),
-            "Clinical danger signs detected. Immediate emergency medical evaluation required."
-        )
-        TriageReasonCode.R2 -> Triple(
-            TriageUiAction.REFER_URGENT,
-            stringResource(R.string.rule_urgent_next_step),
-            "Yellow discoloration in the first 24 hours of life indicates severe early hyperbilirubinemia."
-        )
-        TriageReasonCode.R3 -> Triple(
-            TriageUiAction.CANNOT_SCREEN,
-            stringResource(R.string.rule_ga_reason),
-            "Gestational age is under 35 completed weeks. Use a laboratory blood test."
-        )
-        TriageReasonCode.R4 -> Triple(
-            TriageUiAction.CANNOT_SCREEN,
-            stringResource(R.string.rule_phototherapy_reason),
-            "Baby has already had light treatment (phototherapy). Use a laboratory blood test."
-        )
-        TriageReasonCode.R5 -> Triple(
-            TriageUiAction.CANNOT_SCREEN,
-            stringResource(R.string.rule_age_reason),
-            "Baby is older than 14 days (336 hours). Jaundice after two weeks requires doctor review."
-        )
-        else -> Triple(
-            TriageUiAction.CANNOT_SCREEN,
-            stringResource(R.string.cannot_screen),
-            "Clinical rule triggered."
-        )
-    }
+    // The engine's decision, in doc 6 Section 3 wording; no explanation of a cause is given (the app does not diagnose).
+    val action = presentation.uiAction
+    val nextStepText = presentation.nextStepText(shownAtMs)
+    val reasonText = presentation.reasonText()
 
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
         Column(
@@ -131,12 +102,16 @@ fun S14RuleOutcomeScreen(
                         }
                     },
                     label = { Text(stringResource(R.string.register_label)) },
-                    placeholder = { Text("e.g. 12/345 or OPD-2027-15") },
+                    placeholder = { Text(stringResource(R.string.register_example)) },
                     isError = registerError != null,
                     supportingText = {
                         Text(
                             text = registerError ?: stringResource(R.string.register_hint),
-                            color = if (registerError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (registerError != null) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     },
                     singleLine = true,

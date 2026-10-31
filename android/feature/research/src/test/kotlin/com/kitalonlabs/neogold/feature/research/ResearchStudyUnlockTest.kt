@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.google.common.truth.Truth.assertThat
 import com.kitalonlabs.neogold.core.data.local.NeoGoldDatabase
+import com.kitalonlabs.neogold.core.data.local.entity.ResearchStudyEntity
 import com.kitalonlabs.neogold.core.data.pin.ResearchPinManager
 import com.kitalonlabs.neogold.core.security.DefaultEncryptedFileStore
 import com.kitalonlabs.neogold.core.security.DefaultFileKeysetProvider
@@ -15,6 +16,9 @@ import com.kitalonlabs.neogold.engine.cardtrust.CardTrustVerifier
 import com.kitalonlabs.neogold.engine.cardtrust.TrustList
 import com.kitalonlabs.neogold.engine.cardtrust.TrustListParser
 import com.kitalonlabs.neogold.feature.research.data.ResearchRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
@@ -49,7 +53,11 @@ class ResearchStudyUnlockTest {
             .build()
 
         val fakeMasterKey = FakeMasterKeyProvider()
-        val fileKeysetProvider = DefaultFileKeysetProvider(context, fakeMasterKey, File(context.filesDir, "test_file_keys"))
+        val fileKeysetProvider = DefaultFileKeysetProvider(
+            context,
+            fakeMasterKey,
+            File(context.filesDir, "test_file_keys")
+        )
         encryptedFileStore = DefaultEncryptedFileStore(context, fileKeysetProvider, File(context.filesDir, "test_images"))
 
         val tlFile = findRepoFile("card/spec/testvectors/test_trust_list.json")
@@ -65,7 +73,9 @@ class ResearchStudyUnlockTest {
             trustList = trustList,
             pinManager = pinManager,
             cardTrustVerifier = CardTrustVerifier(trustList),
-            pinHasher = pinHasher
+            pinHasher = pinHasher,
+            provenance = { TEST_PROVENANCE },
+            isAllowedImage = { true }
         )
     }
 
@@ -155,6 +165,81 @@ class ResearchStudyUnlockTest {
         assertThat(database.researchStudyDao().getActiveStudy()).isNull()
     }
 
+    /**
+     * TC-RSH-01 (second study): a signed QR of another study never enrolls over a study that is already active, so a
+     * PIN typed by whoever holds the phone does not open a way around the first study's PIN.
+     */
+    @Test
+    fun tcRsh01_aSecondStudyIsNotEnrolledOverAnActiveOne() = runBlocking {
+        val first = ResearchStudyEntity(
+            id = "first-study-id",
+            studyCode = "OTHER01",
+            siteCode = "OTHER01",
+            displayName = "Another study",
+            serverUrl = null,
+            deviceKeyAlias = null,
+            serverDeviceId = null,
+            pinHash = ByteArray(32),
+            pinSalt = ByteArray(16),
+            failedPinAttempts = 0,
+            lockedUntil = null,
+            timestampPrecision = "FULL",
+            timeZone = "Asia/Dhaka",
+            dataGeneration = null,
+            localRetentionAfterAckDays = 14,
+            exportPublicKey = null,
+            status = "ACTIVE",
+            enrolledAt = 1_000L
+        )
+        database.researchStudyDao().insert(first)
+        val vector = loadVectorJson("card/spec/testvectors/study_profile_valid.json")
+        val payloadBytes = hexToBytes(vector.getString("payload_hex"))
+
+        val result = repository.unlockWithStudyQr(payloadBytes, "839174", evaluationDate = LocalDate.of(2026, 10, 17))
+
+        assertThat(result.isFailure).isTrue()
+        assertThat(database.researchStudyDao().getStudyByCode("SKP01")).isNull()
+        assertThat(database.researchStudyDao().getActiveStudy()?.id).isEqualTo("first-study-id")
+    }
+
+    /**
+     * TC-RSH-05 (concurrent guesses): checks that overlap each count. Four wrong PINs tried at once leave the counter
+     * at 4, one short of the first lockout; without the lock around a check, they could all read the same count.
+     */
+    @Test
+    fun tcRsh05_wrongPinsTriedAtTheSameTimeAreEachCounted() = runBlocking {
+        val vector = loadVectorJson("card/spec/testvectors/study_profile_valid.json")
+        val payloadBytes = hexToBytes(vector.getString("payload_hex"))
+        val evalDate = LocalDate.of(2026, 10, 17)
+        val study = repository.unlockWithStudyQr(payloadBytes, "839174", evaluationDate = evalDate).getOrThrow()
+
+        (1..4).map { guess ->
+            async(Dispatchers.Default) { pinManager.verifyPin(study.id, "10000$guess") }
+        }.awaitAll()
+
+        assertThat(database.researchStudyDao().getStudyById(study.id)!!.failedPinAttempts).isEqualTo(4)
+    }
+
+    /**
+     * TC-RSH-05 (QR unlock): a correct PIN typed with the QR clears the failure count even when the same call stores the
+     * study's export key. The row written back is the one the PIN check has just reset, not the copy read before it.
+     */
+    @Test
+    fun tcRsh05_aCorrectPinWithTheQrClearsEarlierFailuresEvenWhenTheExportKeyIsStored() = runBlocking {
+        val vector = loadVectorJson("card/spec/testvectors/study_profile_valid.json")
+        val payloadBytes = hexToBytes(vector.getString("payload_hex"))
+        val evalDate = LocalDate.of(2026, 10, 17)
+        val study = repository.unlockWithStudyQr(payloadBytes, "839174", evaluationDate = evalDate).getOrThrow()
+        database.researchStudyDao().update(study.copy(failedPinAttempts = 3, exportPublicKey = null))
+
+        val result = repository.unlockWithStudyQr(payloadBytes, "839174", evaluationDate = evalDate)
+
+        assertThat(result.isSuccess).isTrue()
+        val saved = database.researchStudyDao().getStudyById(study.id)!!
+        assertThat(saved.failedPinAttempts).isEqualTo(0)
+        assertThat(saved.exportPublicKey).isNotNull()
+    }
+
     private fun loadVectorJson(path: String): JSONObject {
         val file = findRepoFile(path)
         return JSONObject(file.readText(Charsets.UTF_8))
@@ -176,10 +261,9 @@ class ResearchStudyUnlockTest {
             File(relative),
             File("../$relative"),
             File("../../$relative"),
-            File("../../../$relative"),
-            File("d:/Project/neogold-android/$relative")
+            File("../../../$relative")
         )
         return candidates.firstOrNull { it.exists() }
-            ?: throw IllegalStateException("Could not find file '$relative'. Checked: $candidates")
+            ?: error("Could not find file '$relative'. Checked: $candidates")
     }
 }

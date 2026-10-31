@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
-import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.designsystem.R
+import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgExperimentalBanner
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
@@ -89,7 +89,7 @@ fun S09HomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
+                        contentDescription = stringResource(R.string.settings_title),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -185,13 +185,14 @@ fun S09HomeScreen(
                                         .clickable { onRecheckClicked(session.id) }
                                         .padding(vertical = 4.dp)
                                 ) {
-                                    val regPart = if (!session.registerNumber.isNullOrBlank()) {
-                                        "Reg ${session.registerNumber}"
-                                    } else {
-                                        "Session"
-                                    }
+                                    val age = session.ageHours.toInt()
+                                    val register = session.registerNumber
                                     Text(
-                                        text = "$regPart • Age ${session.ageHours.toInt()}h",
+                                        text = if (!register.isNullOrBlank()) {
+                                            stringResource(R.string.home_recent_reg, register, age)
+                                        } else {
+                                            stringResource(R.string.home_recent_session, age)
+                                        },
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )

@@ -24,6 +24,15 @@ class ResearchSessionManager(
     private val _isUnlocked = MutableStateFlow(false)
     val isUnlocked: StateFlow<Boolean> = _isUnlocked.asStateFlow()
 
+    private val lockCountValue = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /**
+     * How many times the session has been locked, from any cause (a button, the background timeout, the screen turning
+     * off). A caller that starts slow work records this first and compares it afterwards: if it moved, the session was
+     * locked in between. Unlike the state flow, it cannot miss a lock that came and went between two collections.
+     */
+    val lockCount: Int get() = lockCountValue.get()
+
     private val _activeStudyId = MutableStateFlow<String?>(null)
     val activeStudyId: StateFlow<String?> = _activeStudyId.asStateFlow()
 
@@ -39,13 +48,14 @@ class ResearchSessionManager(
         _isUnlocked.value = true
         lastActiveTimestamp = timestamp
         backgroundedTimestamp = null
-        Timber.i("Research session unlocked for study $studyId")
+        Timber.i("Research session unlocked")
     }
 
     /**
      * Explicitly locks the research session.
      */
     fun lock() {
+        lockCountValue.incrementAndGet()
         _isUnlocked.value = false
         _activeStudyId.value = null
         backgroundedTimestamp = null
@@ -112,12 +122,13 @@ class ResearchSessionManager(
     /**
      * Unregisters the screen off receiver.
      */
+    @Suppress("TooGenericExceptionCaught") // unregistering a stale receiver must not crash
     fun unregisterScreenOffReceiver(context: Context) {
         screenReceiver?.let {
             try {
                 context.unregisterReceiver(it)
             } catch (e: Exception) {
-                Timber.w(e, "Error unregistering screen off receiver")
+                Timber.w("Error unregistering screen off receiver (%s)", e.javaClass.name)
             }
             screenReceiver = null
         }

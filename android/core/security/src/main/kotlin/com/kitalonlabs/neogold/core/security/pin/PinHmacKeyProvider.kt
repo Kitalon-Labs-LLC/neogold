@@ -2,25 +2,49 @@ package com.kitalonlabs.neogold.core.security.pin
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import timber.log.Timber
+import com.kitalonlabs.neogold.core.security.KeystoreLossException
+import java.io.IOException
+import java.security.GeneralSecurityException
 import java.security.KeyStore
+import java.security.ProviderException
 import javax.crypto.KeyGenerator
 import javax.crypto.Mac
 import javax.crypto.SecretKey
-import javax.crypto.spec.SecretKeySpec
 
+/**
+ * The device-bound HMAC key K9 that binds a research PIN hash to this phone (doc 8 Section 4 and 6.2).
+ *
+ * Every failure to reach K9 is a [KeystoreLossException]. There is no software fallback: a key that is published in the
+ * source tree would let anyone brute-force a copied database off the phone (BUG-2026-011).
+ */
 interface PinHmacKeyProvider {
     /**
-     * Computes HMAC-SHA256 of the given data using the device-bound key.
+     * HMAC-SHA256 of [data] under K9. Creates K9 on first use, which is when a PIN is set.
+     *
+     * @throws KeystoreLossException when the Keystore cannot be reached or refuses the key
      */
     fun computeHmac(data: ByteArray): ByteArray
+
+    /**
+     * True when K9 is in the Keystore. A stored PIN hash without its key means the key was lost: the PIN is not wrong,
+     * it can no longer be checked, and a coordinator has to enroll the phone again.
+     *
+     * @throws KeystoreLossException when the Keystore cannot be reached
+     */
+    fun hasKey(): Boolean
+
+    /** Removes K9, when all data is deleted or the phone leaves a study. Does nothing when the key is absent. */
+    fun deleteKey()
 }
 
 /**
- * Android Keystore implementation of K9 non-exportable HMAC-SHA256 key (doc 8 Section 6.2).
+ * Android Keystore implementation of K9: a non-exportable HMAC-SHA256 key (doc 8 Section 6.2).
+ *
+ * @param openKeyStore opens the key store; tests pass one that fails, to show that nothing falls back to a software key
  */
 class KeystorePinHmacKeyProvider(
-    private val keyAlias: String = KEY_ALIAS_DEFAULT
+    private val keyAlias: String = KEY_ALIAS_DEFAULT,
+    private val openKeyStore: () -> KeyStore = { KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) } }
 ) : PinHmacKeyProvider {
 
     companion object {
@@ -29,61 +53,47 @@ class KeystorePinHmacKeyProvider(
         private const val HMAC_ALGORITHM = "HmacSHA256"
     }
 
-    private val secretKey: SecretKey by lazy {
-        getOrCreateKey()
+    override fun computeHmac(data: ByteArray): ByteArray = keystoreCall("compute the PIN verifier") {
+        val mac = Mac.getInstance(HMAC_ALGORITHM)
+        mac.init(getOrCreateKey())
+        mac.doFinal(data)
     }
 
-    private fun getOrCreateKey(): SecretKey {
-        return try {
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-            if (keyStore.containsAlias(keyAlias)) {
-                keyStore.getKey(keyAlias, null) as? SecretKey
-                    ?: throw IllegalStateException("Key for alias $keyAlias is not a SecretKey")
-            } else {
-                val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
-                val spec = KeyGenParameterSpec.Builder(
-                    keyAlias,
-                    KeyProperties.PURPOSE_SIGN
-                ).build()
-                keyGenerator.init(spec)
-                keyGenerator.generateKey()
-            }
-        } catch (e: Exception) {
-            Timber.w(e, "AndroidKeyStore not available for HMAC, falling back to software provider")
-            // Fallback for Robolectric or test environments without AndroidKeyStore
-            FakePinHmacKeyProvider.STATIC_KEY
+    override fun hasKey(): Boolean = keystoreCall("look for the PIN verifier key") {
+        openKeyStore().containsAlias(keyAlias)
+    }
+
+    override fun deleteKey() = keystoreCall("delete the PIN verifier key") {
+        val keyStore = openKeyStore()
+        if (keyStore.containsAlias(keyAlias)) {
+            keyStore.deleteEntry(keyAlias)
         }
     }
 
-    override fun computeHmac(data: ByteArray): ByteArray {
-        val mac = Mac.getInstance(HMAC_ALGORITHM)
-        mac.init(secretKey)
-        return mac.doFinal(data)
-    }
-}
-
-/**
- * Test/mock HMAC key provider for JVM and test verification (e.g. TC-RSH-06).
- */
-class FakePinHmacKeyProvider(
-    private val keyBytes: ByteArray = DEFAULT_TEST_KEY
-) : PinHmacKeyProvider {
-
-    companion object {
-        val DEFAULT_TEST_KEY = byteArrayOf(
-            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-            0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
-            0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-            0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20
-        )
-        val STATIC_KEY: SecretKey = SecretKeySpec(DEFAULT_TEST_KEY, "HmacSHA256")
+    private fun getOrCreateKey(): SecretKey {
+        val keyStore = openKeyStore()
+        if (keyStore.containsAlias(keyAlias)) {
+            return keyStore.getKey(keyAlias, null) as? SecretKey
+                ?: throw KeystoreLossException("Key '$keyAlias' is not an HMAC key")
+        }
+        val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEYSTORE)
+        keyGenerator.init(KeyGenParameterSpec.Builder(keyAlias, KeyProperties.PURPOSE_SIGN).build())
+        return keyGenerator.generateKey()
     }
 
-    private val secretKey: SecretKey = SecretKeySpec(keyBytes, "HmacSHA256")
-
-    override fun computeHmac(data: ByteArray): ByteArray {
-        val mac = Mac.getInstance("HmacSHA256")
-        mac.init(secretKey)
-        return mac.doFinal(data)
+    /**
+     * Runs [block] and turns every way the Keystore can fail into a [KeystoreLossException]. Anything else, such as a
+     * cancelled coroutine or a programming error, passes through untouched.
+     */
+    private inline fun <T> keystoreCall(what: String, block: () -> T): T {
+        try {
+            return block()
+        } catch (e: GeneralSecurityException) {
+            throw KeystoreLossException("Could not $what", e)
+        } catch (e: ProviderException) {
+            throw KeystoreLossException("Could not $what", e)
+        } catch (e: IOException) {
+            throw KeystoreLossException("Could not $what", e)
+        }
     }
 }

@@ -1,25 +1,19 @@
 package com.kitalonlabs.neogold.decrypt
 
 import com.google.common.truth.Truth.assertThat
-import com.google.crypto.tink.BinaryKeysetWriter
-import com.google.crypto.tink.CleartextKeysetHandle
 import com.google.crypto.tink.HybridEncrypt
+import com.google.crypto.tink.InsecureSecretKeyAccess
 import com.google.crypto.tink.KeysetHandle
+import com.google.crypto.tink.RegistryConfiguration
 import com.google.crypto.tink.StreamingAead
+import com.google.crypto.tink.TinkProtoKeysetFormat
+import com.google.crypto.tink.hybrid.HpkeParameters
+import com.google.crypto.tink.hybrid.HpkePublicKey
 import com.google.crypto.tink.hybrid.HybridConfig
-import com.google.crypto.tink.proto.HpkeAead
-import com.google.crypto.tink.proto.HpkeKdf
-import com.google.crypto.tink.proto.HpkeKem
-import com.google.crypto.tink.proto.HpkeParams
-import com.google.crypto.tink.proto.HpkePublicKey
-import com.google.crypto.tink.proto.KeyData
-import com.google.crypto.tink.proto.KeyStatusType
-import com.google.crypto.tink.proto.Keyset
-import com.google.crypto.tink.proto.OutputPrefixType
-import com.google.crypto.tink.streamingaead.AesGcmHkdfStreamingKeyManager
+import com.google.crypto.tink.streamingaead.PredefinedStreamingAeadParameters
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig
 import com.google.crypto.tink.subtle.X25519
-import com.google.protobuf.ByteString
+import com.google.crypto.tink.util.Bytes
 import org.junit.Assert.fail
 import org.junit.BeforeClass
 import org.junit.Rule
@@ -66,8 +60,8 @@ class DecryptEngineTest {
         val privKey = X25519.generatePrivateKey()
         val pubKey = X25519.publicFromPrivate(privKey)
 
-        val dataKeysetHandle = KeysetHandle.generateNew(AesGcmHkdfStreamingKeyManager.aes256GcmHkdf4KBTemplate())
-        val streamingAead = dataKeysetHandle.getPrimitive(StreamingAead::class.java)
+        val dataKeysetHandle = KeysetHandle.generateNew(PredefinedStreamingAeadParameters.AES256_GCM_HKDF_4KB)
+        val streamingAead = dataKeysetHandle.getPrimitive(RegistryConfiguration.get(), StreamingAead::class.java)
 
         // 1. Plaintext CSVs
         val sessionsCsv = """
@@ -136,42 +130,21 @@ class DecryptEngineTest {
         val manifestBytes = manifestContent.toByteArray(StandardCharsets.UTF_8)
         val manifestSha256 = sha256(manifestBytes)
 
-        // Wrap data keyset with Tink HPKE
-        val hpkePubKeyProto = HpkePublicKey.newBuilder()
-            .setVersion(0)
-            .setParams(
-                HpkeParams.newBuilder()
-                    .setKem(HpkeKem.DHKEM_X25519_HKDF_SHA256)
-                    .setKdf(HpkeKdf.HKDF_SHA256)
-                    .setAead(HpkeAead.AES_256_GCM)
-                    .build()
-            )
-            .setPublicKey(ByteString.copyFrom(pubKey))
+        // Wrap the data keyset with Tink HPKE, written here independently of the engine under test
+        val hpkeParameters = HpkeParameters.builder()
+            .setKemId(HpkeParameters.KemId.DHKEM_X25519_HKDF_SHA256)
+            .setKdfId(HpkeParameters.KdfId.HKDF_SHA256)
+            .setAeadId(HpkeParameters.AeadId.AES_256_GCM)
+            .setVariant(HpkeParameters.Variant.NO_PREFIX)
             .build()
-
-        val pubKeyData = KeyData.newBuilder()
-            .setTypeUrl("type.googleapis.com/google.crypto.tink.HpkePublicKey")
-            .setValue(hpkePubKeyProto.toByteString())
-            .setKeyMaterialType(KeyData.KeyMaterialType.ASYMMETRIC_PUBLIC)
+        val hpkePublicKey = HpkePublicKey.create(hpkeParameters, Bytes.copyFrom(pubKey), null)
+        val encryptor = KeysetHandle.newBuilder()
+            .addEntry(KeysetHandle.importKey(hpkePublicKey).withFixedId(1).makePrimary())
             .build()
+            .getPrimitive(RegistryConfiguration.get(), HybridEncrypt::class.java)
 
-        val pubKeyset = Keyset.newBuilder()
-            .setPrimaryKeyId(1)
-            .addKey(
-                Keyset.Key.newBuilder()
-                    .setKeyData(pubKeyData)
-                    .setStatus(KeyStatusType.ENABLED)
-                    .setKeyId(1)
-                    .setOutputPrefixType(OutputPrefixType.RAW)
-                    .build()
-            )
-            .build()
-
-        val encryptor = CleartextKeysetHandle.fromKeyset(pubKeyset).getPrimitive(HybridEncrypt::class.java)
-
-        val rawKeysetBaos = ByteArrayOutputStream()
-        CleartextKeysetHandle.write(dataKeysetHandle, BinaryKeysetWriter.withOutputStream(rawKeysetBaos))
-        val wrappedDataKeyBytes = encryptor.encrypt(rawKeysetBaos.toByteArray(), DecryptEngine.CONTEXT_INFO)
+        val rawKeyset = TinkProtoKeysetFormat.serializeKeyset(dataKeysetHandle, InsecureSecretKeyAccess.get())
+        val wrappedDataKeyBytes = encryptor.encrypt(rawKeyset, DecryptEngine.CONTEXT_INFO)
         val wrappedDataKeyB64 = Base64.getEncoder().encodeToString(wrappedDataKeyBytes)
 
         val headerJson = """

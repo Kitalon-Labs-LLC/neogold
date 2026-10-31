@@ -5,6 +5,10 @@
     <string name="action_recheck">Screen again in %d hours</string>
     <string name="action_no_further">No further action from this screen</string>
     <string name="next_no_further">Continue routine care. Watch for danger signs.</string>
+    <string name="next_blood_test">Send for a blood test today.</string>
+    <string name="next_use_blood_test">Use a blood test.</string>
+    <string name="next_doctor_review">This baby needs a doctor\'s review.</string>
+    <string name="next_recheck">Check again at %1$s. Come back sooner if danger signs appear.</string>
     <string name="confirm_blood">Always confirm with a blood test.</string>
     <string name="experimental">Experimental. Not yet validated in Bangladesh.</string>
     <string name="cannot_screen">NeoGold cannot screen this baby. Use a blood test.</string>
@@ -17,6 +21,7 @@
     <string name="danger_arching">Arching of the back or neck</string>
     <string name="q_phototherapy">Has the baby already had phototherapy (light treatment)?</string>
     <string name="birth_time">When was the baby born?</string>
+    <string name="birth_time_not_set">Not set yet. Tap to set the birth time.</string>
     <string name="ga_label">Gestational age (weeks)</string>
     <string name="place_card">Place the card on the baby\'s chest</string>
     <string name="hold_still">Hold the phone steady</string>
@@ -94,7 +99,7 @@
     <string name="s08_title">Qualification complete</string>
     <string name="s08_repeatability">Repeatability: %s</string>
     <string name="s08_uniformity">Uniformity: %s</string>
-    <string name="s08_accuracy">Accuracy: %s</string>
+    <string name="s08_accuracy">Colour difference: %s</string>
     <string name="s08_btn_get_started">Get started</string>
 
     <!-- Settings S23 to S25 -->
@@ -115,8 +120,8 @@
     <string name="about_version">App %1$s • Model %2$s • Config %3$s</string>
     <string name="about_model_card_title">Model Summary</string>
     <string name="about_license_title">Open Source Licenses</string>
-    <string name="about_intended_use">Intended use: Decision support for trained health workers. NeoGold is a screening tool, not a diagnostic device.</string>
-    <string name="about_limitations">Limitations: Validated only for babies born at 35 weeks or later, up to 14 days of age, with no prior phototherapy.</string>
+    <string name="about_intended_use">Intended use: Decision support for trained health workers. NeoGold suggests a next step; the health worker decides.</string>
+    <string name="about_limitations">Limitations: Intended for babies born at 35 weeks or later, up to 14 days of age, with no prior phototherapy. Not yet validated.</string>
 
     <!-- S25 Delete Data -->
     <string name="delete_data_title">Delete all local data?</string>
@@ -161,6 +166,7 @@
 
     <!-- S10 Birth time & Stepper -->
     <string name="birth_time_future_error">Birth time cannot be in the future.</string>
+    <string name="birth_time_too_old_error">The age is 30 days or more. Check the birth time.</string>
     <string name="birth_age_hours_display">Age now: %d hours</string>
 
     <!-- S14 Rule outcomes -->
@@ -188,6 +194,8 @@
     <string name="forehead_photo_desc">A second photo of the card on the baby\'s forehead improves estimate consistency.</string>
     <string name="btn_add_forehead">Add forehead photo</string>
     <string name="btn_skip_forehead">Skip forehead photo</string>
+    <string name="forehead_photo_problem">The forehead photo could not be used. Place the card flat on the forehead and try again, or continue without it.</string>
+    <string name="forehead_photo_limit">The forehead photo could not be used after three tries. Continue without it.</string>
 
     <!-- S19 Analyzing -->
     <string name="analyzing_title">Analyzing image...</string>
@@ -207,6 +215,58 @@
     <string name="session_detail_title">Screening Detail</string>
 
     <!-- Notifications NG-048, TC-LOG-09 -->
-    <string name="notif_recheck_title">NeoGold</string>
-    <string name="notif_recheck_body">A recheck is due</string>
+
+    <!-- Package F1: strings moved out of Kotlin literals -->
+    <string name="crash_report_title">Share Crash Report?</string>
+    <string name="crash_report_body">NeoGold encountered an unexpected error on its previous run. No personal data or exception messages are included in this report.</string>
+    <string name="crash_report_share">Share</string>
+    <string name="crash_report_dismiss">Dismiss</string>
+    <string name="lock_title">NeoGold is Locked</string>
+    <string name="lock_body">Device authentication is required to access patient screening and records.</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="result_estimated_range">Estimated range</string>
+    <string name="result_threshold">Threshold: %1$s %2$s</string>
+    <string name="version_line_card">App %1$s • Model %2$s • Config %3$s • Card %4$s</string>
+    <string name="step_of">Step %1$s of %2$s</string>
+    <string name="age_now_hours">Age now: %1$s hours</string>
+    <string name="research_participant">Participant: %1$s</string>
+    <string name="research_mode_badge">RESEARCH MODE</string>
+    <string name="research_consent_study">Consent Form: %1$s • Study: %2$s</string>
+    <string name="log_row_age">Age: %1$sh • %2$s</string>
+    <string name="log_row_register">Register: %1$s</string>
+    <string name="manual_capture">Manual capture</string>
+    <string name="log_ga_age">GA %1$s wk • %2$s h</string>
+    <string name="device_check_tested_models">Planned test models (not yet tested):</string>
+    <string name="register_example">e.g. 12/345 or OPD-2027-15</string>
+    <string name="notification_title">NeoGold</string>
+    <string name="recheck_notification_text">A recheck is due</string>
+    <string name="home_recent_reg">Reg %1$s • Age %2$sh</string>
+    <string name="home_recent_session">Session • Age %1$sh</string>
+    <string name="ga_select_hint">Select completed weeks (22 to 44)</string>
+    <string name="consent_explanation">Screening requires explicit agreement from the parent or caregiver. No names or personal identifiers are recorded.</string>
+    <string name="btn_return_home">Return to Home</string>
+    <string name="delete_permanent_title">Permanent Deletion</string>
+    <string name="detail_clinical_info">Clinical Information</string>
+    <string name="detail_date_time">Date &amp; Time</string>
+    <string name="detail_register_no">Register No.</string>
+    <string name="detail_none">None</string>
+    <string name="detail_gestational_age">Gestational Age</string>
+    <string name="detail_weeks">%1$s weeks</string>
+    <string name="detail_age_at_screening">Age at Screening</string>
+    <string name="detail_hours">%1$s hours</string>
+    <string name="detail_estimated_bilirubin">Estimated Bilirubin</string>
+    <string name="detail_mgdl">%1$s mg/dL</string>
+    <string name="detail_treatment_threshold">Treatment Threshold</string>
+    <string name="detail_reason_codes">Reason Codes</string>
+    <string name="detail_traceability">Traceability &amp; Versions</string>
+    <string name="detail_app_version">App Version</string>
+    <string name="detail_model_version">Model Version</string>
+    <string name="detail_config_version">Config Version</string>
+    <string name="detail_card_batch">Card Batch ID</string>
+    <string name="detail_session_id">Session ID</string>
+    <string name="detail_not_available">N/A</string>
+    <string name="about_data_sources">Data sources: %1$s (%2$s samples).</string>
+    <string name="about_data_sources_unknown">Data sources: not available.</string>
+    <string name="about_unavailable">unavailable</string>
+    <string name="about_model_note">%1$s</string>
 </resources>

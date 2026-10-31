@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // card and study QR payload byte layout (card/spec)
+
 package com.kitalonlabs.neogold.engine.cardtrust
 
 import com.google.crypto.tink.subtle.Ed25519Verify
@@ -20,6 +22,10 @@ class CardTrustVerifier(
      * @param evaluationDate Date to evaluate validity against (defaults to today).
      * @return Typed [VerificationResult].
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "ReturnCount"
+    ) // ordered verification steps, each failure returns its own typed result (doc 8)
     fun verifyCardBatch(
         payloadBytes: ByteArray,
         evaluationDate: LocalDate = LocalDate.now()
@@ -129,6 +135,10 @@ class CardTrustVerifier(
      * @param evaluationDate Date to evaluate validity against (defaults to today).
      * @return Typed [VerificationResult].
      */
+    @Suppress(
+        "CyclomaticComplexMethod",
+        "ReturnCount"
+    ) // ordered verification steps, each failure returns its own typed result (doc 8)
     fun verifyStudyProfile(
         payloadBytes: ByteArray,
         evaluationDate: LocalDate = LocalDate.now()

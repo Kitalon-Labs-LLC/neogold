@@ -91,7 +91,7 @@ sequenceDiagram
 3. A manifest before its images (`404 SESSION_UNKNOWN`).
 4. A session before a TSB value that references it (`422 SESSION_UNKNOWN`).
 
-When the server reports a missing dependency, the outbox re-queues that dependency first and retries; this heals a phone whose local outbox lost order after a crash. Each item may trigger at most 3 dependency re-queues; after that it is held as `FAILED_PERMANENT` with the code shown to the coordinator, so a broken dependency cannot loop forever.
+When the server reports a missing dependency, the outbox re-queues that dependency first and retries; this heals a phone whose local outbox lost order after a crash. An item that receives a dependency error three times is held as `FAILED_PERMANENT` with the code shown to the coordinator, so a broken dependency cannot loop forever: the first two errors re-queue the dependency and retry the item, the third ends it (`TC-SYNC-05`).
 
 **Same baby, two phones.** A recheck may happen on a different phone. Each phone creates its own participant UUID; when the second phone registers the same `participant_code` with the same `consent_form_id`, the server stores its UUID as an alias of the first and returns `canonical_participant_id`. Sessions and TSB values from either phone resolve to one participant. A matching code with a different consent form ID is a genuine conflict (`409 PARTICIPANT_CODE_TAKEN`).
 
@@ -436,6 +436,9 @@ The study QR (Section 4.1) is signed off the server, on Kitalon Labs' offline si
 - Network security config: cleartext disallowed, system CAs only, user-installed CAs not trusted (the default for apps targeting API 24 and up [Certain]). No certificate pinning in v1; reasons in doc 8 Section 5.3.
 - The outbox worker is one unique WorkManager work, foreground when the backlog is long (Section 5.3); background runs and **Upload now** call the same `OutboxProcessor`, so there is one code path to test.
 - Dates are formatted in the study time zone from `upload_policy.time_zone`, never with the phone's default zone or UTC.
+- **Enrollment checks on the phone (package C4).** Before the request, the client refuses if the phone has no study, the study QR is of another study, the phone already has a device ID, or the study names no host. The `device` block carries the camera hardware level and qualification of the phone's active device profile; the client has no default for either. After the response, the client deletes the new key and refuses if `upload_policy.timestamp_precision` differs from the signed profile or `upload_policy.max_image_bytes` is below 5,000,000 (the largest research photo the app keeps; the contract's maximum is 20,000,000, so a lower value would refuse photos already kept) (TC-API-07).
+- When the server answers `study_status: CLOSED` or `DEVICE_REVOKED`, the client clears the device key and device ID and stops retrying; research data stays on the phone for export (Section 4.5, TC-SYNC-16).
+- Errors reach the screens as kinds, not text: a server's `title`, `detail` and the host never appear on a screen or in a log (doc 8 Section 6.6).
 
 ---
 

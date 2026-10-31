@@ -10,7 +10,7 @@ import java.util.Locale
 /**
  * TC-EST-01: Parity test with golden test vectors at 1e-4.
  * Validates features against P04's golden_patch_correction.json and golden estimation vectors.
- * Generates and validates testdata/golden/estimation/golden_estimation.json and manifest.sha256.
+ * Compares the engine's output with the committed testdata/golden/estimation/golden_estimation.json and its manifest.sha256.
  */
 class EstimationGoldenVectorsTest {
 
@@ -52,8 +52,8 @@ class EstimationGoldenVectorsTest {
         assertThat(p04Features["b_over_l"]!!).isWithin(tol).of(0.41830593)
         assertThat(p04Features["a_over_b"]!!).isWithin(tol).of(0.41151967)
 
-        // Step 2: Generate and verify estimation golden vectors in testdata/golden/estimation/
-        goldenEstimationDir.mkdirs()
+        // Step 2: compare the engine's output with the committed, reviewed golden file (BUG-2026-045, hazard H7).
+        // Nothing is written unless NEOGOLD_REGENERATE_GOLDEN=1 is set on purpose; then the test fails with a reminder.
         val goldenFile = File(goldenEstimationDir, "golden_estimation.json")
         val manifestFile = File(goldenEstimationDir, "manifest.sha256")
 
@@ -61,20 +61,24 @@ class EstimationGoldenVectorsTest {
         val engine = EstimationEngine.fromJson(modelJson)
 
         val goldenJson = buildGoldenEstimationJson(engine)
-        goldenFile.writeText(goldenJson)
+        if (System.getenv(REGENERATE_ENV) == "1") {
+            goldenEstimationDir.mkdirs()
+            goldenFile.writeText(goldenJson)
+            manifestFile.writeText("${sha256(goldenFile)}  golden_estimation.json\n")
+            throw AssertionError(
+                "Golden vectors regenerated. Read the diff of testdata/golden/estimation, commit it, run again."
+            )
+        }
 
-        val fileSha256 = sha256(goldenFile)
-        val manifestContent = "$fileSha256  golden_estimation.json\n"
-        manifestFile.writeText(manifestContent)
-
-        // Step 3: Validate generated golden vector file
+        // Step 3: the committed file is the expectation (line endings do not matter), and the manifest describes it
         assertThat(goldenFile.exists()).isTrue()
         assertThat(manifestFile.exists()).isTrue()
+        assertThat(lf(goldenFile.readText())).isEqualTo(lf(goldenJson))
 
         val manifestLines = manifestFile.readLines().map { it.trim() }.filter { it.isNotEmpty() }
         assertThat(manifestLines).hasSize(1)
         val parts = manifestLines[0].split(Regex("\\s+"))
-        assertThat(parts[0]).isEqualTo(fileSha256)
+        assertThat(parts[0]).isEqualTo(sha256(goldenFile))
         assertThat(parts[1]).isEqualTo("golden_estimation.json")
 
         // Step 4: Verify inference against golden expectations within 1e-4
@@ -113,7 +117,9 @@ class EstimationGoldenVectorsTest {
         val sb = StringBuilder()
         sb.append("{\n")
         sb.append("  \"version\": \"1.0.0\",\n")
-        sb.append("  \"description\": \"Golden estimation vectors for on-device ridge regression and 90% split-conformal intervals\",\n")
+        sb.append(
+            "  \"description\": \"Golden estimation vectors for on-device ridge regression and 90% split-conformal intervals\",\n"
+        )
         sb.append("  \"model_version\": \"${engine.model.modelVersion}\",\n")
         sb.append("  \"feature_list\": [\"l_star\", \"a_star\", \"b_star\", \"b_over_l\", \"a_over_b\"],\n")
         sb.append("  \"vectors\": [\n")
@@ -137,29 +143,44 @@ class EstimationGoldenVectorsTest {
             sb.append("        \"a_over_b\": ${fmt(features["a_over_b"]!!)}\n")
             sb.append("      },\n")
             sb.append("      \"sternum\": {\n")
-            sb.append("        \"standardized_features\": [${sternum.standardizedFeatures.joinToString(", ") { fmt(it) }}],\n")
+            sb.append(
+                "        \"standardized_features\": [${sternum.standardizedFeatures.joinToString(", ") { fmt(it) }}],\n"
+            )
             sb.append("        \"estimate\": ${fmt(sternum.estimate)},\n")
             sb.append("        \"residual_quantile_90\": ${fmt(sternum.residualQuantile90)},\n")
             sb.append("        \"lower_bound\": ${fmt(sternum.lowerBound)},\n")
             sb.append("        \"upper_bound\": ${fmt(sternum.upperBound)},\n")
             val sTenths = sternum.toIntegerTenths()
-            sb.append("        \"integer_tenths\": {\"estimate\": ${sTenths.estimateTenths}, \"lower\": ${sTenths.lowerTenths}, \"upper\": ${sTenths.upperTenths}}\n")
+            sb.append(
+                "        \"integer_tenths\": {\"estimate\": ${sTenths.estimateTenths}, \"lower\": ${sTenths.lowerTenths}, " +
+                    "\"upper\": ${sTenths.upperTenths}}\n"
+            )
             sb.append("      },\n")
             sb.append("      \"forehead\": {\n")
-            sb.append("        \"standardized_features\": [${forehead.standardizedFeatures.joinToString(", ") { fmt(it) }}],\n")
+            sb.append(
+                "        \"standardized_features\": [${forehead.standardizedFeatures.joinToString(
+                    ", "
+                ) { fmt(it) }}],\n"
+            )
             sb.append("        \"estimate\": ${fmt(forehead.estimate)},\n")
             sb.append("        \"residual_quantile_90\": ${fmt(forehead.residualQuantile90)},\n")
             sb.append("        \"lower_bound\": ${fmt(forehead.lowerBound)},\n")
             sb.append("        \"upper_bound\": ${fmt(forehead.upperBound)},\n")
             val fTenths = forehead.toIntegerTenths()
-            sb.append("        \"integer_tenths\": {\"estimate\": ${fTenths.estimateTenths}, \"lower\": ${fTenths.lowerTenths}, \"upper\": ${fTenths.upperTenths}}\n")
+            sb.append(
+                "        \"integer_tenths\": {\"estimate\": ${fTenths.estimateTenths}, \"lower\": ${fTenths.lowerTenths}, " +
+                    "\"upper\": ${fTenths.upperTenths}}\n"
+            )
             sb.append("      },\n")
             sb.append("      \"combined_multisite\": {\n")
             sb.append("        \"estimate\": ${fmt(combined.estimate)},\n")
             sb.append("        \"lower_bound\": ${fmt(combined.lowerBound)},\n")
             sb.append("        \"upper_bound\": ${fmt(combined.upperBound)},\n")
             val cTenths = combined.integerTenths
-            sb.append("        \"integer_tenths\": {\"estimate\": ${cTenths.estimateTenths}, \"lower\": ${cTenths.lowerTenths}, \"upper\": ${cTenths.upperTenths}}\n")
+            sb.append(
+                "        \"integer_tenths\": {\"estimate\": ${cTenths.estimateTenths}, \"lower\": ${cTenths.lowerTenths}, " +
+                    "\"upper\": ${cTenths.upperTenths}}\n"
+            )
             sb.append("      }\n")
             sb.append(if (idx == cases.size - 1) "    }\n" else "    },\n")
         }
@@ -171,10 +192,16 @@ class EstimationGoldenVectorsTest {
 
     private fun fmt(d: Double): String = String.format(Locale.US, "%.8f", d)
 
+    private fun lf(text: String): String = text.replace("\r\n", "\n")
+
+    /** SHA-256 of the file with LF line endings, which is how the manifest was written and how git stores it. */
     private fun sha256(file: File): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val bytes = file.readBytes()
-        val hash = digest.digest(bytes)
+        val bytes = lf(file.readText()).toByteArray(Charsets.UTF_8)
+        val hash = MessageDigest.getInstance("SHA-256").digest(bytes)
         return hash.joinToString("") { "%02x".format(it) }
+    }
+
+    private companion object {
+        const val REGENERATE_ENV = "NEOGOLD_REGENERATE_GOLDEN"
     }
 }

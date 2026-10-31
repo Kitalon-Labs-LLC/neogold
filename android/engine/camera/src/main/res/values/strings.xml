@@ -1,0 +1,10 @@
+<resources>
+    <!-- Camera access, shown in place of the camera preview (C1) -->
+    <string name="camera_permission_title">Camera access is needed</string>
+    <string name="camera_permission_body">NeoGold uses the camera to read the card and to photograph it. Allow camera access to continue.</string>
+    <string name="camera_permission_allow">Allow camera</string>
+    <string name="camera_permission_settings">Open settings</string>
+    <string name="camera_unavailable_title">The camera could not be opened</string>
+    <string name="camera_unavailable_body">Close other apps that use the camera, then try again.</string>
+    <string name="camera_unavailable_retry">Try again</string>
+</resources>

@@ -53,13 +53,14 @@ class DefaultEncryptedFileStore(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught") // clean up the temp file on any failure, then rethrow
     override fun writeEncryptedFile(
         fileName: String,
         associatedData: ByteArray,
         writeAction: (OutputStream) -> Unit
     ): String {
         val targetFile = File(baseDirectory, fileName)
-        val tempFile = File(baseDirectory, "${fileName}.${UUID.randomUUID()}.tmp")
+        val tempFile = File(baseDirectory, "$fileName.${UUID.randomUUID()}.tmp")
 
         val digest = MessageDigest.getInstance("SHA-256")
 

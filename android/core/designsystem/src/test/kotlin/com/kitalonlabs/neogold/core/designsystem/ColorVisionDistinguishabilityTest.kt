@@ -26,14 +26,6 @@ class ColorVisionDistinguishabilityTest {
             TriageUiAction.CANNOT_SCREEN to NgIcons.Block.name
         )
 
-        val borderDp = mapOf(
-            TriageUiAction.REFER_URGENT to 4,
-            TriageUiAction.BLOOD_TEST to 4,
-            TriageUiAction.RECHECK to 2,
-            TriageUiAction.NO_FURTHER_ACTION to 2,
-            TriageUiAction.CANNOT_SCREEN to 2
-        )
-
         // All icons must be distinct
         assertThat(icons.values.toSet().size).isEqualTo(icons.size)
 

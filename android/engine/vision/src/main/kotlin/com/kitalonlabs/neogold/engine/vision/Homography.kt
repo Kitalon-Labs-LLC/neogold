@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // 3x3 matrix element indices and numeric tolerances
+
 package com.kitalonlabs.neogold.engine.vision
 
 /**
@@ -28,13 +30,19 @@ class Homography(val m: DoubleArray) {
      * Compute analytical 3x3 matrix inverse.
      */
     fun inverse(): Homography {
-        val a00 = m[0]; val a01 = m[1]; val a02 = m[2]
-        val a10 = m[3]; val a11 = m[4]; val a12 = m[5]
-        val a20 = m[6]; val a21 = m[7]; val a22 = m[8]
+        val a00 = m[0]
+        val a01 = m[1]
+        val a02 = m[2]
+        val a10 = m[3]
+        val a11 = m[4]
+        val a12 = m[5]
+        val a20 = m[6]
+        val a21 = m[7]
+        val a22 = m[8]
 
         val det = a00 * (a11 * a22 - a12 * a21) -
-                  a01 * (a10 * a22 - a12 * a20) +
-                  a02 * (a10 * a21 - a11 * a20)
+            a01 * (a10 * a22 - a12 * a20) +
+            a02 * (a10 * a21 - a11 * a20)
 
         require(StrictMath.abs(det) > 1e-12) { "Homography is singular and non-invertible (det=$det)" }
         val invDet = 1.0 / det
@@ -165,18 +173,9 @@ class Homography(val m: DoubleArray) {
             val leftLen = p0.distanceTo(p3)
             val rightLen = p1.distanceTo(p2)
 
-            // Ratio of opposite edges (< 1.0 under perspective tilt)
-            val ratioHorizontal = if (StrictMath.max(topLen, botLen) > 0.0) {
-                StrictMath.min(topLen, botLen) / StrictMath.max(topLen, botLen)
-            } else 1.0
-
-            val ratioVertical = if (StrictMath.max(leftLen, rightLen) > 0.0) {
-                StrictMath.min(leftLen, rightLen) / StrictMath.max(leftLen, rightLen)
-            } else 1.0
-
             // Foreshortening aspect ratio check against nominal marker centers aspect ratio 980 / 540
             val nominalAspect = (CardGeometry.MARKER_CENTERS.getValue(1).x - CardGeometry.MARKER_CENTERS.getValue(0).x) /
-                                (CardGeometry.MARKER_CENTERS.getValue(3).y - CardGeometry.MARKER_CENTERS.getValue(0).y)
+                (CardGeometry.MARKER_CENTERS.getValue(3).y - CardGeometry.MARKER_CENTERS.getValue(0).y)
             val avgWidth = (topLen + botLen) * 0.5
             val avgHeight = (leftLen + rightLen) * 0.5
             val observedAspect = if (avgHeight > 0.0) avgWidth / avgHeight else nominalAspect

@@ -33,6 +33,18 @@ class SecureScreenHelperTest {
     }
 
     @Test
+    fun s14RuleOutcome_isSecure_becauseItTakesTheRegisterNumber_TC_PRIV_02() {
+        assertThat(SecureScreenHelper.isDestinationSecure("s14_rule_outcome")).isTrue()
+    }
+
+    @Test
+    fun pinEntryAndEnrollment_areSecure_becauseThePinAndTheEnrollmentCodeAreTypedThere_TC_PRIV_02() {
+        assertThat(SecureScreenHelper.isDestinationSecure("r01_research_unlock")).isTrue()
+        assertThat(SecureScreenHelper.isDestinationSecure("r08_enrollment")).isTrue()
+        assertThat(SecureScreenHelper.isDestinationSecure("r09_leave_study")).isTrue() // the PIN is typed again here
+    }
+
+    @Test
     fun setSecureScreen_togglesWindowFlagSecure_TC_PRIV_02() {
         val activity = Robolectric.buildActivity(Activity::class.java).create().get()
         val window = activity.window
@@ -57,14 +69,18 @@ class SecureScreenHelperTest {
         val normalEvent = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 0f, 0f, 0)
         assertThat(SecureScreenHelper.isTouchEventObscured(normalEvent)).isFalse()
 
-        val properties = arrayOf(MotionEvent.PointerProperties().apply {
-            id = 0
-            toolType = MotionEvent.TOOL_TYPE_FINGER
-        })
-        val coords = arrayOf(MotionEvent.PointerCoords().apply {
-            x = 0f
-            y = 0f
-        })
+        val properties = arrayOf(
+            MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_FINGER
+            }
+        )
+        val coords = arrayOf(
+            MotionEvent.PointerCoords().apply {
+                x = 0f
+                y = 0f
+            }
+        )
 
         val obscuredEvent = MotionEvent.obtain(
             0L, 0L, MotionEvent.ACTION_DOWN, 1, properties, coords,

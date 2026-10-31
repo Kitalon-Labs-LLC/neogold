@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- RecheckNotificationHelper posts the recheck reminder (NG-048). The same permission is already
+         declared by :app and allow-listed in tools/check_manifest.py, so the merged manifest does not
+         change. Declaring it here lets lint see that this module holds it (BUG-2026-034). The runtime
+         check before posting is what keeps the app working when the user blocks notifications. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+</manifest>

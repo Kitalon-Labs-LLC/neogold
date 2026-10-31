@@ -4,17 +4,14 @@ plugins {
 
 android {
     namespace = "com.kitalonlabs.neogold.engine.vision"
-
-    val ndkPath = project.findProperty("android.ndkPath") as? String ?: System.getenv("ANDROID_NDK_HOME")
-    if (ndkPath != null && file(ndkPath).exists()) {
-        externalNativeBuild {
-            cmake {
-                path = file("src/main/cpp/CMakeLists.txt")
-            }
-        }
-    }
 }
 
 dependencies {
     implementation(project(":engine:colorscience"))
+    implementation(libs.opencv)
+
+    // On-device tests of the OpenCV detector: its native library cannot load in JVM unit tests (ADR-018).
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.truth)
 }

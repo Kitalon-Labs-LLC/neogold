@@ -3,7 +3,6 @@ package com.kitalonlabs.neogold.engine.estimation
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.kitalonlabs.neogold.engine.colorscience.Lab
-import com.kitalonlabs.neogold.engine.triage.TriageAction
 import com.kitalonlabs.neogold.engine.triage.TriageArithmetic
 import com.kitalonlabs.neogold.engine.triage.TriageConfigParser
 import com.kitalonlabs.neogold.engine.triage.TriageEngine
@@ -62,6 +61,7 @@ class EstimationMultiAbiDeterminismTest {
 
         for (vec in vectors) {
             val vecId = vec["id"] as String
+
             @Suppress("UNCHECKED_CAST")
             val inputLabArr = vec["input_lab"] as List<Number>
             val inputLab = Lab(
@@ -73,6 +73,7 @@ class EstimationMultiAbiDeterminismTest {
             // Sternum test
             @Suppress("UNCHECKED_CAST")
             val sternumExpected = vec["sternum"] as Map<String, Any?>
+
             @Suppress("UNCHECKED_CAST")
             val sternumExpectedTenths = sternumExpected["integer_tenths"] as Map<String, Any?>
             val expectedETenths = (sternumExpectedTenths["estimate"] as Number).toInt()
@@ -132,8 +133,12 @@ class EstimationMultiAbiDeterminismTest {
 
             // Triage action and reason codes must match identically
             assertWithMessage("Vector $vecId action").that(triageResult1.action).isEqualTo(triageResult2.action)
-            assertWithMessage("Vector $vecId reason code").that(triageResult1.reasonCode).isEqualTo(triageResult2.reasonCode)
-            assertWithMessage("Vector $vecId threshold").that(triageResult1.thresholdUsed).isEqualTo(triageResult2.thresholdUsed)
+            assertWithMessage(
+                "Vector $vecId reason code"
+            ).that(triageResult1.reasonCode).isEqualTo(triageResult2.reasonCode)
+            assertWithMessage(
+                "Vector $vecId threshold"
+            ).that(triageResult1.thresholdUsed).isEqualTo(triageResult2.thresholdUsed)
         }
     }
 

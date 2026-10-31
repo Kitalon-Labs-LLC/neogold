@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // matrix element indices, bit shifts and pixel arithmetic
+
 package com.kitalonlabs.neogold.engine.vision
 
 /**
@@ -27,9 +29,15 @@ class CardWarper(
         val framePixels = frame.data
 
         val h = invHomography.m
-        val h00 = h[0]; val h01 = h[1]; val h02 = h[2]
-        val h10 = h[3]; val h11 = h[4]; val h12 = h[5]
-        val h20 = h[6]; val h21 = h[7]; val h22 = h[8]
+        val h00 = h[0]
+        val h01 = h[1]
+        val h02 = h[2]
+        val h10 = h[3]
+        val h11 = h[4]
+        val h12 = h[5]
+        val h20 = h[6]
+        val h21 = h[7]
+        val h22 = h[8]
 
         var outIdx = 0
         for (v in 0 until targetH) {
@@ -43,7 +51,7 @@ class CardWarper(
                 val x0 = srcX.toInt()
                 val y0 = srcY.toInt()
 
-                if (x0 >= 0 && x0 < frameW - 1 && y0 >= 0 && y0 < frameH - 1) {
+                if (x0 in 0 until frameW - 1 && y0 in 0 until frameH - 1) {
                     val fx = srcX - x0
                     val fy = srcY - y0
                     val fx1 = 1.0 - fx
@@ -60,10 +68,18 @@ class CardWarper(
                     val p11 = framePixels[idx11]
 
                     // Bilinear interpolation for each channel
-                    val r00 = (p00 shr 16) and 0xFF; val g00 = (p00 shr 8) and 0xFF; val b00 = p00 and 0xFF
-                    val r01 = (p01 shr 16) and 0xFF; val g01 = (p01 shr 8) and 0xFF; val b01 = p01 and 0xFF
-                    val r10 = (p10 shr 16) and 0xFF; val g10 = (p10 shr 8) and 0xFF; val b10 = p10 and 0xFF
-                    val r11 = (p11 shr 16) and 0xFF; val g11 = (p11 shr 8) and 0xFF; val b11 = p11 and 0xFF
+                    val r00 = (p00 shr 16) and 0xFF
+                    val g00 = (p00 shr 8) and 0xFF
+                    val b00 = p00 and 0xFF
+                    val r01 = (p01 shr 16) and 0xFF
+                    val g01 = (p01 shr 8) and 0xFF
+                    val b01 = p01 and 0xFF
+                    val r10 = (p10 shr 16) and 0xFF
+                    val g10 = (p10 shr 8) and 0xFF
+                    val b10 = p10 and 0xFF
+                    val r11 = (p11 shr 16) and 0xFF
+                    val g11 = (p11 shr 8) and 0xFF
+                    val b11 = p11 and 0xFF
 
                     val rTop = r00 * fx1 + r01 * fx
                     val rBot = r10 * fx1 + r11 * fx
@@ -78,7 +94,7 @@ class CardWarper(
                     val b = (bTop * fy1 + bBot * fy).toInt().coerceIn(0, 255)
 
                     reusableBuffer[outIdx] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
-                } else if (x0 >= 0 && x0 < frameW && y0 >= 0 && y0 < frameH) {
+                } else if (x0 in 0 until frameW && y0 in 0 until frameH) {
                     // Border nearest neighbor
                     reusableBuffer[outIdx] = framePixels[y0 * frameW + x0]
                 } else {

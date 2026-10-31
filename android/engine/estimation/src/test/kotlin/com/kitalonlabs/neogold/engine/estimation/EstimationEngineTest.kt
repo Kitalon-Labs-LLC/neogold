@@ -165,9 +165,9 @@ class EstimationEngineTest {
         val q90 = sternumModel.residualQuantile90
 
         // Simulate realistic neonatal skin window chromaticities and paired ground-truth TSB
-        for (i in 0 until nSamples) {
+        repeat(nSamples) {
             val l = 45.0 + rng.nextDouble() * 30.0 // 45 to 75
-            val a = 6.0 + rng.nextDouble() * 12.0  // 6 to 18
+            val a = 6.0 + rng.nextDouble() * 12.0 // 6 to 18
             val b = 15.0 + rng.nextDouble() * 25.0 // 15 to 40
 
             val lab = Lab(l, a, b)
