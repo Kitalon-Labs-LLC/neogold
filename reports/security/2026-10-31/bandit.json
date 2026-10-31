@@ -1,0 +1,25 @@
+{
+  "tool": "bandit",
+  "version": "1.9.4",
+  "results": [
+    {
+      "filename": "D:\\Project\\neogold-android\\training\\lock_dependencies.py",
+      "test_name": "blacklist",
+      "test_id": "B310",
+      "issue_severity": "MEDIUM",
+      "issue_cwe": {
+        "id": 22,
+        "link": "https://cwe.mitre.org/data/definitions/22.html"
+      },
+      "issue_confidence": "HIGH",
+      "issue_text": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.",
+      "line_number": 34,
+      "line_range": [
+        34
+      ],
+      "col_offset": 13,
+      "end_col_offset": 52,
+      "code": "33     try:\n34         with urllib.request.urlopen(req, timeout=15) as resp:\n35             data = json.loads(resp.read().decode(\"utf-8\"))\n"
+    }
+  ]
+}

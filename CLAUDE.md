@@ -117,6 +117,7 @@ Fill this in as work packages create them; keep it current.
 | No skipped tests & TC baseline (P25) | `python3 tools/check_no_skipped_tests.py` |
 | Forward-only migrations check (P25) | `python3 tools/check_migrations.py` |
 | Actions pinned by SHA (P25) | `python3 tools/check_actions_pinned.py` |
+| Security scan and debt ledger (P26) | `/ng-secscan [--changed \| --full]` (or `bash tools/secscan/run.sh [--changed \| --full]`) |
 | Native library imports, Gate S10 (D1) | `python3 tools/check_native_imports.py <app.apk or lib dir>` |
 | Release gates proved to fail when they should (D1) | `python3 -m pytest tools/tests/test_release_gates.py tools/tests/test_check_native_imports.py` |
 | Regenerate golden vectors on purpose (the tests compare with the committed files and otherwise write nothing) | `NEOGOLD_REGENERATE_GOLDEN=1 ./gradlew :engine:colorscience:test :engine:estimation:test`, read the diff of `testdata/golden/`, commit it |

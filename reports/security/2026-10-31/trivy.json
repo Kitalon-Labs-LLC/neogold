@@ -1,0 +1,343 @@
+{
+  "tool": "trivy",
+  "version": "v0.69.3",
+  "mode": "full",
+  "targets_scanned": [
+    "filesystem",
+    "neogold-intake (backend/Dockerfile)",
+    "neogold-caddy (backend/deploy/caddy/Dockerfile)"
+  ],
+  "vulnerabilities": [
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/app/gradle.lockfile",
+      "line": 246,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/app/gradle.lockfile",
+      "line": 246,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/benchmark/gradle.lockfile",
+      "line": 230,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/benchmark/gradle.lockfile",
+      "line": 230,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/core/data/gradle.lockfile",
+      "line": 164,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/core/data/gradle.lockfile",
+      "line": 164,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/core/designsystem/gradle.lockfile",
+      "line": 169,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/core/designsystem/gradle.lockfile",
+      "line": 169,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/core/security/gradle.lockfile",
+      "line": 115,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/core/security/gradle.lockfile",
+      "line": 115,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/engine/camera/gradle.lockfile",
+      "line": 202,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/engine/camera/gradle.lockfile",
+      "line": 202,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/engine/vision/gradle.lockfile",
+      "line": 94,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/engine/vision/gradle.lockfile",
+      "line": 94,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/calibration/gradle.lockfile",
+      "line": 169,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/calibration/gradle.lockfile",
+      "line": 169,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/log/gradle.lockfile",
+      "line": 229,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/log/gradle.lockfile",
+      "line": 229,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/onboarding/gradle.lockfile",
+      "line": 231,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/onboarding/gradle.lockfile",
+      "line": 231,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/research/gradle.lockfile",
+      "line": 237,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/research/gradle.lockfile",
+      "line": 237,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/result/gradle.lockfile",
+      "line": 229,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/result/gradle.lockfile",
+      "line": 229,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/screening/gradle.lockfile",
+      "line": 237,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/screening/gradle.lockfile",
+      "line": 237,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/settings/gradle.lockfile",
+      "line": 223,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/feature/settings/gradle.lockfile",
+      "line": 223,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-8763",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/sync/research/gradle.lockfile",
+      "line": 151,
+      "summary": "Bouncy Castle 1.80.2 vulnerability in build-time androidLintTool classpath"
+    },
+    {
+      "id": "CVE-2026-13506",
+      "package": "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2",
+      "ecosystem": "Maven",
+      "version": "1.80.2",
+      "fixed_version": "1.81",
+      "severity": "HIGH",
+      "file": "android/sync/research/gradle.lockfile",
+      "line": 151,
+      "summary": "Bouncy Castle 1.80.2 ASN.1/crypto flaw in build-time androidLintTool classpath"
+    }
+  ],
+  "misconfigurations": []
+}

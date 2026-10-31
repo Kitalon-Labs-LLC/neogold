@@ -16,4 +16,26 @@ Review the diff (`git diff main...HEAD`, or the files you are pointed to) for:
 7. Secrets and CI: no keys or passwords in code or logs, Actions pinned by SHA, scanner jobs without secrets, signing material deleted in an always-run step.
 8. Backend and deploy: non-root containers, dropped capabilities, read-only filesystems with explicit volumes, digest-pinned images, expand-only migrations.
 
-Report findings only, most severe first. For each: file and line, the problem, a concrete attack or leak, and the fix. If you find nothing, say which checks you ran. Do not edit files.
+## Threat Checklist (`docs/8_Security_Compliance_Plan.md` Section 9: `T1` to `T17`)
+
+When invoked by `/ng-secscan` (or on a security review diff), evaluate the diff since the last scan against every threat `T1` to `T17` from `docs/8_Security_Compliance_Plan.md` Section 9 and output a table marking each threat as **`Covered`**, **`Weakened`**, or **`Not checked`**, citing `file:line` evidence:
+
+- **T1:** Lost or stolen phone exposes screening or research data (SQLCipher, Tink, Keystore keys; app lock; research PIN bound to Keystore; retention 60 and 180 days; device revocation).
+- **T2:** Family member on a shared phone browses NeoGold (App lock, `FLAG_SECURE`, notifications without details, screening log can be off).
+- **T3:** Repackaged APK with altered thresholds or malware, shared over messaging apps (Play Store as the only official channel; signing certificate SHA-256 fingerprint published on the website and README; trademark rule; training material; `validUntil` + signed `bundle-manifest.json`).
+- **T4:** Counterfeit card: genuine QR copied onto a home-printed card (Signature authenticates the reference values; the correction residual check authenticates the physical print via `HIGH_RESIDUAL`; batch expiry; batch revocation).
+- **T5:** Card issuer key stolen (Offline key K4, two-person passphrase, signing log; purpose-bound trust list `CARD_ISSUER`; revocation by app update).
+- **T6:** Forged study QR points phones at a rogue server (Signed study profile with K5 `STUDY_PROFILE`; host shown on R08 before confirming).
+- **T7:** Malicious Wi-Fi or network attacker (TLS, system CAs only, no cleartext, request signing with body hash).
+- **T8:** Stolen enrollment code (Single use, 72 hours, site-bound, consumed atomically; attestation challenge bound to the code; coordinator sees each enrolled device and its attestation result; revocation).
+- **T9:** Forged or replayed uploads (ES256 per request, `jti` replay table, method, URL, and body binding).
+- **T10:** Study server compromise (Hardened host in Section 8, dedicated machine, WireGuard-only SSH, encrypted volume, no names or birth dates on the server, encrypted backups).
+- **T11:** Insider at the partner copies data (CLI-only export, append-only `audit_log`, de-identified exports, separate export DB role, data sharing agreement).
+- **T12:** Supply chain: malicious dependency, compromised GitHub account, poisoned CI action (Gradle dependency verification metadata; pip hash-pinned lockfile; GitHub Actions pinned by commit SHA; Dependabot; 2FA required; branch protection with review; release environment approval; SBOMs).
+- **T13:** Denial of service on the study server (Rate and size limits; uploads wait in the outbox; screening unaffected).
+- **T14:** Crafted image exploits the server's image parser (Only enrolled devices can upload; pixel limits; non-root, read-only container; prompt Pillow updates).
+- **T15:** Re-identification from uploaded data (Codes only, day-precision dates on device and server, JPEG metadata stripped, per-participant date shift in exports, identity mapping on paper).
+- **T16:** A health worker disputes what the app showed (Local `audit_event` with config, model, and card batch versions per session; not a legal-grade record).
+- **T17:** Data pulled off the phone through backup or debugging (Backup disabled, release not debuggable).
+
+Report findings only, most severe first. For each: file and line, the problem, a concrete attack or leak, and the fix. Follow with the `T1`–`T17` checklist table (`Covered` | `Weakened` | `Not checked`). If you find nothing, say which checks you ran. Do not edit files.

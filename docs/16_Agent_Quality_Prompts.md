@@ -94,7 +94,7 @@ Later packages depend on these claims, so test them with `/ng-spike` as soon as 
 1. Hook input carries `agent_type` inside subagents, and hooks in a subagent's frontmatter apply only while that subagent runs (P24, P27, P28). The current docs say both [Certain]; the spike checks your installed version.
 2. A fresh-eyes session started from a sandbox folder outside the repository sees no CLAUDE.md, no git status, and no file names in its first context (P28) [Likely].
 3. The emulator's virtual scene camera can show a bench image that the vision engine accepts (P28, P29) [Guessing].
-4. DeepSec finds at least one real issue in `backend/` that Bandit and Ruff miss (P26) [Guessing].
+4. DeepSec finds at least one real issue in `backend/` that Bandit and Ruff miss (P26) [Certain — Refuted in `docs/spikes/2026-10-31-deepsec-trial.md`: 0 issues missed by Bandit/Ruff; rejected for `--full`].
 5. Maestro's output gives per-step timing good enough for step budgets (P29) [Guessing].
 
 ---
@@ -377,7 +377,7 @@ One command, `/ng-secscan`, that does three things:
       - how many held up once you checked the code path
       - whether step 1 had missed any of them
    c. Add it to `--full` only if it found at least one real issue the other tools missed.
-   d. Kotlin support is unconfirmed [Guessing], so report Kotlin findings separately.
+   d. Kotlin support is unconfirmed [Certain — Stage 1 has no built-in Kotlin rules; Stage 2 LLM reads `.kt` files; see `docs/spikes/2026-10-31-deepsec-trial.md`], so report Kotlin findings separately.
 4. `security/exceptions.yaml` records every accepted finding: ID, tool, rule, file, reason, approver, and an expiry date no more than 90 days out.
    - The scan fails on any high or critical finding that isn't in the file.
    - It also fails on any expired exception.

@@ -55,6 +55,7 @@ Confidence tags: **[Certain]** from the docs or verified, **[Likely]** strong in
 | P23 | Spike and assumption check | 11 Agent quality loop | P00 | none (process) | tooling tests in tools/tests/ | 1 to 2 |
 | P24 | Direction check | 11 Agent quality loop | P23 | none (process) | tooling tests in tools/tests/ | 2 to 3 |
 | P25 | Guardrails as code | 11 Agent quality loop | P24 | none (process) | tooling and hook tests in tools/tests/ and .claude/hooks/tests/ | 2 |
+| P26 | Security scan command and security-debt ledger | 11 Agent quality loop | P25 | none (process) | TC-SEC-10 groundwork (MobSF step), tooling tests in tools/tests/ | 2 |
 
 Total: about 52 to 64 sessions [Guessing].
 
@@ -70,6 +71,7 @@ flowchart LR
     P00 --> P23
     P23 --> P24
     P24 --> P25
+    P25 --> P26
     P01 --> P03
     P01 --> P04
     P01 --> P11
@@ -113,7 +115,7 @@ flowchart LR
 | Android | P01, P03 to P06, P08 to P16, P20 to P22 | The main line |
 | Training | P07 | Starts once P04 and the P06 model format exist |
 | Backend | P17 to P19 | Starts right after P00; only needs `docs/api/openapi.yaml` |
-| Quality loop | P23, P24, P25 | Spike protocol and assumption check (P23); direction check, `/ng-direction`, and the `drift_inventory.py --check` CI job (P24); guardrails as code, hooks, quality tiers (P25) |
+| Quality loop | P23, P24, P25, P26 | Spike protocol and assumption check (P23); direction check, `/ng-direction`, and the `drift_inventory.py --check` CI job (P24); guardrails as code, hooks, quality tiers (P25); security scan `/ng-secscan` and security-debt ledger (P26) |
 
 ---
 

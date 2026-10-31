@@ -29,3 +29,5 @@
 /.trivyignore.yaml                      @sowad @second-approver
 /tools/check_*.py                       @sowad @second-approver
 /tools/hooks/                           @sowad @second-approver
+/security/                              @sowad @second-approver
+/tools/secscan/                         @sowad @second-approver

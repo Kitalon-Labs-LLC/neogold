@@ -1,0 +1,103 @@
+name: security-scan
+on:
+  pull_request: {}
+  schedule:
+    # Nightly full security scan on main at 02:15 UTC (P26, docs/8 Section 10)
+    - cron: "15 2 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Scan mode (changed or full)"
+        required: false
+        default: "full"
+        type: choice
+        options:
+          - changed
+          - full
+
+# Read-only repository contents permission; no pull-requests:write or issues:write so results
+# are never posted as public PR comments (P26 Requirement 7).
+permissions:
+  contents: read
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secscan-pr:
+    name: "Security scan (--changed on PR)"
+    if: github.event_name == 'pull_request'
+    # No secrets in scanner jobs: a compromised scanner has nothing to steal (doc 8 T15/T16, P26).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install locked Python tooling
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
+      - name: Install pinned gitleaks binary
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/gitleaks.tgz" \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Run /ng-secscan (--changed)
+        run: bash tools/secscan/run.sh --changed
+      - name: Run security scan tooling tests
+        run: python3 -m pytest -q tools/tests/test_secscan.py
+      - name: Upload redacted security scan artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-scan-pr-${{ github.run_id }}
+          path: |
+            reports/security/
+          retention-days: 30
+
+  secscan-nightly:
+    name: "Security scan (--full nightly on main)"
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # No secrets in scanner jobs: a compromised scanner has nothing to steal (doc 8 T15/T16, P26).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install locked Python tooling
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
+      - name: Install pinned gitleaks binary
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/gitleaks.tgz" \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Run Android Lint, detekt, and unsigned release APK build
+        working-directory: android
+        run: ./gradlew --no-daemon lintRelease detekt assembleRelease
+      - name: Run /ng-secscan (--full)
+        run: bash tools/secscan/run.sh --full
+      - name: Upload redacted security scan artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: security-scan-full-${{ github.run_id }}
+          path: |
+            reports/security/
+          retention-days: 90
+

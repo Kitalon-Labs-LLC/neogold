@@ -617,7 +617,7 @@ def handle_export(args: argparse.Namespace) -> int:
         part_anon_ids: dict[UUID, str] = {}
         for idx, (p, site_code) in enumerate(participants, 1):
             seed_val = int(hashlib.sha256(str(p.id).encode("utf-8")).hexdigest()[:8], 16)
-            rng = random.Random(seed_val)  # nosec B311
+            rng = random.Random(seed_val)  # nosec B311  # SEC-EXC-0003
             offset = rng.randint(-180, 180)
             if offset == 0:
                 offset = 1
