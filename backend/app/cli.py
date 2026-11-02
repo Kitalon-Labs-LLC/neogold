@@ -468,16 +468,19 @@ def handle_restore_mark(args: argparse.Namespace) -> int:
     try:
         now_ts = int(time.time())
         studies = db.execute(select(Study)).scalars().all()
+        applied_gen = now_ts
         for study in studies:
-            study.data_generation = now_ts
+            current_gen = int(study.data_generation or 0)
+            study.data_generation = max(now_ts, current_gen + 1)
+            applied_gen = max(applied_gen, int(study.data_generation))
         db.commit()
 
         record_admin_audit(
             db,
             action="RESTORE_MARKED",
-            details={"data_generation": now_ts},
+            details={"data_generation": applied_gen},
         )
-        print(f"Data generation marked to Unix time {now_ts}")
+        print(f"Data generation marked to Unix time {applied_gen}")
         return 0
     finally:
         db.close()

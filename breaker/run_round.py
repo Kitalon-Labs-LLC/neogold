@@ -592,8 +592,10 @@ def run_api_attacks() -> list[AttackResult]:
         try:
             with patch("app.cli.time.time", return_value=1_761_955_200.0):
                 handle_restore_mark(db)
+                db.expire_all()
                 g1 = int(db.get(Study, study_id).data_generation)
                 handle_restore_mark(db)
+                db.expire_all()
                 g2 = int(db.get(Study, study_id).data_generation)
         finally:
             db.close()

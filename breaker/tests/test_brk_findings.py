@@ -305,10 +305,12 @@ def test_brk_023_restore_mark_strictly_increases_data_generation():
             fixed_unix_ts = 1_761_955_200
             with patch("app.cli.time.time", return_value=float(fixed_unix_ts)):
                 assert handle_restore_mark(db) == 0
+                db.expire_all()
                 gen_first = int(db.get(Study, study_id).data_generation)
 
                 # Second restore mark within the same second (or slightly behind clock)
                 assert handle_restore_mark(db) == 0
+                db.expire_all()
                 gen_second = int(db.get(Study, study_id).data_generation)
 
             assert gen_second > gen_first, (
