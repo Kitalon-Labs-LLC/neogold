@@ -74,8 +74,9 @@ card/           Card v1 design files, print spec, neogold-sign tool
 config/         triage-config.json, trust-list.json, schemas
 testdata/       golden/, bad/, triage/, api/, bench/ (synthetic and bench data only)
 tools/          release gates and checks (doc 12 Appendix B)
+breaker/        adversarial breaker environment (env/), catalog.md, findings/, and regression tests (P27)
 docs/           the design documents; docs/api/openapi.yaml; docs/ci-templates/
-.claude/        commands/ (one per work package), agents/ (reviewers)
+.claude/        commands/ (one per work package), agents/ (reviewers and breaker), skills/
 ```
 
 ---
@@ -118,6 +119,7 @@ Fill this in as work packages create them; keep it current.
 | Forward-only migrations check (P25) | `python3 tools/check_migrations.py` |
 | Actions pinned by SHA (P25) | `python3 tools/check_actions_pinned.py` |
 | Security scan and debt ledger (P26) | `/ng-secscan [--changed \| --full]` (or `bash tools/secscan/run.sh [--changed \| --full]`) |
+| Breaker agent quality loop (P27) | `/ng-break [area] [--rounds N] [--commit <ref>] [--recheck]` (or `python3 breaker/run_round.py [area] [--rounds N] [--recheck]`) |
 | Native library imports, Gate S10 (D1) | `python3 tools/check_native_imports.py <app.apk or lib dir>` |
 | Release gates proved to fail when they should (D1) | `python3 -m pytest tools/tests/test_release_gates.py tools/tests/test_check_native_imports.py` |
 | Regenerate golden vectors on purpose (the tests compare with the committed files and otherwise write nothing) | `NEOGOLD_REGENERATE_GOLDEN=1 ./gradlew :engine:colorscience:test :engine:estimation:test`, read the diff of `testdata/golden/`, commit it |

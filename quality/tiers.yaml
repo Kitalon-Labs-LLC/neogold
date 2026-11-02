@@ -50,6 +50,8 @@ tiers:
     description: "Developer tooling, training notebooks, benchmarks, test harnesses, and documentation"
     paths:
       - "tools/**"
+      - "breaker/**"
+      - "security/**"
       - "training/**"
       - "reports/**"
       - "testdata/**"
