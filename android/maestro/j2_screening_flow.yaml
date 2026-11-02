@@ -1,0 +1,132 @@
+appId: ${APP_ID}
+---
+# ==============================================================================
+# NeoGold Journey J2: Core Screening Flow (doc 2 Section 6, NFR-02, TC-PERF-01, TC-PERF-05)
+# Full screening with guardian consent, baby inputs, guided card capture, triage result, and save to log.
+# Target: full journey under 60 s; capture to result under 10 s (NFR-02)
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Step: start_screening_and_consent (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_start_screening"
+    timeout: 5000
+
+- tapOn:
+    id: "btn_start_screening"
+
+- extendedWaitUntil:
+    visible:
+      id: "consent_question_text"
+    timeout: 5000
+
+- tapOn:
+    id: "yes_button"
+    optional: true
+
+- tapOn:
+    id: "consent_yes_no_buttons"
+    optional: true
+
+# 2. Step: demographic_and_safety_inputs (Budget: 15.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "ga_number_stepper"
+    timeout: 5000
+
+- tapOn:
+    id: "birth_time_field"
+
+- extendedWaitUntil:
+    visible:
+      text: "OK"
+    timeout: 3000
+    optional: true
+
+- tapOn:
+    text: "OK"
+    optional: true
+
+- tapOn:
+    id: "ga_number_stepper"
+
+- tapOn:
+    id: "btn_next"
+
+# Answer safety questions (S11, S12, S13)
+- extendedWaitUntil:
+    visible:
+      id: "early_jaundice_buttons"
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    id: "no_button"
+    optional: true
+
+- tapOn:
+    id: "early_jaundice_buttons"
+    optional: true
+
+- tapOn:
+    id: "danger_signs_buttons"
+    optional: true
+
+- tapOn:
+    id: "prior_phototherapy_buttons"
+    optional: true
+
+# 3. Step: card_placement_guide (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_open_camera"
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    id: "btn_open_camera"
+    optional: true
+
+# 4. Step: guided_capture (Budget: 8.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "camera_preview"
+    timeout: 8000
+
+- assertVisible:
+    id: "card_detection_overlay"
+
+- extendedWaitUntil:
+    visible:
+      id: "steady_progress_bar"
+    timeout: 8000
+
+# 5. Step: capture_to_result (Budget: 10.0 s, NFR-02)
+- extendedWaitUntil:
+    visible:
+      id: "capture_processing_indicator"
+    timeout: 5000
+    optional: true
+
+- extendedWaitUntil:
+    visible:
+      id: "triage_card"
+    timeout: 10000
+
+- assertVisible:
+    id: "experimental_banner"
+
+# 6. Step: save_to_log (Budget: 5.0 s)
+- assertVisible:
+    id: "btn_save_to_log"
+
+- tapOn:
+    id: "btn_save_to_log"
+
+- extendedWaitUntil:
+    visible:
+      id: "home_experimental_banner"
+    timeout: 5000

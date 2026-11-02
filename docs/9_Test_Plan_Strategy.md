@@ -163,7 +163,7 @@ Pipeline definitions are in doc 12 Section 3.
 |---|---|---|
 | v0.1 Prototype | Scaffold builds; bench rig assembled | Pipeline runs end to end on 3 phones; golden-vector parity passes; bad image set 100% rejected; camera qualification measured on all six matrix phones |
 | v0.5 Research build | v0.1 exit met; partner device survey done | All P1 cases for research mode, sync, export, security pass; zero records lost in 50 kill tests and 10 power-pull tests per phone; research build on Play closed testing for the partner |
-| v1.0 internal track | v0.5 exit met; G1 and G2 met (doc 8 Section 13.3) | All P1 and P2 cases pass on D1 to D4; no open S1 or S2 defects; performance budgets met on D1 and D2; gates S1 to S10 pass |
+| v1.0 internal track | v0.5 exit met; G1 and G2 met (doc 8 Section 13.3) | All P1 and P2 cases pass on D1 to D4; no open S1 or S2 defects; performance budgets met on D1 and D2; gates S1 to S10 pass; journey release gate passes (`tools/check_journeys.py`: 20/20 error-free runs on all P1 journeys on D1 to D4; NFR-02 p95 budgets met) |
 | v1.0 closed testing (partner nurses) | Internal track exit met | Usability targets met (Section 13); 14 days with no S1 and no unresolved S2. No minimum tester count: Kitalon Labs publishes from an organization account, and Play's 12-tester rule applies only to new personal accounts [Certain] (confirmed by the founder, 11 October 2026) |
 | v1.0 closed research release (PRD D10) | Closed testing exit met; partner ethics approval in hand | Research build with `triageEnabled` false on the closed track for all study sites |
 | Later public release | v1.0 study results; **G1, G2, and G3 met** (doc 8 Section 13.3) | Production checklist in doc 12 Section 9 complete |

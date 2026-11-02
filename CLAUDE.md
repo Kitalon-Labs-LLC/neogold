@@ -121,6 +121,8 @@ Fill this in as work packages create them; keep it current.
 | Security scan and debt ledger (P26) | `/ng-secscan [--changed \| --full]` (or `bash tools/secscan/run.sh [--changed \| --full]`) |
 | Breaker agent quality loop (P27) | `/ng-break [area] [--rounds N] [--commit <ref>] [--recheck]` (or `python3 breaker/run_round.py [area] [--rounds N] [--recheck]`) |
 | Fresh-eyes first-time user UX agent (P28) | `/ng-fresh-eyes <persona> <task> [--device <serial>] [--lang <en\|bn>]` (or `bash tools/ux/run-fresh-eyes.sh <persona> <task> [--device <serial>]`) |
+| Journey runner and error-free session rate (P29) | `/ng-journeys [--device <D1..D7\|emulator>] [--runs N] [--priority P1\|P2\|all]` (or `python3 tools/journeys/run.py [--device <serial>] [--runs N] [--priority P1\|P2\|all]`) |
+| Journey release gate (P29) | `python3 tools/check_journeys.py [--version <v>] [--device <dev>]` |
 | Native library imports, Gate S10 (D1) | `python3 tools/check_native_imports.py <app.apk or lib dir>` |
 | Release gates proved to fail when they should (D1) | `python3 -m pytest tools/tests/test_release_gates.py tools/tests/test_check_native_imports.py` |
 | Regenerate golden vectors on purpose (the tests compare with the committed files and otherwise write nothing) | `NEOGOLD_REGENERATE_GOLDEN=1 ./gradlew :engine:colorscience:test :engine:estimation:test`, read the diff of `testdata/golden/`, commit it |

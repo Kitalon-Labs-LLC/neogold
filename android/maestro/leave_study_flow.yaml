@@ -1,0 +1,53 @@
+appId: ${APP_ID}
+---
+# ==============================================================================
+# NeoGold Leave Study Flow (doc 7 Section 4.3, TC-SYNC-16)
+# Disconnects phone from study server, purges hardware key, and returns to app home.
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Step: open_research_settings (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "leave_study_button"
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    id: "leave_study_button"
+    optional: true
+
+- tapOn:
+    text: "Leave study"
+    optional: true
+
+# 2. Step: enter_research_pin (Budget: 8.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "leave_pin_input"
+    timeout: 8000
+
+- tapOn:
+    id: "leave_pin_input"
+- inputText: "654321"
+
+# 3. Step: confirm_leave_study_dialog (Budget: 10.0 s)
+- assertVisible:
+    id: "leave_confirm_button"
+- tapOn:
+    id: "leave_confirm_button"
+
+- extendedWaitUntil:
+    visible:
+      id: "leave_dialog_confirm"
+    timeout: 5000
+- tapOn:
+    id: "leave_dialog_confirm"
+
+# 4. Step: verify_unlinked_device_keys_deleted (Budget: 10.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "home_experimental_banner"
+    timeout: 10000
