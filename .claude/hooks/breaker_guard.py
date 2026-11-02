@@ -71,11 +71,12 @@ ALLOWED_WRITE_RES = [
 def normalize_rel_path(path_str: str) -> str:
     s = path_str.replace("\\", "/").strip()
     # Strip Windows drive or repo root prefix if present
-    lower = s.lower()
-    for marker in ("/neogold-android/",):
-        idx = lower.rfind(marker)
+    for prefix in ("breaker/", "backend/", "android/"):
+        idx = s.find("/" + prefix)
         if idx != -1:
-            s = s[idx + len(marker) :]
+            s = s[idx + 1 :]
+            break
+        if s.startswith(prefix):
             break
     while s.startswith("./"):
         s = s[2:]
