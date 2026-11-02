@@ -10,8 +10,8 @@
 | Severity | Fix SLA Deadline | Unaccepted (Open) | Accepted (In `exceptions.yaml`) | Gate Behavior |
 | :--- | :--- | :---: | :---: | :--- |
 | **CRITICAL** | 7 days | 0 | 0 | Fails scan + immediate incident stop (Doc 8 §12) |
-| **HIGH** | 30 days | 0 | 30 | Fails scan unless in `security/exceptions.yaml` |
-| **MEDIUM** | 90 days | 0 | 1 | Tracked in ledger with 90-day fix deadline |
+| **HIGH** | 30 days | 0 | 2 | Fails scan unless in `security/exceptions.yaml` |
+| **MEDIUM** | 90 days | 0 | 2 | Tracked in ledger with 90-day fix deadline |
 | **LOW** | 90 days | 0 | 1 | Tracked in ledger |
 
 ## 2. Unaccepted Open Findings

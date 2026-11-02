@@ -19,9 +19,9 @@ description = "Constant name and internal Docker IP captured from docs and a com
 targetRules = ["generic-api-key"]
 condition = "AND"
 paths = [
-  '''^docs/11_Bug_Defect_Log\.md$''',
-  '''^docs/12_Deployment_Runbook\.md$''',
-  '''^backend/deploy/docker-compose\.yml$''',
+  '''(?:^|/)docs/11_Bug_Defect_Log\.md$''',
+  '''(?:^|/)docs/12_Deployment_Runbook\.md$''',
+  '''(?:^|/)backend/deploy/docker-compose\.yml$''',
 ]
 regexTarget = "secret"
 regexes = [
@@ -36,7 +36,7 @@ description = "Synthetic test key in the Tink 1.7.0 export fixture (BUG-2026-083
 targetRules = ["generic-api-key"]
 condition = "AND"
 paths = [
-  '''^android/core/security/src/test/resources/export/legacy-tink-1\.7\.0\.properties$''',
+  '''(?:^|/)android/core/security/src/test/resources/export/legacy-tink-1\.7\.0\.properties$''',
 ]
 regexTarget = "secret"
 regexes = [

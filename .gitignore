@@ -35,10 +35,11 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-venv/
-.venv/
-ENV/
+/env/
+/venv/
+/.venv/
+/ENV/
+!breaker/env/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/

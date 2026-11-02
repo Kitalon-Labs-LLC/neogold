@@ -22,7 +22,7 @@
 | `20261102-shirin-bn-04-join-study` | `shirin-chw` (`bn`) | `04-join-study` | `emulator-5554` | **done with trouble** | 9 | 59.4 s | [report.md](20261102-shirin-bn-04-join-study/report.md) |
 | `20261102-shirin-bn-05-send-study-data` | `shirin-chw` (`bn`) | `05-send-study-data` | `emulator-5554` | **done with trouble** | 5 | 30.6 s | [report.md](20261102-shirin-bn-05-send-study-data/report.md) |
 | `20261102-shirin-bn-06-lock-app` | `shirin-chw` (`bn`) | `06-lock-app` | `emulator-5554` | **done** | 3 | 23.4 s | [report.md](20261102-shirin-bn-06-lock-app/report.md) |
-| `20261102-rokeya-bn-02-screen-bed4-matrix-d1` | `rokeya-nurse` (`bn`) | `02-screen-bed4` | `D1-galaxy-a05-matrix` | **done with trouble** | 12 | 70.2 s | [report.md](20261102-rokeya-bn-02-screen-bed4-matrix-d1/report.md) |
+| `20261102-rokeya-bn-02-screen-bed4-matrix-d1` | `rokeya-nurse` (`bn`) | `02-screen-bed4` | `D1-tecno-spark-matrix` | **done with trouble** | 12 | 70.2 s | [report.md](20261102-rokeya-bn-02-screen-bed4-matrix-d1/report.md) |
 
 ## 2. Consolidated Friction Points Mapped to Screens & Doc 6 (Proposals Only)
 

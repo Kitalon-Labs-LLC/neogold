@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Repository rule: no AI attribution on any commit.
 
-Commits carry no `Co-Authored-By: Claude ...` trailer, no `noreply@anthropic.com` address, and no
-"Generated with Claude Code" line. Commits are pushed as the repository owner's own GitHub account.
-Ordinary mentions are fine ("update CLAUDE.md", "move .claude/settings.json"); a human co-author is fine.
+Commits carry no `Co-Authored-By: Claude ...`, `Co-Authored-By: Copilot ...`, no AI attribution trailers,
+no `@anthropic.com` or `@openai.com` address, no Copilot bot address, and no "Generated with ..." AI line.
+Commits are pushed as the repository owner's own GitHub account. Ordinary mentions are fine ("update CLAUDE.md",
+"move .claude/settings.json"); a human co-author is fine.
 
 Usage:
   python3 tools/check_commit_attribution.py REV_RANGE            check every commit in a range, e.g. origin/dev..HEAD
@@ -16,6 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def is_attribution(line):
     """True when one line is AI attribution. Case-insensitive.
 
@@ -23,15 +25,32 @@ def is_attribution(line):
     crafted 120 KB line took 11 seconds to match, enough to stall a CI runner.
     """
     low = line.lower()
-    # Co-Authored-By: Claude ... / a trailer that names Anthropic (a human co-author is fine).
-    if low.lstrip().startswith("co-authored-by:") and ("claude" in low or "anthropic" in low):
+    # Co-Authored-By: Claude / Copilot / ChatGPT / OpenAI / Gemini / etc.
+    if low.lstrip().startswith("co-authored-by:"):
+        ai_markers = (
+            "claude",
+            "anthropic",
+            "copilot",
+            "chatgpt",
+            "openai",
+            "gemini",
+            "cursor",
+            "autofix",
+            "powered by ai",
+        )
+        if any(marker in low for marker in ai_markers):
+            return True
+    # Any address at known AI vendor or bot domains
+    if "@anthropic.com" in low or "@openai.com" in low:
         return True
-    # Any address at the vendor's domain, human-looking or not.
-    if "@anthropic.com" in low:
+    if "copilot@users.noreply.github.com" in low:
         return True
-    # "Generated with [Claude Code](...)": the footer wording, in this order.
+    # "Generated with ...":
     start = low.find("generated with")
-    return start >= 0 and "claude" in low[start:]
+    if start >= 0:
+        if any(marker in low[start:] for marker in ("claude", "copilot", "chatgpt", "openai", "gemini", "cursor", "ai")):
+            return True
+    return False
 
 
 def find_attribution(message):

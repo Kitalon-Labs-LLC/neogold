@@ -5,7 +5,7 @@
 | **Run ID** | `20261102-rokeya-bn-02-screen-bed4-matrix-d1` |
 | **Persona** | `rokeya-nurse` (`bn`) |
 | **Task** | `02-screen-bed4` — Check baby in bed 4; the mother agrees. |
-| **Device / Target** | `D1-galaxy-a05-matrix` |
+| **Device / Target** | `D1-tecno-spark-matrix` |
 | **Outcome** | **done with trouble** |
 | **Taps** | 12 taps (39 total `drive.sh` actions) |
 | **Time** | 70.2 s |

@@ -45,4 +45,3 @@ class DebugBenchFeederAbsentFromMainTest {
         assertThat(offenders).isEmpty()
     }
 }
-

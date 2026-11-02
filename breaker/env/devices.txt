@@ -1,0 +1,9 @@
+# NeoGold Breaker Environment — Allow-listed Test Device Serials (P27)
+#
+# Only the disposable emulator AVD named `neogold-breaker` or physical lab
+# phones explicitly listed below (one adb serial per line) are permitted by
+# `breaker/env/guard.sh`. Never add a clinical field phone or personal device.
+#
+# Example lab test device serial (uncomment only for dedicated bench runs):
+# NEOGOLD-BENCH-D1-0001
+neogold-breaker

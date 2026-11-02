@@ -22,6 +22,9 @@ spec.loader.exec_module(check)
     "Co-Authored-By: Someone Else <noreply@anthropic.com>",
     "Generated with [Claude Code](https://claude.com/claude-code)",
     "🤖 Generated with Claude Code",
+    "Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>",
+    "Co-Authored-By: GitHub Copilot <copilot@users.noreply.github.com>",
+    "Co-authored-by: OpenAI ChatGPT <noreply@openai.com>",
 ])
 def test_attribution_lines_are_found(line):
     assert check.find_attribution(f"fix: something\n\nbody text\n\n{line}\n") == [line.strip()]
@@ -125,6 +128,7 @@ HOOK_CASES = [
     ("co-authored-by: claude <anything@example.com>", 1),
     ("Co-Authored-By: Someone <noreply@anthropic.com>", 1),
     ("Generated with [Claude Code](https://claude.com/claude-code)", 1),
+    ("Co-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>", 1),
     ("Co-Authored-By: Jane Doe <jane@example.com>", 0),
     ("docs: update CLAUDE.md commands table", 0),
 ]

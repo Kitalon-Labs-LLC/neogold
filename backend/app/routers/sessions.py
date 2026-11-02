@@ -181,8 +181,8 @@ def put_session_manifest(
 
     # 7. Create new session
     missing_uuids = [c.capture_id for c in body.captures if c.has_image]
-    initial_status = "COMPLETE" if not missing_uuids else "RECEIVING"
-    completed_on = today if not missing_uuids else None
+    initial_status = "RECEIVING"
+    completed_on = None
 
     new_session = DbSession(
         id=session_id,
