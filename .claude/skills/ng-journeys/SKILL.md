@@ -95,3 +95,4 @@ Present a clear summary to the owner:
 - NFR-02 status (J2 p95 and capture-to-result p95 on D1/D2).
 - Gate status: Pass or Fail with clear reasons.
 - Any drafted defect entries and recommended investigations (proposals only).
+

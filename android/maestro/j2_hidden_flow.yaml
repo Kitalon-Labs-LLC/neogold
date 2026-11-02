@@ -113,3 +113,4 @@ appId: ${APP_ID}
     visible:
       id: "home_experimental_banner"
     timeout: 5000
+

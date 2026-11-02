@@ -51,3 +51,4 @@ appId: ${APP_ID}
     visible:
       id: "switch_app_lock"
     timeout: 8000
+

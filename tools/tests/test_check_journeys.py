@@ -138,3 +138,4 @@ def test_release_gate_fails_when_device_missing(tmp_path):
     ok, errs = run_release_gate(tmp_path, ["D1", "D2", "D3", "D4"], min_runs=20)
     assert ok is False
     assert any("Missing required journey report for device D4" in e for e in errs)
+

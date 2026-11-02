@@ -142,3 +142,4 @@ def test_runner_harness_failure_isolation():
     )
     assert report["is_valid"] is False
     assert "exceeds 5% threshold" in report.get("invalid_reason", "")
+

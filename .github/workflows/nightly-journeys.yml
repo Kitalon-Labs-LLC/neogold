@@ -51,3 +51,4 @@ jobs:
           echo "### Nightly Journey Regression Defect Report" >> "$GITHUB_STEP_SUMMARY"
           echo "Nightly automated journey run failed on API 34 emulator." >> "$GITHUB_STEP_SUMMARY"
           echo "Please open a defect under docs/11_Bug_Defect_Log.md using the P29 / doc 11 template." >> "$GITHUB_STEP_SUMMARY"
+
