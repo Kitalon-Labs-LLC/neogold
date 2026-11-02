@@ -1,0 +1,35 @@
+{"timestamp": "2026-11-02T02:45:38.189048+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:45:38.327234+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:38.477877+00:00", "action": "shot", "args": ["01_language_choice"]}
+{"timestamp": "2026-11-02T02:45:38.620669+00:00", "action": "tap-text", "args": ["বাংলা (Bangla)", "540", "440"]}
+{"timestamp": "2026-11-02T02:45:38.763338+00:00", "action": "tap-text", "args": ["এগিয়ে যান", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:38.905985+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:39.051886+00:00", "action": "shot", "args": ["02_safety_page1"]}
+{"timestamp": "2026-11-02T02:45:39.195444+00:00", "action": "tap-text", "args": ["পরবর্তী", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:39.337272+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:39.480120+00:00", "action": "tap-text", "args": ["পরবর্তী", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:39.622704+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:39.786034+00:00", "action": "shot", "args": ["03_safety_page3"]}
+{"timestamp": "2026-11-02T02:45:39.931949+00:00", "action": "tap-text", "args": ["আমি বুঝতে পেরেছি", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:40.075448+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:40.221051+00:00", "action": "shot", "args": ["04_device_check"]}
+{"timestamp": "2026-11-02T02:45:40.361433+00:00", "action": "tap-text", "args": ["এগিয়ে যান", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:40.500763+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:40.644916+00:00", "action": "shot", "args": ["05_card_qr_prompt"]}
+{"timestamp": "2026-11-02T02:45:40.785806+00:00", "action": "tap-text", "args": ["কার্ড QR স্ক্যান করুন", "540", "990"]}
+{"timestamp": "2026-11-02T02:45:40.926204+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:41.070764+00:00", "action": "shot", "args": ["06_card_qr_verified"]}
+{"timestamp": "2026-11-02T02:45:41.212657+00:00", "action": "tap-text", "args": ["এগিয়ে যান", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:41.356167+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:41.504534+00:00", "action": "shot", "args": ["07_qual_photo_1"]}
+{"timestamp": "2026-11-02T02:45:41.646469+00:00", "action": "tap-text", "args": ["পরীক্ষামূলক ছবি তুলুন", "540", "1690"]}
+{"timestamp": "2026-11-02T02:45:41.783081+00:00", "action": "wait", "args": ["1"]}
+{"timestamp": "2026-11-02T02:45:41.929557+00:00", "action": "tap-text", "args": ["পরীক্ষামূলক ছবি তুলুন", "540", "1690"]}
+{"timestamp": "2026-11-02T02:45:42.064897+00:00", "action": "wait", "args": ["1"]}
+{"timestamp": "2026-11-02T02:45:42.209650+00:00", "action": "tap-text", "args": ["পরীক্ষামূলক ছবি তুলুন", "540", "1690"]}
+{"timestamp": "2026-11-02T02:45:42.344511+00:00", "action": "wait", "args": ["1"]}
+{"timestamp": "2026-11-02T02:45:42.489266+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:42.652573+00:00", "action": "shot", "args": ["08_setup_complete"]}
+{"timestamp": "2026-11-02T02:45:42.820230+00:00", "action": "tap-text", "args": ["শুরু করুন", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:42.969916+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:43.124524+00:00", "action": "shot", "args": ["09_home_ready"]}

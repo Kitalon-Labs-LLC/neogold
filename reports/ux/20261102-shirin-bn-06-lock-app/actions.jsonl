@@ -1,0 +1,13 @@
+{"timestamp": "2026-11-02T02:46:00.506253+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:46:00.670682+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:00.838517+00:00", "action": "shot", "args": ["01_home_no_lock"]}
+{"timestamp": "2026-11-02T02:46:01.017682+00:00", "action": "tap-text", "args": ["সেটিংস", "970", "150"]}
+{"timestamp": "2026-11-02T02:46:01.206738+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:01.621579+00:00", "action": "shot", "args": ["02_settings_lock_toggle"]}
+{"timestamp": "2026-11-02T02:46:01.834841+00:00", "action": "tap-text", "args": ["স্ক্রিন লক (পিন/ফিঙ্গারপ্রিন্ট)", "540", "510"]}
+{"timestamp": "2026-11-02T02:46:02.002731+00:00", "action": "swipe", "args": ["up"]}
+{"timestamp": "2026-11-02T02:46:02.176991+00:00", "action": "tap-text", "args": ["রিসার্চ মোড (Research mode)", "540", "1480"]}
+{"timestamp": "2026-11-02T02:46:02.344890+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:02.504768+00:00", "action": "shot", "args": ["03_research_already_locked_or_pin"]}
+{"timestamp": "2026-11-02T02:46:02.647514+00:00", "action": "back", "args": []}
+{"timestamp": "2026-11-02T02:46:02.798947+00:00", "action": "shot", "args": ["04_locked_ready"]}

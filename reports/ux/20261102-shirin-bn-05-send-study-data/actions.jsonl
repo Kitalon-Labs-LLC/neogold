@@ -1,0 +1,17 @@
+{"timestamp": "2026-11-02T02:45:57.937827+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:45:58.081459+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:58.245367+00:00", "action": "shot", "args": ["01_home_start"]}
+{"timestamp": "2026-11-02T02:45:58.387843+00:00", "action": "tap-text", "args": ["সেটিংস", "970", "150"]}
+{"timestamp": "2026-11-02T02:45:58.547428+00:00", "action": "swipe", "args": ["up"]}
+{"timestamp": "2026-11-02T02:45:58.712958+00:00", "action": "tap-text", "args": ["রিসার্চ মোড (Research mode)", "540", "1480"]}
+{"timestamp": "2026-11-02T02:45:58.862459+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:59.015718+00:00", "action": "type", "args": ["258025"]}
+{"timestamp": "2026-11-02T02:45:59.162298+00:00", "action": "tap-text", "args": ["রিসার্চ মোড খুলুন", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:59.307646+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:59.457350+00:00", "action": "shot", "args": ["02_study_home"]}
+{"timestamp": "2026-11-02T02:45:59.597501+00:00", "action": "tap-text", "args": ["রিসার্চ ডেটা এক্সপোর্ট (Export Research Data)", "540", "910"]}
+{"timestamp": "2026-11-02T02:45:59.751928+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:59.909479+00:00", "action": "shot", "args": ["03_export_before_upload"]}
+{"timestamp": "2026-11-02T02:46:00.054904+00:00", "action": "tap-text", "args": ["এখনই আপলোড করুন (Upload now)", "540", "780"]}
+{"timestamp": "2026-11-02T02:46:00.192862+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:00.339794+00:00", "action": "shot", "args": ["04_upload_complete"]}
