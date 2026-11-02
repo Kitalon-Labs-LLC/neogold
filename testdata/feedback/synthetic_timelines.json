@@ -1,0 +1,32 @@
+[
+  {
+    "id": "BUG-2026-101",
+    "title": "Clinical triage threshold issue",
+    "severity": "S1",
+    "reported_at": "2026-10-26T08:00:00Z",
+    "first_response_at": "2026-10-26T09:30:00Z",
+    "sorted_at": "2026-10-26T12:00:00Z",
+    "fix_merged_at": "2026-10-27T16:00:00Z",
+    "closed_track_at": "2026-10-28T10:00:00Z"
+  },
+  {
+    "id": "BUG-2026-102",
+    "title": "Camera preview freeze on D4",
+    "severity": "S2",
+    "reported_at": "2026-10-26T10:00:00Z",
+    "first_response_at": "2026-10-26T14:00:00Z",
+    "sorted_at": "2026-10-27T10:00:00Z",
+    "fix_merged_at": "2026-10-29T12:00:00Z",
+    "closed_track_at": "2026-10-30T15:00:00Z"
+  },
+  {
+    "id": "BUG-2026-103",
+    "title": "Settings icon alignment",
+    "severity": "S4",
+    "reported_at": "2026-10-27T09:00:00Z",
+    "first_response_at": "2026-10-27T17:00:00Z",
+    "sorted_at": "2026-10-28T14:00:00Z",
+    "fix_merged_at": "2026-10-31T11:00:00Z",
+    "closed_track_at": null
+  }
+]

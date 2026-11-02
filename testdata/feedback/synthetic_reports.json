@@ -1,0 +1,51 @@
+[
+  {
+    "id": "SYN-CLINICAL-001",
+    "title": "Triage threshold discrepancy: baby above bilirubin cutoff showed normal care",
+    "source": "Health worker field report",
+    "content": "In our facility, a 38-week infant at 48 hours with severe jaundice showed 'No further action from this screen' instead of referral. The triage rule threshold should have recommended a blood test.",
+    "known_bugs": []
+  },
+  {
+    "id": "SYN-SECURITY-002",
+    "title": "Unencrypted participant token found in diagnostic log export",
+    "source": "Security review report",
+    "content": "A diagnostic export file contained an unencrypted auth secret and enrollment token in plaintext. Potential privacy and security incident per doc 8 Section 12.",
+    "known_bugs": []
+  },
+  {
+    "id": "SYN-DEFECT-003",
+    "title": "App crashes on language selection screen S01 when rotated",
+    "source": "Shared crash report",
+    "content": "FATAL EXCEPTION: java.lang.NullPointerException at com.kitalonlabs.neogold.feature.onboarding.LanguageScreenKt.LanguageScreen. The app closes when rotating the device.",
+    "known_bugs": []
+  },
+  {
+    "id": "SYN-CONFUSION-004",
+    "title": "Unclear lighting warning when capturing card photo",
+    "source": "Health worker feedback",
+    "content": "How far should I hold the phone from the baby's chest? The app kept showing lighting warning even though the room lights were turned on.",
+    "known_bugs": []
+  },
+  {
+    "id": "SYN-DUPLICATE-005",
+    "title": "Device check crashes with number format exception",
+    "source": "Play store review",
+    "content": "The S05 device check screen crashes on launch with number format exception BUG-2026-067.",
+    "known_bugs": ["BUG-2026-067"]
+  },
+  {
+    "id": "SYN-PLANTED-BABY-006",
+    "title": "Report with planted baby name and phone number",
+    "source": "Field message",
+    "content": "Patient Baby of Rahima was screened today. If any issues contact nurse at +8801712345678. Register number REG-99182, DOB: 2026-10-20.",
+    "known_bugs": []
+  },
+  {
+    "id": "SYN-PLANTED-REDACT-007",
+    "title": "Report with planted adult phone, register number, and DOB",
+    "source": "Clinic email",
+    "content": "Sender: Nurse Fatima. Registration code REG-88421 was tested. Mother phone 01812345678, DOB: 2026-10-22. Export button unresponsive.",
+    "known_bugs": []
+  }
+]

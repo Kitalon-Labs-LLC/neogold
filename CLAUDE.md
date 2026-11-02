@@ -123,6 +123,9 @@ Fill this in as work packages create them; keep it current.
 | Fresh-eyes first-time user UX agent (P28) | `/ng-fresh-eyes <persona> <task> [--device <serial>] [--lang <en\|bn>]` (or `bash tools/ux/run-fresh-eyes.sh <persona> <task> [--device <serial>]`) |
 | Journey runner and error-free session rate (P29) | `/ng-journeys [--device <D1..D7\|emulator>] [--runs N] [--priority P1\|P2\|all]` (or `python3 tools/journeys/run.py [--device <serial>] [--runs N] [--priority P1\|P2\|all]`) |
 | Journey release gate (P29) | `python3 tools/check_journeys.py [--version <v>] [--device <dev>]` |
+| Feedback triage loop (P30) | `/ng-feedback [--inbox <dir>]` (or `python3 tools/feedback/triage.py [--inbox <dir>]`) |
+| Feedback turnaround times (P30) | `python3 tools/feedback/report_times.py --input <path>` |
+| Play vitals reporting (P30) | `python3 tools/feedback/play_vitals.py [--dry-run]` |
 | Native library imports, Gate S10 (D1) | `python3 tools/check_native_imports.py <app.apk or lib dir>` |
 | Release gates proved to fail when they should (D1) | `python3 -m pytest tools/tests/test_release_gates.py tools/tests/test_check_native_imports.py` |
 | Regenerate golden vectors on purpose (the tests compare with the committed files and otherwise write nothing) | `NEOGOLD_REGENERATE_GOLDEN=1 ./gradlew :engine:colorscience:test :engine:estimation:test`, read the diff of `testdata/golden/`, commit it |
