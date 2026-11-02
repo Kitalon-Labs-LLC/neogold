@@ -1,0 +1,54 @@
+appId: ${APP_ID}
+---
+# ==============================================================================
+# NeoGold App Lock and Unlock Flow (doc 2 Section 7.7 FR-35, NFR-13, TC-SEC-03)
+# Tests enabling optional PIN/screen lock in S23 settings and unlocking.
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Step: open_settings (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_settings"
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    id: "btn_settings"
+    optional: true
+
+- tapOn:
+    text: "Settings"
+    optional: true
+
+# 2. Step: enable_app_lock_switch (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "switch_app_lock"
+    timeout: 5000
+
+- tapOn:
+    id: "switch_app_lock"
+
+# 3. Step: background_and_reopen_app (Budget: 8.0 s)
+# Send app to background and resume to engage screen lock
+- pressKey: Home
+- launchApp:
+    clearState: false
+
+# 4. Step: verify_locked_and_unlock (Budget: 8.0 s)
+- extendedWaitUntil:
+    visible:
+      text: ".*(Unlock|Locked).*"
+    timeout: 8000
+
+- tapOn:
+    text: ".*Unlock.*"
+
+- extendedWaitUntil:
+    visible:
+      id: "switch_app_lock"
+    timeout: 8000
+

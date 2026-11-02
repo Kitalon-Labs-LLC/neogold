@@ -1,0 +1,86 @@
+# NeoGold Security Exceptions Ledger (P26, docs/8_Security_Compliance_Plan.md Section 10)
+#
+# Rules enforced by tools/secscan/evaluate_secscan.py:
+# 1. Every entry MUST declare: id, tool, rule, severity, file, reason, approver, created_at, expires_at.
+# 2. expires_at MUST NOT be in the past and MUST NOT be more than 90 days after created_at or the scan date.
+# 3. The security scan fails on any HIGH or CRITICAL finding not matched by a valid, non-expired exception here.
+# 4. Inline security suppressions in source code (# nosec, # noqa: S*, gitleaks:allow, security @Suppress/@SuppressLint)
+#    are allowed ONLY when the same line cites a valid exception ID (SEC-EXC-XXXX) from this file.
+# 5. Changes to this file require owner review (.github/CODEOWNERS).
+
+schema_version: 1
+
+exceptions:
+  - id: SEC-EXC-0001
+    tool: trivy
+    rule: CVE-2026-8763
+    severity: HIGH
+    file: android/settings-gradle.lockfile
+    package: "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2"
+    reason: >-
+      Build-time only: Bouncy Castle 1.80.2 is bundled inside Android's own lint tool
+      (androidLintTool configuration of AGP 9.4.1). It is in no APK and no runtime classpath
+      (verified by tools/tests/test_trivy_exceptions.py, BUG-2026-036). Clears with AGP upgrade.
+    approver: "@sowad"
+    created_at: "2026-10-27"
+    expires_at: "2027-01-25"
+
+  - id: SEC-EXC-0002
+    tool: trivy
+    rule: CVE-2026-13506
+    severity: HIGH
+    file: android/settings-gradle.lockfile
+    package: "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.80.2"
+    reason: >-
+      Build-time only: Bouncy Castle 1.80.2 is bundled inside Android's own lint tool
+      (androidLintTool configuration of AGP 9.4.1). It is in no APK and no runtime classpath
+      (verified by tools/tests/test_trivy_exceptions.py, BUG-2026-036). Clears with AGP upgrade.
+    approver: "@sowad"
+    created_at: "2026-10-27"
+    expires_at: "2027-01-25"
+
+  - id: SEC-EXC-0003
+    tool: bandit
+    rule: B311
+    aliases:
+      - S311
+    severity: LOW
+    file: backend/app/cli.py
+    line: 620
+    reason: >-
+      Deterministic per-participant date-shift PRNG (-180 to +180 days) seeded from the SHA-256
+      digest of the participant UUID during de-identified study CSV export (doc 7 Section 7,
+      doc 8 Section 3). Not used for cryptographic key, nonce, or token generation.
+    approver: "@sowad"
+    created_at: "2026-10-31"
+    expires_at: "2027-01-29"
+
+  - id: SEC-EXC-0004
+    tool: bandit
+    rule: B310
+    aliases:
+      - S310
+    severity: MEDIUM
+    file: training/lock_dependencies.py
+    line: 34
+    reason: >-
+      Offline lockfile maintenance utility fetches SHA-256 wheel digests from hardcoded
+      https://pypi.org/pypi/<package>/<version>/json URLs over HTTPS only; never invoked at
+      runtime or with untrusted user input.
+    approver: "@sowad"
+    created_at: "2026-10-31"
+    expires_at: "2027-01-29"
+
+  - id: SEC-EXC-0005
+    tool: gitleaks
+    rule: generic-api-key
+    severity: MEDIUM
+    file: android/core/security/src/test/resources/export/legacy-tink-1.7.0.properties
+    reason: >-
+      Synthetic throwaway X25519 test key in Tink 1.7.0 compatibility fixture
+      (BUG-2026-083 item 27); protects no study, build, or server and is required to test
+      backward-compatible archive decryption.
+    approver: "@sowad"
+    created_at: "2026-10-30"
+    expires_at: "2027-01-28"
+

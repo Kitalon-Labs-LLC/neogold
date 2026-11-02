@@ -1,0 +1,95 @@
+{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "gitleaks",
+          "version": "v8.30.1",
+          "informationUri": "https://github.com/gitleaks/gitleaks",
+          "rules": [
+            {
+              "id": "private-key",
+              "shortDescription": {
+                "text": "Private Key (PEM/PKCS8/OpenSSH)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "aws-access-token",
+              "shortDescription": {
+                "text": "AWS Access Key ID"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "github-pat",
+              "shortDescription": {
+                "text": "GitHub Personal Access Token"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "github-fine-grained-pat",
+              "shortDescription": {
+                "text": "GitHub Fine-Grained Personal Access Token"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "gcp-api-key",
+              "shortDescription": {
+                "text": "Google Cloud / Firebase API Key"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "slack-token",
+              "shortDescription": {
+                "text": "Slack Token"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "stripe-access-token",
+              "shortDescription": {
+                "text": "Stripe Live Secret Key"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "generic-api-key",
+              "shortDescription": {
+                "text": "Generic High-Entropy API Key / Secret Assignment"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            }
+          ]
+        }
+      },
+      "results": [],
+      "properties": {
+        "mode": "full",
+        "redacted": true,
+        "ignoredHistoryFingerprintsCount": 3
+      }
+    }
+  ]
+}

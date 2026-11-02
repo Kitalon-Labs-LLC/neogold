@@ -67,7 +67,7 @@ class ResearchUploadWorkerTest {
         context = RuntimeEnvironment.getApplication()
         database = Room.inMemoryDatabaseBuilder(context, NeoGoldDatabase::class.java).allowMainThreadQueries().build()
         server = MockWebServer().also { it.start() }
-        keys = SoftwareDeviceKeyManager().also { it.generateDeviceKey("worker-key", "7K2X-M49P-3ABC") }
+        keys = SoftwareDeviceKeyManager().also { it.generateDeviceKey("worker-device-alias", "7K2X-M49P-3ABC") }
     }
 
     @After
@@ -97,7 +97,7 @@ class ResearchUploadWorkerTest {
                 siteCode = "DHK-01",
                 displayName = "Sakhipur Study",
                 serverUrl = server.url("/v1").toString(),
-                deviceKeyAlias = "worker-key",
+                deviceKeyAlias = "worker-device-alias",
                 serverDeviceId = "d-1",
                 pinHash = ByteArray(32),
                 pinSalt = ByteArray(16),
@@ -156,7 +156,7 @@ class ResearchUploadWorkerTest {
         assertThat(study).isNotNull() // TC-SYNC-16: still ACTIVE, so export and retention find it
         assertThat(study!!.serverDeviceId).isNull()
         assertThat(study.deviceKeyAlias).isNull()
-        assertThat(keys.hasDeviceKey("worker-key")).isFalse()
+        assertThat(keys.hasDeviceKey("worker-device-alias")).isFalse()
         assertThat(database.auditEventDao().getEventsByType("DEVICE_DISCONNECTED").single().details)
             .isEqualTo("""{"reason":"CLOSED"}""")
     }

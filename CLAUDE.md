@@ -74,8 +74,9 @@ card/           Card v1 design files, print spec, neogold-sign tool
 config/         triage-config.json, trust-list.json, schemas
 testdata/       golden/, bad/, triage/, api/, bench/ (synthetic and bench data only)
 tools/          release gates and checks (doc 12 Appendix B)
+breaker/        adversarial breaker environment (env/), catalog.md, findings/, and regression tests (P27)
 docs/           the design documents; docs/api/openapi.yaml; docs/ci-templates/
-.claude/        commands/ (one per work package), agents/ (reviewers)
+.claude/        commands/ (one per work package), agents/ (reviewers and breaker), skills/
 ```
 
 ---
@@ -117,6 +118,14 @@ Fill this in as work packages create them; keep it current.
 | No skipped tests & TC baseline (P25) | `python3 tools/check_no_skipped_tests.py` |
 | Forward-only migrations check (P25) | `python3 tools/check_migrations.py` |
 | Actions pinned by SHA (P25) | `python3 tools/check_actions_pinned.py` |
+| Security scan and debt ledger (P26) | `/ng-secscan [--changed \| --full]` (or `bash tools/secscan/run.sh [--changed \| --full]`) |
+| Breaker agent quality loop (P27) | `/ng-break [area] [--rounds N] [--commit <ref>] [--recheck]` (or `python3 breaker/run_round.py [area] [--rounds N] [--recheck]`) |
+| Fresh-eyes first-time user UX agent (P28) | `/ng-fresh-eyes <persona> <task> [--device <serial>] [--lang <en\|bn>]` (or `bash tools/ux/run-fresh-eyes.sh <persona> <task> [--device <serial>]`) |
+| Journey runner and error-free session rate (P29) | `/ng-journeys [--device <D1..D7\|emulator>] [--runs N] [--priority P1\|P2\|all]` (or `python3 tools/journeys/run.py [--device <serial>] [--runs N] [--priority P1\|P2\|all]`) |
+| Journey release gate (P29) | `python3 tools/check_journeys.py [--version <v>] [--device <dev>]` |
+| Feedback triage loop (P30) | `/ng-feedback [--inbox <dir>]` (or `python3 tools/feedback/triage.py [--inbox <dir>]`) |
+| Feedback turnaround times (P30) | `python3 tools/feedback/report_times.py --input <path>` |
+| Play vitals reporting (P30) | `python3 tools/feedback/play_vitals.py [--dry-run]` |
 | Native library imports, Gate S10 (D1) | `python3 tools/check_native_imports.py <app.apk or lib dir>` |
 | Release gates proved to fail when they should (D1) | `python3 -m pytest tools/tests/test_release_gates.py tools/tests/test_check_native_imports.py` |
 | Regenerate golden vectors on purpose (the tests compare with the committed files and otherwise write nothing) | `NEOGOLD_REGENERATE_GOLDEN=1 ./gradlew :engine:colorscience:test :engine:estimation:test`, read the diff of `testdata/golden/`, commit it |

@@ -1,0 +1,103 @@
+appId: ${APP_ID}
+---
+# ==============================================================================
+# NeoGold Journey J3: Offline Home Visit Screening (doc 2 Section 6, NFR-01, TC-REL-02)
+# Executes complete screening cycle in offline airplane mode without network access.
+# Verifies S20 Result displays 'What to tell the mother' guidance card.
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Step: start_screening_and_consent (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_start_screening"
+    timeout: 5000
+
+- tapOn:
+    id: "btn_start_screening"
+
+- extendedWaitUntil:
+    visible:
+      id: "consent_question_text"
+    timeout: 5000
+
+- tapOn:
+    id: "yes_button"
+    optional: true
+
+# 2. Step: demographic_and_safety_inputs (Budget: 15.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "ga_number_stepper"
+    timeout: 5000
+
+- tapOn:
+    id: "birth_time_field"
+
+- tapOn:
+    text: "OK"
+    optional: true
+
+- tapOn:
+    id: "ga_number_stepper"
+
+- tapOn:
+    id: "btn_next"
+
+- tapOn:
+    id: "early_jaundice_buttons"
+    optional: true
+
+- tapOn:
+    id: "danger_signs_buttons"
+    optional: true
+
+- tapOn:
+    id: "prior_phototherapy_buttons"
+    optional: true
+
+# 3. Step: card_placement_guide (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_open_camera"
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    id: "btn_open_camera"
+    optional: true
+
+# 4. Step: guided_capture (Budget: 8.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "camera_preview"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible:
+      id: "steady_progress_bar"
+    timeout: 8000
+
+# 5. Step: capture_to_result (Budget: 10.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "triage_card"
+    timeout: 10000
+
+# 6. Step: mother_guidance_and_save (Budget: 10.0 s)
+- assertVisible:
+    id: "what_to_tell_mother_card"
+
+- assertVisible:
+    id: "btn_save_to_log"
+
+- tapOn:
+    id: "btn_save_to_log"
+
+- extendedWaitUntil:
+    visible:
+      id: "home_experimental_banner"
+    timeout: 5000
+

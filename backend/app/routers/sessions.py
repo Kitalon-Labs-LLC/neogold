@@ -328,6 +328,14 @@ async def put_capture_image(
     if not session_row:
         raise SessionUnknownError(f"Session {session_id} not found", status=404)
 
+    participant_row = db.execute(
+        select(Participant).where(Participant.id == session_row.participant_id)
+    ).scalar_one_or_none()
+    if (participant_row and participant_row.withdrawn_on is not None) or (
+        session_row.rejected_reason == "CONSENT_WITHDRAWN"
+    ):
+        raise ParticipantWithdrawnError("Participant has withdrawn consent")
+
     capture_row = db.execute(
         select(DbCapture).where(DbCapture.session_id == session_id, DbCapture.id == capture_id).with_for_update()
     ).scalar_one_or_none()
@@ -394,7 +402,7 @@ async def put_capture_image(
     ).scalar_one()
 
     today = study_today(study.time_zone)
-    if missing_count == 0:
+    if missing_count == 0 and session_row.status != "REJECTED":
         session_row.status = "COMPLETE"
         session_row.completed_on = today
 

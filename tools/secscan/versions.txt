@@ -1,0 +1,39 @@
+# Pinned tool versions for /ng-secscan (P26, docs/8_Security_Compliance_Plan.md Section 10)
+# Format: <tool>=<pinned-version> (plus SHA-256 digests and container references where applicable).
+# Any version upgrade requires owner review and updating this file together with lockfiles/workflows.
+
+# 1. Secrets scanning (MIT)
+gitleaks=v8.30.1
+gitleaks_linux_x64_sha256=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+
+# 2. Dependency vulnerability scanning (Apache-2.0)
+osv_scanner=v2.0.2
+trivy=v0.69.3
+trivy_action=v0.36.0
+trivy_action_commit=ed142fd0673e97e23eac54620cfb913e5ce36c25
+
+# 3. Static analysis - Android (Apache-2.0, pinned in android/gradle/libs.versions.toml)
+android_lint=9.4.1
+detekt=1.23.8
+
+# 4. Static analysis - Python (MIT / Apache-2.0, pinned in backend/requirements.lock)
+ruff=0.17.1
+bandit=1.9.4
+
+# 5. Multi-language SAST (LGPL-2.1 engine; optional when enabled)
+semgrep=1.151.0
+
+# 6. GitHub Actions workflow analysis (MIT + repo P25 checks tools/check_actions_pinned.py & tools/check_workflows.py)
+zizmor=v1.22.0
+p25_workflow_checks=1.0.0
+
+# 7. Mobile application static security analysis (GPL-3.0, isolated local Docker container, --full only, uploads nothing)
+mobsf=v4.4.5
+mobsf_image=opensecurity/mobile-security-framework-mobsf:v4.4.5
+
+# 8. OpenAPI contract fuzzing against local compose stack (MIT, --full only, never staging/production)
+schemathesis=4.32.7
+
+# 9. DeepSec trial version recorded via /ng-spike (Apache-2.0, trial only, not a runtime dependency)
+deepsec_trial=0.1.0
+

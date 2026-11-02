@@ -1,0 +1,33 @@
+{"timestamp": "2026-11-02T02:45:28.567563+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:45:28.715781+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:28.863243+00:00", "action": "shot", "args": ["01_study_home_empty"]}
+{"timestamp": "2026-11-02T02:45:29.007707+00:00", "action": "tap-text", "args": ["সেটিংস", "970", "150"]}
+{"timestamp": "2026-11-02T02:45:29.154130+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:29.302242+00:00", "action": "shot", "args": ["02_settings_top"]}
+{"timestamp": "2026-11-02T02:45:29.441842+00:00", "action": "swipe", "args": ["up"]}
+{"timestamp": "2026-11-02T02:45:29.582962+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:29.742934+00:00", "action": "shot", "args": ["03_settings_scrolled"]}
+{"timestamp": "2026-11-02T02:45:29.895891+00:00", "action": "tap-text", "args": ["রিসার্চ মোড (Research mode)", "540", "1480"]}
+{"timestamp": "2026-11-02T02:45:30.039587+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:30.186176+00:00", "action": "shot", "args": ["04_research_unlock_qr"]}
+{"timestamp": "2026-11-02T02:45:30.346002+00:00", "action": "tap-text", "args": ["স্টাডি QR কোড স্ক্যান করুন", "540", "890"]}
+{"timestamp": "2026-11-02T02:45:30.511739+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:30.687742+00:00", "action": "type", "args": ["258025"]}
+{"timestamp": "2026-11-02T02:45:30.842158+00:00", "action": "tap-text", "args": ["রিসার্চ মোড খুলুন", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:30.998360+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:31.144451+00:00", "action": "type", "args": ["258025"]}
+{"timestamp": "2026-11-02T02:45:31.297796+00:00", "action": "tap-text", "args": ["রিসার্চ মোড খুলুন", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:31.442044+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:31.594119+00:00", "action": "shot", "args": ["05_research_study_home"]}
+{"timestamp": "2026-11-02T02:45:31.742003+00:00", "action": "tap-text", "args": ["রিসার্চ ডেটা এক্সপোর্ট (Export Research Data)", "540", "910"]}
+{"timestamp": "2026-11-02T02:45:31.892438+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:32.048980+00:00", "action": "shot", "args": ["06_export_screen_join"]}
+{"timestamp": "2026-11-02T02:45:32.229036+00:00", "action": "tap-text", "args": ["স্টাডি সার্ভারে যুক্ত হোন (Join study server)", "540", "780"]}
+{"timestamp": "2026-11-02T02:45:32.385646+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:32.534711+00:00", "action": "shot", "args": ["07_join_server_qr"]}
+{"timestamp": "2026-11-02T02:45:32.679533+00:00", "action": "tap-text", "args": ["স্টাডি এনরোলমেন্ট QR স্ক্যান করুন", "540", "490"]}
+{"timestamp": "2026-11-02T02:45:32.823764+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:32.964669+00:00", "action": "type", "args": ["7K2X-M49P-3QW8"]}
+{"timestamp": "2026-11-02T02:45:33.124894+00:00", "action": "tap-text", "args": ["ডিভাইস যুক্ত করুন", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:33.280509+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:33.435801+00:00", "action": "shot", "args": ["08_enrolled_done"]}

@@ -1,0 +1,9 @@
+{
+  "tool": "mobsf",
+  "version": "v4.4.5",
+  "image": "opensecurity/mobile-security-framework-mobsf:v4.4.5",
+  "local_only": true,
+  "external_uploads": false,
+  "apk_present": false,
+  "findings": []
+}

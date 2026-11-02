@@ -1,0 +1,17 @@
+{"timestamp": "2026-11-02T02:45:08.398531+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:45:08.544305+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:08.695166+00:00", "action": "shot", "args": ["01_home_start"]}
+{"timestamp": "2026-11-02T02:45:08.845547+00:00", "action": "tap-text", "args": ["Settings", "970", "150"]}
+{"timestamp": "2026-11-02T02:45:08.993251+00:00", "action": "swipe", "args": ["up"]}
+{"timestamp": "2026-11-02T02:45:09.141411+00:00", "action": "tap-text", "args": ["Research mode", "540", "1480"]}
+{"timestamp": "2026-11-02T02:45:09.286563+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:09.427318+00:00", "action": "type", "args": ["258025"]}
+{"timestamp": "2026-11-02T02:45:09.576944+00:00", "action": "tap-text", "args": ["Unlock Research Mode", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:09.748409+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:09.917721+00:00", "action": "shot", "args": ["02_study_home"]}
+{"timestamp": "2026-11-02T02:45:10.067865+00:00", "action": "tap-text", "args": ["Export Research Data", "540", "910"]}
+{"timestamp": "2026-11-02T02:45:10.210982+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:10.361849+00:00", "action": "shot", "args": ["03_export_before_upload"]}
+{"timestamp": "2026-11-02T02:45:10.514803+00:00", "action": "tap-text", "args": ["Upload now", "540", "780"]}
+{"timestamp": "2026-11-02T02:45:10.655268+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:10.807949+00:00", "action": "shot", "args": ["04_upload_complete"]}

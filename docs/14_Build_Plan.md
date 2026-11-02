@@ -25,7 +25,7 @@ Confidence tags: **[Certain]** from the docs or verified, **[Likely]** strong in
 
 ## 1. Phases and Work Packages
 
-25 work packages (P00 to P24) in 12 phases (0 to 11), mapped to the three milestones in PRD Section 13. Effort is in Claude Code sessions of a few hours each, plus review time [Guessing; adjust after P01 and P03].
+30 work packages (P00 to P29) in 12 phases (0 to 11), mapped to the three milestones in PRD Section 13. Effort is in Claude Code sessions of a few hours each, plus review time [Guessing; adjust after P01 and P03].
 
 | WP | Name | Phase | Depends on | Backlog | Tests | Sessions |
 |---|---|---|---|---|---|---|
@@ -55,8 +55,13 @@ Confidence tags: **[Certain]** from the docs or verified, **[Likely]** strong in
 | P23 | Spike and assumption check | 11 Agent quality loop | P00 | none (process) | tooling tests in tools/tests/ | 1 to 2 |
 | P24 | Direction check | 11 Agent quality loop | P23 | none (process) | tooling tests in tools/tests/ | 2 to 3 |
 | P25 | Guardrails as code | 11 Agent quality loop | P24 | none (process) | tooling and hook tests in tools/tests/ and .claude/hooks/tests/ | 2 |
+| P26 | Security scan command and security-debt ledger | 11 Agent quality loop | P25 | none (process) | TC-SEC-10 groundwork (MobSF step), tooling tests in tools/tests/ | 2 |
+| P27 | Breaker agent (attack our own app, on copies of the data) | 11 Agent quality loop | P25 | none (process) | regression tests citing TC, T, or H IDs in breaker/tests/; tooling tests in tools/tests/ and .claude/hooks/tests/ | 2 to 3 |
+| P28 | Fresh-eyes agent (a first-time user who can't see the code) | 11 Agent quality loop | P23, P25 | none (process) | tooling and hook tests in tools/tests/ and .claude/hooks/tests/; feeds TC-USE-01 to TC-USE-03 preparation | 2 |
+| P29 | Journey runner and error-free session rate | 11 Agent quality loop | P25, P28 | none (process) | TC-PERF-01, TC-PERF-05, TC-TRI-26, E2E in doc 10 Sections 15 & 16; tooling tests in tools/tests/ | 2 |
+| P30 | Feedback triage loop | 11 Agent quality loop | P26, P29 | none (process) | tooling tests in tools/tests/ with synthetic reports | 1 to 2 |
 
-Total: about 52 to 64 sessions [Guessing].
+Total: about 57 to 71 sessions [Guessing].
 
 ---
 
@@ -70,6 +75,13 @@ flowchart LR
     P00 --> P23
     P23 --> P24
     P24 --> P25
+    P25 --> P26
+    P25 --> P27
+    P23 --> P28
+    P25 --> P28
+    P28 --> P29
+    P26 --> P30
+    P29 --> P30
     P01 --> P03
     P01 --> P04
     P01 --> P11
@@ -113,7 +125,7 @@ flowchart LR
 | Android | P01, P03 to P06, P08 to P16, P20 to P22 | The main line |
 | Training | P07 | Starts once P04 and the P06 model format exist |
 | Backend | P17 to P19 | Starts right after P00; only needs `docs/api/openapi.yaml` |
-| Quality loop | P23, P24, P25 | Spike protocol and assumption check (P23); direction check, `/ng-direction`, and the `drift_inventory.py --check` CI job (P24); guardrails as code, hooks, quality tiers (P25) |
+| Quality loop | P23, P24, P25, P26, P27, P28, P29, P30 | Spike protocol and assumption check (P23); direction check, `/ng-direction`, and the `drift_inventory.py --check` CI job (P24); guardrails as code, hooks, quality tiers (P25); security scan `/ng-secscan` and security-debt ledger (P26); adversarial breaker agent `/ng-break` on disposable copies (P27); fresh-eyes first-time user UX agent `/ng-fresh-eyes` in isolated sandbox (P28); journey runner `/ng-journeys`, `tools/journeys/run.py`, and release gate `check_journeys.py` (P29); feedback triage loop `/ng-feedback`, `tools/feedback/triage.py`, `play_vitals.py`, and turnaround time reporting `report_times.py` (P30) |
 
 ---
 

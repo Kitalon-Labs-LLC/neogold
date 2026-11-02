@@ -1,0 +1,304 @@
+# NeoGold Journey Catalog (P29)
+# Source of truth for automated end-to-end user journeys and step time budgets.
+# Maps PRD Section 6 (J1 to J4) and core operations to Maestro flows and NFR-02 performance budgets.
+
+version: "1.0"
+
+journeys:
+  - id: "J1"
+    name: "First Launch and Device Qualification"
+    prd_source: "PRD Section 6 J1, FR-01..FR-04b, TC-ONB-01..03, TC-DEV-01..04"
+    priority: "P1"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: true
+      seeded_data: "none"
+      network_state: "online"
+      camera_required: true
+    flow: "android/maestro/j1_onboarding_qualification_flow.yaml"
+    time_budget_seconds: 90.0
+    steps:
+      - name: "language_selection"
+        budget_seconds: 5.0
+        description: "Choose language (Bangla or English) on S01"
+      - name: "safety_acknowledgement"
+        budget_seconds: 10.0
+        description: "Step through S02-S04 safety notice and acknowledge"
+      - name: "device_check"
+        budget_seconds: 10.0
+        description: "Run device check S05 and battery guidance"
+      - name: "card_qr_scan"
+        budget_seconds: 15.0
+        description: "Scan card QR S06 and verify offline batch signature"
+      - name: "camera_qualification_3_photos"
+        budget_seconds: 45.0
+        description: "Capture and evaluate 3 qualification photos on S07"
+      - name: "landing_on_home"
+        budget_seconds: 5.0
+        description: "View S08 qualification summary and land on S09 home screen"
+
+  - id: "J2"
+    name: "Core Screening Flow"
+    prd_source: "PRD Section 6 J2, NFR-02, TC-PERF-01, TC-PERF-05, TC-CAP-01, TC-UI-01"
+    priority: "P1"
+    preconditions:
+      build: "debug"
+      config: "synthetic"
+      triage_enabled: true
+      seeded_data: "none"
+      network_state: "online"
+      camera_required: true
+    flow: "android/maestro/j2_screening_flow.yaml"
+    time_budget_seconds: 60.0 # NFR-02 full journey target
+    steps:
+      - name: "start_screening_and_consent"
+        budget_seconds: 5.0
+        description: "Tap new screening on S09 and confirm guardian consent on S10a"
+      - name: "demographic_and_safety_inputs"
+        budget_seconds: 15.0
+        description: "Enter age in hours, gestational age, and answer 3 safety questions on S10-S13"
+      - name: "card_placement_guide"
+        budget_seconds: 5.0
+        description: "Review S15 card positioning overlay and open camera"
+      - name: "guided_capture"
+        budget_seconds: 8.0
+        description: "Detect card markers, steady indicator, and auto-burst capture on S16"
+      - name: "capture_to_result"
+        budget_seconds: 10.0 # NFR-02 capture-to-result budget
+        description: "Color correction, skin segmentation, estimation, triage action mapping to S20 result"
+      - name: "save_to_log"
+        budget_seconds: 5.0
+        description: "Enter optional register number and save session to local log"
+
+  - id: "J2-hidden"
+    name: "Study Build Screening (Hidden Triage)"
+    prd_source: "PRD D10, PRD Section 6 J2, TC-TRI-26"
+    priority: "P1"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: false
+      seeded_data: "none"
+      network_state: "online"
+      camera_required: true
+    flow: "android/maestro/j2_hidden_flow.yaml"
+    time_budget_seconds: 50.0
+    steps:
+      - name: "start_screening_and_consent"
+        budget_seconds: 5.0
+        description: "Tap new screening on S09 and confirm guardian consent on S10a"
+      - name: "demographic_and_safety_inputs"
+        budget_seconds: 15.0
+        description: "Enter age in hours, gestational age, and answer 3 safety questions on S10-S13"
+      - name: "card_placement_guide"
+        budget_seconds: 5.0
+        description: "Review S15 card positioning overlay and open camera"
+      - name: "guided_capture"
+        budget_seconds: 8.0
+        description: "Detect card markers, steady indicator, and auto-burst capture on S16"
+      - name: "hidden_result_blood_test_prompt"
+        budget_seconds: 10.0
+        description: "Verify triage action is hidden; blood test message displayed per TC-TRI-26"
+      - name: "save_to_log"
+        budget_seconds: 5.0
+        description: "Save session with no clinical estimate to local log"
+
+  - id: "J3"
+    name: "Offline Home Visit Screening"
+    prd_source: "PRD Section 6 J3, NFR-01, TC-REL-02"
+    priority: "P1"
+    preconditions:
+      build: "debug"
+      config: "synthetic"
+      triage_enabled: true
+      seeded_data: "none"
+      network_state: "offline"
+      camera_required: true
+    flow: "android/maestro/j3_offline_home_visit_flow.yaml"
+    time_budget_seconds: 60.0
+    steps:
+      - name: "start_screening_and_consent"
+        budget_seconds: 5.0
+        description: "Verify offline banner, confirm guardian consent on S10a"
+      - name: "demographic_and_safety_inputs"
+        budget_seconds: 15.0
+        description: "Enter newborn clinical inputs on S10-S13 completely offline"
+      - name: "card_placement_guide"
+        budget_seconds: 5.0
+        description: "Review card placement instructions"
+      - name: "guided_capture"
+        budget_seconds: 8.0
+        description: "Capture chest photo without network access"
+      - name: "capture_to_result"
+        budget_seconds: 10.0
+        description: "Compute local estimate and display triage action on S20"
+      - name: "mother_guidance_and_save"
+        budget_seconds: 10.0
+        description: "Review 'What to tell mother' guidance card and save to local log"
+
+  - id: "J4"
+    name: "Research Mode Blinded Capture & TSB Entry"
+    prd_source: "PRD Section 6 J4, FR-25..FR-31, TC-RSH-08..11, TC-RSH-16"
+    priority: "P1"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: false
+      seeded_data: "study_enrolled"
+      network_state: "online"
+      camera_required: true
+    flow: "android/maestro/j4_research_capture_flow.yaml"
+    time_budget_seconds: 85.0
+    steps:
+      - name: "research_unlock"
+        budget_seconds: 8.0
+        description: "Unlock research mode on R01 with 6-digit study PIN"
+      - name: "participant_and_consent_entry"
+        budget_seconds: 12.0
+        description: "Enter participant code, paper consent form ID, and clinical inputs on R03"
+      - name: "four_site_blinded_capture"
+        budget_seconds: 40.0
+        description: "Capture 4 protocol sites (sternum, forehead, sclera flash, sclera no-flash) on R04"
+      - name: "blinded_verification"
+        budget_seconds: 5.0
+        description: "Verify estimate is strictly hidden with no triage text displayed"
+      - name: "paired_tsb_entry"
+        budget_seconds: 10.0
+        description: "Enter paired blood TSB laboratory measurement and method on R05"
+      - name: "session_complete_encrypted_storage"
+        budget_seconds: 8.0
+        description: "Confirm encrypted session packaging on R06 and return to study home"
+
+  - id: "upload-now"
+    name: "Research Outbox Manual Sync"
+    prd_source: "PRD FR-31, doc 7 Section 5, TC-SYNC-10, TC-SYNC-12"
+    priority: "P1"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: false
+      seeded_data: "outbox_pending_items"
+      network_state: "online"
+      camera_required: false
+    flow: "android/maestro/research_upload_now_flow.yaml"
+    time_budget_seconds: 45.0
+    steps:
+      - name: "open_research_export_sync"
+        budget_seconds: 8.0
+        description: "Navigate to R07 research export and sync screen"
+      - name: "trigger_upload_now"
+        budget_seconds: 10.0
+        description: "Tap upload now to start foreground HTTPS batch outbox transmission"
+      - name: "verify_sync_complete_outbox_drained"
+        budget_seconds: 25.0
+        description: "Wait for server acknowledgment and verify 0 pending outbox items"
+
+  - id: "encrypted-export"
+    name: "Research Encrypted USB / File Export"
+    prd_source: "PRD FR-30, doc 8 Section 3, TC-EXP-01..04"
+    priority: "P1"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: false
+      seeded_data: "study_sessions_present"
+      network_state: "offline"
+      camera_required: false
+    flow: "android/maestro/research_export_flow.yaml"
+    time_budget_seconds: 50.0
+    steps:
+      - name: "open_research_export"
+        budget_seconds: 8.0
+        description: "Navigate to R07 research export screen"
+      - name: "select_export_destination"
+        budget_seconds: 8.0
+        description: "Select file destination location"
+      - name: "package_and_encrypt_export"
+        budget_seconds: 25.0
+        description: "Compress sessions, generate CSV, encrypt to study key via Tink (AES-256-GCM)"
+      - name: "export_complete_confirmation"
+        budget_seconds: 8.0
+        description: "Verify export completed successfully card and tap done"
+
+  - id: "app-lock-unlock"
+    name: "Shared Phone App Lock and Unlock"
+    prd_source: "PRD FR-35, NFR-13, TC-SEC-03"
+    priority: "P2"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: false
+      seeded_data: "none"
+      network_state: "offline"
+      camera_required: false
+    flow: "android/maestro/app_lock_unlock_flow.yaml"
+    time_budget_seconds: 28.0
+    steps:
+      - name: "open_settings"
+        budget_seconds: 5.0
+        description: "Navigate from home S09 to settings S23"
+      - name: "enable_app_lock_switch"
+        budget_seconds: 5.0
+        description: "Toggle app lock switch on S23"
+      - name: "background_and_reopen_app"
+        budget_seconds: 8.0
+        description: "Simulate app pause and resume to trigger lock screen"
+      - name: "verify_locked_and_unlock"
+        budget_seconds: 8.0
+        description: "Verify lock screen displayed, tap unlock, verify return to app"
+
+  - id: "delete-all-data"
+    name: "Delete All Data (Factory Reset)"
+    prd_source: "PRD FR-33, doc 6 Section 5, TC-PRIV-01"
+    priority: "P2"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: false
+      seeded_data: "none"
+      network_state: "offline"
+      camera_required: false
+    flow: "android/maestro/delete_all_data_flow.yaml"
+    time_budget_seconds: 30.0
+    steps:
+      - name: "open_settings"
+        budget_seconds: 5.0
+        description: "Navigate to settings S23"
+      - name: "navigate_to_delete_all_data"
+        budget_seconds: 5.0
+        description: "Click delete all data link to reach S25"
+      - name: "confirm_delete_all_warning"
+        budget_seconds: 10.0
+        description: "Read warning box and tap confirm delete all button"
+      - name: "verify_data_cleared_and_app_reset"
+        budget_seconds: 10.0
+        description: "Verify app database wiped, encryption keys dropped, and app resets to S01"
+
+  - id: "leave-study"
+    name: "Leave Study Disconnect"
+    prd_source: "PRD FR-25, doc 7 Section 4.3, TC-SYNC-16"
+    priority: "P2"
+    preconditions:
+      build: "debug"
+      config: "default"
+      triage_enabled: false
+      seeded_data: "study_enrolled"
+      network_state: "online"
+      camera_required: false
+    flow: "android/maestro/leave_study_flow.yaml"
+    time_budget_seconds: 36.0
+    steps:
+      - name: "open_research_settings"
+        budget_seconds: 5.0
+        description: "Navigate from study home R02 to leave study screen R09"
+      - name: "enter_research_pin"
+        budget_seconds: 8.0
+        description: "Input study PIN on R09"
+      - name: "confirm_leave_study_dialog"
+        budget_seconds: 10.0
+        description: "Confirm leave study dialog"
+      - name: "verify_unlinked_device_keys_deleted"
+        budget_seconds: 10.0
+        description: "Verify device unlinked, server device key deleted, and user returned to home"
+

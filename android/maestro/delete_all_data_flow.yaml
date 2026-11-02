@@ -1,0 +1,56 @@
+appId: ${APP_ID}
+---
+# ==============================================================================
+# NeoGold Delete All Data Flow (doc 2 Section 7.7 FR-33, doc 6 S25, TC-PRIV-01)
+# Verifies complete erase of local database, session records, and settings.
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Step: open_settings (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_settings"
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    id: "btn_settings"
+    optional: true
+
+- tapOn:
+    text: "Settings"
+    optional: true
+
+# 2. Step: navigate_to_delete_all_data (Budget: 5.0 s)
+- scrollUntilVisible:
+    element:
+      id: "link_delete_all_data"
+    direction: DOWN
+    timeout: 5000
+
+- tapOn:
+    id: "link_delete_all_data"
+
+# 3. Step: confirm_delete_all_warning (Budget: 10.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "delete_data_warning_box"
+    timeout: 5000
+
+- assertVisible:
+    id: "btn_confirm_delete_all"
+
+- tapOn:
+    id: "btn_confirm_delete_all"
+
+# 4. Step: verify_data_cleared_and_app_reset (Budget: 10.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "lang_option_en"
+    timeout: 10000
+
+- assertVisible:
+    id: "lang_option_bn"
+

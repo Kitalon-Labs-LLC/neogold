@@ -1,0 +1,86 @@
+# breaker/env/docker-compose.yml
+#
+# Disposable backend stack for the P27 Breaker Agent (`neogold-breaker`).
+# Uses isolated volumes (`neogold-breaker_pgdata`, `neogold-breaker_images`,
+# `neogold-breaker_exports`) and synthetic-only credentials.
+# Torn down completely by `breaker/env/down.sh` (`docker compose -p neogold-breaker down -v`).
+
+name: neogold-breaker
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: "no"
+
+services:
+  db:
+    <<: *hardening
+    image: postgres:16-alpine
+    user: "70:70"
+    environment:
+      POSTGRES_DB: neogold_breaker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${BREAKER_DB_PASSWORD:-breaker-disposable-pg-pass-only}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    tmpfs:
+      - /tmp:size=64m
+      - /var/run/postgresql:size=1m
+    ports:
+      - "127.0.0.1:${BREAKER_DB_PORT:-15432}:5432"
+    networks:
+      - breaker_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d neogold_breaker"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    <<: *hardening
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    image: neogold-breaker-api:local
+    user: "10001:10001"
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:${BREAKER_DB_PASSWORD:-breaker-disposable-pg-pass-only}@db:5432/neogold_breaker
+      PUBLIC_BASE_URL: http://127.0.0.1:${BREAKER_API_PORT:-18000}/v1
+      ENROLLMENT_CODE_SECRET: ${BREAKER_ENROLLMENT_SECRET:-breaker-synthetic-only-0123456789abcdef0123456789abcdef}
+      IMAGE_STORE_DIR: /data/images
+      EXPORT_DIR: /data/exports
+      FORWARDED_ALLOW_IPS: "127.0.0.1"
+      NEOGOLD_SKIP_BACKUP_CHECK: "1"
+    volumes:
+      - images:/data/images
+      - exports:/data/exports
+    tmpfs:
+      - /tmp:size=64m
+    ports:
+      - "127.0.0.1:${BREAKER_API_PORT:-18000}:8000"
+    networks:
+      - breaker_net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=3)",
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  pgdata:
+  images:
+  exports:
+
+networks:
+  breaker_net:
+    driver: bridge

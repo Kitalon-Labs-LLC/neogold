@@ -1,0 +1,116 @@
+appId: ${APP_ID}
+---
+# ==============================================================================
+# NeoGold Journey J2-hidden: Study Build Screening (doc 2 Section 6, TC-TRI-26)
+# Validates that when triage is disabled (v1.0 study build), no estimate or triage
+# action is shown and the mandatory blood test guidance appears instead.
+# ==============================================================================
+
+- launchApp:
+    clearState: false
+
+# 1. Step: start_screening_and_consent (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_start_screening"
+    timeout: 5000
+
+- tapOn:
+    id: "btn_start_screening"
+
+- extendedWaitUntil:
+    visible:
+      id: "consent_question_text"
+    timeout: 5000
+
+- tapOn:
+    id: "yes_button"
+    optional: true
+
+- tapOn:
+    id: "consent_yes_no_buttons"
+    optional: true
+
+# 2. Step: demographic_and_safety_inputs (Budget: 15.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "ga_number_stepper"
+    timeout: 5000
+
+- tapOn:
+    id: "birth_time_field"
+
+- extendedWaitUntil:
+    visible:
+      text: "OK"
+    timeout: 3000
+    optional: true
+
+- tapOn:
+    text: "OK"
+    optional: true
+
+- tapOn:
+    id: "ga_number_stepper"
+
+- tapOn:
+    id: "btn_next"
+
+- tapOn:
+    id: "early_jaundice_buttons"
+    optional: true
+
+- tapOn:
+    id: "danger_signs_buttons"
+    optional: true
+
+- tapOn:
+    id: "prior_phototherapy_buttons"
+    optional: true
+
+# 3. Step: card_placement_guide (Budget: 5.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "btn_open_camera"
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    id: "btn_open_camera"
+    optional: true
+
+# 4. Step: guided_capture (Budget: 8.0 s)
+- extendedWaitUntil:
+    visible:
+      id: "camera_preview"
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible:
+      id: "steady_progress_bar"
+    timeout: 8000
+
+# 5. Step: hidden_result_blood_test_prompt (Budget: 10.0 s, TC-TRI-26)
+- extendedWaitUntil:
+    visible:
+      id: "triage_card_disabled"
+    timeout: 10000
+
+- assertNotVisible:
+    id: "triage_card"
+
+- assertNotVisible:
+    text: ".*mg/dL.*"
+
+# 6. Step: save_to_log (Budget: 5.0 s)
+- assertVisible:
+    id: "btn_save_to_log"
+
+- tapOn:
+    id: "btn_save_to_log"
+
+- extendedWaitUntil:
+    visible:
+      id: "home_experimental_banner"
+    timeout: 5000
+

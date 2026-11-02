@@ -35,10 +35,11 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-venv/
-.venv/
-ENV/
+/env/
+/venv/
+/.venv/
+/ENV/
+!breaker/env/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
@@ -63,3 +64,10 @@ testdata/bench/*.parquet
 training/output/model_run*.json
 /15_Claude_Code_Prompts.md
 /16_Agent_Quality_Prompts.md
+
+# Feedback triage inbox (doc 8 Section 6.6, P30: never committed, emptied after triage)
+feedback/inbox/*
+!feedback/inbox/.gitkeep
+feedback/*.log
+feedback/triaged/*
+!feedback/triaged/.gitkeep

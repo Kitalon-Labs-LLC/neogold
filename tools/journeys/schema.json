@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NeoGoldJourneyReport",
+  "description": "Validation schema for NeoGold lab journey runner and error-free session rate reports (P29)",
+  "type": "object",
+  "required": [
+    "build",
+    "device",
+    "date",
+    "priority",
+    "total_runs",
+    "total_error_free_runs",
+    "overall_error_free_rate",
+    "harness_failure_rate",
+    "is_valid",
+    "journeys"
+  ],
+  "properties": {
+    "build": {
+      "type": "object",
+      "required": ["version", "commit", "config_hash", "triage_enabled"],
+      "properties": {
+        "version": { "type": "string" },
+        "commit": { "type": "string" },
+        "config_hash": { "type": "string" },
+        "triage_enabled": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "device": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "class": { "type": "string" },
+        "ram_mb": { "type": "integer" },
+        "android_version": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "date": { "type": "string" },
+    "priority": {
+      "type": "string",
+      "enum": ["P1", "P2", "all"]
+    },
+    "total_runs": { "type": "integer", "minimum": 0 },
+    "total_error_free_runs": { "type": "integer", "minimum": 0 },
+    "overall_error_free_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "harness_failure_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "is_valid": { "type": "boolean" },
+    "invalid_reason": { "type": ["string", "null"] },
+    "journeys": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "prd_source",
+          "priority",
+          "runs",
+          "error_free_runs",
+          "error_free_rate",
+          "failures",
+          "steps"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "prd_source": { "type": "string" },
+          "priority": { "type": "string", "enum": ["P1", "P2"] },
+          "runs": { "type": "integer", "minimum": 0 },
+          "error_free_runs": { "type": "integer", "minimum": 0 },
+          "error_free_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "harness_failures": { "type": "integer", "minimum": 0 },
+          "failures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["run_index", "type", "message"],
+              "properties": {
+                "run_index": { "type": "integer" },
+                "step": { "type": ["string", "null"] },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "crash",
+                    "anr",
+                    "wrong_screen",
+                    "app_log_error",
+                    "time_budget_exceeded",
+                    "harness_selector"
+                  ]
+                },
+                "message": { "type": "string" },
+                "evidence": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "steps": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["budget_seconds", "p50_seconds", "p95_seconds", "budget_met"],
+              "properties": {
+                "budget_seconds": { "type": "number" },
+                "p50_seconds": { "type": "number" },
+                "p95_seconds": { "type": "number" },
+                "max_seconds": { "type": "number" },
+                "budget_met": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total_time": {
+            "type": "object",
+            "required": ["budget_seconds", "p50_seconds", "p95_seconds", "budget_met"],
+            "properties": {
+              "budget_seconds": { "type": "number" },
+              "p50_seconds": { "type": "number" },
+              "p95_seconds": { "type": "number" },
+              "max_seconds": { "type": "number" },
+              "budget_met": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+

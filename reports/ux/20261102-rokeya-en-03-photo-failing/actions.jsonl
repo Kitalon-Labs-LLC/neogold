@@ -1,0 +1,23 @@
+{"timestamp": "2026-11-02T02:44:59.484333+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:44:59.641560+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:44:59.872536+00:00", "action": "tap-text", "args": ["New screening", "540", "510"]}
+{"timestamp": "2026-11-02T02:45:00.021833+00:00", "action": "tap-text", "args": ["Yes", "540", "1760"]}
+{"timestamp": "2026-11-02T02:45:00.166384+00:00", "action": "tap-text", "args": ["48 hours (2 days)", "540", "470"]}
+{"timestamp": "2026-11-02T02:45:00.312101+00:00", "action": "tap-text", "args": ["38 weeks or more (Term)", "540", "790"]}
+{"timestamp": "2026-11-02T02:45:00.484596+00:00", "action": "tap-text", "args": ["Next", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:00.674515+00:00", "action": "tap-text", "args": ["No", "540", "1760"]}
+{"timestamp": "2026-11-02T02:45:00.831272+00:00", "action": "tap-text", "args": ["No", "540", "1760"]}
+{"timestamp": "2026-11-02T02:45:00.987614+00:00", "action": "tap-text", "args": ["No", "540", "1760"]}
+{"timestamp": "2026-11-02T02:45:01.141105+00:00", "action": "tap-text", "args": ["Open camera", "540", "2000"]}
+{"timestamp": "2026-11-02T02:45:01.287420+00:00", "action": "tap-text", "args": ["Take photo now", "540", "1940"]}
+{"timestamp": "2026-11-02T02:45:01.447721+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:01.607740+00:00", "action": "shot", "args": ["01_photo_problem_attempt1"]}
+{"timestamp": "2026-11-02T02:45:01.766290+00:00", "action": "tap-text", "args": ["Retake photo", "540", "1800"]}
+{"timestamp": "2026-11-02T02:45:01.922707+00:00", "action": "tap-text", "args": ["Take photo now", "540", "1940"]}
+{"timestamp": "2026-11-02T02:45:02.064571+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:02.217828+00:00", "action": "shot", "args": ["02_photo_problem_attempt2"]}
+{"timestamp": "2026-11-02T02:45:02.361533+00:00", "action": "tap-text", "args": ["Retake photo", "540", "1800"]}
+{"timestamp": "2026-11-02T02:45:02.519229+00:00", "action": "tap-text", "args": ["Take photo now", "540", "1940"]}
+{"timestamp": "2026-11-02T02:45:02.694994+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:02.857918+00:00", "action": "shot", "args": ["03_fallback_blood_test_today"]}
+{"timestamp": "2026-11-02T02:45:03.038839+00:00", "action": "tap-text", "args": ["Save to log", "540", "2000"]}

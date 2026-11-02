@@ -122,6 +122,7 @@ Two gates are not automated in CI and are recorded in the test summary instead: 
 | 1 | Cut `release/X.Y` from `main`; set `versionName`; freeze strings | Commit |
 | 2 | Clinical lead signs the config: `CLINICAL_SIGNOFF.md` with the canonical config hash, config `clinicalSignoff.status` set to `SIGNED`, `validUntil` within 12 months (Appendix B.1) | Signed record in the repository |
 | 3 | Run the release-candidate suite (doc 9 Section 7) and the device matrix (doc 9 Section 4.2) | Test summary report |
+| 3b | Run journey suite and release gate (`python3 tools/check_journeys.py`) | Valid reports in `reports/journeys/<version>/` for D1 to D4 with 20/20 error-free runs on all P1 journeys; NFR-02 budgets met |
 | 4 | Push tag `vX.Y.Z`; approve the `release` environment | Workflow run |
 | 5 | Workflow uploads to the **internal testing** track | Play Console release |
 | 6 | Install from the internal track on D1 to D4; run the smoke suite (TC-ONB-01, TC-DEV-01, TC-CARD-01, a full screening, a research session, TC-SYNC-01) | Signed smoke checklist |

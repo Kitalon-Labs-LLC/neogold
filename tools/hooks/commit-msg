@@ -4,7 +4,7 @@
 # The same rule runs in CI: tools/check_commit_attribution.py.
 #
 # Enable it once per clone:   git config core.hooksPath tools/hooks
-if grep -i -E '^[[:space:]]*co-authored-by:.*(claude|anthropic)|@anthropic\.com|generated with.*claude' "$1" > /dev/null 2>&1; then
+if grep -i -E '^[[:space:]]*co-authored-by:.*(claude|anthropic|copilot|openai|chatgpt|gemini|cursor|autofix|powered by ai)|@anthropic\.com|@openai\.com|copilot@users\.noreply\.github\.com|generated with.*(claude|copilot|chatgpt|openai|gemini|cursor|ai)' "$1" > /dev/null 2>&1; then
   echo "commit-msg: rejected. NeoGold rule (CLAUDE.md, Commits): no AI attribution on any commit." >&2
   echo "Remove the Co-Authored-By / Generated-with line and commit again." >&2
   exit 1

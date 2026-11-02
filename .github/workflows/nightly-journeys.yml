@@ -1,0 +1,54 @@
+name: nightly-journeys
+on:
+  schedule:
+    # Nightly journey run on main at 03:00 UTC (P29, docs/9 Section 7)
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "Number of runs per journey"
+        required: false
+        default: "20"
+      device:
+        description: "Target emulator / device"
+        required: false
+        default: "emulator"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-journeys-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-camera-free-journeys:
+    name: "Nightly camera-free journeys (API 34 emulator)"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: "Install locked Python dependencies"
+        run: "pip install --require-hashes --only-binary :all: -r backend/requirements.lock"
+      - name: "Run camera-free journeys"
+        id: run_journeys
+        run: |
+          python3 tools/journeys/run.py \
+            --device "${{ github.event.inputs.device || 'emulator' }}" \
+            --runs "${{ github.event.inputs.runs || '20' }}" \
+            --priority all
+      - name: "Verify journey release gate (emulator suite)"
+        run: |
+          python3 tools/check_journeys.py \
+            --device "${{ github.event.inputs.device || 'emulator' }}" \
+            --min-runs "${{ github.event.inputs.runs || '20' }}"
+      - name: "Format defect report on failure"
+        if: failure()
+        run: |
+          echo "### Nightly Journey Regression Defect Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "Nightly automated journey run failed on API 34 emulator." >> "$GITHUB_STEP_SUMMARY"
+          echo "Please open a defect under docs/11_Bug_Defect_Log.md using the P29 / doc 11 template." >> "$GITHUB_STEP_SUMMARY"
+

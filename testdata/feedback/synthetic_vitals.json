@@ -1,0 +1,59 @@
+{
+  "package_name": "com.kitalonlabs.neogold",
+  "fetched_at": "2026-11-02T10:00:00Z",
+  "crash_rates": {
+    "rows": [
+      {
+        "dimensions": {
+          "date": "2026-11-01",
+          "versionCode": "1000001",
+          "deviceModel": "TECNO Spark 30C"
+        },
+        "metrics": {
+          "userPerceivedCrashRate": {
+            "value": "0.15%"
+          },
+          "crashRate": {
+            "value": "0.20%"
+          }
+        }
+      }
+    ]
+  },
+  "anr_rates": {
+    "rows": [
+      {
+        "dimensions": {
+          "date": "2026-11-01",
+          "versionCode": "1000001",
+          "deviceModel": "TECNO Spark 30C"
+        },
+        "metrics": {
+          "userPerceivedAnrRate": {
+            "value": "0.05%"
+          },
+          "anrRate": {
+            "value": "0.05%"
+          }
+        }
+      }
+    ]
+  },
+  "error_issues": [
+    {
+      "name": "apps/com.kitalonlabs.neogold/errorIssues/CLUST-001",
+      "type": "CRASH",
+      "cause": "java.lang.IllegalStateException in ScreeningFlow",
+      "distinctUsers": 3
+    }
+  ],
+  "error_reports": [
+    {
+      "name": "apps/com.kitalonlabs.neogold/errorReports/REP-001",
+      "deviceModel": "TECNO Spark 30C",
+      "osVersion": "Android 14",
+      "stackTrace": "java.lang.IllegalStateException: Card window not detected\n  at com.kitalonlabs.neogold.engine.vision.CardDetector.process(CardDetector.kt:42)\n  at com.kitalonlabs.neogold.feature.screening.ScreeningViewModel.onFrame(ScreeningViewModel.kt:112)"
+    }
+  ]
+}
+

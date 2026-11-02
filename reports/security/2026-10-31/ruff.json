@@ -1,0 +1,25 @@
+{
+  "tool": "ruff",
+  "version": "0.17.1",
+  "results": [
+    {
+      "cell": null,
+      "code": "S311",
+      "end_location": {
+        "column": 42,
+        "row": 620
+      },
+      "filename": "D:\\Project\\neogold-android\\backend\\app\\cli.py",
+      "fix": null,
+      "location": {
+        "column": 19,
+        "row": 620
+      },
+      "message": "Standard pseudo-random generators are not suitable for cryptographic purposes",
+      "name": "suspicious-non-cryptographic-random-usage",
+      "noqa_row": 620,
+      "severity": "error",
+      "url": "https://docs.astral.sh/ruff/rules/suspicious-non-cryptographic-random-usage"
+    }
+  ]
+}
