@@ -2,6 +2,18 @@
 
 Every break discovered by `/ng-break` (the `breaker` subagent or `breaker/run_round.py`) is recorded in this directory as `BRK-YYYYMMDD-nn.md` before any fix is written.
 
+## Completed Breaker Rounds
+
+| Round ID | Date | Target Ref | Scope | Total Checks | Passed | New Findings | S1/S2 Open |
+|---|---|---|---|---|---|---|---|
+| `RND-20261031-01` | 2026-10-31 | `main` | `api` | 10 | 7 | 3 (`BRK-021`, `BRK-022`, `BRK-023`) | 0 (all fixed) |
+| `RND-20261102-01` | 2026-11-02 | `main` | `all` (`clinical`, `data-loss`, `api`, `privacy`, `ui`) | 30 | 30 | 0 | 0 |
+
+### Findings Index
+- [BRK-20261031-01](BRK-20261031-01.md) (`S1`, `api`): Capture image upload for withdrawn participant rejected with 422, zero files written to disk (`FIXED`, regression test: `test_brk_022`).
+- [BRK-20261031-02](BRK-20261031-02.md) (`S2`, `api`): Manifest with all `has_image=False` completes immediately (`FIXED`, regression test: `test_brk_021`).
+- [BRK-20261031-03](BRK-20261031-03.md) (`S2`, `api`): `neogold-admin restore mark` strictly increases `data_generation` (`FIXED`, regression test: `test_brk_023`).
+
 ## Mandatory Finding Template (`BRK-YYYYMMDD-nn.md`)
 
 ```markdown
@@ -13,12 +25,12 @@ Every break discovered by `/ng-break` (the `breaker` subagent or `breaker/run_ro
 | Date | `YYYY-MM-DD` |
 | Commit | `<git-sha>` |
 | Catalog ID | `BRK-nnn` |
-| Area | `clinical` \| `data-loss` \| `api` \| `privacy` \| `ui` |
-| Severity | `S1 Critical` \| `S2 Major` \| `S3 Minor` \| `S4 Cosmetic` (doc 9 Section 9.1) |
-| Clinical | `Yes` \| `No` |
+| Area | `clinical` | `data-loss` | `api` | `privacy` | `ui` |
+| Severity | `S1 Critical` | `S2 Major` | `S3 Minor` | `S4 Cosmetic` (doc 9 Section 9.1) |
+| Clinical | `Yes` | `No` |
 | Protects | `H1`..`H11`, `T1`..`T17`, `TC-xxx` |
 | Regression Test | `<path/to/failing_test>` |
-| Status | `OPEN` \| `FIXED` |
+| Status | `OPEN` | `FIXED` |
 
 ## 1. Summary
 What failed and why it violates the safe behavior required by `docs/`.

@@ -95,7 +95,7 @@ Later packages depend on these claims, so test them with `/ng-spike` as soon as 
 2. A fresh-eyes session started from a sandbox folder outside the repository sees no CLAUDE.md, no git status, and no file names in its first context (P28) [Certain — Confirmed in `docs/spikes/2026-11-02-fresh-eyes-sandbox-isolation.md` on Claude Code 2.1.45].
 3. The emulator's virtual scene camera can show a bench image that the vision engine accepts (P28, P29) [Certain — Verified in `docs/spikes/2026-11-02-emulator-virtual-scene-camera.md`: virtualscene 3D lighting distorts patches; use `src/debug/` `DebugBenchFeeder` for emulator/headless runs and physical bench rig for matrix phones].
 4. DeepSec finds at least one real issue in `backend/` that Bandit and Ruff miss (P26) [Certain — Refuted in `docs/spikes/2026-10-31-deepsec-trial.md`: 0 issues missed by Bandit/Ruff; rejected for `--full`].
-5. Maestro's output gives per-step timing good enough for step budgets (P29) [Guessing].
+5. Maestro's output gives per-step timing good enough for step budgets (P29) [Certain — Refuted in `docs/spikes/2026-11-02-maestro-step-timing.md`: Maestro CLI outputs only flow-level aggregate durations; per-step timing requires the external wrapper harness implemented in `tools/journeys/run.py`].
 
 ---
 
