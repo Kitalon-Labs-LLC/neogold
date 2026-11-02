@@ -1,0 +1,13 @@
+{"timestamp": "2026-11-02T02:45:11.098438+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:45:11.292873+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:11.458598+00:00", "action": "shot", "args": ["01_home_no_lock"]}
+{"timestamp": "2026-11-02T02:45:11.613132+00:00", "action": "tap-text", "args": ["Settings", "970", "150"]}
+{"timestamp": "2026-11-02T02:45:11.758006+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:11.912204+00:00", "action": "shot", "args": ["02_settings_lock_toggle"]}
+{"timestamp": "2026-11-02T02:45:12.063069+00:00", "action": "tap-text", "args": ["Screen lock (PIN/fingerprint)", "540", "510"]}
+{"timestamp": "2026-11-02T02:45:12.197836+00:00", "action": "swipe", "args": ["up"]}
+{"timestamp": "2026-11-02T02:45:12.339236+00:00", "action": "tap-text", "args": ["Research mode", "540", "1480"]}
+{"timestamp": "2026-11-02T02:45:12.476586+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:12.624144+00:00", "action": "shot", "args": ["03_research_already_locked_or_pin"]}
+{"timestamp": "2026-11-02T02:45:12.760039+00:00", "action": "back", "args": []}
+{"timestamp": "2026-11-02T02:45:12.905220+00:00", "action": "shot", "args": ["04_locked_ready"]}

@@ -33,3 +33,10 @@
 - **What happened:** Had to tap 'Take qualification photo' 3 separate times with the card in the same spot before advancing.
 - **Severity:** `Slow`
 
+## 3. Main-Session Screen Mapping & Fix Proposals (Build 8)
+
+| Friction ID | Severity | Mapped Screen ID | Doc 6 Section / Hazard | Proposed Fix (Proposal Only) |
+|---|---|---|---|---|
+| `FP-01` | `Wording` | S05 (`S05DeviceCheckScreen.kt`) | Doc 6 Section 5 (Language, Tone, and Banned Words) & Section 8.1 (Onboarding S01–S08) | Proposal only: Replace technical Camera2 API level text ('Hardware Level FULL') on `S05` with plain ward-friendly wording ('Camera and flash ready' / 'ক্যামেরা ও ফ্ল্যাশ প্রস্তুত'). Must pass `tools/check_strings_banned.py` and nurse panel review (`TC-USE-01`). |
+| `FP-02` | `Slow` | S07 (`S07CameraQualificationScreen.kt`) | Doc 6 Section 8.1 (Onboarding S07 Camera Qualification) & Section 1 (60-Second Ward Budget) | Proposal only: Add a short progress subtitle on `S07` ('Taking 3 quick photos to check flash consistency: 1 of 3') or auto-advance across the 3 qualification bursts so the nurse does not have to tap the shutter 3 times manually. |
+

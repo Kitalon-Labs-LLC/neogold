@@ -34,3 +34,10 @@
 - **What happened:** Typing 'Bed 4' triggered a validation error blocking Save until I replaced it with '12/345'.
 - **Severity:** `Confusing`
 
+## 3. Main-Session Screen Mapping & Fix Proposals (Build 8)
+
+| Friction ID | Severity | Mapped Screen ID | Doc 6 Section / Hazard | Proposed Fix (Proposal Only) |
+|---|---|---|---|---|
+| `FP-01` | `Confusing` | S18 (`S18ForeheadPromptScreen.kt`) | Doc 6 Section 8.3 (Capture & Quality Gate S15–S19) | Proposal only: Clarify on `S18` that the chest (sternum) photo is sufficient for a complete result and the forehead photo is an optional extra check ('Chest photo is complete. You can go straight to the result or add an optional forehead photo'). Route through nurse panel and clinical lead. |
+| `FP-02` | `Confusing` | S20 (`S20ResultScreen.kt`) | Doc 6 Section 9 (Result Screen S20) & Doc 8 Section 3 (Privacy Guardrail — No Patient Names) | Proposal only: Keep the no-letters-plus-spaces privacy guardrail (which prevents typing a baby's name), but auto-convert spaces between 'Bed' and a number into a hyphen (`Bed 4` -> `BED-4`) or show the example `e.g. 12/345 or BED-4` directly inside the placeholder label on `S20`. |
+

@@ -1,0 +1,33 @@
+{"timestamp": "2026-11-02T02:45:03.332613+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:45:03.534003+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:03.721661+00:00", "action": "shot", "args": ["01_study_home_empty"]}
+{"timestamp": "2026-11-02T02:45:03.887091+00:00", "action": "tap-text", "args": ["Settings", "970", "150"]}
+{"timestamp": "2026-11-02T02:45:04.031733+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:04.190818+00:00", "action": "shot", "args": ["02_settings_top"]}
+{"timestamp": "2026-11-02T02:45:04.337516+00:00", "action": "swipe", "args": ["up"]}
+{"timestamp": "2026-11-02T02:45:04.479978+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:04.636419+00:00", "action": "shot", "args": ["03_settings_scrolled"]}
+{"timestamp": "2026-11-02T02:45:04.799032+00:00", "action": "tap-text", "args": ["Research mode", "540", "1480"]}
+{"timestamp": "2026-11-02T02:45:04.941815+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:05.093158+00:00", "action": "shot", "args": ["04_research_unlock_qr"]}
+{"timestamp": "2026-11-02T02:45:05.240112+00:00", "action": "tap-text", "args": ["Scan Study QR Code", "540", "890"]}
+{"timestamp": "2026-11-02T02:45:05.382300+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:05.522367+00:00", "action": "type", "args": ["258025"]}
+{"timestamp": "2026-11-02T02:45:05.673233+00:00", "action": "tap-text", "args": ["Unlock Research Mode", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:05.848662+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:05.996050+00:00", "action": "type", "args": ["258025"]}
+{"timestamp": "2026-11-02T02:45:06.147000+00:00", "action": "tap-text", "args": ["Unlock Research Mode", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:06.290477+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:06.440448+00:00", "action": "shot", "args": ["05_research_study_home"]}
+{"timestamp": "2026-11-02T02:45:06.582675+00:00", "action": "tap-text", "args": ["Export Research Data", "540", "910"]}
+{"timestamp": "2026-11-02T02:45:06.723815+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:06.872318+00:00", "action": "shot", "args": ["06_export_screen_join"]}
+{"timestamp": "2026-11-02T02:45:07.014994+00:00", "action": "tap-text", "args": ["Join study server", "540", "780"]}
+{"timestamp": "2026-11-02T02:45:07.155202+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:07.300681+00:00", "action": "shot", "args": ["07_join_server_qr"]}
+{"timestamp": "2026-11-02T02:45:07.444236+00:00", "action": "tap-text", "args": ["Scan Study Enrolment QR", "540", "490"]}
+{"timestamp": "2026-11-02T02:45:07.585954+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:07.728530+00:00", "action": "type", "args": ["7K2X-M49P-3QW8"]}
+{"timestamp": "2026-11-02T02:45:07.887323+00:00", "action": "tap-text", "args": ["Enrol device", "540", "1960"]}
+{"timestamp": "2026-11-02T02:45:08.039859+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:45:08.208495+00:00", "action": "shot", "args": ["08_enrolled_done"]}
