@@ -120,6 +120,7 @@ Fill this in as work packages create them; keep it current.
 | Actions pinned by SHA (P25) | `python3 tools/check_actions_pinned.py` |
 | Security scan and debt ledger (P26) | `/ng-secscan [--changed \| --full]` (or `bash tools/secscan/run.sh [--changed \| --full]`) |
 | Breaker agent quality loop (P27) | `/ng-break [area] [--rounds N] [--commit <ref>] [--recheck]` (or `python3 breaker/run_round.py [area] [--rounds N] [--recheck]`) |
+| Fresh-eyes first-time user UX agent (P28) | `/ng-fresh-eyes <persona> <task> [--device <serial>] [--lang <en\|bn>]` (or `bash tools/ux/run-fresh-eyes.sh <persona> <task> [--device <serial>]`) |
 | Native library imports, Gate S10 (D1) | `python3 tools/check_native_imports.py <app.apk or lib dir>` |
 | Release gates proved to fail when they should (D1) | `python3 -m pytest tools/tests/test_release_gates.py tools/tests/test_check_native_imports.py` |
 | Regenerate golden vectors on purpose (the tests compare with the committed files and otherwise write nothing) | `NEOGOLD_REGENERATE_GOLDEN=1 ./gradlew :engine:colorscience:test :engine:estimation:test`, read the diff of `testdata/golden/`, commit it |

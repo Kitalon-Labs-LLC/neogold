@@ -1,0 +1,35 @@
+{"timestamp": "2026-11-02T02:40:06.084363+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:40:06.230341+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:06.555114+00:00", "action": "shot", "args": ["01_language_choice"]}
+{"timestamp": "2026-11-02T02:40:06.702601+00:00", "action": "tap-text", "args": ["English", "540", "640"]}
+{"timestamp": "2026-11-02T02:40:06.851047+00:00", "action": "tap-text", "args": ["Continue", "540", "2000"]}
+{"timestamp": "2026-11-02T02:40:07.016938+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:07.193487+00:00", "action": "shot", "args": ["02_safety_page1"]}
+{"timestamp": "2026-11-02T02:40:07.346427+00:00", "action": "tap-text", "args": ["Next", "540", "2000"]}
+{"timestamp": "2026-11-02T02:40:07.488270+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:07.629721+00:00", "action": "tap-text", "args": ["Next", "540", "2000"]}
+{"timestamp": "2026-11-02T02:40:07.770702+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:07.920114+00:00", "action": "shot", "args": ["03_safety_page3"]}
+{"timestamp": "2026-11-02T02:40:08.067750+00:00", "action": "tap-text", "args": ["I understand", "540", "2000"]}
+{"timestamp": "2026-11-02T02:40:08.211955+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:08.364800+00:00", "action": "shot", "args": ["04_device_check"]}
+{"timestamp": "2026-11-02T02:40:08.510256+00:00", "action": "tap-text", "args": ["Continue", "540", "2000"]}
+{"timestamp": "2026-11-02T02:40:08.651114+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:08.811047+00:00", "action": "shot", "args": ["05_card_qr_prompt"]}
+{"timestamp": "2026-11-02T02:40:08.973057+00:00", "action": "tap-text", "args": ["Scan Card QR", "540", "990"]}
+{"timestamp": "2026-11-02T02:40:09.126022+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:09.297745+00:00", "action": "shot", "args": ["06_card_qr_verified"]}
+{"timestamp": "2026-11-02T02:40:09.438839+00:00", "action": "tap-text", "args": ["Continue", "540", "2000"]}
+{"timestamp": "2026-11-02T02:40:09.593276+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:09.742164+00:00", "action": "shot", "args": ["07_qual_photo_1"]}
+{"timestamp": "2026-11-02T02:40:09.888063+00:00", "action": "tap-text", "args": ["Take qualification photo", "540", "1690"]}
+{"timestamp": "2026-11-02T02:40:10.024117+00:00", "action": "wait", "args": ["1"]}
+{"timestamp": "2026-11-02T02:40:10.173249+00:00", "action": "tap-text", "args": ["Take qualification photo", "540", "1690"]}
+{"timestamp": "2026-11-02T02:40:10.309601+00:00", "action": "wait", "args": ["1"]}
+{"timestamp": "2026-11-02T02:40:10.453902+00:00", "action": "tap-text", "args": ["Take qualification photo", "540", "1690"]}
+{"timestamp": "2026-11-02T02:40:10.595405+00:00", "action": "wait", "args": ["1"]}
+{"timestamp": "2026-11-02T02:40:10.738887+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:10.892073+00:00", "action": "shot", "args": ["08_setup_complete"]}
+{"timestamp": "2026-11-02T02:40:11.041955+00:00", "action": "tap-text", "args": ["Get started", "540", "2000"]}
+{"timestamp": "2026-11-02T02:40:11.185359+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:40:11.333924+00:00", "action": "shot", "args": ["09_home_ready"]}
