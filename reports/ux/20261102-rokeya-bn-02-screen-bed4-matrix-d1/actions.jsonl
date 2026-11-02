@@ -1,0 +1,39 @@
+{"timestamp": "2026-11-02T02:46:02.968557+00:00", "action": "launch", "args": []}
+{"timestamp": "2026-11-02T02:46:03.109804+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:03.257623+00:00", "action": "shot", "args": ["01_home"]}
+{"timestamp": "2026-11-02T02:46:03.401716+00:00", "action": "tap-text", "args": ["নতুন স্ক্রিনিং", "540", "510"]}
+{"timestamp": "2026-11-02T02:46:03.550129+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:03.699326+00:00", "action": "shot", "args": ["02_guardian_consent"]}
+{"timestamp": "2026-11-02T02:46:03.884317+00:00", "action": "tap-text", "args": ["হ্যাঁ", "540", "1760"]}
+{"timestamp": "2026-11-02T02:46:04.076946+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:04.271892+00:00", "action": "shot", "args": ["03_age_and_ga_blank"]}
+{"timestamp": "2026-11-02T02:46:04.415810+00:00", "action": "tap-text", "args": ["৪৮ ঘণ্টা (২ দিন)", "540", "470"]}
+{"timestamp": "2026-11-02T02:46:04.559749+00:00", "action": "tap-text", "args": ["৩৮ সপ্তাহ বা তার বেশি (পূর্ণাঙ্গ)", "540", "790"]}
+{"timestamp": "2026-11-02T02:46:04.712921+00:00", "action": "tap-text", "args": ["পরবর্তী", "540", "2000"]}
+{"timestamp": "2026-11-02T02:46:04.878128+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:05.022280+00:00", "action": "shot", "args": ["04_early_jaundice"]}
+{"timestamp": "2026-11-02T02:46:05.163270+00:00", "action": "tap-text", "args": ["না", "540", "1760"]}
+{"timestamp": "2026-11-02T02:46:05.301128+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:05.445415+00:00", "action": "shot", "args": ["05_danger_signs"]}
+{"timestamp": "2026-11-02T02:46:05.584589+00:00", "action": "tap-text", "args": ["না", "540", "1760"]}
+{"timestamp": "2026-11-02T02:46:05.724860+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:05.868815+00:00", "action": "shot", "args": ["06_prior_phototherapy"]}
+{"timestamp": "2026-11-02T02:46:06.009464+00:00", "action": "tap-text", "args": ["না", "540", "1760"]}
+{"timestamp": "2026-11-02T02:46:06.146676+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:06.292148+00:00", "action": "shot", "args": ["07_chest_guide"]}
+{"timestamp": "2026-11-02T02:46:06.441598+00:00", "action": "tap-text", "args": ["ক্যামেরা খুলুন", "540", "2000"]}
+{"timestamp": "2026-11-02T02:46:06.583786+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:06.728319+00:00", "action": "shot", "args": ["08_camera_capture"]}
+{"timestamp": "2026-11-02T02:46:06.887099+00:00", "action": "tap-text", "args": ["এখন ছবি তুলুন", "540", "1940"]}
+{"timestamp": "2026-11-02T02:46:07.057810+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:07.242635+00:00", "action": "shot", "args": ["09_optional_forehead"]}
+{"timestamp": "2026-11-02T02:46:07.389585+00:00", "action": "tap-text", "args": ["কপালের ছবি ছাড়াই এগিয়ে যান", "540", "1960"]}
+{"timestamp": "2026-11-02T02:46:07.529275+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:07.678312+00:00", "action": "shot", "args": ["10_result_screen"]}
+{"timestamp": "2026-11-02T02:46:07.817005+00:00", "action": "type", "args": ["Bed 4"]}
+{"timestamp": "2026-11-02T02:46:07.960777+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:08.114792+00:00", "action": "shot", "args": ["11_register_space_error"]}
+{"timestamp": "2026-11-02T02:46:08.255790+00:00", "action": "type", "args": ["12/345"]}
+{"timestamp": "2026-11-02T02:46:08.400458+00:00", "action": "tap-text", "args": ["লগে সংরক্ষণ করুন", "540", "2000"]}
+{"timestamp": "2026-11-02T02:46:08.544619+00:00", "action": "see", "args": []}
+{"timestamp": "2026-11-02T02:46:08.687159+00:00", "action": "shot", "args": ["12_saved_home"]}
