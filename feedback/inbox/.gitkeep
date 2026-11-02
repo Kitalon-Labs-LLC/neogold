@@ -1,2 +1,3 @@
 # Empty inbox directory for shared crash reports dropped by health workers.
 # All contents except this .gitkeep are gitignored and emptied after triage.
+

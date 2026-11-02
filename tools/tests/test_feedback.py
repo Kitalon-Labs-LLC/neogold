@@ -341,3 +341,4 @@ def test_inbox_lifecycle_emptied_after_triage(tmp_path: Path) -> None:
     assert not report_1.exists()
     assert not report_2.exists()
     assert gitkeep.exists()
+
