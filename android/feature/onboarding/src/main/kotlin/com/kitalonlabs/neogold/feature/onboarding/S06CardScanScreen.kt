@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgBadge
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgTextButton
 import com.kitalonlabs.neogold.core.designsystem.theme.Dimens
+import com.kitalonlabs.neogold.core.designsystem.util.rememberNgHaptics
 import com.kitalonlabs.neogold.engine.camera.host.CameraMode
 import com.kitalonlabs.neogold.engine.camera.qualification.RequalificationReason
 import com.kitalonlabs.neogold.engine.camera.ui.CameraPreviewHost
@@ -50,6 +52,15 @@ fun S06CardScanScreen(
     requalification: RequalificationReason? = null
 ) {
     val phase by state.phase.collectAsState()
+    val haptics = rememberNgHaptics()
+
+    // A tick the moment the card is read and verified (doc 6 Section 3.2). The banner says so in
+    // words; the tick says it without the health worker having to look at the screen.
+    LaunchedEffect(phase) {
+        if (phase is CardScanState.Phase.Verified) {
+            haptics.tick()
+        }
+    }
 
     Column(
         modifier = modifier

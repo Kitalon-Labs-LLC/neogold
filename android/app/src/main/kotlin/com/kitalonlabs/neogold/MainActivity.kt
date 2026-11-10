@@ -489,6 +489,9 @@ fun NeoGoldNavHost(
     // Log & Session detail state
     var selectedSessionIdForDetail by remember { mutableStateOf<String?>(null) }
     var logSessions by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
+    // True until the first read of the screening log returns, so the log can show placeholders
+    // instead of claiming the health worker has no screenings.
+    var isLogLoading by remember { mutableStateOf(true) }
     var dueRechecks by remember { mutableStateOf<List<ScreeningSessionEntity>>(emptyList()) }
 
     val integrity = assets.integrity
@@ -974,10 +977,16 @@ fun NeoGoldNavHost(
         // S21 to S25 Log & Settings
         composable(Destinations.S21_LOG) {
             androidx.compose.runtime.LaunchedEffect(Unit) {
-                logSessions = db.screeningSessionDao().getSessionsByMode("SCREENING")
+                isLogLoading = true
+                try {
+                    logSessions = db.screeningSessionDao().getSessionsByMode("SCREENING")
+                } finally {
+                    isLogLoading = false
+                }
             }
             S21LogScreen(
                 sessions = logSessions,
+                isLoading = isLogLoading,
                 onSessionSelected = { sessionId ->
                     selectedSessionIdForDetail = sessionId
                     navController.navigate(Destinations.S22_SESSION_DETAIL)

@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
+import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgYesNoButtons
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBottomActionBar
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgDangerSignsList
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgSafetyQuestion
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgStepIndicator
@@ -62,6 +64,20 @@ fun S12DangerSignsScreen(
                     }
                 }
             )
+        },
+        // The answer pair sits in the lower third so the four danger signs can be read with the
+        // thumb already resting on the buttons (doc 6 Section 3).
+        bottomBar = {
+            NgBottomActionBar {
+                NgYesNoButtons(
+                    selectedAnswer = selectedAnswer,
+                    onAnswerSelected = { answer ->
+                        selectedAnswer = answer
+                        onAnswered(answer)
+                    },
+                    modifier = Modifier.testTag("danger_signs_yes_no")
+                )
+            }
         }
     ) { innerPadding ->
         Column(
@@ -83,6 +99,7 @@ fun S12DangerSignsScreen(
                 content = {
                     NgDangerSignsList(modifier = Modifier.testTag("danger_signs_list"))
                 },
+                showButtons = false,
                 modifier = Modifier.testTag("danger_signs_question")
             )
         }

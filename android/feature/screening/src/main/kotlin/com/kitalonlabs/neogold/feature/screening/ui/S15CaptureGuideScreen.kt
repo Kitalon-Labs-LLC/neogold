@@ -19,8 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,12 +32,15 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kitalonlabs.neogold.core.designsystem.R
+import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBottomActionBar
+import com.kitalonlabs.neogold.core.designsystem.theme.PrimaryButtonHeight
 
 /**
  * S15 Capture Guide screen.
@@ -77,6 +78,17 @@ fun S15CaptureGuideScreen(
                 )
             )
         },
+        // "Open camera" is the one action on this screen: lower third, 56 dp, under the thumb.
+        bottomBar = {
+            NgBottomActionBar {
+                NgPrimaryButton(
+                    text = stringResource(R.string.btn_open_camera),
+                    height = PrimaryButtonHeight,
+                    onClick = onOpenCamera,
+                    modifier = Modifier.testTag("btn_open_camera")
+                )
+            }
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
@@ -84,8 +96,9 @@ fun S15CaptureGuideScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.SpaceBetween
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 12.dp),
+            verticalArrangement = Arrangement.Top
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -144,30 +157,6 @@ fun S15CaptureGuideScreen(
                     stepNumber = "3",
                     text = stringResource(R.string.capture_guide_step3)
                 )
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp)
-            ) {
-                Button(
-                    onClick = onOpenCamera,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.btn_open_camera),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
             }
         }
     }

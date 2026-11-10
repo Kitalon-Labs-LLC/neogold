@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.common.validation.RegisterNumberValidator
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBottomActionBar
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgExperimentalBanner
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgVersionFooter
 import com.kitalonlabs.neogold.core.designsystem.components.organisms.NgTriageCard
@@ -62,7 +63,25 @@ fun S14RuleOutcomeScreen(
     val nextStepText = presentation.nextStepText(shownAtMs)
     val reasonText = presentation.reasonText()
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        // Saving the outcome is the one action: pinned in the lower third so the register field
+        // and the version footer can scroll under it (doc 6 Section 3).
+        bottomBar = {
+            NgBottomActionBar {
+                NgPrimaryButton(
+                    text = stringResource(R.string.btn_save_to_log),
+                    height = ResultButtonHeight,
+                    enabled = registerError == null,
+                    onClick = {
+                        val finalReg = registerNumber.trim().ifBlank { null }
+                        onSaveToLog(finalReg)
+                    },
+                    modifier = Modifier.testTag("btn_save_rule_outcome")
+                )
+            }
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -120,17 +139,6 @@ fun S14RuleOutcomeScreen(
                         .testTag("register_number_field")
                 )
             }
-
-            NgPrimaryButton(
-                text = stringResource(R.string.btn_save_to_log),
-                height = ResultButtonHeight,
-                enabled = registerError == null,
-                onClick = {
-                    val finalReg = registerNumber.trim().ifBlank { null }
-                    onSaveToLog(finalReg)
-                },
-                modifier = Modifier.testTag("btn_save_rule_outcome")
-            )
 
             NgVersionFooter(
                 appVersion = appVersion,

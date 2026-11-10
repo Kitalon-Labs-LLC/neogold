@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.common.validation.RegisterNumberValidator
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBottomActionBar
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgExperimentalBanner
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgVersionFooter
 import com.kitalonlabs.neogold.core.designsystem.components.organisms.NgTriageCard
@@ -64,7 +65,25 @@ fun S20ResultScreen(
     var registerError by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
 
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        // The one action stays in the lower third, reachable with a gloved thumb while the
+        // triage card, the wording and the register field scroll above it (doc 6 Section 3).
+        bottomBar = {
+            NgBottomActionBar {
+                NgPrimaryButton(
+                    text = stringResource(R.string.btn_save_to_log),
+                    height = ResultButtonHeight,
+                    enabled = registerError == null,
+                    onClick = {
+                        val finalRegisterNumber = registerNumber.trim().ifBlank { null }
+                        onSaveToLog(finalRegisterNumber)
+                    },
+                    modifier = Modifier.testTag("btn_save_to_log")
+                )
+            }
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -157,18 +176,6 @@ fun S20ResultScreen(
                         .testTag("register_number_field")
                 )
             }
-
-            // Save to log action button (64 dp tall for gloved hands)
-            NgPrimaryButton(
-                text = stringResource(R.string.btn_save_to_log),
-                height = ResultButtonHeight,
-                enabled = registerError == null,
-                onClick = {
-                    val finalRegisterNumber = registerNumber.trim().ifBlank { null }
-                    onSaveToLog(finalRegisterNumber)
-                },
-                modifier = Modifier.testTag("btn_save_to_log")
-            )
 
             // Versions footer: App, Model, Config, Card batch (FR-22, TC-UI-03)
             NgVersionFooter(

@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +25,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
+import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgYesNoButtons
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBottomActionBar
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgSafetyQuestion
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgStepIndicator
 
@@ -61,14 +65,28 @@ fun S13PhototherapyScreen(
                     }
                 }
             )
+        },
+        // Lower-third action bar: the answer pair stays under the thumb (doc 6 Section 3).
+        bottomBar = {
+            NgBottomActionBar {
+                NgYesNoButtons(
+                    selectedAnswer = selectedAnswer,
+                    onAnswerSelected = { answer ->
+                        selectedAnswer = answer
+                        onAnswered(answer)
+                    },
+                    modifier = Modifier.testTag("phototherapy_yes_no")
+                )
+            }
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             NgSafetyQuestion(
                 questionText = stringResource(R.string.q_phototherapy),
@@ -78,6 +96,7 @@ fun S13PhototherapyScreen(
                     selectedAnswer = answer
                     onAnswered(answer)
                 },
+                showButtons = false,
                 modifier = Modifier.testTag("phototherapy_question")
             )
         }

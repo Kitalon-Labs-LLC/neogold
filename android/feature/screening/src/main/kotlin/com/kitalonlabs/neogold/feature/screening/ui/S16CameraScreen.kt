@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
+import com.kitalonlabs.neogold.core.designsystem.util.rememberNgHaptics
 import com.kitalonlabs.neogold.engine.camera.LiveCardState
 import com.kitalonlabs.neogold.engine.camera.host.CameraMode
 import com.kitalonlabs.neogold.engine.camera.host.CameraSession
@@ -51,6 +53,16 @@ fun S16CameraScreen(
     var session by remember { mutableStateOf<CameraSession?>(null) }
     var capturing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val haptics = rememberNgHaptics()
+
+    // One tick the moment all four markers are found and the phone has been steady for a second:
+    // the health worker knows the frame is good without looking away from the baby (doc 6
+    // Section 3.2: a tick when the card is read).
+    LaunchedEffect(liveState.readyForCapture) {
+        if (liveState.readyForCapture) {
+            haptics.tick()
+        }
+    }
 
     // One burst at a time; the sharpest of its frames is the photo
     val capture = {
@@ -60,6 +72,8 @@ fun S16CameraScreen(
             scope.launch {
                 try {
                     val burst = open.captureBurst()
+                    // The double tick is the "photo taken" pattern (doc 6 Section 3.2).
+                    haptics.doubleTick()
                     onCaptureCompleted(burst.selectedFrame, burst.selectedMetadata)
                 } catch (e: CancellationException) {
                     throw e

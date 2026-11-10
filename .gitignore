@@ -71,3 +71,9 @@ feedback/inbox/*
 feedback/*.log
 feedback/triaged/*
 !feedback/triaged/.gitkeep
+
+# Local Android SDK used for local builds
+android/.android-sdk/
+
+# Local JDK 21 for Android builds
+.jdk/

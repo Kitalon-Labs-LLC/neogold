@@ -16,9 +16,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.theme.ButtonCornerRadius
+import com.kitalonlabs.neogold.core.designsystem.util.rememberNgHaptics
 import com.kitalonlabs.neogold.core.designsystem.theme.MinTouchTarget
 import com.kitalonlabs.neogold.core.designsystem.theme.PrimaryButtonHeight
 import com.kitalonlabs.neogold.core.designsystem.theme.YesNoButtonGap
@@ -28,6 +30,8 @@ import com.kitalonlabs.neogold.core.designsystem.theme.YesNoButtonHeight
  * NgPrimaryButton (doc 6 Section 4.1).
  * The one main action per screen. Full width, 56 dp default (64 dp on result / capture).
  * Minimum 48 dp touch target enforced.
+ *
+ * Presses carry the light haptic tap from [rememberNgHaptics]; nothing else vibrates.
  */
 @Composable
 fun NgPrimaryButton(
@@ -39,8 +43,12 @@ fun NgPrimaryButton(
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
+    val haptics = rememberNgHaptics()
     Button(
-        onClick = onClick,
+        onClick = {
+            haptics.tap()
+            onClick()
+        },
         enabled = enabled,
         shape = RoundedCornerShape(ButtonCornerRadius),
         colors = ButtonDefaults.buttonColors(
@@ -52,11 +60,11 @@ fun NgPrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .defaultMinSize(minWidth = MinTouchTarget, minHeight = MinTouchTarget)
-    ) {
+            .defaultMinSize(minWidth = MinTouchTarget, minHeight = MinTouchTarget)        ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -73,8 +81,12 @@ fun NgSecondaryButton(
     enabled: Boolean = true,
     height: Dp = PrimaryButtonHeight
 ) {
+    val haptics = rememberNgHaptics()
     OutlinedButton(
-        onClick = onClick,
+        onClick = {
+            haptics.tap()
+            onClick()
+        },
         enabled = enabled,
         shape = RoundedCornerShape(ButtonCornerRadius),
         border = BorderStroke(
@@ -87,11 +99,11 @@ fun NgSecondaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .defaultMinSize(minWidth = MinTouchTarget, minHeight = MinTouchTarget)
-    ) {
+            .defaultMinSize(minWidth = MinTouchTarget, minHeight = MinTouchTarget)        ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -107,8 +119,12 @@ fun NgTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
+    val haptics = rememberNgHaptics()
     TextButton(
-        onClick = onClick,
+        onClick = {
+            haptics.tap()
+            onClick()
+        },
         enabled = enabled,
         modifier = modifier.defaultMinSize(minWidth = MinTouchTarget, minHeight = MinTouchTarget)
     ) {
@@ -140,6 +156,7 @@ fun NgYesNoButtons(
     yesLabel: String = "Yes",
     noLabel: String = "No"
 ) {
+    val haptics = rememberNgHaptics()
     Column(
         verticalArrangement = Arrangement.spacedBy(YesNoButtonGap),
         modifier = modifier.fillMaxWidth()
@@ -147,7 +164,10 @@ fun NgYesNoButtons(
         // YES button
         val isYesSelected = selectedAnswer == true
         Button(
-            onClick = { onAnswerSelected(true) },
+            onClick = {
+                haptics.tap()
+                onAnswerSelected(true)
+            },
             shape = RoundedCornerShape(ButtonCornerRadius),
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (isYesSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
@@ -168,7 +188,10 @@ fun NgYesNoButtons(
         // NO button
         val isNoSelected = selectedAnswer == false
         Button(
-            onClick = { onAnswerSelected(false) },
+            onClick = {
+                haptics.tap()
+                onAnswerSelected(false)
+            },
             shape = RoundedCornerShape(ButtonCornerRadius),
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (isNoSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,

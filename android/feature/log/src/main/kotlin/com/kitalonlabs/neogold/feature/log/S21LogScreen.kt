@@ -32,19 +32,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.designsystem.R
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgSkeletonList
 import com.kitalonlabs.neogold.core.designsystem.theme.LocalTriageColors
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -53,6 +57,9 @@ import java.util.Locale
  * S21 Screening Log screen.
  * Displays local screening sessions filterable by date (FR-23, NG-023, TC-LOG-01).
  */
+/** How long the log waits before admitting it is still reading, in milliseconds. */
+private const val SKELETON_REVEAL_DELAY_MS = 120L
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun S21LogScreen(
@@ -60,9 +67,23 @@ fun S21LogScreen(
     onSessionSelected: (String) -> Unit,
     onExportClicked: () -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
     var selectedFilter by remember { mutableStateOf(LogDateFilter.ALL) }
+
+    // Placeholders appear only when the read really takes a moment. The encrypted database
+    // usually answers in a few milliseconds, and a flash of skeletons over data that had
+    // already arrived would be worse than no skeleton at all.
+    var showSkeleton by remember { mutableStateOf(false) }
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            delay(SKELETON_REVEAL_DELAY_MS)
+            showSkeleton = true
+        } else {
+            showSkeleton = false
+        }
+    }
 
     val currentTimeMs = System.currentTimeMillis()
     val filteredSessions = remember(sessions, selectedFilter, currentTimeMs) {
@@ -162,7 +183,14 @@ fun S21LogScreen(
                 )
             }
 
-            if (filteredSessions.isEmpty()) {
+            if (showSkeleton) {
+                NgSkeletonList(
+                    itemCount = 3,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("log_skeleton")
+                )
+            } else if (filteredSessions.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

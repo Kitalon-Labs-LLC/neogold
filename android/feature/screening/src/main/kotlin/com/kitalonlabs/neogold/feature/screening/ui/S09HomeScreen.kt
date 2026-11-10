@@ -1,5 +1,6 @@
 package com.kitalonlabs.neogold.feature.screening.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,10 +15,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,12 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
+import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBottomActionBar
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgExperimentalBanner
 import com.kitalonlabs.neogold.core.designsystem.theme.CardCornerRadius
 import com.kitalonlabs.neogold.core.designsystem.theme.ResultButtonHeight
@@ -53,6 +59,8 @@ import java.util.Locale
  * - Card batch validity display
  * - Gating on `triageEnabled`: In study/release builds without clinical sign-off,
  *   the "New screening" button is hidden (PRD D10, TC-TRI-26).
+ *
+ * Surfaces are drawn with a hairline outline rather than a shadow (doc 6 Section 2.3: shadows disappear in glare).
  */
 @Composable
 fun S09HomeScreen(
@@ -69,19 +77,21 @@ fun S09HomeScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
             ) {
                 Text(
                     text = stringResource(R.string.home_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.semantics { heading() }
                 )
                 IconButton(
                     onClick = onSettingsClicked,
@@ -90,7 +100,22 @@ fun S09HomeScreen(
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = stringResource(R.string.settings_title),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        // The one main action sits in the lower third, under the thumb, rather than in the top
+        // quarter above the summary (doc 6 Section 3: reachable with one hand). Gated on
+        // triageEnabled: hidden in study builds where triageEnabled is false (TC-TRI-26).
+        bottomBar = {
+            if (triageEnabled) {
+                NgBottomActionBar {
+                    NgPrimaryButton(
+                        text = stringResource(R.string.home_btn_new_screening),
+                        height = ResultButtonHeight,
+                        onClick = onNewScreeningClicked,
+                        modifier = Modifier.testTag("btn_new_screening")
                     )
                 }
             }
@@ -100,41 +125,34 @@ fun S09HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp)
+                .padding(top = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Experimental label (NG-022)
             NgExperimentalBanner(modifier = Modifier.testTag("home_experimental_banner"))
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Primary action: New screening (64 dp tall)
-            // Gated on triageEnabled: hidden in study builds where triageEnabled is false (TC-TRI-26)
-            if (triageEnabled) {
-                NgPrimaryButton(
-                    text = stringResource(R.string.home_btn_new_screening),
-                    height = ResultButtonHeight,
-                    onClick = onNewScreeningClicked,
-                    modifier = Modifier.testTag("btn_new_screening")
-                )
-            }
-
             // Today's summary card
             Card(
                 shape = RoundedCornerShape(CardCornerRadius),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = stringResource(R.string.home_today_screenings, todayScreeningsCount),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.testTag("today_screenings_count")
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     if (dueRechecks.isEmpty()) {
                         Text(
@@ -166,7 +184,7 @@ fun S09HomeScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("due_rechecks_list")
@@ -183,7 +201,7 @@ fun S09HomeScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable { onRecheckClicked(session.id) }
-                                        .padding(vertical = 4.dp)
+                                        .padding(vertical = 8.dp)
                                 ) {
                                     val age = session.ageHours.toInt()
                                     val register = session.registerNumber
@@ -193,12 +211,12 @@ fun S09HomeScreen(
                                         } else {
                                             stringResource(R.string.home_recent_session, age)
                                         },
-                                        style = MaterialTheme.typography.bodyMedium,
+                                        style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = stringResource(R.string.home_rechecks_due_at, dueTime),
-                                        style = MaterialTheme.typography.labelMedium,
+                                        style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
@@ -214,6 +232,7 @@ fun S09HomeScreen(
                 onClick = onScreeningLogClicked,
                 shape = RoundedCornerShape(CardCornerRadius),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("btn_screening_log")
@@ -221,7 +240,7 @@ fun S09HomeScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.List,
@@ -231,9 +250,15 @@ fun S09HomeScreen(
                     )
                     Text(
                         text = stringResource(R.string.home_screening_log),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

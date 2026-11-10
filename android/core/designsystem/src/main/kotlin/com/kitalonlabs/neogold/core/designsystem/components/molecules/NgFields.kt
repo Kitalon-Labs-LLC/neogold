@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.designsystem.R
@@ -133,6 +135,11 @@ fun NgBirthTimeField(
 /**
  * NgSafetyQuestion (doc 6 Section 4.2).
  * One question, its explanation, and NgYesNoButtons.
+ *
+ * The question carries the heading semantics, so TalkBack announces it as a heading and the
+ * user can jump between questions with the heading gesture instead of reading the whole screen.
+ * Pass `showButtons = false` when the screen puts the answer pair in an [NgBottomActionBar] so
+ * it stays in the thumb zone.
  */
 @Composable
 fun NgSafetyQuestion(
@@ -143,13 +150,15 @@ fun NgSafetyQuestion(
     modifier: Modifier = Modifier,
     yesLabel: String = stringResource(R.string.btn_yes),
     noLabel: String = stringResource(R.string.btn_no),
+    showButtons: Boolean = true,
     content: @Composable (() -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = questionText,
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.semantics { heading() }
         )
         if (!explanationText.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -163,13 +172,15 @@ fun NgSafetyQuestion(
             Spacer(modifier = Modifier.height(16.dp))
             content()
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        NgYesNoButtons(
-            selectedAnswer = selectedAnswer,
-            onAnswerSelected = onAnswerSelected,
-            yesLabel = yesLabel,
-            noLabel = noLabel
-        )
+        if (showButtons) {
+            Spacer(modifier = Modifier.height(24.dp))
+            NgYesNoButtons(
+                selectedAnswer = selectedAnswer,
+                onAnswerSelected = onAnswerSelected,
+                yesLabel = yesLabel,
+                noLabel = noLabel
+            )
+        }
     }
 }
 
