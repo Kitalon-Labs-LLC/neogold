@@ -4,7 +4,78 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Optical Calibration Brackets (Cyan #38BDF8) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,34 A20,20 0 1,0 54,74 A20,20 0 1,0 54,34 Z" />
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M30,42 L30,34 A4,4 0 0,1 34,30 L42,30" />
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M66,30 L74,30 A4,4 0 0,1 78,34 L78,42" />
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M30,66 L30,74 A4,4 0 0,0 34,78 L42,78" />
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M66,78 L74,78 A4,4 0 0,0 78,74 L78,66" />
+
+    <!-- Calibration Center Alignment Dots -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M54,29 A1,1 0 1,0 54,31 A1,1 0 1,0 54,29 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M54,77 A1,1 0 1,0 54,79 A1,1 0 1,0 54,77 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M29,54 A1,1 0 1,0 31,54 A1,1 0 1,0 29,54 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M77,54 A1,1 0 1,0 79,54 A1,1 0 1,0 77,54 Z" />
+
+    <!-- Golden Camera Aperture Ring (#F59E0B) -->
+    <path
+        android:strokeColor="#F59E0B"
+        android:strokeWidth="2"
+        android:pathData="M54,38 A16,16 0 1,0 54,70 A16,16 0 1,0 54,38 Z" />
+
+    <!-- Aperture Iris Blades -->
+    <path
+        android:strokeColor="#FBBF24"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M54,38 L65,45 M68,46 L70,59 M68,62 L58,69 M54,70 L43,63 M40,62 L38,49 M40,46 L50,39" />
+
+    <!-- Radiant Golden Newborn in Center -->
+    <!-- Head -->
+    <path
+        android:fillColor="#FDE047"
+        android:pathData="M58,49 A4.5,4.5 0 1,0 58,58 A4.5,4.5 0 1,0 58,49 Z" />
+
+    <!-- Sleeping closed eye -->
+    <path
+        android:strokeColor="#B45309"
+        android:strokeWidth="0.8"
+        android:strokeLineCap="round"
+        android:pathData="M57,53 Q58.5,54.5 60,53" />
+
+    <!-- Swaddled infant curved body -->
+    <path
+        android:strokeColor="#F59E0B"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M55,56 C52,57 48,60 48,63 C48,67 54,68 59,67 C63,65 65,62 64,59" />
+
+    <!-- Spark of Life -->
+    <path
+        android:fillColor="#FEF08A"
+        android:pathData="M68,41 Q70,43 72,43 Q70,43 68,45 Q68,43 66,43 Q68,43 68,41 Z" />
 </vector>

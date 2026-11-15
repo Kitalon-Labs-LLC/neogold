@@ -1,0 +1,424 @@
+{
+  "build": {
+    "version": "1.0.0",
+    "commit": "7bbd264658e49da4dcb1a3c3ca8cd0355919ab6d",
+    "config_hash": "cbf26083319a7abbf9479e9b6194dcf8436b9081e502cb4c4e7709cf1cdfb5e0",
+    "triage_enabled": false
+  },
+  "device": {
+    "name": "Android Emulator API 34",
+    "class": "Emulator Image",
+    "ram_mb": 4096,
+    "android_version": "14 (API 34)",
+    "id": "emulator"
+  },
+  "date": "2026-11-15",
+  "priority": "P1",
+  "total_runs": 140,
+  "total_error_free_runs": 140,
+  "overall_error_free_rate": 1.0,
+  "harness_failure_rate": 0.0,
+  "is_valid": true,
+  "invalid_reason": null,
+  "journeys": {
+    "J1": {
+      "id": "J1",
+      "name": "First Launch and Device Qualification",
+      "prd_source": "PRD Section 6 J1, FR-01..FR-04b, TC-ONB-01..03, TC-DEV-01..04",
+      "priority": "P1",
+      "runs": 20,
+      "error_free_runs": 20,
+      "error_free_rate": 1.0,
+      "harness_failures": 0,
+      "failures": [],
+      "steps": {
+        "language_selection": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.346,
+          "p95_seconds": 2.766,
+          "max_seconds": 2.774,
+          "budget_met": true
+        },
+        "safety_acknowledgement": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 4.724,
+          "p95_seconds": 5.364,
+          "max_seconds": 5.7,
+          "budget_met": true
+        },
+        "device_check": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 4.124,
+          "p95_seconds": 5.4,
+          "max_seconds": 5.62,
+          "budget_met": true
+        },
+        "card_qr_scan": {
+          "budget_seconds": 15.0,
+          "p50_seconds": 5.909,
+          "p95_seconds": 8.055,
+          "max_seconds": 8.239,
+          "budget_met": true
+        },
+        "camera_qualification_3_photos": {
+          "budget_seconds": 45.0,
+          "p50_seconds": 19.794,
+          "p95_seconds": 23.717,
+          "max_seconds": 24.347,
+          "budget_met": true
+        },
+        "landing_on_home": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.062,
+          "p95_seconds": 2.617,
+          "max_seconds": 2.632,
+          "budget_met": true
+        }
+      },
+      "total_time": {
+        "budget_seconds": 90.0,
+        "p50_seconds": 38.603,
+        "p95_seconds": 44.426,
+        "max_seconds": 44.834,
+        "budget_met": true
+      }
+    },
+    "J2": {
+      "id": "J2",
+      "name": "Core Screening Flow",
+      "prd_source": "PRD Section 6 J2, NFR-02, TC-PERF-01, TC-PERF-05, TC-CAP-01, TC-UI-01",
+      "priority": "P1",
+      "runs": 20,
+      "error_free_runs": 20,
+      "error_free_rate": 1.0,
+      "harness_failures": 0,
+      "failures": [],
+      "steps": {
+        "start_screening_and_consent": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.25,
+          "p95_seconds": 2.697,
+          "max_seconds": 2.866,
+          "budget_met": true
+        },
+        "demographic_and_safety_inputs": {
+          "budget_seconds": 15.0,
+          "p50_seconds": 6.661,
+          "p95_seconds": 7.828,
+          "max_seconds": 8.166,
+          "budget_met": true
+        },
+        "card_placement_guide": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.167,
+          "p95_seconds": 2.757,
+          "max_seconds": 2.854,
+          "budget_met": true
+        },
+        "guided_capture": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.853,
+          "p95_seconds": 4.391,
+          "max_seconds": 4.422,
+          "budget_met": true
+        },
+        "capture_to_result": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 2.446,
+          "p95_seconds": 2.874,
+          "max_seconds": 3.17,
+          "budget_met": true
+        },
+        "save_to_log": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 1.986,
+          "p95_seconds": 2.676,
+          "max_seconds": 2.86,
+          "budget_met": true
+        }
+      },
+      "total_time": {
+        "budget_seconds": 60.0,
+        "p50_seconds": 19.326,
+        "p95_seconds": 21.485,
+        "max_seconds": 21.52,
+        "budget_met": true
+      }
+    },
+    "J2-hidden": {
+      "id": "J2-hidden",
+      "name": "Study Build Screening (Hidden Triage)",
+      "prd_source": "PRD D10, PRD Section 6 J2, TC-TRI-26",
+      "priority": "P1",
+      "runs": 20,
+      "error_free_runs": 20,
+      "error_free_rate": 1.0,
+      "harness_failures": 0,
+      "failures": [],
+      "steps": {
+        "start_screening_and_consent": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.127,
+          "p95_seconds": 2.585,
+          "max_seconds": 2.588,
+          "budget_met": true
+        },
+        "demographic_and_safety_inputs": {
+          "budget_seconds": 15.0,
+          "p50_seconds": 6.643,
+          "p95_seconds": 7.995,
+          "max_seconds": 8.336,
+          "budget_met": true
+        },
+        "card_placement_guide": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.385,
+          "p95_seconds": 2.906,
+          "max_seconds": 2.939,
+          "budget_met": true
+        },
+        "guided_capture": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.715,
+          "p95_seconds": 4.305,
+          "max_seconds": 4.378,
+          "budget_met": true
+        },
+        "hidden_result_blood_test_prompt": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 4.121,
+          "p95_seconds": 5.117,
+          "max_seconds": 5.191,
+          "budget_met": true
+        },
+        "save_to_log": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.339,
+          "p95_seconds": 2.805,
+          "max_seconds": 2.808,
+          "budget_met": true
+        }
+      },
+      "total_time": {
+        "budget_seconds": 50.0,
+        "p50_seconds": 20.702,
+        "p95_seconds": 23.529,
+        "max_seconds": 25.404,
+        "budget_met": true
+      }
+    },
+    "J3": {
+      "id": "J3",
+      "name": "Offline Home Visit Screening",
+      "prd_source": "PRD Section 6 J3, NFR-01, TC-REL-02",
+      "priority": "P1",
+      "runs": 20,
+      "error_free_runs": 20,
+      "error_free_rate": 1.0,
+      "harness_failures": 0,
+      "failures": [],
+      "steps": {
+        "start_screening_and_consent": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.285,
+          "p95_seconds": 2.744,
+          "max_seconds": 2.887,
+          "budget_met": true
+        },
+        "demographic_and_safety_inputs": {
+          "budget_seconds": 15.0,
+          "p50_seconds": 6.946,
+          "p95_seconds": 8.096,
+          "max_seconds": 8.165,
+          "budget_met": true
+        },
+        "card_placement_guide": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.268,
+          "p95_seconds": 2.703,
+          "max_seconds": 2.71,
+          "budget_met": true
+        },
+        "guided_capture": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.747,
+          "p95_seconds": 4.368,
+          "max_seconds": 4.452,
+          "budget_met": true
+        },
+        "capture_to_result": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 2.449,
+          "p95_seconds": 2.96,
+          "max_seconds": 3.154,
+          "budget_met": true
+        },
+        "mother_guidance_and_save": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 4.361,
+          "p95_seconds": 5.457,
+          "max_seconds": 5.58,
+          "budget_met": true
+        }
+      },
+      "total_time": {
+        "budget_seconds": 60.0,
+        "p50_seconds": 22.018,
+        "p95_seconds": 23.729,
+        "max_seconds": 24.526,
+        "budget_met": true
+      }
+    },
+    "J4": {
+      "id": "J4",
+      "name": "Research Mode Blinded Capture & TSB Entry",
+      "prd_source": "PRD Section 6 J4, FR-25..FR-31, TC-RSH-08..11, TC-RSH-16",
+      "priority": "P1",
+      "runs": 20,
+      "error_free_runs": 20,
+      "error_free_rate": 1.0,
+      "harness_failures": 0,
+      "failures": [],
+      "steps": {
+        "research_unlock": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.262,
+          "p95_seconds": 4.277,
+          "max_seconds": 4.353,
+          "budget_met": true
+        },
+        "participant_and_consent_entry": {
+          "budget_seconds": 12.0,
+          "p50_seconds": 4.755,
+          "p95_seconds": 6.441,
+          "max_seconds": 6.551,
+          "budget_met": true
+        },
+        "four_site_blinded_capture": {
+          "budget_seconds": 40.0,
+          "p50_seconds": 16.554,
+          "p95_seconds": 21.107,
+          "max_seconds": 21.555,
+          "budget_met": true
+        },
+        "blinded_verification": {
+          "budget_seconds": 5.0,
+          "p50_seconds": 2.223,
+          "p95_seconds": 2.762,
+          "max_seconds": 2.931,
+          "budget_met": true
+        },
+        "paired_tsb_entry": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 4.326,
+          "p95_seconds": 5.378,
+          "max_seconds": 5.463,
+          "budget_met": true
+        },
+        "session_complete_encrypted_storage": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.572,
+          "p95_seconds": 4.242,
+          "max_seconds": 4.309,
+          "budget_met": true
+        }
+      },
+      "total_time": {
+        "budget_seconds": 85.0,
+        "p50_seconds": 34.811,
+        "p95_seconds": 41.467,
+        "max_seconds": 41.791,
+        "budget_met": true
+      }
+    },
+    "upload-now": {
+      "id": "upload-now",
+      "name": "Research Outbox Manual Sync",
+      "prd_source": "PRD FR-31, doc 7 Section 5, TC-SYNC-10, TC-SYNC-12",
+      "priority": "P1",
+      "runs": 20,
+      "error_free_runs": 20,
+      "error_free_rate": 1.0,
+      "harness_failures": 0,
+      "failures": [],
+      "steps": {
+        "open_research_export_sync": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.014,
+          "p95_seconds": 4.097,
+          "max_seconds": 4.126,
+          "budget_met": true
+        },
+        "trigger_upload_now": {
+          "budget_seconds": 10.0,
+          "p50_seconds": 4.374,
+          "p95_seconds": 5.112,
+          "max_seconds": 5.436,
+          "budget_met": true
+        },
+        "verify_sync_complete_outbox_drained": {
+          "budget_seconds": 25.0,
+          "p50_seconds": 11.48,
+          "p95_seconds": 13.782,
+          "max_seconds": 13.995,
+          "budget_met": true
+        }
+      },
+      "total_time": {
+        "budget_seconds": 45.0,
+        "p50_seconds": 18.873,
+        "p95_seconds": 21.557,
+        "max_seconds": 22.735,
+        "budget_met": true
+      }
+    },
+    "encrypted-export": {
+      "id": "encrypted-export",
+      "name": "Research Encrypted USB / File Export",
+      "prd_source": "PRD FR-30, doc 8 Section 3, TC-EXP-01..04",
+      "priority": "P1",
+      "runs": 20,
+      "error_free_runs": 20,
+      "error_free_rate": 1.0,
+      "harness_failures": 0,
+      "failures": [],
+      "steps": {
+        "open_research_export": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.75,
+          "p95_seconds": 4.434,
+          "max_seconds": 4.489,
+          "budget_met": true
+        },
+        "select_export_destination": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.421,
+          "p95_seconds": 4.178,
+          "max_seconds": 4.461,
+          "budget_met": true
+        },
+        "package_and_encrypt_export": {
+          "budget_seconds": 25.0,
+          "p50_seconds": 10.844,
+          "p95_seconds": 13.21,
+          "max_seconds": 13.669,
+          "budget_met": true
+        },
+        "export_complete_confirmation": {
+          "budget_seconds": 8.0,
+          "p50_seconds": 3.304,
+          "p95_seconds": 4.212,
+          "max_seconds": 4.444,
+          "budget_met": true
+        }
+      },
+      "total_time": {
+        "budget_seconds": 50.0,
+        "p50_seconds": 21.349,
+        "p95_seconds": 24.025,
+        "max_seconds": 25.15,
+        "budget_met": true
+      }
+    }
+  }
+}

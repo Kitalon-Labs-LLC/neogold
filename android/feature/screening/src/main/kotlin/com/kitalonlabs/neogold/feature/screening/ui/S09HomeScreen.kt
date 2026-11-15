@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.kitalonlabs.neogold.core.data.local.entity.ScreeningSessionEntity
 import com.kitalonlabs.neogold.core.designsystem.R
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgIcons
+import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgLogoIcon
 import com.kitalonlabs.neogold.core.designsystem.components.atoms.NgPrimaryButton
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgBottomActionBar
 import com.kitalonlabs.neogold.core.designsystem.components.molecules.NgExperimentalBanner
@@ -86,13 +87,19 @@ fun S09HomeScreen(
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.home_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.semantics { heading() }
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    NgLogoIcon(size = 32.dp)
+                    Text(
+                        text = stringResource(R.string.home_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.semantics { heading() }
+                    )
+                }
                 IconButton(
                     onClick = onSettingsClicked,
                     modifier = Modifier.testTag("btn_settings")

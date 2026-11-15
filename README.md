@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/neogold-banner.png" alt="NeoGold Banner" width="800">
+</p>
+
 # NeoGold
 
 NeoGold is a free, open-source Android app (Kotlin, Jetpack Compose) that estimates newborn jaundice risk from a phone photo of the baby's chest next to a signed color card, fully offline. A small per-study backend (FastAPI, PostgreSQL 16, Caddy, Docker Compose) receives consented research uploads only.
