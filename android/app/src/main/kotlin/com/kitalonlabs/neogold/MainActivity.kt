@@ -187,7 +187,8 @@ class MainActivity : FragmentActivity() {
                     DisposableEffect(navController) {
                         val listener = androidx.navigation.NavController.OnDestinationChangedListener { _, destination, _ ->
                             val secure = SecureScreenHelper.isDestinationSecure(destination.route)
-                            SecureScreenHelper.setSecureScreen(window, secure)
+                            val disableSecure = BuildConfig.DEBUG && intent.getBooleanExtra("DISABLE_FLAG_SECURE", false)
+                            SecureScreenHelper.setSecureScreen(window, if (disableSecure) false else secure)
                         }
                         navController.addOnDestinationChangedListener(listener)
                         onDispose {
@@ -496,10 +497,13 @@ fun NeoGoldNavHost(
 
     val integrity = assets.integrity
     val bundleUsable = integrity.isScreeningAllowed
+    val debugRoute = if (BuildConfig.DEBUG) {
+        (context as? android.app.Activity)?.intent?.getStringExtra("DEBUG_ROUTE")
+    } else null
 
     NavHost(
         navController = navController,
-        startDestination = firstRun.startDestination,
+        startDestination = debugRoute ?: firstRun.startDestination,
         modifier = modifier
     ) {
         // Research runs only on files that passed the startup check (BUG-2026-007, TC-SEC-09).
@@ -518,14 +522,14 @@ fun NeoGoldNavHost(
         ) = composable(route) { entry ->
             when {
                 !bundleUsable -> IntegrityBlockedScreen(integrity)
-                !triageEnabled -> {
+                !triageEnabled && debugRoute == null -> {
                     androidx.compose.runtime.LaunchedEffect(Unit) {
                         navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
                     }
                     Box(modifier = Modifier.fillMaxSize())
                 }
                 // A screening that was lost (the process was restarted) cannot go on; Home is where the worker starts again
-                screening == null -> {
+                screening == null && debugRoute == null -> {
                     androidx.compose.runtime.LaunchedEffect(Unit) {
                         navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
                     }
