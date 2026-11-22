@@ -53,12 +53,12 @@
   "maxIntervalWidth": 6.0,
   "qualityThresholds": {
     "maxCardAngleDegrees": 20.0,
-    "maxPatchNonuniformityDelta": 8.0,
+    "maxPatchNonuniformityDelta": 5.0,
     "minBlurLaplacianVariance": 100.0,
     "maxGlarePixelFraction": 0.02,
     "minExposureMidGray": 40.0,
     "maxExposureMidGray": 215.0,
-    "maxLightUniformityDelta": 8.0,
+    "maxLightUniformityDelta": 5.0,
     "maxCorrectionResidualDeltaE": 5.0
   }
 }

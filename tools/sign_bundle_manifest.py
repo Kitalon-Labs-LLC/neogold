@@ -33,9 +33,16 @@ from pathlib import Path
 
 try:
     from cryptography.hazmat.primitives.asymmetric import ed25519
+    from cryptography.hazmat.primitives import serialization
 except ImportError:
     print("ERROR: cryptography package required. Run: pip install cryptography", file=sys.stderr)
     sys.exit(1)
+
+
+def _public_bytes(pub: ed25519.Ed25519PublicKey) -> bytes:
+    if hasattr(pub, "public_bytes_raw"):
+        return pub.public_bytes_raw()
+    return pub.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
 
 # Core clinical bundle assets required for app integrity
 REQUIRED_BUNDLE_FILES = [
@@ -122,7 +129,7 @@ def resolve_signer(
     """Chooses the signing key and says which kind it is. Raises SigningError rather than sign with the wrong one."""
     if manifest_key:
         key = parse_private_key(manifest_key)
-        public_hex = key.public_key().public_bytes_raw().hex()
+        public_hex = _public_bytes(key.public_key()).hex()
         pinned = read_pinned_public_key(pinned_public_key_file)
         # A key that is given is a release key, and a release key is only worth trusting when the public half was
         # committed ahead of time: without a pin, whichever key happened to be passed in would be trusted.
@@ -163,7 +170,7 @@ def generate_bundle_manifest(
 ) -> dict:
     """Copies the bundle files into out_dir and writes bundle-manifest.json and signing-info.json beside them."""
     out_dir.mkdir(parents=True, exist_ok=True)
-    public_hex = signer.public_key().public_bytes_raw().hex()
+    public_hex = _public_bytes(signer.public_key()).hex()
 
     file_hashes: dict[str, str] = {}
     for filename in REQUIRED_BUNDLE_FILES + OPTIONAL_BUNDLE_FILES:

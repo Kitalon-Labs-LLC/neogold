@@ -52,7 +52,7 @@ data class QualificationAuditEvent(
  */
 data class QualificationThresholds(
     val maxRepeatabilityDeltaE: Double = 3.0,
-    val maxUniformityDeltaE: Double = 8.0,
+    val maxUniformityDeltaE: Double = 5.0,
     val maxAccuracyDeltaE: Double = 5.0
 ) {
     companion object {
@@ -67,7 +67,7 @@ data class QualificationThresholds(
             }
             return QualificationThresholds(
                 maxRepeatabilityDeltaE = getDouble("maxRepeatabilityDeltaE", 3.0),
-                maxUniformityDeltaE = getDouble("maxPatchNonuniformityDelta", 8.0),
+                maxUniformityDeltaE = getDouble("maxPatchNonuniformityDelta", 5.0),
                 maxAccuracyDeltaE = getDouble("maxCorrectionResidualDeltaE", 5.0)
             )
         }
