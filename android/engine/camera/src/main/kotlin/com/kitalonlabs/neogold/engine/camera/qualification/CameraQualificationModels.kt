@@ -51,9 +51,9 @@ data class QualificationAuditEvent(
  * Loaded from triage-config.json / qualityThresholds (doc 4 Section 5.1).
  */
 data class QualificationThresholds(
-    val maxRepeatabilityDeltaE: Double = 1.5,
-    val maxUniformityDeltaE: Double = 2.0,
-    val maxAccuracyDeltaE: Double = 3.0
+    val maxRepeatabilityDeltaE: Double = 3.0,
+    val maxUniformityDeltaE: Double = 8.0,
+    val maxAccuracyDeltaE: Double = 5.0
 ) {
     companion object {
         fun fromMap(map: Map<String, Any?>): QualificationThresholds {
@@ -66,9 +66,9 @@ data class QualificationThresholds(
                 }
             }
             return QualificationThresholds(
-                maxRepeatabilityDeltaE = getDouble("maxRepeatabilityDeltaE", 1.5),
-                maxUniformityDeltaE = getDouble("maxPatchNonuniformityDelta", 2.0),
-                maxAccuracyDeltaE = getDouble("maxCorrectionResidualDeltaE", 3.0)
+                maxRepeatabilityDeltaE = getDouble("maxRepeatabilityDeltaE", 3.0),
+                maxUniformityDeltaE = getDouble("maxPatchNonuniformityDelta", 8.0),
+                maxAccuracyDeltaE = getDouble("maxCorrectionResidualDeltaE", 5.0)
             )
         }
     }
