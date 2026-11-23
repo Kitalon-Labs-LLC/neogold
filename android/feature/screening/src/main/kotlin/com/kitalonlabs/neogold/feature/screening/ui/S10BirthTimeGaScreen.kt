@@ -23,6 +23,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -213,6 +214,24 @@ fun S10BirthTimeGaScreen(
                 onEditClicked = { showDatePicker = true },
                 modifier = Modifier.testTag("birth_time_field")
             )
+
+            // Quick presets for fast clinical testing / entry
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf(24 to "24h ago", 48 to "48h ago", 72 to "72h ago").forEach { (hours, label) ->
+                    FilterChip(
+                        selected = ageHours?.toInt() == hours,
+                        onClick = {
+                            birthTimeSetMs = currentPhoneTimeEpochMs - hours * 3600_000L
+                        },
+                        label = { Text(label) },
+                        modifier = Modifier.testTag("quick_age_${hours}h")
+                    )
+                }
+            }
 
             // Future birth error banner (TC-REL-06)
             if (isBirthInFuture) {

@@ -664,6 +664,7 @@ fun NeoGoldNavHost(
             S09HomeScreen(
                 triageEnabled = triageEnabled,
                 todayScreeningsCount = todayCount,
+                totalScreeningsCount = logSessions.size,
                 dueRechecks = dueRechecks,
                 onNewScreeningClicked = startScreening,
                 onScreeningLogClicked = {
@@ -672,7 +673,10 @@ fun NeoGoldNavHost(
                 onSettingsClicked = {
                     navController.navigate(Destinations.S23_SETTINGS)
                 },
-                onRecheckClicked = { _ -> startScreening() }
+                onRecheckClicked = { _ -> startScreening() },
+                onResearchClicked = {
+                    navController.navigate(Destinations.R01_RESEARCH_UNLOCK)
+                }
             )
         }
 

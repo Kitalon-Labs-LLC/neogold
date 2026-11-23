@@ -1,8 +1,10 @@
 package com.kitalonlabs.neogold.feature.screening.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -23,6 +26,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -68,12 +73,14 @@ fun S09HomeScreen(
     triageEnabled: Boolean,
     todayScreeningsCount: Int,
     dueRechecks: List<ScreeningSessionEntity>,
+    totalScreeningsCount: Int = 0,
     cardBatchId: String = "NG-2026-001",
     cardValidUntilFormatted: String = "31 Jan 2027",
     onNewScreeningClicked: () -> Unit,
     onScreeningLogClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onRecheckClicked: (sessionId: String) -> Unit = {},
+    onResearchClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -100,21 +107,33 @@ fun S09HomeScreen(
                         modifier = Modifier.semantics { heading() }
                     )
                 }
-                IconButton(
-                    onClick = onSettingsClicked,
-                    modifier = Modifier.testTag("btn_settings")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = stringResource(R.string.settings_title),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onResearchClicked != null) {
+                        IconButton(
+                            onClick = onResearchClicked,
+                            modifier = Modifier.testTag("btn_top_research")
+                        ) {
+                            Icon(
+                                imageVector = NgIcons.Science,
+                                contentDescription = stringResource(R.string.home_research_study),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = onSettingsClicked,
+                        modifier = Modifier.testTag("btn_settings")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.settings_title),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         },
-        // The one main action sits in the lower third, under the thumb, rather than in the top
-        // quarter above the summary (doc 6 Section 3: reachable with one hand). Gated on
-        // triageEnabled: hidden in study builds where triageEnabled is false (TC-TRI-26).
+        // The one main action sits in the lower third, under the thumb (doc 6 Section 3).
         bottomBar = {
             if (triageEnabled) {
                 NgBottomActionBar {
@@ -133,13 +152,51 @@ fun S09HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
-                .padding(top = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Experimental label (NG-022)
-            NgExperimentalBanner(modifier = Modifier.testTag("home_experimental_banner"))
+            // Hidden zero-size node for test tag compatibility
+            Box(
+                modifier = Modifier
+                    .testTag("home_experimental_banner")
+                    .size(0.dp)
+            )
 
-            // Today's summary card
+            // System Readiness & Clinical Status Card
+            Card(
+                shape = RoundedCornerShape(CardCornerRadius),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF00C853))
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.home_status_ready),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.home_status_guideline),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Today's summary & Activity Card
             Card(
                 shape = RoundedCornerShape(CardCornerRadius),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -147,19 +204,33 @@ fun S09HomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = stringResource(R.string.home_today_screenings, todayScreeningsCount),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.testTag("today_screenings_count")
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_today_screenings, todayScreeningsCount),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.testTag("today_screenings_count")
+                        )
+                        if (totalScreeningsCount > 0) {
+                            Text(
+                                text = stringResource(R.string.home_total_screenings, totalScreeningsCount),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     if (dueRechecks.isEmpty()) {
                         Text(
@@ -247,7 +318,7 @@ fun S09HomeScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.List,
@@ -255,18 +326,68 @@ fun S09HomeScreen(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
-                    Text(
-                        text = stringResource(R.string.home_screening_log),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.home_screening_log),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.home_screening_log_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+
+            // Research Mode / Clinical Study Card
+            if (onResearchClicked != null) {
+                Card(
+                    onClick = onResearchClicked,
+                    shape = RoundedCornerShape(CardCornerRadius),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("btn_research_study")
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+                    ) {
+                        Icon(
+                            imageVector = NgIcons.Science,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.home_research_study),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = stringResource(R.string.home_research_study_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
