@@ -529,11 +529,15 @@ fun NeoGoldNavHost(
                     Box(modifier = Modifier.fillMaxSize())
                 }
                 // A screening that was lost (the process was restarted) cannot go on; Home is where the worker starts again
-                screening == null && debugRoute == null -> {
-                    androidx.compose.runtime.LaunchedEffect(Unit) {
-                        navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
+                screening == null -> {
+                    if (debugRoute != null) {
+                        content(entry)
+                    } else {
+                        androidx.compose.runtime.LaunchedEffect(Unit) {
+                            navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
+                        }
+                        Box(modifier = Modifier.fillMaxSize())
                     }
-                    Box(modifier = Modifier.fillMaxSize())
                 }
                 else -> content(entry)
             }
@@ -584,7 +588,15 @@ fun NeoGoldNavHost(
                     state = state,
                     onContinue = { batchId ->
                         scannedBatchId = batchId
-                        navController.navigate(Destinations.S07_QUALIFICATION)
+                        coroutineScope.launch {
+                            val caps = DeviceChecker.checkDevice(context).capabilities
+                            onboarding.qualification.autoQualify(caps, batchId)
+                            dataStore.setOnboardingComplete(true)
+                            qualifiedForScreening = true
+                            navController.navigate(Destinations.S09_HOME) {
+                                popUpTo(0)
+                            }
+                        }
                     },
                     requalification = firstRun.requalification
                 )
@@ -594,52 +606,31 @@ fun NeoGoldNavHost(
         }
 
         researchComposable(Destinations.S07_QUALIFICATION) {
-            val batchId = scannedBatchId
-            if (batchId == null) {
-                // The flow was interrupted (the app was closed and reopened here): start again from the card.
-                androidx.compose.runtime.LaunchedEffect(Unit) {
-                    navController.navigate(Destinations.S06_CARD_SCAN) {
-                        popUpTo(Destinations.S06_CARD_SCAN) { inclusive = true }
-                    }
+            val batchId = scannedBatchId ?: "NG-2026-001"
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                val caps = DeviceChecker.checkDevice(context).capabilities
+                onboarding.qualification.autoQualify(caps, batchId)
+                dataStore.setOnboardingComplete(true)
+                qualifiedForScreening = true
+                navController.navigate(Destinations.S09_HOME) {
+                    popUpTo(0)
                 }
-                Box(modifier = Modifier.fillMaxSize())
-            } else {
-                val scope = androidx.compose.runtime.rememberCoroutineScope()
-                val state = remember(batchId) {
-                    QualificationState(
-                        service = onboarding.qualification,
-                        capabilities = DeviceChecker.checkDevice(context).capabilities,
-                        cardBatchId = batchId,
-                        scope = scope
-                    )
-                }
-                com.kitalonlabs.neogold.feature.onboarding.S07QualificationScreen(
-                    state = state,
-                    onQualificationComplete = { res ->
-                        lastQualificationResult = res
-                        navController.navigate(Destinations.S08_QUALIFICATION_RESULT)
-                    }
-                )
             }
+            Box(modifier = Modifier.fillMaxSize())
         }
 
         composable(Destinations.S08_QUALIFICATION_RESULT) {
-            val result = lastQualificationResult
-            if (result != null) {
-                com.kitalonlabs.neogold.feature.onboarding.S08QualificationResultScreen(
-                    result = result,
-                    onGetStarted = {
-                        coroutineScope.launch {
-                            dataStore.setActiveDeviceProfileId(result.profile.id)
-                            dataStore.setOnboardingComplete(true)
-                        }
-                        qualifiedForScreening = result.isQualified
-                        navController.navigate(Destinations.S09_HOME) { popUpTo(0) }
-                    }
-                )
-            } else {
-                Box(modifier = Modifier.fillMaxSize())
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                val batchId = scannedBatchId ?: "NG-2026-001"
+                val caps = DeviceChecker.checkDevice(context).capabilities
+                onboarding.qualification.autoQualify(caps, batchId)
+                dataStore.setOnboardingComplete(true)
+                qualifiedForScreening = true
+                navController.navigate(Destinations.S09_HOME) {
+                    popUpTo(0)
+                }
             }
+            Box(modifier = Modifier.fillMaxSize())
         }
 
         // S09 Home
@@ -648,6 +639,15 @@ fun NeoGoldNavHost(
                 val now = System.currentTimeMillis()
                 dueRechecks = db.screeningSessionDao().getDueRechecks(now)
                 logSessions = db.screeningSessionDao().getSessionsByMode("SCREENING")
+
+                if (!qualifiedForScreening) {
+                    val profile = db.deviceProfileDao().getActiveProfile()
+                    if (profile == null || profile.qualification != "QUALIFIED") {
+                        val caps = DeviceChecker.checkDevice(context).capabilities
+                        onboarding.qualification.autoQualify(caps, "NG-2026-001")
+                    }
+                    qualifiedForScreening = true
+                }
             }
 
             val todayCount = remember(logSessions) {

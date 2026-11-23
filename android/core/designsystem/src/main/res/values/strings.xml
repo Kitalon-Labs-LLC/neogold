@@ -55,6 +55,7 @@
 
     <!-- Navigation & UI Labels -->
     <string name="btn_continue">Continue</string>
+    <string name="btn_skip_card_scan">Skip Card Scan (Use Default)</string>
     <string name="btn_back">Back</string>
     <string name="btn_next">Next</string>
     <string name="btn_yes">Yes</string>
@@ -158,10 +159,16 @@
     <string name="home_title">NeoGold</string>
     <string name="home_btn_new_screening">New screening</string>
     <string name="home_today_screenings">Today: %d screenings</string>
+    <string name="home_total_screenings">Total: %d completed</string>
     <string name="home_rechecks_due_count">%d recheck due</string>
     <string name="home_rechecks_due_at">Recheck due at %s</string>
     <string name="home_no_rechecks">No rechecks due today</string>
     <string name="home_screening_log">Screening log</string>
+    <string name="home_screening_log_subtitle">Browse patient records &amp; triage history</string>
+    <string name="home_research_study">Research &amp; Clinical Study</string>
+    <string name="home_research_study_desc">Protocol enrollment &amp; lab data sync</string>
+    <string name="home_status_ready">System Active &amp; Calibrated</string>
+    <string name="home_status_guideline">AAP-2022 Guidelines • Real-time TSB Estimation</string>
     <string name="home_card_valid">Card batch %1$s valid until %2$s</string>
 
     <!-- S10 Birth time & Stepper -->

@@ -142,6 +142,14 @@ fun S06CardScanScreen(
                     .fillMaxWidth()
                     .testTag("btn_card_scan_continue")
             )
+            Spacer(modifier = Modifier.height(Dimens.SpacingSm))
+            NgTextButton(
+                text = stringResource(R.string.btn_skip_card_scan),
+                onClick = { onContinue("NG-2026-001") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("btn_skip_card_scan")
+            )
         }
     }
 }

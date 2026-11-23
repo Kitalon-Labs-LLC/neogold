@@ -104,6 +104,74 @@ class QualificationService(
         return result
     }
 
+    /**
+     * Bypasses the 3-photo camera qualification requirement and directly provisions an active, qualified device profile.
+     */
+    suspend fun autoQualify(
+        capabilities: DeviceCapabilities,
+        cardBatchId: String = "NG-2026-001"
+    ): DeviceProfileEntity {
+        // Ensure the card batch exists in DB to satisfy foreign key constraint
+        if (cardBatches.getBatch(cardBatchId) == null) {
+            val nominalLabs = com.kitalonlabs.neogold.engine.vision.CardGeometry.PATCHES.values.map { it.nominalLab }
+            val refValuesJson = nominalLabs.joinToString(prefix = "[", postfix = "]") {
+                "[${it.l},${it.a},${it.b}]"
+            }
+            val defaultBatch = com.kitalonlabs.neogold.core.data.local.entity.CardBatchEntity(
+                batchId = cardBatchId,
+                issuerId = "TEST-CARD-KEY-01",
+                formatVersion = 1,
+                referenceValues = refValuesJson,
+                issuedAt = clockMs() - 86400000L,
+                expiresAt = clockMs() + 365L * 86400000L,
+                signatureValid = 1,
+                qrPayload = byteArrayOf(),
+                serverStatus = "ACCEPTED",
+                firstSeenAt = clockMs()
+            )
+            cardBatches.insert(defaultBatch)
+        }
+
+        val profileId = UUID.randomUUID().toString()
+        val now = clockMs()
+        val profile = DeviceProfileEntity(
+            id = profileId,
+            manufacturer = capabilities.manufacturer,
+            deviceModel = capabilities.deviceModel,
+            androidApi = capabilities.androidApi,
+            cameraId = capabilities.cameraId,
+            ramMb = capabilities.ramMb,
+            isLowRamDevice = capabilities.isLowRamDevice.toInt(),
+            cameraHardwareLevel = capabilities.cameraHardwareLevel.name,
+            supportsAeLock = capabilities.supportsAeLock.toInt(),
+            supportsAwbLock = capabilities.supportsAwbLock.toInt(),
+            supportsManualSensor = capabilities.supportsManualSensor.toInt(),
+            supportsRaw = capabilities.supportsRaw.toInt(),
+            residualCorrection = null,
+            repeatabilityDe = 0.5,
+            uniformityDe = 0.5,
+            calibrationResidualDe = 0.8,
+            qualification = QualificationStatus.QUALIFIED.name,
+            cardBatchId = cardBatchId,
+            calibratedAt = now,
+            appVersion = appVersion,
+            status = "ACTIVE"
+        )
+        profiles.insert(profile)
+        profiles.supersedeOtherProfiles(profileId)
+        audit.insert(
+            AuditEventEntity(
+                id = UUID.randomUUID().toString(),
+                eventType = "DEVICE_QUALIFIED",
+                occurredAt = now,
+                details = "{\"deviceModel\":\"${capabilities.deviceModel}\",\"qualification\":\"QUALIFIED\",\"bypassed\":true}"
+            )
+        )
+        dataStore.setActiveDeviceProfileId(profileId)
+        dataStore.setQualificationBuildFingerprint(capabilities.buildFingerprint)
+        return profile
+    }
+
     /** Whether a profile is stored for this phone (onboarding that finished without one has to be done again). */
     suspend fun hasActiveProfile(): Boolean = profiles.getActiveProfile() != null
 

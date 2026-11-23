@@ -55,6 +55,7 @@
 
     <!-- Navigation & UI Labels -->
     <string name="btn_continue">চালিয়ে যান</string>
+    <string name="btn_skip_card_scan">কার্ড স্ক্যান বাদ দিন (ডিফল্ট কার্ড)</string>
     <string name="btn_back">পেছনে</string>
     <string name="btn_next">পরবর্তী</string>
     <string name="btn_yes">হ্যাঁ</string>
@@ -158,10 +159,16 @@
     <string name="home_title">নিওগোল্ড</string>
     <string name="home_btn_new_screening">নতুন স্ক্রীনিং</string>
     <string name="home_today_screenings">আজ: %dটি স্ক্রীনিং</string>
+    <string name="home_total_screenings">মোট: %dটি সম্পন্ন</string>
     <string name="home_rechecks_due_count">%dটি ফলোআপ বাকি</string>
     <string name="home_rechecks_due_at">%s-এ ফলোআপ নির্ধারিত</string>
     <string name="home_no_rechecks">আজ কোনো ফলোআপ বাকি নেই</string>
     <string name="home_screening_log">স্ক্রীনিং লগ</string>
+    <string name="home_screening_log_subtitle">রোগীর রেকর্ড ও ট্রায়াজ ইতিহাস দেখুন</string>
+    <string name="home_research_study">গবেষণা ও ক্লিনিক্যাল স্টাডি</string>
+    <string name="home_research_study_desc">প্রোটোকল ভর্তি ও ল্যাব ডেটা সিঙ্ক</string>
+    <string name="home_status_ready">সিস্টেম সক্রিয় ও ক্যালিব্রেটেড</string>
+    <string name="home_status_guideline">AAP-2022 নির্দেশিকা • রিয়েল-টাইম TSB পরিমাপ</string>
     <string name="home_card_valid">কার্ড ব্যাচ %1$s মেয়াদ %2$s পর্যন্ত</string>
 
     <!-- S10 Birth time & Stepper -->

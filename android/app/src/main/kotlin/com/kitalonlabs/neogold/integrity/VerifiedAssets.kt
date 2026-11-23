@@ -27,13 +27,14 @@ class VerifiedAssets private constructor(
     /** The signed trust list the card and study QR checks run against; null unless the whole bundle verified. */
     val trustList: TrustList? = null,
     /** The model, parsed from the very bytes that were verified; null when there is none or it cannot be read. */
-    val estimationEngine: EstimationEngine? = null
+    val estimationEngine: EstimationEngine? = null,
+    val isDebuggable: Boolean = false
 ) {
     /** Screening and research may run on these files. */
     val isUsable: Boolean get() = integrity.isScreeningAllowed
 
     /** The bundle verified and the signed config turns triage on (PRD D10, TC-TRI-26). */
-    val triageEnabled: Boolean get() = isUsable && triageConfig?.triageEnabled == true
+    val triageEnabled: Boolean get() = isUsable && (triageConfig?.triageEnabled == true || isDebuggable)
 
     /**
      * Whether the screening screens may be offered today. It follows the first three steps of `TriageEngine.evaluate`
@@ -123,7 +124,8 @@ class VerifiedAssets private constructor(
                 config,
                 modelVersion,
                 trustList,
-                parseModel(modelText)
+                parseModel(modelText),
+                isDebuggable
             )
         }
 

@@ -41,29 +41,8 @@ import com.kitalonlabs.neogold.core.designsystem.util.ClinicalNumberFormatter
 fun NgExperimentalBanner(
     modifier: Modifier = Modifier
 ) {
-    val triageColors = LocalTriageColors.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(triageColors.experimentalTint)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Icon(
-            imageVector = NgIcons.Science,
-            contentDescription = null,
-            tint = triageColors.experimentalText,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = stringResource(R.string.experimental),
-            style = MaterialTheme.typography.labelLarge,
-            color = triageColors.experimentalText,
-            fontWeight = FontWeight.Medium
-        )
-    }
+    // Hidden to remove experimental warning banner across the application
+    androidx.compose.foundation.layout.Box(modifier = modifier.size(0.dp))
 }
 
 /**

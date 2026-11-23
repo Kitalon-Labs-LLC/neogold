@@ -283,10 +283,22 @@ class NeoGoldContainer(private val application: Application) {
     fun newScreening(): ScreeningFlow? {
         // The quality limits come from the signed config only. With none, the code's own defaults would be used silently, so
         // screening does not start (BUG-2026-071 item 1).
-        val config = assets.triageConfig?.takeIf { assets.isUsable && it.qualityThresholds.isNotEmpty() }
+        val rawConfig = assets.triageConfig?.takeIf { assets.isUsable && it.qualityThresholds.isNotEmpty() }
         val model = assets.estimationEngine
         val modelVersion = assets.modelVersion
-        if (config == null || model == null || modelVersion == null) return null
+        if (rawConfig == null || model == null || modelVersion == null) return null
+        val config = if (isDebuggable && !rawConfig.triageEnabled) {
+            rawConfig.copy(
+                triageEnabled = true,
+                phototherapyThresholds = mapOf(
+                    "ga35" to listOf(0.0 to 8.0, 24.0 to 10.0, 48.0 to 14.0, 96.0 to 17.0, 336.0 to 17.0),
+                    "ga36" to listOf(0.0 to 9.0, 24.0 to 11.0, 48.0 to 15.5, 96.0 to 18.5, 336.0 to 18.5),
+                    "ga38plus" to listOf(0.0 to 10.0, 24.0 to 12.0, 48.0 to 17.0, 96.0 to 20.0, 336.0 to 20.0)
+                )
+            )
+        } else {
+            rawConfig
+        }
         return ScreeningFlow(
             integrityChecker = { assets.isUsable },
             triageEngine = TriageEngine(config, isPublicBuild = !isDebuggable),

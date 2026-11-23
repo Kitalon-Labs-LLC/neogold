@@ -217,7 +217,7 @@ class OnboardingDomainTest {
         val batchId = storeNominalBatch()
 
         val result = qualification.qualify(
-            photos(SyntheticRenderConfig(duplicateMismatchDeltaE = 4.0)),
+            photos(SyntheticRenderConfig(duplicateMismatchDeltaE = 6.0)),
             capabilities,
             batchId
         )
@@ -342,7 +342,7 @@ class OnboardingDomainTest {
     @Test
     fun aResearchOnlyPhoneIsNeverOfferedScreening_TC_DEV_05() = runTest {
         val batchId = storeNominalBatch()
-        qualification.qualify(photos(SyntheticRenderConfig(duplicateMismatchDeltaE = 4.0)), capabilities, batchId)
+        qualification.qualify(photos(SyntheticRenderConfig(duplicateMismatchDeltaE = 6.0)), capabilities, batchId)
 
         assertThat(profiles.getActiveProfile()!!.qualification).isEqualTo("RESEARCH_ONLY")
         assertThat(qualification.screeningEligible(capabilities.buildFingerprint)).isFalse()
