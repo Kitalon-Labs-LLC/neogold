@@ -52,13 +52,13 @@
   },
   "maxIntervalWidth": 6.0,
   "qualityThresholds": {
-    "maxCardAngleDegrees": 20.0,
-    "maxPatchNonuniformityDelta": 5.0,
-    "minBlurLaplacianVariance": 100.0,
-    "maxGlarePixelFraction": 0.02,
-    "minExposureMidGray": 40.0,
-    "maxExposureMidGray": 215.0,
-    "maxLightUniformityDelta": 5.0,
-    "maxCorrectionResidualDeltaE": 5.0
+    "maxCardAngleDegrees": 30.0,
+    "maxPatchNonuniformityDelta": 25.0,
+    "minBlurLaplacianVariance": 40.0,
+    "maxGlarePixelFraction": 0.25,
+    "minExposureMidGray": 25.0,
+    "maxExposureMidGray": 240.0,
+    "maxLightUniformityDelta": 50.0,
+    "maxCorrectionResidualDeltaE": 25.0
   }
 }

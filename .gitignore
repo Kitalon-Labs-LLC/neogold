@@ -50,6 +50,17 @@ htmlcov/
 dist/
 eggs/
 
+
+# Android build files
+android/app/build/
+android/build/
+android/.gradle/
+
+# Generated APK files
+apks/
+*.apk
+*.aab
+
 # OS artifacts
 .DS_Store
 Thumbs.db
